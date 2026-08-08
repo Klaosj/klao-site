@@ -1,0 +1,24 @@
+[
+  {
+    "id": "fx-actmedia",
+    "role": "Business Development",
+    "company": "Actmedia Thailand",
+    "period": "2024 – present",
+    "wins": {
+      "en": ["Sample win — replace with quantified outcomes in Notion.", "In-store retail media partnerships."],
+      "th": ["ตัวอย่างผลงาน — แทนที่ด้วยตัวเลขจริงใน Notion", "พาร์ตเนอร์สื่อ retail ในร้านค้า"]
+    },
+    "order": 1
+  },
+  {
+    "id": "fx-casetify",
+    "role": "Business Development",
+    "company": "Casetify",
+    "period": "2022 – 2024",
+    "wins": {
+      "en": ["Sample win — replace with quantified outcomes in Notion."],
+      "th": ["ตัวอย่างผลงาน — แทนที่ด้วยตัวเลขจริงใน Notion"]
+    },
+    "order": 2
+  }
+]

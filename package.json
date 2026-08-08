@@ -6,8 +6,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "test": "vitest run --passWithNoTests",
-    "check": "tsc --noEmit && eslint . && vitest run --passWithNoTests"
+    "test": "vitest run",
+    "check": "tsc --noEmit && eslint . && vitest run"
   },
   "dependencies": {
     "@notionhq/client": "^2.3.0",
