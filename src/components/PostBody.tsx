@@ -30,7 +30,11 @@ type ListGroup = { type: 'bullets' | 'numbers'; items: RichSpan[][] };
 type NonListBlock = Exclude<ContentBlock, { type: 'bullet' } | { type: 'numbered' }>;
 type Grouped = NonListBlock | ListGroup;
 
-function groupLists(blocks: ContentBlock[]): Grouped[] {
+// Exported for direct unit testing (tests/post-body.test.tsx) -- the fixtures
+// contain no numbered blocks, no adjacent bullets, and no image/mark spans,
+// so this is the only way the list-merging branches ever execute outside
+// production Notion content.
+export function groupLists(blocks: ContentBlock[]): Grouped[] {
   const out: Grouped[] = [];
   for (const block of blocks) {
     const last = out[out.length - 1];
