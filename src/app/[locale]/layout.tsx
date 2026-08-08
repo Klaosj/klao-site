@@ -2,29 +2,55 @@ import '../globals.css';
 import type { Metadata } from 'next';
 import SiteNav from '@/components/SiteNav';
 import SiteFooter from '@/components/SiteFooter';
-import type { Locale } from '@/lib/models';
+import { assertLocale } from '@/lib/locale';
+import { LOCALES, type Locale } from '@/lib/models';
 import { SITE_URL } from '@/lib/site';
 
 export const revalidate = 3600;
 
+// Deliberately NOT setting `export const dynamicParams = false;` here, even
+// though this is the layout every dotted single-segment path (e.g.
+// `/favicon.ico`) falls into. Next.js computes a route's effective
+// dynamicParams as the AND of every segment in that route's chain --
+// `segments.every((s) => s.config?.dynamicParams !== false)` in
+// node_modules/next/dist/build/static-paths/app.js (with a literal
+// `// TODO: dynamic params should be allowed to be granular per segment but
+// we need additional information stored/leveraged in the prerender
+// manifest to allow this behavior` above it) -- so `false` set on a layout
+// poisons every descendant route and CANNOT be overridden back to `true` by
+// a child page. writing/[slug]/page.tsx deliberately sets its own
+// `dynamicParams = true` so a post published to Notion after the last build
+// still resolves without a redeploy; setting `false` here would silently
+// break that (verified empirically against the installed Next.js version,
+// not assumed). Instead, `dynamicParams = false` is set individually on the
+// four LEAF pages that don't need on-demand resolution (page.tsx,
+// projects/page.tsx, career/page.tsx, writing/page.tsx) -- each is a
+// separate route from writing/[slug], so it doesn't touch that route's own
+// computation. The actual crash fix is `assertLocale` below: it 404s a
+// bogus locale value before any Notion-backed data fetch runs, in every
+// page and generateMetadata, regardless of dynamicParams.
 export function generateStaticParams() {
-  return [{ locale: 'en' }, { locale: 'th' }];
+  return LOCALES.map((locale) => ({ locale }));
 }
 
-// `params` is widened to `{ locale: string }` and narrowed to `Locale` inside
-// the body, mirroring RootLayout below. Next intersects generateMetadata's
-// props with `any` (like page props), so a narrow `Locale` type would build
-// fine here today -- but layouts are exactly the spot that broke `tsc` once
-// (ParamMap["/[locale]"] is `{ locale: string }`, checked contravariantly
-// under strict), so this file uses the same widen-then-narrow pattern
-// throughout for consistency and to not depend on that leniency.
+// `params` is widened to `{ locale: string }` and narrowed via `assertLocale`
+// inside the body, mirroring RootLayout below. Next intersects
+// generateMetadata's props with `any` (like page props), so a narrow
+// `Locale` type would build fine here today -- but layouts are exactly the
+// spot that broke `tsc` once (ParamMap["/[locale]"] is `{ locale: string }`,
+// checked contravariantly under strict), so this file uses the same
+// widen-then-narrow pattern throughout for consistency and to not depend on
+// that leniency. `assertLocale` (rather than the old `locale === 'th' ?
+// 'th' : 'en'` coercion) 404s an unrecognized value instead of silently
+// rendering English -- this is the layout every route under `[locale]`
+// shares, so this is the one call site that can't be skipped.
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
   const { locale } = await params;
-  const l: Locale = locale === 'th' ? 'th' : 'en';
+  const l = assertLocale(locale);
   const descriptions: Record<Locale, string> = {
     en: 'Suwichak "Klao" Jarunopratamp — business developer who builds his own tools. BD × Data Analytics, Bangkok.',
     th: 'สุวิจักขณ์ "เกลา" — นัก Business Development ที่สร้างเครื่องมือใช้เอง BD × Data Analytics กรุงเทพฯ',
@@ -66,7 +92,7 @@ export default async function RootLayout({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const l: Locale = locale === 'th' ? 'th' : 'en';
+  const l = assertLocale(locale);
   return (
     <html lang={l}>
       <body className="flex min-h-screen flex-col">

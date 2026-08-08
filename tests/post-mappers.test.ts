@@ -77,6 +77,21 @@ describe('mapPostMeta', () => {
     warn.mockRestore();
   });
 
+  it('truncates a datetime Date.start (Notion "Include time" toggle on) to its YYYY-MM-DD prefix', () => {
+    // models.ts pins PostMeta.date as `// YYYY-MM-DD`. With Notion's time
+    // toggle enabled, date.start is a full timestamp instead -- without
+    // truncation this flows straight through to format.ts's
+    // `new Date(iso + 'T00:00:00Z')`, which fails to parse a string that
+    // already contains its own 'T', and the post date renders as a raw ISO
+    // timestamp instead of a formatted date.
+    const page2 = {
+      ...page,
+      properties: { ...page.properties, Date: { date: { start: '2026-07-27T10:00:00.000+07:00' } } },
+    };
+    const p = mapPostMeta(page2)!;
+    expect(p.date).toBe('2026-07-27');
+  });
+
   it('treats a non-string Date.start as missing and hits the Date skip guard', () => {
     // Date is typed as PostMeta.date: string. A malformed Notion payload
     // (e.g. a number instead of an ISO string) must not flow through

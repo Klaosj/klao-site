@@ -91,7 +91,16 @@ export function mapPostMeta(page: NotionPage): PostMeta | null {
   const props: any = page.properties;
   const slug = text(props.Slug);
   const dateRaw = props.Date?.date?.start;
-  const date = typeof dateRaw === 'string' ? dateRaw : '';
+  // With Notion's "Include time" toggle on, `date.start` is a full
+  // timestamp (e.g. "2026-07-27T10:00:00.000+07:00"), not a bare date.
+  // PostMeta.date's contract (models.ts) is `// YYYY-MM-DD` -- format.ts
+  // builds `new Date(iso + 'T00:00:00Z')` from it, so a timestamp already
+  // containing a 'T' produces an invalid, doubled-up string that fails to
+  // parse and falls back to rendering the raw ISO timestamp verbatim on
+  // /writing, the home page's latest-writing list, and the post header.
+  // Slicing to the first 10 characters restores the date-only contract
+  // regardless of whether the time toggle is on.
+  const date = typeof dateRaw === 'string' ? dateRaw.slice(0, 10) : '';
   const titleEn = text(props.TitleEN);
   if (!slug) return skip('Posts', page, 'missing Slug');
   if (!date) return skip('Posts', page, 'missing Date');

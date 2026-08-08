@@ -4,13 +4,14 @@ import { notFound } from 'next/navigation';
 import { getPost, getPosts } from '@/lib/content';
 import { dict } from '@/lib/dictionary';
 import { formatDate } from '@/lib/format';
-import type { Locale } from '@/lib/models';
+import { assertLocale } from '@/lib/locale';
+import { LOCALES } from '@/lib/models';
 import { SITE_URL } from '@/lib/site';
 import PostBody from '@/components/PostBody';
 
 export async function generateStaticParams() {
   const posts = await getPosts();
-  return ['en', 'th'].flatMap((locale) => posts.map((post) => ({ locale, slug: post.slug })));
+  return LOCALES.flatMap((locale) => posts.map((post) => ({ locale, slug: post.slug })));
 }
 
 // Content lives in Notion and is deliberately published between deploys (see
@@ -34,6 +35,15 @@ export async function generateStaticParams() {
 // fixture mode (no NOTION_TOKEN — how this build currently runs) getPosts()
 // is a synchronous local read, so the check is genuinely free there. Either
 // way, an unknown slug now 404s without ever reaching fetchPostBySlug.
+//
+// This also leaves the `locale` segment on this route dynamically
+// resolvable at the framework level (no ancestor sets dynamicParams: false,
+// unlike the four leaf pages in this route group -- see layout.tsx's
+// generateStaticParams comment). A bogus locale here (e.g.
+// `/xx/writing/<slug>`) isn't rejected by Next's static-path fallback the
+// way `/favicon.ico` is; it's caught one line below by `assertLocale`
+// instead, which is fine specifically for this route since it already has
+// to run its own body for the equivalent bogus-slug case.
 export const dynamicParams = true;
 
 // Widen-then-narrow `params`, matching layout.tsx's generateMetadata (Task
@@ -49,7 +59,7 @@ export async function generateMetadata({
   params: Promise<{ locale: string; slug: string }>;
 }): Promise<Metadata> {
   const { locale, slug } = await params;
-  const l: Locale = locale === 'th' ? 'th' : 'en';
+  const l = assertLocale(locale);
   const knownSlugs = await getPosts();
   if (!knownSlugs.some((p) => p.slug === slug)) notFound();
   const post = await getPost(slug);
@@ -63,9 +73,10 @@ export async function generateMetadata({
 export default async function PostPage({
   params,
 }: {
-  params: Promise<{ locale: Locale; slug: string }>;
+  params: Promise<{ locale: string; slug: string }>;
 }) {
-  const { locale, slug } = await params;
+  const { locale: rawLocale, slug } = await params;
+  const locale = assertLocale(rawLocale);
   const knownSlugs = await getPosts();
   if (!knownSlugs.some((p) => p.slug === slug)) notFound();
   const post = await getPost(slug);

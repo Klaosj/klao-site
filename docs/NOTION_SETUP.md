@@ -75,7 +75,10 @@ short, lowercase, hyphenated, and unique. **`Slug`, `Date`, and `TitleEN`
 are all required — leaving any one of the three blank silently drops the
 whole post from `/writing`.** `Date` is the one most likely to catch you
 out: it doesn't feel mandatory the way a title does, but it's checked
-exactly like one.
+exactly like one. If you turn on Notion's "Include time" toggle for `Date`,
+only the date part is kept — the time is read and then discarded, so the
+post still sorts and displays correctly by day; there's no way to schedule
+same-day posts by time of day through this field.
 
 **Bilingual body:** the site looks through the page's blocks for a **Heading
 1** block whose text is *exactly* `ไทย` (nothing else on that line, no

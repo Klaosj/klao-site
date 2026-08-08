@@ -1,9 +1,20 @@
 import type { MetadataRoute } from 'next';
 import { getPosts } from '@/lib/content';
+import { LOCALES } from '@/lib/models';
 import { SITE_URL } from '@/lib/site';
 
-const locales = ['en', 'th'] as const;
 const staticPaths = ['', '/projects', '/writing', '/career'];
+
+// Without this, `.next/prerender-manifest.json` shows `/sitemap.xml` with
+// `initialRevalidateSeconds: false` (built once, never again) while every
+// content route below it is 3600 -- so a post published to Notion appears
+// on `/writing` within the hour but never enters the sitemap, and since
+// hreflang lives ONLY in the sitemap (see docs/DEPLOY.md §8, no
+// `<link rel="alternate">` tags in page HTML), a new post also never gets
+// any hreflang at all. That directly contradicts README.md's "content
+// updates need no redeploy" -- this file calls getPosts() same as every
+// other content route, so it needs the same revalidate window.
+export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const posts = await getPosts();
@@ -29,7 +40,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   return pages.flatMap(({ path, lastModified }) =>
-    locales.map((locale) => ({
+    LOCALES.map((locale) => ({
       url: `${SITE_URL}/${locale}${path}`,
       ...(lastModified ? { lastModified } : {}),
       alternates: {

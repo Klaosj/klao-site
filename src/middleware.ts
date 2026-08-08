@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-const LOCALES = ['en', 'th'];
+import { LOCALES } from '@/lib/models';
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const first = pathname.split('/')[1];
-  if (LOCALES.includes(first)) return NextResponse.next();
+  if ((LOCALES as readonly string[]).includes(first)) return NextResponse.next();
   const url = req.nextUrl.clone();
   url.pathname = `/en${pathname === '/' ? '' : pathname}`;
   return NextResponse.redirect(url);

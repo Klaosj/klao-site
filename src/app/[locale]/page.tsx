@@ -2,11 +2,20 @@ import Link from 'next/link';
 import { getFeaturedProjects, getPosts, getProfile } from '@/lib/content';
 import { dict } from '@/lib/dictionary';
 import { formatDate } from '@/lib/format';
-import type { Locale } from '@/lib/models';
+import { assertLocale } from '@/lib/locale';
 import ProjectCard from '@/components/ProjectCard';
 
-export default async function HomePage({ params }: { params: Promise<{ locale: Locale }> }) {
-  const { locale } = await params;
+// See layout.tsx's generateStaticParams comment: a layout-level
+// `dynamicParams = false` can't be scoped to just this route (it poisons
+// writing/[slug] too), so it's set per leaf page instead. This route has no
+// dynamic segment of its own beyond `locale`, so an unlisted locale (e.g.
+// `/favicon.ico` falling through middleware into `[locale]`) 404s at the
+// routing layer before this component -- or any Notion-backed fetch below
+// -- ever runs.
+export const dynamicParams = false;
+
+export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
+  const locale = assertLocale((await params).locale);
   const t = dict[locale];
   const [profile, featured, posts] = await Promise.all([getProfile(), getFeaturedProjects(), getPosts()]);
 

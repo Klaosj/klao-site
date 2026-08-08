@@ -1,8 +1,12 @@
 import type { Metadata } from 'next';
 import { getCareer, getProfile } from '@/lib/content';
 import { dict } from '@/lib/dictionary';
-import type { Locale } from '@/lib/models';
+import { assertLocale } from '@/lib/locale';
 import { SITE_URL } from '@/lib/site';
+
+// See src/app/[locale]/page.tsx for why this is set per leaf page rather
+// than on the shared layout.
+export const dynamicParams = false;
 
 // Widen-then-narrow `params`, matching layout.tsx's generateMetadata (Task
 // 10 review's critical type constraint).
@@ -12,15 +16,15 @@ export async function generateMetadata({
   params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
   const { locale } = await params;
-  const l: Locale = locale === 'th' ? 'th' : 'en';
+  const l = assertLocale(locale);
   return {
     title: dict[l].career,
     alternates: { canonical: `${SITE_URL}/${l}/career` },
   };
 }
 
-export default async function CareerPage({ params }: { params: Promise<{ locale: Locale }> }) {
-  const { locale } = await params;
+export default async function CareerPage({ params }: { params: Promise<{ locale: string }> }) {
+  const locale = assertLocale((await params).locale);
   const t = dict[locale];
   const [career, profile] = await Promise.all([getCareer(), getProfile()]);
 

@@ -10,7 +10,7 @@ export default function LocaleToggle() {
   const rest = segments.slice(2).join('/');
   const href = (locale: string) => `/${locale}${rest ? `/${rest}` : ''}`;
   return (
-    <nav aria-label="Language" className="rounded border border-line px-2 py-1 text-sm">
+    <nav aria-label="Language" className="whitespace-nowrap rounded border border-line px-2 py-1 text-sm">
       <Link
         href={href('en')}
         className={current === 'en' ? 'font-semibold' : 'text-soft'}

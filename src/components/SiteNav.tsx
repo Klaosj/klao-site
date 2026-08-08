@@ -11,10 +11,10 @@ export default function SiteNav({ locale }: { locale: Locale }) {
         <Link href={`/${locale}`} className="font-display text-lg font-bold tracking-wide">
           KLAO
         </Link>
-        <div className="flex items-center gap-5 text-sm">
-          <Link href={`/${locale}/projects`} className="text-soft hover:text-ink">{t.projects}</Link>
-          <Link href={`/${locale}/writing`} className="text-soft hover:text-ink">{t.writing}</Link>
-          <Link href={`/${locale}/career`} className="text-soft hover:text-ink">{t.career}</Link>
+        <div className="flex items-center gap-3 text-sm sm:gap-5">
+          <Link href={`/${locale}/projects`} className="whitespace-nowrap text-soft hover:text-ink">{t.projects}</Link>
+          <Link href={`/${locale}/writing`} className="whitespace-nowrap text-soft hover:text-ink">{t.writing}</Link>
+          <Link href={`/${locale}/career`} className="whitespace-nowrap text-soft hover:text-ink">{t.career}</Link>
           <LocaleToggle />
         </div>
       </nav>

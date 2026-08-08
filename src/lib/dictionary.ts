@@ -13,6 +13,8 @@ const en = {
   fullCareer: 'Full career',
   back: 'Back',
   email: 'Email',
+  liveSite: 'Live site',
+  viewCode: 'View code',
 };
 
 const th: typeof en = {
@@ -28,6 +30,8 @@ const th: typeof en = {
   fullCareer: 'เส้นทางอาชีพทั้งหมด',
   back: 'กลับ',
   email: 'อีเมล',
+  liveSite: 'ดูเว็บไซต์',
+  viewCode: 'ดูโค้ด',
 };
 
 export type UiDict = typeof en;
