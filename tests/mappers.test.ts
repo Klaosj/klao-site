@@ -55,46 +55,88 @@ describe('mapProject', () => {
   });
 });
 
+const careerPage = {
+  id: 'c1',
+  properties: {
+    Role: title('Business Development'),
+    Company: rich('Actmedia'),
+    Period: rich('2024 – present'),
+    WinsEN: rich('Win one\nWin two'),
+    WinsTH: rich(''),
+    Order: { number: 1 },
+  },
+};
+
 describe('mapCareerEntry', () => {
   it('maps wins as newline-split bullets with TH fallback', () => {
-    const c = mapCareerEntry({
+    const c = mapCareerEntry(careerPage)!;
+    expect(c).toEqual({
       id: 'c1',
-      properties: {
-        Role: title('Business Development'),
-        Company: rich('Actmedia'),
-        Period: rich('2024 – present'),
-        WinsEN: rich('Win one\nWin two'),
-        WinsTH: rich(''),
-        Order: { number: 1 },
-      },
-    })!;
-    expect(c.wins.en).toEqual(['Win one', 'Win two']);
-    expect(c.wins.th).toEqual(['Win one', 'Win two']);
+      role: 'Business Development',
+      company: 'Actmedia',
+      period: '2024 – present',
+      wins: { en: ['Win one', 'Win two'], th: ['Win one', 'Win two'] },
+      order: 1,
+    });
+    // wins.th falls back to wins.en's *content*, not the same array reference,
+    // so an in-place mutation (.sort()/.push()) on one locale can't leak into the other.
+    expect(c.wins.th).not.toBe(c.wins.en);
+  });
+
+  it('returns null and warns on missing Role', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const page = { ...careerPage, properties: { ...careerPage.properties, Role: title('') } };
+    expect(mapCareerEntry(page)).toBeNull();
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
   });
 });
 
+const profilePage = {
+  id: 'pr1',
+  properties: {
+    Name: title('Suwichak Jarunopratamp (Klao)'),
+    HeadlineEN: rich('Business developer who builds his own tools.'),
+    HeadlineTH: rich('นัก BD ที่สร้างเครื่องมือใช้เอง'),
+    BylineEN: rich('Bangkok'),
+    BylineTH: rich(''),
+    NowEN: rich('BD at Actmedia'),
+    NowTH: rich(''),
+    Photo: { files: [] },
+    LinkedIn: { url: 'https://linkedin.com/in/x' },
+    GitHub: { url: 'https://github.com/Klaosj' },
+    Email: { email: 'me@example.com' },
+    ResumeURL: { url: null },
+  },
+};
+
 describe('mapProfile', () => {
   it('maps the single profile row', () => {
-    const p = mapProfile({
-      id: 'pr1',
-      properties: {
-        Name: title('Suwichak Jarunopratamp (Klao)'),
-        HeadlineEN: rich('Business developer who builds his own tools.'),
-        HeadlineTH: rich('นัก BD ที่สร้างเครื่องมือใช้เอง'),
-        BylineEN: rich('Bangkok'),
-        BylineTH: rich(''),
-        NowEN: rich('BD at Actmedia'),
-        NowTH: rich(''),
-        Photo: { files: [] },
-        LinkedIn: { url: 'https://linkedin.com/in/x' },
-        GitHub: { url: 'https://github.com/Klaosj' },
-        Email: { email: 'me@example.com' },
-        ResumeURL: { url: null },
+    const p = mapProfile(profilePage)!;
+    // Full-object assertion: every field on the Profile interface is required,
+    // so this is exhaustive coverage rather than a spot check.
+    expect(p).toEqual({
+      name: 'Suwichak Jarunopratamp (Klao)',
+      headline: {
+        en: 'Business developer who builds his own tools.',
+        th: 'นัก BD ที่สร้างเครื่องมือใช้เอง',
       },
-    })!;
-    expect(p.name).toContain('Klao');
-    expect(p.byline.th).toBe('Bangkok');
-    expect(p.photoSrc).toBeNull();
-    expect(p.email).toBe('me@example.com');
+      byline: { en: 'Bangkok', th: 'Bangkok' },
+      // NowTH is empty in the fixture: this is the TH->EN fallback case.
+      now: { en: 'BD at Actmedia', th: 'BD at Actmedia' },
+      photoSrc: null,
+      linkedin: 'https://linkedin.com/in/x',
+      github: 'https://github.com/Klaosj',
+      email: 'me@example.com',
+      resumeUrl: null,
+    });
+  });
+
+  it('returns null and warns on missing Name', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const page = { ...profilePage, properties: { ...profilePage.properties, Name: title('') } };
+    expect(mapProfile(page)).toBeNull();
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
   });
 });

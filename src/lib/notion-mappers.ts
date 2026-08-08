@@ -54,7 +54,7 @@ export function mapCareerEntry(page: NotionPage): CareerEntry | null {
     role,
     company: text(page.properties.Company),
     period: text(page.properties.Period),
-    wins: { en: winsEn, th: winsTh.length ? winsTh : winsEn },
+    wins: { en: winsEn, th: winsTh.length ? winsTh : [...winsEn] },
     order: num(page.properties.Order),
   };
 }
