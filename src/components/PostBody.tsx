@@ -1,11 +1,11 @@
-import { Fragment } from 'react';
+import { Fragment, type ReactNode } from 'react';
 import type { ContentBlock, RichSpan } from '@/lib/models';
 
 function Spans({ spans }: { spans: RichSpan[] }) {
   return (
     <>
       {spans.map((s, i) => {
-        let node: React.ReactNode = s.text;
+        let node: ReactNode = s.text;
         if (s.code) node = <code className="rounded bg-line px-1 text-[0.9em]">{node}</code>;
         if (s.bold) node = <strong>{node}</strong>;
         if (s.italic) node = <em>{node}</em>;
@@ -107,19 +107,30 @@ export default function PostBody({ blocks }: { blocks: ContentBlock[] }) {
           case 'code':
             return (
               <pre key={i} className="overflow-x-auto rounded bg-ink p-4 text-sm text-paper">
-                <code>{block.code}</code>
+                <code className={`language-${block.language}`}>{block.code}</code>
               </pre>
             );
           case 'image':
             return (
               <figure key={i}>
-                <img src={block.src} alt={block.caption || 'post image'} loading="lazy" className="w-full rounded" />
+                {/* Decorative alt: PostBody has no locale, so a fallback alt string
+                    can't be translated — and would duplicate the figcaption for a
+                    screen reader anyway. The caption below is the accessible
+                    description; an uncaptioned image is presentation-only. */}
+                <img src={block.src} alt="" loading="lazy" className="w-full rounded" />
                 {block.caption && <figcaption className="mt-1 text-xs text-soft">{block.caption}</figcaption>}
               </figure>
             );
           default: {
+            // Compile-time exhaustiveness guard: a future ContentBlock variant makes
+            // this a type error. Deliberately not `return exhaustive` — `block` here
+            // is a real runtime object (e.g. from an unchecked fixture/Notion-mapper
+            // cast with a typo'd `type`), and returning an object as a React child
+            // throws and takes down the whole post. Render nothing for that one
+            // block instead of crashing the page.
             const exhaustive: never = block;
-            return exhaustive;
+            void exhaustive;
+            return null;
           }
         }
       })}

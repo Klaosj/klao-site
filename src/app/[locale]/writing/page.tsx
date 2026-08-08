@@ -14,7 +14,7 @@ export default async function WritingPage({ params }: { params: Promise<{ locale
         {posts.map((post) => (
           <li key={post.id}>
             <Link href={`/${locale}/writing/${post.slug}`} className="font-medium hover:underline">
-              {post.title[locale]}
+              {post.title[locale] || post.title.en}
             </Link>
             <p className="mt-1 text-xs text-soft">
               {formatDate(post.date, locale)}
