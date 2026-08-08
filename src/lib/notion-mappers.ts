@@ -1,4 +1,4 @@
-import type { CareerEntry, Localized, Profile, Project } from './models';
+import type { CareerEntry, ContentBlock, Localized, PostMeta, Profile, Project, RichSpan } from './models';
 
 export type NotionPage = { id: string; properties: Record<string, unknown> };
 
@@ -73,4 +73,88 @@ export function mapProfile(page: NotionPage): Profile | null {
     email: emailOf(page.properties.Email),
     resumeUrl: urlOf(page.properties.ResumeURL),
   };
+}
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+const spans = (rich: any[]): RichSpan[] =>
+  (rich ?? [])
+    .filter((r) => (r?.plain_text ?? '') !== '')
+    .map((r) => ({
+      text: r.plain_text as string,
+      ...(r?.annotations?.bold ? { bold: true } : {}),
+      ...(r?.annotations?.italic ? { italic: true } : {}),
+      ...(r?.annotations?.code ? { code: true } : {}),
+      ...(r?.href ? { href: r.href as string } : {}),
+    }));
+
+export function mapPostMeta(page: NotionPage): PostMeta | null {
+  const props: any = page.properties;
+  const slug = text(props.Slug);
+  const date = props.Date?.date?.start ?? '';
+  const titleEn = text(props.TitleEN);
+  if (!slug) return skip('Posts', page, 'missing Slug');
+  if (!date) return skip('Posts', page, 'missing Date');
+  if (!titleEn) return skip('Posts', page, 'missing TitleEN');
+  return {
+    id: page.id,
+    slug,
+    title: localized(titleEn, text(props.TitleTH)),
+    date,
+    tags: multi(props.Tags),
+  };
+}
+
+export function mapBlocks(rawBlocks: unknown[]): ContentBlock[] {
+  const out: ContentBlock[] = [];
+  for (const raw of rawBlocks as any[]) {
+    switch (raw?.type) {
+      case 'heading_1':
+        out.push({ type: 'heading', level: 1, text: text({ rich_text: raw.heading_1?.rich_text }) });
+        break;
+      case 'heading_2':
+        out.push({ type: 'heading', level: 2, text: text({ rich_text: raw.heading_2?.rich_text }) });
+        break;
+      case 'heading_3':
+        out.push({ type: 'heading', level: 3, text: text({ rich_text: raw.heading_3?.rich_text }) });
+        break;
+      case 'paragraph': {
+        const s = spans(raw.paragraph?.rich_text);
+        if (s.length) out.push({ type: 'paragraph', spans: s });
+        break;
+      }
+      case 'bulleted_list_item':
+        out.push({ type: 'bullet', spans: spans(raw.bulleted_list_item?.rich_text) });
+        break;
+      case 'numbered_list_item':
+        out.push({ type: 'numbered', spans: spans(raw.numbered_list_item?.rich_text) });
+        break;
+      case 'quote':
+        out.push({ type: 'quote', spans: spans(raw.quote?.rich_text) });
+        break;
+      case 'code':
+        out.push({
+          type: 'code',
+          language: raw.code?.language ?? 'text',
+          code: text({ rich_text: raw.code?.rich_text }),
+        });
+        break;
+      case 'image':
+        out.push({
+          type: 'image',
+          src: `/api/img/block/${raw.id}`,
+          caption: text({ rich_text: raw.image?.caption ?? [] }),
+        });
+        break;
+      default:
+        break; // unsupported block types (and malformed entries) are dropped
+    }
+  }
+  return out;
+}
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
+export function splitBilingual(blocks: ContentBlock[]): { en: ContentBlock[]; th: ContentBlock[] } {
+  const i = blocks.findIndex((b) => b.type === 'heading' && b.level === 1 && b.text.trim() === 'ไทย');
+  if (i === -1) return { en: blocks, th: blocks };
+  return { en: blocks.slice(0, i), th: blocks.slice(i + 1) };
 }
