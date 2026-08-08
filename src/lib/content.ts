@@ -51,7 +51,15 @@ export async function getFeaturedProjects(): Promise<Project[]> {
   return (await getProjectsCached()).filter((p) => p.featured).slice(0, 3);
 }
 
-export async function getPosts(): Promise<PostMeta[]> {
+// [locale]/writing/[slug]/page.tsx calls getPosts() (the pre-check for a
+// bogus slug) and getPost(slug) once each from generateMetadata and again
+// from PostPage itself -- without cache(), that's 2x the list query, 2x the
+// filtered query, and 2x the block-content fetch per post request in live-
+// Notion mode. Wrapped exactly like getProjectsCached/getProfileCached
+// below; fromNotion's fallback/rethrow semantics are untouched by this --
+// cache() only dedupes calls within a single request/render, it doesn't
+// change what fromNotion does when Notion fails.
+const getPostsCached = cache(async (): Promise<PostMeta[]> => {
   const fixtureMetas = (postsFixture as Post[]).map(({ id, slug, title, date, tags }) => ({
     id,
     slug,
@@ -61,11 +69,19 @@ export async function getPosts(): Promise<PostMeta[]> {
   }));
   const all = await fromNotion((n) => n.fetchPostMetas(), fixtureMetas);
   return [...all].sort((a, b) => b.date.localeCompare(a.date));
+});
+
+export async function getPosts(): Promise<PostMeta[]> {
+  return getPostsCached();
 }
 
-export async function getPost(slug: string): Promise<Post | null> {
+const getPostCached = cache(async (slug: string): Promise<Post | null> => {
   const fixture = (postsFixture as Post[]).find((p) => p.slug === slug) ?? null;
   return fromNotion((n) => n.fetchPostBySlug(slug), fixture);
+});
+
+export async function getPost(slug: string): Promise<Post | null> {
+  return getPostCached(slug);
 }
 
 export async function getCareer(): Promise<CareerEntry[]> {

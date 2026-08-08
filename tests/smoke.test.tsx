@@ -182,6 +182,16 @@ describe('smoke: pages render in both locales (fixture mode)', () => {
     expect(enMeta.alternates?.canonical).toBe(`${SITE_URL}/en`);
     expect(thMeta.alternates?.canonical).toBe(`${SITE_URL}/th`);
 
+    // Task 10 re-review item 3: nothing previously pinned that the layout
+    // does NOT emit a static site-root `alternates.languages` map. Without
+    // this, re-adding `{ en: '/en', th: '/th' }' here would resurrect the
+    // original hreflang bug (non-reciprocal on 10 of 12 URLs, since every
+    // page would inherit this one unchanged) with the whole suite green --
+    // sitemap.ts's own per-URL languages test doesn't touch the layout at
+    // all, so it can't catch a regression here.
+    expect(enMeta.alternates?.languages).toBeUndefined();
+    expect(thMeta.alternates?.languages).toBeUndefined();
+
     expect(enMeta.openGraph?.locale).toBe('en_US');
     expect(thMeta.openGraph?.locale).toBe('th_TH');
   });

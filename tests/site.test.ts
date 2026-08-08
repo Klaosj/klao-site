@@ -30,6 +30,23 @@ describe('SITE_URL (src/lib/site.ts)', () => {
     expect(SITE_URL).toBe('https://klao.dev');
   });
 
+  it('trims a pasted-in trailing space (realistic: pasted into the Vercel dashboard) before stripping the slash', async () => {
+    vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://klao.dev/ ');
+    const { SITE_URL } = await import('@/lib/site');
+    expect(SITE_URL).toBe('https://klao.dev');
+  });
+
+  it('trims leading whitespace too', async () => {
+    vi.stubEnv('NEXT_PUBLIC_SITE_URL', '  https://klao.dev');
+    const { SITE_URL } = await import('@/lib/site');
+    expect(SITE_URL).toBe('https://klao.dev');
+  });
+
+  it('throws a named, actionable error for a URL with no protocol, instead of an opaque TypeError later at metadataBase', async () => {
+    vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'klao.dev');
+    await expect(import('@/lib/site')).rejects.toThrow('NEXT_PUBLIC_SITE_URL is set to "klao.dev"');
+  });
+
   it('leaves a clean URL untouched', async () => {
     vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://klao.dev');
     const { SITE_URL } = await import('@/lib/site');
