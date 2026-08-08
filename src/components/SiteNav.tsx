@@ -7,7 +7,7 @@ export default function SiteNav({ locale }: { locale: Locale }) {
   const t = dict[locale];
   return (
     <header className="border-b border-line">
-      <nav className="mx-auto flex max-w-3xl items-center justify-between px-6 py-5">
+      <nav aria-label="Main" className="mx-auto flex max-w-3xl items-center justify-between px-6 py-5">
         <Link href={`/${locale}`} className="font-display text-lg font-bold tracking-wide">
           KLAO
         </Link>
