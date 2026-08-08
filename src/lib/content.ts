@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import type { CareerEntry, Post, PostMeta, Profile, Project } from './models';
 import projectsFixture from '@/content/fixtures/projects.json';
 import postsFixture from '@/content/fixtures/posts.json';
@@ -34,13 +35,20 @@ async function fromNotion<T>(
   }
 }
 
-export async function getProjects(): Promise<Project[]> {
+// cache() dedupes getFeaturedProjects' call to the same underlying fetch within
+// a single request/render — in Notion mode that's the difference between one
+// Projects round trip per homepage render and two.
+const getProjectsCached = cache(async (): Promise<Project[]> => {
   const all = await fromNotion((n) => n.fetchProjects(), projectsFixture as Project[]);
   return [...all].sort((a, b) => a.order - b.order);
+});
+
+export async function getProjects(): Promise<Project[]> {
+  return getProjectsCached();
 }
 
 export async function getFeaturedProjects(): Promise<Project[]> {
-  return (await getProjects()).filter((p) => p.featured).slice(0, 3);
+  return (await getProjectsCached()).filter((p) => p.featured).slice(0, 3);
 }
 
 export async function getPosts(): Promise<PostMeta[]> {
