@@ -1,5 +1,33 @@
 [
   {
+    "id": "fx-dailybrief",
+    "name": "DailyBrief",
+    "description": {
+      "en": "Automated news pipeline: RSS to Thai summaries delivered to Notion every morning.",
+      "th": "ระบบข่าวอัตโนมัติ: RSS แปลสรุปเป็นไทย ส่งเข้า Notion ทุกเช้า"
+    },
+    "stack": ["Python", "Notion API"],
+    "liveUrl": null,
+    "repoUrl": "https://github.com/Klaosj",
+    "imageSrc": "/images/placeholder.svg",
+    "featured": true,
+    "order": 3
+  },
+  {
+    "id": "fx-tickerdesk",
+    "name": "TickerDesk",
+    "description": {
+      "en": "US options decision-support briefs with sector-based screening.",
+      "th": "รายงานช่วยตัดสินใจออปชันหุ้นสหรัฐฯ พร้อมการคัดกรองตามกลุ่มอุตสาหกรรม"
+    },
+    "stack": ["Python", "Notion API"],
+    "liveUrl": null,
+    "repoUrl": "https://github.com/Klaosj",
+    "imageSrc": "/images/placeholder.svg",
+    "featured": true,
+    "order": 4
+  },
+  {
     "id": "fx-gonai",
     "name": "GoNai",
     "description": {
@@ -26,33 +54,5 @@
     "imageSrc": "/images/placeholder.svg",
     "featured": true,
     "order": 2
-  },
-  {
-    "id": "fx-dailybrief",
-    "name": "DailyBrief",
-    "description": {
-      "en": "Automated news pipeline: RSS to Thai summaries delivered to Notion every morning.",
-      "th": "ระบบข่าวอัตโนมัติ: RSS แปลสรุปเป็นไทย ส่งเข้า Notion ทุกเช้า"
-    },
-    "stack": ["Python", "Notion API"],
-    "liveUrl": null,
-    "repoUrl": "https://github.com/Klaosj",
-    "imageSrc": "/images/placeholder.svg",
-    "featured": true,
-    "order": 3
-  },
-  {
-    "id": "fx-tickerdesk",
-    "name": "TickerDesk",
-    "description": {
-      "en": "US options decision-support briefs with sector-based screening.",
-      "th": "รายงานช่วยตัดสินใจออปชันหุ้นสหรัฐฯ พร้อมการคัดกรองตามกลุ่มอุตสาหกรรม"
-    },
-    "stack": ["Python", "Notion API"],
-    "liveUrl": null,
-    "repoUrl": "https://github.com/Klaosj",
-    "imageSrc": "/images/placeholder.svg",
-    "featured": false,
-    "order": 4
   }
 ]

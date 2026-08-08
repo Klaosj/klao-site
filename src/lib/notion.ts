@@ -6,8 +6,8 @@ export async function fetchProjects(): Promise<Project[]> {
 export async function fetchPostMetas(): Promise<PostMeta[]> {
   throw new Error('Notion layer not implemented yet (Task 6)');
 }
-export async function fetchPostBySlug(_slug: string): Promise<Post | null> {
-  throw new Error('Notion layer not implemented yet (Task 6)');
+export async function fetchPostBySlug(slug: string): Promise<Post | null> {
+  throw new Error(`Notion layer not implemented yet (Task 6): ${slug}`);
 }
 export async function fetchCareer(): Promise<CareerEntry[]> {
   throw new Error('Notion layer not implemented yet (Task 6)');

@@ -8,8 +8,18 @@ function isNotionConfigured(): boolean {
   return Boolean(process.env.NOTION_TOKEN);
 }
 
-// Spec §5 error handling: if Notion is configured but unreachable and there is
-// no cached build to serve, fall back to fixtures instead of crashing.
+function isProductionBuildPhase(): boolean {
+  return process.env.NEXT_PHASE === 'phase-production-build';
+}
+
+// Spec §5 error handling has two distinct rules, and they resolve opposite ways here:
+// (a) Notion fails during ISR revalidate (a cached build already exists) → the last
+//     good build must keep serving. Next only does that when the revalidating render
+//     throws, so we rethrow here and let ISR's error path take over.
+// (b) Notion fails with no cache to fall back on (the production build phase, before
+//     any page has ever rendered successfully) → there is nothing for ISR to serve, so
+//     we return fixtures instead of failing the build outright.
+// Logging happens before the branch so both paths are logged, per spec §5.
 async function fromNotion<T>(
   fetcher: (notion: typeof import('./notion')) => Promise<T>,
   fallback: T,
@@ -18,8 +28,9 @@ async function fromNotion<T>(
   try {
     return await fetcher(await import('./notion'));
   } catch (e) {
-    console.warn('[content] Notion fetch failed, serving fixture fallback', e);
-    return fallback;
+    console.warn('[content] Notion fetch failed', e);
+    if (isProductionBuildPhase()) return fallback;
+    throw e;
   }
 }
 
@@ -33,7 +44,13 @@ export async function getFeaturedProjects(): Promise<Project[]> {
 }
 
 export async function getPosts(): Promise<PostMeta[]> {
-  const fixtureMetas = (postsFixture as Post[]).map(({ body: _body, ...meta }) => meta);
+  const fixtureMetas = (postsFixture as Post[]).map(({ id, slug, title, date, tags }) => ({
+    id,
+    slug,
+    title,
+    date,
+    tags,
+  }));
   const all = await fromNotion((n) => n.fetchPostMetas(), fixtureMetas);
   return [...all].sort((a, b) => b.date.localeCompare(a.date));
 }

@@ -47,7 +47,9 @@ describe('content API (fixture mode)', () => {
 
 describe('formatDate', () => {
   it('formats per locale', () => {
-    expect(formatDate('2026-07-14', 'en')).toContain('2026');
-    expect(formatDate('2026-07-14', 'th')).toBeTruthy();
+    const en = formatDate('2026-07-14', 'en');
+    const th = formatDate('2026-07-14', 'th');
+    expect(en).toContain('2026');
+    expect(th).not.toBe(en);
   });
 });

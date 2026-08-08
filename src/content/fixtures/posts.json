@@ -1,5 +1,24 @@
 [
   {
+    "id": "fx-post-bd",
+    "slug": "what-bd-taught-me-about-shipping",
+    "title": {
+      "en": "What BD taught me about shipping products",
+      "th": "งาน BD สอนอะไรเกี่ยวกับการทำโปรดักต์"
+    },
+    "date": "2026-06-15",
+    "tags": ["bd", "product"],
+    "body": {
+      "en": [
+        { "type": "paragraph", "spans": [{ "text": "Second sample post. Replace in Notion." }] },
+        { "type": "quote", "spans": [{ "text": "Revenue first, elegance second." }] }
+      ],
+      "th": [
+        { "type": "paragraph", "spans": [{ "text": "บทความตัวอย่างที่สอง แทนที่ใน Notion" }] }
+      ]
+    }
+  },
+  {
     "id": "fx-post-gonai",
     "slug": "building-gonai-in-a-weekend",
     "title": {
@@ -19,25 +38,6 @@
         { "type": "paragraph", "spans": [{ "text": "เนื้อหาตัวอย่าง แทนที่ด้วยบทความจริงใน Notion" }] },
         { "type": "heading", "level": 2, "text": "สิ่งที่ได้เรียนรู้" },
         { "type": "bullet", "spans": [{ "text": "ทำเล็ก ๆ แต่เสร็จจริง" }] }
-      ]
-    }
-  },
-  {
-    "id": "fx-post-bd",
-    "slug": "what-bd-taught-me-about-shipping",
-    "title": {
-      "en": "What BD taught me about shipping products",
-      "th": "งาน BD สอนอะไรเกี่ยวกับการทำโปรดักต์"
-    },
-    "date": "2026-06-15",
-    "tags": ["bd", "product"],
-    "body": {
-      "en": [
-        { "type": "paragraph", "spans": [{ "text": "Second sample post. Replace in Notion." }] },
-        { "type": "quote", "spans": [{ "text": "Revenue first, elegance second." }] }
-      ],
-      "th": [
-        { "type": "paragraph", "spans": [{ "text": "บทความตัวอย่างที่สอง แทนที่ใน Notion" }] }
       ]
     }
   }
