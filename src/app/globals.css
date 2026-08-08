@@ -8,7 +8,9 @@
   --font-display: Georgia, 'Times New Roman', serif;
 }
 
-body {
-  background: var(--color-paper);
-  color: var(--color-ink);
+@layer base {
+  body {
+    background: var(--color-paper);
+    color: var(--color-ink);
+  }
 }

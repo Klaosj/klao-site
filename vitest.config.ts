@@ -4,5 +4,5 @@ import path from 'node:path';
 export default defineConfig({
   esbuild: { jsx: 'automatic' },
   test: { environment: 'node', include: ['tests/**/*.test.ts', 'tests/**/*.test.tsx'] },
-  resolve: { alias: { '@': path.resolve(process.cwd(), 'src') } },
+  resolve: { alias: { '@': path.resolve(import.meta.dirname, 'src') } },
 });

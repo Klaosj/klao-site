@@ -6,11 +6,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "test": "vitest run",
+    "test": "vitest run --passWithNoTests",
     "check": "tsc --noEmit && eslint . && vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@next/swc-darwin-arm64": "^15.5.23",
     "@notionhq/client": "^2.3.0",
     "next": "^15.5.23",
     "react": "^19.2.8",
