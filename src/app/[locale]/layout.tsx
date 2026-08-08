@@ -3,14 +3,13 @@ import type { Metadata } from 'next';
 import SiteNav from '@/components/SiteNav';
 import SiteFooter from '@/components/SiteFooter';
 import type { Locale } from '@/lib/models';
+import { SITE_URL } from '@/lib/site';
 
 export const revalidate = 3600;
 
 export function generateStaticParams() {
   return [{ locale: 'en' }, { locale: 'th' }];
 }
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
 
 // `params` is widened to `{ locale: string }` and narrowed to `Locale` inside
 // the body, mirroring RootLayout below. Next intersects generateMetadata's
@@ -34,8 +33,21 @@ export async function generateMetadata({
     metadataBase: new URL(SITE_URL),
     title: { default: 'Klao — Suwichak Jarunopratamp', template: '%s · Klao' },
     description: descriptions[l],
+    // Self-referential canonical for THIS locale's site root. This is only
+    // ever the final answer for the home page, which doesn't override it --
+    // every other route (projects/writing/career/[slug]) sets its own
+    // canonical via its own generateMetadata, which fully replaces this
+    // default rather than merging with it.
+    //
+    // `languages` (hreflang) deliberately does NOT live here anymore: a
+    // layout-level `alternates.languages` is inherited by every descendant
+    // page unchanged, which is exactly the Task 10 review bug (Important
+    // #2) -- a single site-root map emitted on all 12 URLs, non-reciprocal
+    // on 10 of them (e.g. a post page's "th" alternate pointed at the Thai
+    // *home* page, not the Thai post). Per-URL hreflang now lives in
+    // sitemap.ts, where each entry can point at its own matching page.
     alternates: {
-      languages: { en: '/en', th: '/th' },
+      canonical: `${SITE_URL}/${l}`,
     },
     openGraph: {
       title: 'Klao — Suwichak Jarunopratamp',

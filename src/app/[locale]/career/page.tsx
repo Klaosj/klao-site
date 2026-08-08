@@ -1,6 +1,23 @@
+import type { Metadata } from 'next';
 import { getCareer, getProfile } from '@/lib/content';
 import { dict } from '@/lib/dictionary';
 import type { Locale } from '@/lib/models';
+import { SITE_URL } from '@/lib/site';
+
+// Widen-then-narrow `params`, matching layout.tsx's generateMetadata (Task
+// 10 review's critical type constraint).
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const l: Locale = locale === 'th' ? 'th' : 'en';
+  return {
+    title: dict[l].career,
+    alternates: { canonical: `${SITE_URL}/${l}/career` },
+  };
+}
 
 export default async function CareerPage({ params }: { params: Promise<{ locale: Locale }> }) {
   const { locale } = await params;

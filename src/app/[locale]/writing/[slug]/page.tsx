@@ -1,9 +1,11 @@
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getPost, getPosts } from '@/lib/content';
 import { dict } from '@/lib/dictionary';
 import { formatDate } from '@/lib/format';
 import type { Locale } from '@/lib/models';
+import { SITE_URL } from '@/lib/site';
 import PostBody from '@/components/PostBody';
 
 export async function generateStaticParams() {
@@ -33,6 +35,30 @@ export async function generateStaticParams() {
 // is a synchronous local read, so the check is genuinely free there. Either
 // way, an unknown slug now 404s without ever reaching fetchPostBySlug.
 export const dynamicParams = true;
+
+// Widen-then-narrow `params`, matching layout.tsx's generateMetadata (Task
+// 10 review's critical type constraint). Gives each post its own title --
+// the real SEO loss Important #3 called out, since posts and projects are
+// this site's actual discoverable content -- and a self-referential
+// canonical. Mirrors PostPage's own unknown-slug guard below so a bogus/
+// crawler slug 404s from generateMetadata too rather than reading
+// `post.title[l]` off a null post.
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string; slug: string }>;
+}): Promise<Metadata> {
+  const { locale, slug } = await params;
+  const l: Locale = locale === 'th' ? 'th' : 'en';
+  const knownSlugs = await getPosts();
+  if (!knownSlugs.some((p) => p.slug === slug)) notFound();
+  const post = await getPost(slug);
+  if (!post) notFound();
+  return {
+    title: post.title[l],
+    alternates: { canonical: `${SITE_URL}/${l}/writing/${slug}` },
+  };
+}
 
 export default async function PostPage({
   params,

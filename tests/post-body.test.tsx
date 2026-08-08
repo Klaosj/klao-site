@@ -95,6 +95,30 @@ describe('PostBody rendering (marks and images the fixtures never exercise)', ()
     expect(emClose).toBeLessThan(aClose);
 
     expect(html).toContain('href="https://example.com/x"');
+    // Task 10 review Minor #8: only the href was asserted before, so
+    // dropping `rel="noreferrer"` -- a tabnabbing regression on every
+    // external link in every post -- passed. target/rel are on the same
+    // <a> as the href checked above (there's only one <a> in this markup).
+    expect(html).toContain('target="_blank"');
+    expect(html).toContain('rel="noreferrer"');
+  });
+
+  it('renders a bullet group as <ul> and a numbered group as <ol>, not swapped', () => {
+    // Task 10 review Minor #6: no test rendered a list group through
+    // PostBody at all -- every groupLists test above stops at the grouped
+    // data structure, so swapping the <ul>/<ol> tags (or their case labels)
+    // in PostBody's switch passed all 64 tests. This closes that gap by
+    // going through renderToStaticMarkup(<PostBody .../>), the real
+    // component, not groupLists directly.
+    const bulletsHtml = renderToStaticMarkup(<PostBody blocks={[bullet('one'), bullet('two'), bullet('three')]} />);
+    expect(bulletsHtml).toContain('<ul');
+    expect(bulletsHtml).not.toContain('<ol');
+    expect((bulletsHtml.match(/<li>/g) ?? []).length).toBe(3);
+
+    const numbersHtml = renderToStaticMarkup(<PostBody blocks={[numbered('1'), numbered('2')]} />);
+    expect(numbersHtml).toContain('<ol');
+    expect(numbersHtml).not.toContain('<ul');
+    expect((numbersHtml.match(/<li>/g) ?? []).length).toBe(2);
   });
 
   it('renders a figcaption for an image block that has a caption', () => {
