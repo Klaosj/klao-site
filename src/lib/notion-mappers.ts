@@ -90,7 +90,8 @@ const spans = (rich: any[]): RichSpan[] =>
 export function mapPostMeta(page: NotionPage): PostMeta | null {
   const props: any = page.properties;
   const slug = text(props.Slug);
-  const date = props.Date?.date?.start ?? '';
+  const dateRaw = props.Date?.date?.start;
+  const date = typeof dateRaw === 'string' ? dateRaw : '';
   const titleEn = text(props.TitleEN);
   if (!slug) return skip('Posts', page, 'missing Slug');
   if (!date) return skip('Posts', page, 'missing Date');
@@ -106,31 +107,48 @@ export function mapPostMeta(page: NotionPage): PostMeta | null {
 
 export function mapBlocks(rawBlocks: unknown[]): ContentBlock[] {
   const out: ContentBlock[] = [];
-  for (const raw of rawBlocks as any[]) {
+  // Blocks with no extractable content (empty heading text, empty span list)
+  // are dropped, same as unsupported types and malformed entries. Code and
+  // image blocks always render with their defaults (language 'text', empty
+  // code/caption) since an empty fence or a captionless image is still
+  // meaningful content, and image src comes from the block id, not payload.
+  for (const raw of (rawBlocks ?? []) as any[]) {
     switch (raw?.type) {
-      case 'heading_1':
-        out.push({ type: 'heading', level: 1, text: text({ rich_text: raw.heading_1?.rich_text }) });
+      case 'heading_1': {
+        const t = text({ rich_text: raw.heading_1?.rich_text });
+        if (t) out.push({ type: 'heading', level: 1, text: t });
         break;
-      case 'heading_2':
-        out.push({ type: 'heading', level: 2, text: text({ rich_text: raw.heading_2?.rich_text }) });
+      }
+      case 'heading_2': {
+        const t = text({ rich_text: raw.heading_2?.rich_text });
+        if (t) out.push({ type: 'heading', level: 2, text: t });
         break;
-      case 'heading_3':
-        out.push({ type: 'heading', level: 3, text: text({ rich_text: raw.heading_3?.rich_text }) });
+      }
+      case 'heading_3': {
+        const t = text({ rich_text: raw.heading_3?.rich_text });
+        if (t) out.push({ type: 'heading', level: 3, text: t });
         break;
+      }
       case 'paragraph': {
         const s = spans(raw.paragraph?.rich_text);
         if (s.length) out.push({ type: 'paragraph', spans: s });
         break;
       }
-      case 'bulleted_list_item':
-        out.push({ type: 'bullet', spans: spans(raw.bulleted_list_item?.rich_text) });
+      case 'bulleted_list_item': {
+        const s = spans(raw.bulleted_list_item?.rich_text);
+        if (s.length) out.push({ type: 'bullet', spans: s });
         break;
-      case 'numbered_list_item':
-        out.push({ type: 'numbered', spans: spans(raw.numbered_list_item?.rich_text) });
+      }
+      case 'numbered_list_item': {
+        const s = spans(raw.numbered_list_item?.rich_text);
+        if (s.length) out.push({ type: 'numbered', spans: s });
         break;
-      case 'quote':
-        out.push({ type: 'quote', spans: spans(raw.quote?.rich_text) });
+      }
+      case 'quote': {
+        const s = spans(raw.quote?.rich_text);
+        if (s.length) out.push({ type: 'quote', spans: s });
         break;
+      }
       case 'code':
         out.push({
           type: 'code',
@@ -146,7 +164,7 @@ export function mapBlocks(rawBlocks: unknown[]): ContentBlock[] {
         });
         break;
       default:
-        break; // unsupported block types (and malformed entries) are dropped
+        break; // unsupported block types are dropped
     }
   }
   return out;
