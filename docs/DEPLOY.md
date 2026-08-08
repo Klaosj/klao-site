@@ -41,33 +41,53 @@ git remote add origin https://github.com/<your-username>/klao-site.git
 git push -u origin main
 ```
 
-Run those from the repo root.
+Run those from the repo root. **If you're pushing `build/v1` as-is instead
+of merging into `main` first**, replace `main` with `build/v1` in that
+second command (`git push -u origin build/v1`), and set `build/v1` as the
+Production Branch in Vercel's project settings in step 2 below — Vercel
+defaults to treating `main`/`master` as Production, so a plain import would
+otherwise build the wrong (nearly-empty) branch.
 
 ## 2. Import the repo on Vercel
 
 1. Go to https://vercel.com/new.
 2. Import the `klao-site` GitHub repo. Vercel auto-detects Next.js — leave
-   the framework preset and build command as detected (`next build`, which
-   this repo's `package.json` maps to `next build --turbopack`).
-3. **Before clicking Deploy**, do step 3 below. Setting environment
-   variables after the first deploy means redoing the deploy anyway (see
-   step 5), so it's simpler to set them first.
+   the framework preset and build command as detected. Vercel's Next.js
+   preset runs this repo's `package.json` `build` script by default (it
+   isn't substituting some fixed `next build` command of its own); here
+   that script is `next build --turbopack`, so Turbopack is what actually
+   runs on Vercel too, the same as local `npm run build`.
+3. **Before clicking Deploy**, add `NEXT_PUBLIC_SITE_URL` right here on
+   this same import screen — see step 3 below for the value and why it
+   matters. The project doesn't exist yet at this point, so there's no
+   Settings page to visit; the import screen has its own **Environment
+   Variables** section for exactly this. (The `Project → Settings →
+   Environment Variables` page referenced later in this doc only exists
+   after this first deploy — you'll use it in step 6, to add the Notion
+   variables afterward.)
 
 ## 3. Set `NEXT_PUBLIC_SITE_URL` — before the first build
 
-In the Vercel project's **Settings → Environment Variables**, add:
+On the import screen from step 2, expand the **Environment Variables**
+section and add:
 
 ```
 NEXT_PUBLIC_SITE_URL=https://<your-production-domain>
 ```
 
-No trailing slash, no trailing whitespace (easy to introduce by accident
-when pasting into Vercel's dashboard — both would silently produce
-double-slash URLs in the sitemap). Use the actual domain you plan to serve
-from (e.g. `https://klao.dev` or the `*.vercel.app` domain Vercel assigns —
-you can change this later, see the warning in step 5 below).
+Use the actual domain you plan to serve from (e.g. `https://klao.dev`, or
+the `*.vercel.app` domain Vercel assigns if you don't have a custom domain
+yet — you can change this later, see step 5's redeploy requirement).
 
-**This is not optional and the build will fail loudly without it — that is
+Keep it clean — no trailing slash, no trailing whitespace — as a matter of
+habit, though `src/lib/site.ts` actually trims and strips both
+automatically before using the value, precisely so a stray one pasted into
+Vercel's dashboard doesn't produce a broken double slash in the sitemap.
+What *isn't* auto-corrected: a value with no protocol (e.g. `klao.dev`
+instead of `https://klao.dev`) fails validation and throws a clearly-named
+error identifying `NEXT_PUBLIC_SITE_URL` and the bad value you gave it.
+
+**This is not optional, and the build will fail loudly without it — that is
 intentional, not a bug.** `src/lib/site.ts` throws an error at build/render
 time if `NEXT_PUBLIC_SITE_URL` is unset and the code detects it's running on
 Vercel (`VERCEL=1`, which Vercel sets in every one of its build and runtime
@@ -92,20 +112,33 @@ you want (e.g. a `*.vercel.app` preview URL vs. your real domain) — the
 requirement is just that *some* valid absolute URL is set in all three
 environments, not that they're identical.
 
-## 5. It's a build-time variable — changing it means a redeploy
+## 5. Environment variable changes need a redeploy — for ALL of them, not just NEXT_PUBLIC_SITE_URL
 
-`NEXT_PUBLIC_` variables are inlined into the JavaScript bundle at build
-time, not read at runtime. That means:
+Two different reasons produce the same requirement, so both are worth
+knowing:
 
-- Editing the value in Vercel's dashboard alone does nothing to a
-  live deployment — the old value is already baked into the build that's
-  currently serving traffic.
-- After changing it, trigger a new deploy (push a commit, or use Vercel's
-  "Redeploy" button) for the change to actually take effect.
+**`NEXT_PUBLIC_` variables specifically** are inlined into the JavaScript
+bundle at build time, not read at runtime. Editing the value in Vercel's
+dashboard alone does nothing to a live deployment — the old value is
+already baked into the build that's currently serving traffic.
 
-This is different from the five Notion variables below, which are read at
-request time and take effect on the next Notion fetch — no redeploy needed
-for those.
+**Every environment variable — including the five Notion ones in step 6
+below — is also subject to a separate, platform-level rule:** a Vercel
+deployment is an immutable snapshot, and the environment variables visible
+to its running functions are fixed at the moment that deployment was built.
+Saving a new or changed value under Project → Settings → Environment
+Variables updates the *project's* configuration for the *next* deployment
+— it does not reach into a deployment that's already live and update it.
+This holds even though `src/lib/notion.ts` and `src/lib/content.ts` do read
+`process.env` at request time (that part is true) — the `process.env` a
+running function actually sees is still whatever was captured when its
+specific deployment was built, not whatever is currently saved in Settings.
+
+**In practice:** after adding or changing *any* environment variable in
+Vercel — `NEXT_PUBLIC_SITE_URL`, or later the Notion variables — trigger a
+new deployment (push a commit, or use the "Redeploy" button in the Vercel
+dashboard) before expecting the change to take effect. Saving the variable
+alone is not enough for either kind.
 
 ## 6. The five Notion variables — optional, can come later
 
@@ -123,11 +156,23 @@ they're added. That means step 2-5 (get it live) and connecting Notion are
 fully independent — do the deploy now, do `docs/NOTION_SETUP.md` whenever
 you're ready.
 
-When you do add them: set all five together (a token with a missing
-database ID will try and fail to reach Notion, rather than cleanly falling
-back to fixtures), and unlike `NEXT_PUBLIC_SITE_URL`, no redeploy is
-needed — they're read at request time, so the next ISR revalidation (within
-an hour) or the next `npm run dev` reload picks them up.
+When you do add them, under Project → Settings → Environment Variables: set
+all five together — see `docs/NOTION_SETUP.md` for why a partial set (e.g.
+a token with no matching database ID) silently falls back to sample content
+rather than failing loudly — then **redeploy** (step 5 above: adding these
+variables to the project does not touch the deployment that's already
+live, Notion variables included, even though the code technically reads
+`process.env` at request time).
+
+**Don't trust the page looking right as proof it worked.** The bundled
+sample content is Klao's real name, headline, LinkedIn, email, and project
+list — not placeholder text — so an unconnected site looks completely
+correct even after you've added the vars and reloaded. The only reliable
+check: add a throwaway row in Notion (e.g. a Project named `TEST — delete
+me`), tick Published, redeploy if you haven't already, and confirm `TEST —
+delete me` actually shows up on the live site. If it doesn't, you're still
+looking at fixtures — see `docs/NOTION_SETUP.md`'s "What happens when
+something's wrong" section for why, and work through its checklist.
 
 ## 7. Post-deploy verification
 
@@ -140,10 +185,12 @@ After the first deploy completes, check:
 - `https://<your-domain>/icon.svg` — returns HTTP 200.
 - View source (or DevTools) on any page — the `<link rel="canonical">` tag
   in `<head>` shows your real domain, not `localhost`.
-- Once Notion is connected (step 6 done): edit something in Notion (e.g.
-  toggle a Project's `Published` checkbox), wait up to an hour, reload the
-  live site — the change should appear without you doing anything else (no
-  redeploy, no manual cache clear). This is ISR (`revalidate = 3600` in
+- Once Notion is connected (step 6 done, including the redeploy and the
+  throwaway-row check): edit something real in Notion (e.g. toggle a
+  Project's `Published` checkbox), wait up to an hour, reload the live
+  site — the change should appear with no further action from you (no
+  redeploy needed for this kind of edit — only the one-time step of adding
+  the variables needed one). This is ISR (`revalidate = 3600` in
   `src/app/[locale]/layout.tsx`) working as designed.
 
 ## 8. hreflang lives in the sitemap, not in page HTML — expected, not a bug
