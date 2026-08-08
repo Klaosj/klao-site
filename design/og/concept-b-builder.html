@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>OG B — Builder Split</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1200px; height: 630px; overflow: hidden; }
+  body {
+    background: #fafaf8;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: #111111;
+  }
+  .board { width: 1200px; height: 630px; display: flex; }
+  .left {
+    flex: 1.35; padding: 76px 56px 68px 92px;
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .right {
+    flex: 1; border-left: 1px solid #e5e5e0; background: #ffffff;
+    padding: 76px 68px 68px 56px;
+    display: flex; flex-direction: column; justify-content: center; gap: 20px;
+  }
+  .wordmark {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 25px; font-weight: 700; letter-spacing: 0.14em;
+  }
+  .headline {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 62px; line-height: 1.1; letter-spacing: -0.015em; font-weight: 400;
+  }
+  .rule { width: 84px; height: 3px; background: #111111; margin: 26px 0 22px; }
+  .byline { font-size: 20px; color: #666666; line-height: 1.45; }
+  .domain { font-family: Georgia, serif; font-size: 17px; letter-spacing: 0.04em; }
+  .label {
+    font-size: 12px; color: #666666; letter-spacing: 0.16em;
+    text-transform: uppercase; margin-bottom: 4px;
+  }
+  .proj { border-bottom: 1px solid #e5e5e0; padding-bottom: 16px; }
+  .proj:last-of-type { border-bottom: 0; padding-bottom: 0; }
+  .pname { font-size: 24px; font-weight: 600; letter-spacing: -0.01em; }
+  .pdesc { font-size: 15px; color: #666666; margin-top: 3px; }
+
+  body.th .headline {
+    font-family: "Sukhumvit Set", "Noto Sans Thai", Thonburi, sans-serif;
+    font-weight: 600; font-size: 48px; line-height: 1.28;
+  }
+  body.th .byline, body.th .pdesc, body.th .label {
+    font-family: "Sukhumvit Set", "Noto Sans Thai", Thonburi, sans-serif;
+  }
+</style>
+</head>
+<body>
+  <div class="board">
+    <div class="left">
+      <span class="wordmark">KLAO</span>
+      <div>
+        <h1 class="headline">Business developer who builds his own tools.</h1>
+        <div class="rule"></div>
+        <p class="byline">Bangkok · BD × Data Analytics<br>shipping apps with AI</p>
+      </div>
+      <span class="domain">klao.dev</span>
+    </div>
+    <div class="right">
+      <div class="label">Selected work</div>
+      <div class="proj"><div class="pname">GoNai</div><div class="pdesc">Trip planner · Next.js</div></div>
+      <div class="proj"><div class="pname">AISecretary</div><div class="pdesc">macOS menu bar · Swift</div></div>
+      <div class="proj"><div class="pname">DailyBrief</div><div class="pdesc">News pipeline · Python</div></div>
+    </div>
+  </div>
+</body>
+</html>

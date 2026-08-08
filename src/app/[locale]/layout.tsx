@@ -55,6 +55,23 @@ export async function generateMetadata({
     en: 'Suwichak "Klao" Jarunopratamp — business developer who builds his own tools. BD × Data Analytics, Bangkok.',
     th: 'สุวิจักขณ์ "เกลา" — นัก Business Development ที่สร้างเครื่องมือใช้เอง BD × Data Analytics กรุงเทพฯ',
   };
+  // Share-preview cards, one per locale. Static PNGs rather than Next's
+  // ImageResponse: Satori (which ImageResponse uses) ships no Thai font, so
+  // the TH card would need a Thai font file loaded at request time. Sources
+  // are design/og/og-{en,th}.html — see design/og/README.md to regenerate
+  // after changing the headline or the featured-project list.
+  const ogAlt: Record<Locale, string> = {
+    en: 'Klao — business developer who builds his own tools. Selected work: GoNai, AISecretary, DailyBrief.',
+    th: 'Klao — นัก Business Development ที่สร้างเครื่องมือใช้เอง ผลงานเด่น: GoNai, AISecretary, DailyBrief',
+  };
+  // Relative path resolves against metadataBase, so this follows
+  // NEXT_PUBLIC_SITE_URL automatically instead of hardcoding a domain.
+  const ogImage = {
+    url: `/og/og-${l}.png`,
+    width: 1200,
+    height: 630,
+    alt: ogAlt[l],
+  };
   return {
     metadataBase: new URL(SITE_URL),
     title: { default: 'Klao — Suwichak Jarunopratamp', template: '%s · Klao' },
@@ -80,6 +97,17 @@ export async function generateMetadata({
       description: descriptions[l],
       type: 'website',
       locale: l === 'th' ? 'th_TH' : 'en_US',
+      url: `${SITE_URL}/${l}`,
+      siteName: 'Klao',
+      images: [ogImage],
+    },
+    // X/Twitter ignores og:image sizing and needs its own card type to
+    // render a large preview rather than a thumbnail strip.
+    twitter: {
+      card: 'summary_large_image',
+      title: 'Klao — Suwichak Jarunopratamp',
+      description: descriptions[l],
+      images: [ogImage],
     },
   };
 }

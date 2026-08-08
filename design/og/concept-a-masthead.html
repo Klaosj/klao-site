@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>OG A — Editorial Masthead</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1200px; height: 630px; overflow: hidden; }
+  body {
+    background: #fafaf8;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: #111111;
+  }
+  .board {
+    width: 1200px; height: 630px;
+    padding: 76px 92px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    position: relative;
+  }
+  .board::after {
+    content: ""; position: absolute; inset: 28px;
+    border: 1px solid #e5e5e0; pointer-events: none;
+  }
+  .top { display: flex; align-items: center; justify-content: space-between; }
+  .wordmark {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 26px; font-weight: 700; letter-spacing: 0.14em;
+  }
+  .locale {
+    font-size: 15px; color: #666666; letter-spacing: 0.06em;
+    border: 1px solid #e5e5e0; border-radius: 4px; padding: 6px 13px;
+  }
+  .headline {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 76px; line-height: 1.09; letter-spacing: -0.015em;
+    max-width: 15ch; font-weight: 400;
+  }
+  .rule { width: 96px; height: 3px; background: #111111; margin: 32px 0 26px; }
+  .byline { font-size: 23px; color: #666666; }
+  .bottom { display: flex; align-items: flex-end; justify-content: space-between; }
+  .links { font-size: 17px; color: #666666; letter-spacing: 0.02em; }
+  .domain { font-family: Georgia, serif; font-size: 18px; letter-spacing: 0.04em; }
+
+  body.th .headline {
+    font-family: "Sukhumvit Set", "Noto Sans Thai", Thonburi, sans-serif;
+    font-weight: 600; font-size: 60px; line-height: 1.26; letter-spacing: -0.005em;
+    max-width: 17ch;
+  }
+  body.th .byline, body.th .links {
+    font-family: "Sukhumvit Set", "Noto Sans Thai", Thonburi, sans-serif;
+  }
+</style>
+</head>
+<body>
+  <div class="board">
+    <div class="top">
+      <span class="wordmark">KLAO</span>
+      <span class="locale">EN</span>
+    </div>
+    <div>
+      <h1 class="headline">Business developer who builds his own tools.</h1>
+      <div class="rule"></div>
+      <p class="byline">Bangkok · BD × Data Analytics · shipping apps with AI</p>
+    </div>
+    <div class="bottom">
+      <span class="links">Projects · Writing · Career</span>
+      <span class="domain">klao.dev</span>
+    </div>
+  </div>
+</body>
+</html>

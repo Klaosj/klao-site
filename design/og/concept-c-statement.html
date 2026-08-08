@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>OG C — Wordmark Statement</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1200px; height: 630px; overflow: hidden; }
+  body {
+    background: #111111;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: #fafaf8;
+  }
+  .board {
+    width: 1200px; height: 630px; padding: 80px 92px;
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .top { display: flex; align-items: baseline; gap: 20px; }
+  .wordmark {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 128px; font-weight: 700; letter-spacing: 0.02em; line-height: 1;
+  }
+  .dot { width: 16px; height: 16px; border-radius: 50%; background: #fafaf8; }
+  .role {
+    font-size: 19px; color: #9a9a95; letter-spacing: 0.18em;
+    text-transform: uppercase; margin-top: 18px;
+  }
+  .headline {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 52px; line-height: 1.16; letter-spacing: -0.01em;
+    max-width: 19ch; font-weight: 400;
+  }
+  .bottom {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    border-top: 1px solid #333330; padding-top: 26px;
+  }
+  .byline { font-size: 19px; color: #9a9a95; }
+  .domain { font-family: Georgia, serif; font-size: 18px; letter-spacing: 0.04em; }
+
+  body.th .headline {
+    font-family: "Sukhumvit Set", "Noto Sans Thai", Thonburi, sans-serif;
+    font-weight: 600; font-size: 42px; line-height: 1.34; max-width: 21ch;
+  }
+  body.th .byline, body.th .role {
+    font-family: "Sukhumvit Set", "Noto Sans Thai", Thonburi, sans-serif;
+  }
+  body.th .role { letter-spacing: 0.08em; }
+</style>
+</head>
+<body>
+  <div class="board">
+    <div>
+      <div class="top"><span class="wordmark">KLAO</span><span class="dot"></span></div>
+      <div class="role">BD × Data × Builder</div>
+    </div>
+    <h1 class="headline">Business developer who builds his own tools.</h1>
+    <div class="bottom">
+      <span class="byline">Bangkok · shipping apps with AI</span>
+      <span class="domain">klao.dev</span>
+    </div>
+  </div>
+</body>
+</html>

@@ -196,6 +196,61 @@ describe('smoke: pages render in both locales (fixture mode)', () => {
     expect(thMeta.openGraph?.locale).toBe('th_TH');
   });
 
+  it('layout emits a locale-correct share card for both OpenGraph and Twitter', async () => {
+    // Without these, link previews are text-only.
+    const enMeta = await generateMetadata(p('en'));
+    const thMeta = await generateMetadata(p('th'));
+
+    type OgImg = { url: string; alt: string; width: number; height: number };
+    const enOg = (enMeta.openGraph?.images as OgImg[])[0];
+    const thOg = (thMeta.openGraph?.images as OgImg[])[0];
+
+    // Locale-correct, not one shared card: swapping the two would ship a Thai
+    // preview on English links -- the class of bug this project already
+    // shipped twice with a hardcoded label.
+    expect(enOg.url).toBe('/og/og-en.png');
+    expect(thOg.url).toBe('/og/og-th.png');
+
+    // Relative, so it resolves against metadataBase and follows
+    // NEXT_PUBLIC_SITE_URL rather than pinning a domain into the markup.
+    expect(enOg.url.startsWith('/')).toBe(true);
+
+    // Facebook/LinkedIn need explicit dimensions to render a large card on
+    // first scrape, before they have fetched the image.
+    expect(enOg.width).toBe(1200);
+    expect(enOg.height).toBe(630);
+
+    // Alt text must actually differ per locale, not merely be present.
+    expect(enOg.alt).not.toBe(thOg.alt);
+    expect(thOg.alt).toContain('นัก Business Development');
+
+    // summary_large_image is what makes X render the full card instead of a
+    // small thumbnail strip; dropping it silently downgrades every share.
+    // Next's `Twitter` type is a union whose base member has no `card`, so
+    // the read is narrowed here rather than at the metadata source.
+    const enTw = enMeta.twitter as { card?: string; images?: OgImg[] };
+    const thTw = thMeta.twitter as { card?: string; images?: OgImg[] };
+    expect(enTw.card).toBe('summary_large_image');
+    expect(enTw.images?.[0].url).toBe('/og/og-en.png');
+    expect(thTw.images?.[0].url).toBe('/og/og-th.png');
+  });
+
+  it('both share-card PNGs exist on disk at exactly 1200x630', async () => {
+    // The test above asserts the URLs; this asserts the files those URLs
+    // point at are actually shipped. Deleting a PNG would otherwise leave a
+    // green suite and a broken preview on every shared link.
+    const { statSync, readFileSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    for (const locale of ['en', 'th']) {
+      const file = join(process.cwd(), 'public', 'og', `og-${locale}.png`);
+      expect(statSync(file).size).toBeGreaterThan(1024);
+      // PNG IHDR: width/height are big-endian uint32 at byte offsets 16 and 20.
+      const buf = readFileSync(file);
+      expect(buf.readUInt32BE(16)).toBe(1200);
+      expect(buf.readUInt32BE(20)).toBe(630);
+    }
+  });
+
   it('projects/writing/career pages set their own locale-correct title and self-referential canonical', async () => {
     // Task 10 review Important #3: before this, every one of the 12 sitemap
     // URLs shared the layout's single default title.
