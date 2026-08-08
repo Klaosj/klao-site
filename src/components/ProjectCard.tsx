@@ -3,9 +3,9 @@ import type { Locale, Project } from '@/lib/models';
 export default function ProjectCard({ project, locale }: { project: Project; locale: Locale }) {
   const href = project.liveUrl ?? project.repoUrl ?? undefined;
   const body = (
-    <div className="flex h-full flex-col rounded-md border border-line bg-white p-4 transition-shadow hover:shadow-sm">
+    <div className="flex h-full flex-col rounded-md border border-line bg-card p-4 transition-shadow hover:shadow-sm">
       {project.imageSrc ? (
-        <img src={project.imageSrc} alt={project.name} loading="lazy" className="mb-3 aspect-video w-full rounded object-cover" />
+        <img src={project.imageSrc} alt="" loading="lazy" className="mb-3 aspect-video w-full rounded object-cover" />
       ) : (
         <div className="mb-3 aspect-video w-full rounded bg-line" />
       )}

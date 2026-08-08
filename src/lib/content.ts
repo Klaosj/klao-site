@@ -73,7 +73,11 @@ export async function getCareer(): Promise<CareerEntry[]> {
   return [...all].sort((a, b) => a.order - b.order);
 }
 
-export async function getProfile(): Promise<Profile> {
+const getProfileCached = cache(async (): Promise<Profile> => {
   const profile = await fromNotion((n) => n.fetchProfile(), null);
   return profile ?? (profileFixture as Profile);
+});
+
+export async function getProfile(): Promise<Profile> {
+  return getProfileCached();
 }

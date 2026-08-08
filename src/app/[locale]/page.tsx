@@ -17,22 +17,28 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
           <h1 className="font-display text-3xl leading-snug">{profile.headline[locale]}</h1>
           <p className="mt-3 text-sm text-soft">{profile.byline[locale]}</p>
           <p className="mt-4 flex gap-4 text-sm">
-            <a href={profile.linkedin} className="underline hover:text-soft">LinkedIn</a>
-            <a href={profile.github} className="underline hover:text-soft">GitHub</a>
-            <a href={`mailto:${profile.email}`} className="underline hover:text-soft">Email</a>
+            {profile.linkedin && (
+              <a href={profile.linkedin} className="underline hover:text-soft">LinkedIn</a>
+            )}
+            {profile.github && (
+              <a href={profile.github} className="underline hover:text-soft">GitHub</a>
+            )}
+            {profile.email && (
+              <a href={`mailto:${profile.email}`} className="underline hover:text-soft">{t.email}</a>
+            )}
             {profile.resumeUrl && (
               <a href={profile.resumeUrl} className="underline hover:text-soft">↓ {t.resume}</a>
             )}
           </p>
         </div>
         {profile.photoSrc && (
-          <img src={profile.photoSrc} alt={profile.name} className="h-24 w-24 rounded-full object-cover" />
+          <img src={profile.photoSrc} alt={profile.name} className="h-24 w-24 shrink-0 rounded-full object-cover" />
         )}
       </section>
 
       <section className="border-t border-line pt-8">
         <h2 className="text-xs uppercase tracking-widest text-soft">{t.selectedProjects}</h2>
-        <div className="mt-4 grid gap-4 sm:grid-cols-3">
+        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {featured.map((p) => (
             <ProjectCard key={p.id} project={p} locale={locale} />
           ))}
