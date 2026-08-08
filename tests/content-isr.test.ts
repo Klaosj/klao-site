@@ -8,12 +8,15 @@ vi.mock('@/lib/notion', () => ({
 
 describe('getProjects ISR fallback semantics (carried from Task 2 review)', () => {
   const originalPhase = process.env.NEXT_PHASE;
+  let warn: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
     vi.stubEnv('NOTION_TOKEN', 'x');
+    warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
   });
 
   afterEach(() => {
+    warn.mockRestore();
     vi.unstubAllEnvs();
     if (originalPhase === undefined) delete process.env.NEXT_PHASE;
     else process.env.NEXT_PHASE = originalPhase;
@@ -23,6 +26,7 @@ describe('getProjects ISR fallback semantics (carried from Task 2 review)', () =
     delete process.env.NEXT_PHASE;
     const { getProjects } = await import('@/lib/content');
     await expect(getProjects()).rejects.toThrow('502');
+    expect(warn).toHaveBeenCalledTimes(1);
   });
 
   it('falls back to fixtures during the production build phase (no cache exists yet)', async () => {
@@ -32,5 +36,6 @@ describe('getProjects ISR fallback semantics (carried from Task 2 review)', () =
     expect(projects.length).toBeGreaterThan(0);
     // Fixture data, not a thrown error or empty array from a swallowed failure.
     expect(projects.some((p) => typeof p.name === 'string' && p.name.length > 0)).toBe(true);
+    expect(warn).toHaveBeenCalledTimes(1);
   });
 });
