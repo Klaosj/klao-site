@@ -169,10 +169,15 @@ sample content is Klao's real name, headline, LinkedIn, email, and project
 list — not placeholder text — so an unconnected site looks completely
 correct even after you've added the vars and reloaded. The only reliable
 check: add a throwaway row in Notion (e.g. a Project named `TEST — delete
-me`), tick Published, redeploy if you haven't already, and confirm `TEST —
-delete me` actually shows up on the live site. If it doesn't, you're still
-looking at fixtures — see `docs/NOTION_SETUP.md`'s "What happens when
-something's wrong" section for why, and work through its checklist.
+me`), tick Published, redeploy if you haven't already, and open
+**`https://<your-domain>/en/projects`** specifically — not the home page,
+which only shows up to 3 `Featured` projects and won't display a fresh
+non-Featured row even when everything is working. Confirm `TEST — delete
+me` shows up on `/en/projects`. If it doesn't, you're either still looking
+at fixtures or (if this worked before and just stopped) looking at a
+frozen stale page from before whatever broke — see `docs/NOTION_SETUP.md`'s
+"What happens when something's wrong" section for the difference and how
+to tell which one you're looking at.
 
 ## 7. Post-deploy verification
 

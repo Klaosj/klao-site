@@ -25,23 +25,18 @@ you're actually connected.
 ## 2. Create four databases
 
 Full-page databases, anywhere in your workspace. **Property names must match
-exactly** — same spelling, same capitalization.
-
-Most typos are quiet but limited: the code reads properties by name, so a
-misspelled *content* property (e.g. `DescriptionEN` typed as
-`DiscriptionEN`) just leaves that one field empty on the site — the row
-itself still appears, nothing else breaks. Two properties are the
-exception: **`Published`** and **`Slug`** are also used in Notion's query
-filters, not just read as content, so a typo or a missing one of *those
-two* makes the *entire database's query fail* — which silently falls back
-to sample content instead of leaving one field blank (see "What happens
-when something's wrong" below).
+exactly** — same spelling, same capitalization. Most typos are quiet but
+limited: a misspelled *content* property (e.g. `DescriptionEN` typed as
+`DiscriptionEN`) just leaves that one field empty — the row itself still
+appears. `Published` is the one property that behaves very differently
+when it's missing or misspelled, and it's tempting to assume `Slug` works
+the same way — it doesn't. See "What happens when something's wrong" below
+for exactly how each one fails; the property tables below mark which
+fields are required, since leaving those blank has its own (also silent)
+failure mode.
 
 Each database also needs a **Published** checkbox property, except Profile
-(details in its section below). If you skip it or misspell it on
-Projects/Posts/Career, that whole database's query fails the same way as a
-`Slug` typo — silent fallback to sample content, not just that database's
-rows going missing.
+(details in its section below).
 
 ### Projects
 
@@ -215,24 +210,72 @@ underlying Notion URL behind them is constantly rotating.
 
 ## What happens when something's wrong
 
-Every failure mode described above shares one root cause and one symptom,
-so it's worth understanding as a single rule instead of memorizing each
-case separately.
+Every failure mode described above traces back to one of two mechanisms.
+They produce genuinely different symptoms, so it's worth knowing both
+instead of expecting one uniform "site shows sample content" behavior.
 
-**The rule:** if a fetch from Notion fails for any reason during a
-build — a query-filter property typo, an unshared database, a missing
-database ID, a required field left blank — the site does not error and does
-not go blank. It logs a warning to a server log you'll never see, and
-quietly serves the bundled sample content instead, for whatever it
-couldn't fetch. Since that sample content is Klao's own real data, the
-site keeps looking completely correct.
+### Mechanism A — the Notion query itself fails
 
-**How to actually verify a connection is live — don't trust the page
-looking right:** add a throwaway row (e.g. a Project named `TEST — delete
-me`), tick Published, and confirm it appears on the site. Fixture content
-cannot pass this test — `TEST — delete me` isn't in the bundled sample
-data, so seeing it appear is the one check that proves you're reading from
-Notion and not from fixtures. Delete the row once you've confirmed it.
+An unshared database, or a typo/omission in a property used *inside a
+query filter* (that's `Published` — every one of Projects/Posts/Career
+filters on it — and, only for a single post's own page, `Slug`). Notion
+rejects the request outright, the site's error handling catches it, and
+what happens next depends on **when** it happens:
+
+- **During a build** (`next build`, including every Vercel deployment
+  build) — caught and silently replaced with the bundled sample content
+  for whatever couldn't be fetched. A warning goes to a server log you'll
+  never see; nothing on the page hints anything is wrong.
+- **At runtime, after a successful build** — e.g. something breaks in
+  Notion sometime *after* the site has already been live and working —
+  there is no fixture fallback at this point. Next.js's ISR keeps serving
+  the last successfully-rendered version of the page, indefinitely,
+  silently retrying on later requests until a fetch eventually succeeds
+  again. **This is a different symptom from the one above: frozen stale
+  content, not sample content** — and it's the one you're more likely to
+  actually hit, since it happens after a working launch rather than during
+  initial setup.
+
+### Mechanism B — the query succeeds, but a required field is unreadable
+
+A blank `Name` / `Role` / `Slug` / `Date` / `TitleEN` (see the "Required"
+columns above), or — this is the case to know about — a `Slug` property
+that's been renamed or misspelled. `Slug` is *never* part of the query
+that builds the `/writing` list (`fetchPostMetas` in `src/lib/notion.ts`
+filters only on `Published`); it's read per-row, inside the mapper. So a
+broken `Slug` property doesn't fail that listing query at all — every
+row's Slug just reads back empty, every row gets dropped as "missing
+Slug," and `/writing` comes back genuinely, successfully **empty: no
+fixtures, no fallback, no error.** (Opening one specific post directly,
+`fetchPostBySlug`, *does* filter on `Slug`, so that one request behaves
+like Mechanism A instead.)
+
+For Projects/Posts/Career, a row dropped this way just makes the returned
+list one item shorter — nothing substitutes for it, the content simply
+isn't there. **Profile is the one exception**, and it's the most
+deceptive case in this guide: because Profile is a single row, not a list,
+`mapProfile` returning null (blank Name) cascades into `content.ts`'s
+`profile ?? profileFixture`, which unconditionally substitutes the bundled
+sample profile — at build time **and** at runtime alike, since this path
+never throws and so never goes through the try/catch that Mechanism A's
+build-vs-runtime split depends on. A blank Profile Name is therefore the
+one failure in this guide that behaves identically for the whole life of
+the site: no freeze to eventually notice, no empty page to notice — just
+permanently, quietly wrong.
+
+### How to actually verify a connection is live
+
+Don't trust the page looking right. Add a throwaway row — a Project named
+`TEST — delete me` works well — tick Published, and check
+**`/en/projects` specifically, not the home page.** (The home page only
+shows up to 3 `Featured` projects; a fresh non-Featured row won't appear
+there even when everything is working correctly, which would look
+identical to a failed check. `/en/projects` always lists every published
+project.) Fixture content cannot pass this test — `TEST — delete me` isn't
+in the bundled sample data — so seeing it appear on `/en/projects` is the
+one check that proves you're actually reading from Notion, not from
+fixtures and not from a frozen stale page. Delete the row once you've
+confirmed it.
 
 ## Everyday workflow
 
