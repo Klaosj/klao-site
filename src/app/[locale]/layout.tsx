@@ -14,15 +14,16 @@ export default async function RootLayout({
   params,
 }: {
   children: React.ReactNode;
-  params: Promise<{ locale: Locale }>;
+  params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
+  const l: Locale = locale === 'th' ? 'th' : 'en';
   return (
-    <html lang={locale}>
+    <html lang={l}>
       <body className="flex min-h-screen flex-col">
-        <SiteNav locale={locale} />
+        <SiteNav locale={l} />
         <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-10">{children}</main>
-        <SiteFooter locale={locale} />
+        <SiteFooter locale={l} />
       </body>
     </html>
   );

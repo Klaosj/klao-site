@@ -12,6 +12,7 @@ const en = {
   now: 'Now',
   fullCareer: 'Full career',
   back: 'Back',
+  email: 'Email',
 };
 
 const th: typeof en = {
@@ -26,6 +27,7 @@ const th: typeof en = {
   now: 'ตอนนี้',
   fullCareer: 'เส้นทางอาชีพทั้งหมด',
   back: 'กลับ',
+  email: 'อีเมล',
 };
 
 export type UiDict = typeof en;
