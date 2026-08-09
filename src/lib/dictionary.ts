@@ -102,6 +102,12 @@ const en = {
   // category as `craft` above, hence a dictionary array rather than a
   // profile field.
   identities: ['Business development.', 'Barista.', 'Builds his own tools.'] as readonly string[],
+
+  // /writing rendered a bare empty <ul> with no message once the two
+  // placeholder posts were pulled. Mirrors `careerUnpublished` above: say
+  // the content is not there yet rather than showing an empty container the
+  // visitor has to interpret.
+  writingUnpublished: 'No posts published yet.',
 };
 
 const th: typeof en = {
@@ -162,6 +168,8 @@ const th: typeof en = {
   copyEmailAction: 'คัดลอกที่อยู่อีเมล',
 
   identities: ['พัฒนาธุรกิจ', 'บาริสต้า', 'สร้างเครื่องมือใช้เอง'] as readonly string[],
+
+  writingUnpublished: 'ยังไม่ได้เผยแพร่บทความ',
 };
 
 export type UiDict = typeof en;
