@@ -142,4 +142,37 @@ describe('WorkGrid', () => {
     // it must still be present either way.
     expect(screen.getByText('GoNai')).toBeTruthy();
   });
+
+  it('gives every cover its real intrinsic aspect ratio, not an invented one', () => {
+    // Regression test: width={1440} height={900} (16:10) was an invented
+    // aspect ratio -- the real fixture asset (public/images/
+    // placeholder.svg) is 800x450 (16:9). With Tailwind preflight's
+    // `img{height:auto}`, the browser reserves a pre-load box from this
+    // ratio, so the wrong ratio reserved a box ~11% taller than the image
+    // that actually loads into it -- the exact layout shift these explicit
+    // dimensions exist to prevent.
+    const { container } = render(<WorkGrid projects={projects} locale="en" />);
+    const img = container.querySelector('img') as HTMLImageElement;
+    expect(img.getAttribute('width')).toBe('800');
+    expect(img.getAttribute('height')).toBe('450');
+  });
+
+  it('renders the Thai eyebrow and meta line in the Thai font stack, never font-mono', () => {
+    // Regression test, same class of bug as SiteNav/AboutBand/CraftBand's
+    // own version of this test: no monospace face carries Thai glyphs, and
+    // the meta line composes the localized project description directly,
+    // so a Thai render put real Thai text through font-mono too. Scoped to
+    // the eyebrow and the meta line specifically -- the project name <p>
+    // right next to the meta line was never font-mono to begin with (it's
+    // a plain heading-weight name, not an eyebrow/label), so asserting
+    // every <p> in the section would wrongly demand font-thai on it too.
+    render(<WorkGrid projects={projects} locale="th" />);
+    const eyebrow = screen.getByText(dict.th.selectedWork);
+    expect(eyebrow.className).not.toContain('font-mono');
+    expect(eyebrow.className).toContain('font-thai');
+
+    const meta = screen.getByText(projects[0].description.th, { exact: false });
+    expect(meta.className).not.toContain('font-mono');
+    expect(meta.className).toContain('font-thai');
+  });
 });

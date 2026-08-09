@@ -1,6 +1,7 @@
 import Reveal from '@/components/motion/Reveal';
 import { dict } from '@/lib/dictionary';
 import type { Locale, Project } from '@/lib/models';
+import { eyebrowFont } from '@/lib/typography';
 
 // Server component -- no 'use client'. Reveal (T2) is itself a client
 // component but is composed here the same way CraftBand/AboutBand do it:
@@ -12,7 +13,7 @@ export default function WorkGrid({ projects, locale }: { projects: Project[]; lo
 
   return (
     <section id="work" className="relative z-[2] bg-dark px-6 py-[11vh]">
-      <p className="mb-5 font-mono text-[9.5px] uppercase tracking-[0.24em] text-on-dark-soft">
+      <p className={`mb-5 text-[9.5px] uppercase text-on-dark-soft ${eyebrowFont(locale, 'tracking-[0.24em]')}`}>
         {t.selectedWork}
       </p>
       <div className="grid grid-cols-12 gap-6">
@@ -33,11 +34,19 @@ export default function WorkGrid({ projects, locale }: { projects: Project[]; lo
                     <span aria-hidden="true" className="h-2 w-2 rounded-full bg-on-dark-faint" />
                     <span aria-hidden="true" className="h-2 w-2 rounded-full bg-on-dark-faint" />
                   </div>
+                  {/* 800x450 (16:9), matching the real intrinsic size of the
+                      fixture asset (public/images/placeholder.svg). The
+                      previous 1440x900 (16:10) was an invented aspect
+                      ratio -- with Tailwind preflight's `img{height:auto}`,
+                      the browser reserves a pre-load box from the
+                      width/height ratio declared here, so a 16:10 box for a
+                      16:9 image was ~11% too tall: exactly the layout shift
+                      these explicit dimensions exist to prevent, not avoid. */}
                   <img
                     src={project.imageSrc}
                     alt={`${project.name} — ${project.description[locale]}`}
-                    width={1440}
-                    height={900}
+                    width={800}
+                    height={450}
                     loading="lazy"
                     decoding="async"
                     className="block w-full"
@@ -49,7 +58,7 @@ export default function WorkGrid({ projects, locale }: { projects: Project[]; lo
                   rendering as an empty card. */}
               <div className="mt-4 flex items-baseline justify-between gap-4">
                 <p className="text-lg font-semibold text-on-dark">{project.name}</p>
-                <p className="font-mono text-[11px] text-on-dark-soft">{meta}</p>
+                <p className={`text-[11px] text-on-dark-soft ${eyebrowFont(locale, '')}`}>{meta}</p>
               </div>
             </>
           );
