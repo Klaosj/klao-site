@@ -92,6 +92,16 @@ const en = {
   // concatenated into the button's accessible name before any click; the
   // button now carries this explicit label instead (QA C2).
   copyEmailAction: 'Copy email address',
+
+  // Hero identity stack, replacing the single `roleLine` above. Every line
+  // is literally true of the owner and traceable to his own data: "Business
+  // development" is his current ActMedia title, "Barista" is the VELA Central
+  // World role in career.json, and the tools are the four builds in
+  // projects.json. The combination is the differentiator -- one sentence
+  // buried the fact that all three are the same person. Same fixed-copy
+  // category as `craft` above, hence a dictionary array rather than a
+  // profile field.
+  identities: ['Business development.', 'Barista.', 'Builds his own tools.'] as readonly string[],
 };
 
 const th: typeof en = {
@@ -150,6 +160,8 @@ const th: typeof en = {
   clientsHeading: 'ห้องที่ผมเคยเข้าไปนั่งมาแล้ว',
 
   copyEmailAction: 'คัดลอกที่อยู่อีเมล',
+
+  identities: ['พัฒนาธุรกิจ', 'บาริสต้า', 'สร้างเครื่องมือใช้เอง'] as readonly string[],
 };
 
 export type UiDict = typeof en;
