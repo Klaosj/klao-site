@@ -15,6 +15,25 @@ const en = {
   email: 'Email',
   liveSite: 'Live site',
   viewCode: 'View code',
+  greeting: "Hi, I'm",
+  roleLine: 'Business Development · builds his own tools',
+  about: 'About',
+  howIWork: 'How I work',
+  selectedWork: 'Selected work',
+  craft: [
+    'Scope it honestly.',
+    'Ship something that runs.',
+    'Write it in both languages.',
+    'Leave it maintainable.',
+    'Say the number out loud.',
+    'Then hand over the keys.',
+  ] as readonly string[],
+  copied: 'Copied',
+  startConversation: 'Start a conversation',
+  basedIn: 'Based in',
+  workingIn: 'Working in',
+  photoPlaceholder: 'Photo',
+  careerUnpublished: 'Career data not yet published',
 };
 
 const th: typeof en = {
@@ -32,6 +51,25 @@ const th: typeof en = {
   email: 'อีเมล',
   liveSite: 'ดูเว็บไซต์',
   viewCode: 'ดูโค้ด',
+  greeting: 'สวัสดีครับ ผม',
+  roleLine: 'Business Development · สร้างเครื่องมือเอง',
+  about: 'เกี่ยวกับ',
+  howIWork: 'วิธีทำงานของผม',
+  selectedWork: 'ผลงานที่เลือกมา',
+  craft: [
+    'ประเมินตามจริง',
+    'ส่งของที่รันได้จริง',
+    'เขียนให้ครบสองภาษา',
+    'ทิ้งไว้ให้ดูแลต่อได้',
+    'พูดตัวเลขออกมาตรงๆ',
+    'แล้วส่งกุญแจให้',
+  ] as readonly string[],
+  copied: 'คัดลอกแล้ว',
+  startConversation: 'เริ่มคุยกัน',
+  basedIn: 'ประจำอยู่',
+  workingIn: 'ทำงานเป็น',
+  photoPlaceholder: 'รูป',
+  careerUnpublished: 'ยังไม่ได้เผยแพร่ประวัติการทำงาน',
 };
 
 export type UiDict = typeof en;
