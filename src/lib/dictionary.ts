@@ -48,6 +48,20 @@ const en = {
   workingIn: 'Working in',
   photoPlaceholder: 'Photo',
   careerUnpublished: 'Career data not yet published',
+  // T10: CvBand's stat grid is derived from the real `entries` array (role
+  // count, unique company count, wins shipped) plus LOCALES.length -- never
+  // fabricated numbers -- so only the four labels are fixed copy. Same
+  // rationale as craftHeading/aboutHeading above: this is fixed,
+  // non-profile UI copy, so it belongs in the dictionary, not a
+  // component-local constant.
+  statRoles: 'positions held',
+  statCompanies: 'companies worked with',
+  statWins: 'wins shipped, in both languages',
+  statLanguages: 'working languages, both first-class',
+  // ContactBand's statement heading. Ported verbatim from
+  // .superpowers/brainstorm/11719-1786211516/content/studio.html's #contact
+  // bigHead, same as craftHeading/aboutHeading.
+  contactHeading: 'Have something that should exist?',
 };
 
 const th: typeof en = {
@@ -87,6 +101,11 @@ const th: typeof en = {
   workingIn: 'ทำงานเป็น',
   photoPlaceholder: 'รูป',
   careerUnpublished: 'ยังไม่ได้เผยแพร่ประวัติการทำงาน',
+  statRoles: 'ตำแหน่งที่ผ่านมา',
+  statCompanies: 'บริษัทที่เคยร่วมงาน',
+  statWins: 'ผลงานที่ส่งมอบ ทั้งสองภาษา',
+  statLanguages: 'สองภาษาที่ใช้ทำงานได้เท่ากัน',
+  contactHeading: 'มีของที่ควรมีอยู่จริง แต่ยังไม่มีใครทำ?',
 };
 
 export type UiDict = typeof en;
