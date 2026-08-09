@@ -35,17 +35,17 @@ describe('Hero', () => {
     // RTL's default text matcher only looks at an element's direct text-node
     // children, not its descendants' text. tests/masked-heading.test.tsx hits
     // the same constraint and works around it the same way.
-    const { container } = render(<Hero profile={profile} locale="en" wordmark="SUWICHAK" />);
+    const { container } = render(<Hero profile={profile} locale="en" />);
     expect(container.querySelector('h1')?.textContent).toMatch(/close the deal/);
   });
 
   it('hides the annotation pills from assistive tech', () => {
-    const { container } = render(<Hero profile={profile} locale="en" wordmark="SUWICHAK" />);
+    const { container } = render(<Hero profile={profile} locale="en" />);
     expect(container.querySelector('[data-pills]')?.getAttribute('aria-hidden')).toBe('true');
   });
 
   it('shows a labelled placeholder when no portrait is supplied', () => {
-    const { container } = render(<Hero profile={profile} locale="en" wordmark="SUWICHAK" />);
+    const { container } = render(<Hero profile={profile} locale="en" />);
     expect(container.querySelector('[data-portrait-placeholder]')).toBeTruthy();
     expect(container.querySelector('img')).toBeNull();
   });
@@ -57,14 +57,14 @@ describe('Hero', () => {
     // an <img src="null">, so the falsy-check path needs its own coverage
     // beyond the empty-string case above.
     const noPhoto: Profile = { ...profile, photoSrc: null };
-    const { container } = render(<Hero profile={noPhoto} locale="en" wordmark="SUWICHAK" />);
+    const { container } = render(<Hero profile={noPhoto} locale="en" />);
     expect(container.querySelector('[data-portrait-placeholder]')).toBeTruthy();
     expect(container.querySelector('img')).toBeNull();
   });
 
   it('gives the portrait explicit dimensions and real alt text when one exists', () => {
     const withPhoto: Profile = { ...profile, photoSrc: '/api/img/page/abc/Photo' };
-    const { container } = render(<Hero profile={withPhoto} locale="en" wordmark="S" />);
+    const { container } = render(<Hero profile={withPhoto} locale="en" />);
     const img = container.querySelector('img') as HTMLImageElement;
     expect(img.getAttribute('width')).toBe('118');
     expect(img.getAttribute('height')).toBe('118');
@@ -72,7 +72,7 @@ describe('Hero', () => {
   });
 
   it('never ships a dead link', () => {
-    const { container } = render(<Hero profile={profile} locale="en" wordmark="S" />);
+    const { container } = render(<Hero profile={profile} locale="en" />);
     const anchors = container.querySelectorAll('a');
     // The default fixture has an email, so the CTA must actually be present
     // -- otherwise this loop runs zero times and the assertion below never
@@ -85,17 +85,17 @@ describe('Hero', () => {
 
   it('omits the CTA entirely when no email is published', () => {
     const noMail: Profile = { ...profile, email: '' };
-    const { container } = render(<Hero profile={noMail} locale="en" wordmark="S" />);
+    const { container } = render(<Hero profile={noMail} locale="en" />);
     expect(container.querySelector('a')).toBeNull();
   });
 
   it("renders the byline copy from the profile's own data", () => {
-    render(<Hero profile={profile} locale="en" wordmark="S" />);
+    render(<Hero profile={profile} locale="en" />);
     expect(screen.getByText('BD who builds')).toBeTruthy();
   });
 
   it('switches every piece of sourced copy to Thai when locale is th, not just the headline', () => {
-    render(<Hero profile={profile} locale="th" wordmark="S" />);
+    render(<Hero profile={profile} locale="th" />);
     // Headline
     expect(screen.getByText(/ปิดดีลเอง/)).toBeTruthy();
     // Byline

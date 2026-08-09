@@ -27,7 +27,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   return (
     <>
       <ParticleField word={wordmark} heroSelector="#hero" />
-      <Hero profile={profile} locale={locale} wordmark={wordmark} />
+      <Hero profile={profile} locale={locale} />
       <AboutBand profile={profile} locale={locale} />
       <CraftBand locale={locale} />
       <WorkGrid projects={projects} locale={locale} />

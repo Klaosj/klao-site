@@ -19,7 +19,6 @@ export default function Hero({
 }: {
   profile: Profile;
   locale: Locale;
-  wordmark: string;
 }) {
   const t = dict[locale];
 
