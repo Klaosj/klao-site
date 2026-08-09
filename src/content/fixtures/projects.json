@@ -11,7 +11,7 @@
       "Notion API"
     ],
     "liveUrl": null,
-    "repoUrl": "https://github.com/Klaosj",
+    "repoUrl": null,
     "imageSrc": "/images/dailybrief.jpg",
     "featured": true,
     "order": 3
@@ -28,7 +28,7 @@
       "Notion API"
     ],
     "liveUrl": null,
-    "repoUrl": "https://github.com/Klaosj",
+    "repoUrl": null,
     "imageSrc": null,
     "featured": true,
     "order": 4
@@ -45,7 +45,7 @@
       "Supabase"
     ],
     "liveUrl": null,
-    "repoUrl": "https://github.com/Klaosj",
+    "repoUrl": null,
     "imageSrc": "/images/gonai.jpg",
     "featured": true,
     "order": 1
@@ -62,7 +62,7 @@
       "SwiftUI"
     ],
     "liveUrl": null,
-    "repoUrl": "https://github.com/Klaosj",
+    "repoUrl": null,
     "imageSrc": null,
     "featured": true,
     "order": 2
