@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { usePathname } from 'next/navigation';
 import SiteNav from '@/components/SiteNav';
@@ -256,4 +256,46 @@ describe('SiteNav', () => {
     expect(en.className).toContain('p-1.5');
     expect(en.className).toContain('-m-1.5');
   });
+});
+
+describe('mobile menu', () => {
+  it('renders a menu button that toggles the overlay', () => {
+    render(<SiteNav locale="en" profile={profile} />);
+    const btn = screen.getByRole('button', { name: /main|เมนูหลัก/i });
+    expect(btn.getAttribute('aria-expanded')).toBe('false');
+    fireEvent.click(btn);
+    expect(btn.getAttribute('aria-expanded')).toBe('true');
+    const menu = document.getElementById('mobile-menu');
+    expect(menu).not.toBeNull();
+    // The four section anchors exist inside the overlay
+    expect(within(menu!).getAllByRole('link')).toHaveLength(4);
+    // Clicking a link closes the menu
+    fireEvent.click(within(menu!).getAllByRole('link')[0]);
+    expect(btn.getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('renders the overlay as a sibling of the header, never a descendant', () => {
+    // Regression test (fix round 1): the header carries `nav-hidden`, which
+    // applies a CSS transform (translateY) when the user scrolls down --
+    // and a transformed ancestor establishes a new containing block for any
+    // `position: fixed` descendant. An overlay nested inside the header
+    // would silently re-anchor to the header's own ~82px box instead of the
+    // viewport the instant the header hid mid-scroll (nothing locks
+    // background scroll while the menu is open, so that's reachable in
+    // practice, not just in theory). The overlay must live outside the
+    // header in the DOM so its `fixed` positioning is never at the mercy of
+    // the header's own transform.
+    const { container } = render(<SiteNav locale="en" profile={profile} />);
+    const header = container.querySelector('header') as HTMLElement;
+    const btn = screen.getByRole('button', { name: /main|เมนูหลัก/i });
+    fireEvent.click(btn);
+    const menu = document.getElementById('mobile-menu');
+    expect(menu).not.toBeNull();
+    expect(header.contains(menu)).toBe(false);
+  });
+});
+
+it('marks the header with nav-chrome for scroll styling', () => {
+  render(<SiteNav locale="en" profile={profile} />);
+  expect(document.querySelector('header')!.classList.contains('nav-chrome')).toBe(true);
 });
