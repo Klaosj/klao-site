@@ -1,6 +1,7 @@
 import ParticleField from '@/components/motion/ParticleField';
 import PointerFx from '@/components/motion/PointerFx';
 import AboutBand from '@/components/sections/AboutBand';
+import ClientsBand from '@/components/sections/ClientsBand';
 import ContactBand from '@/components/sections/ContactBand';
 import CraftBand from '@/components/sections/CraftBand';
 import CvBand from '@/components/sections/CvBand';
@@ -33,6 +34,15 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       <AboutBand profile={profile} locale={locale} />
       <CraftBand locale={locale} />
       <WorkGrid projects={projects} locale={locale} />
+      {/* Sits right before the CV band on purpose: these names are the
+          owner's credibility (BD is the client/employer relationships he's
+          built), so the visitor sees the roll call of brands immediately
+          before the career stats/timeline that back it up, not buried at
+          the page's bottom. bg-light also breaks up the dark(Work) ->
+          deep(Cv) run that would otherwise repeat CraftBand's own `deep`
+          two bands later -- Work(dark) -> Clients(light) -> Cv(deep) ->
+          Contact(dark) keeps no two adjacent bands on the same token. */}
+      <ClientsBand clients={profile.clients} locale={locale} />
       <CvBand entries={career} locale={locale} resumeUrl={profile.resumeUrl} />
       <ContactBand profile={profile} locale={locale} />
     </>
