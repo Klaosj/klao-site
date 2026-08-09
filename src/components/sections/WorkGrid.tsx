@@ -1,4 +1,5 @@
 import Reveal from '@/components/motion/Reveal';
+import TiltCard from '@/components/motion/TiltCard';
 import { dict } from '@/lib/dictionary';
 import type { Locale, Project } from '@/lib/models';
 import { eyebrowFont } from '@/lib/typography';
@@ -66,7 +67,7 @@ export default function WorkGrid({ projects, locale }: { projects: Project[]; lo
               <div className="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
                 <p className="text-lg font-semibold text-on-dark">{project.name}</p>
                 <p className="text-[13px] leading-[1.6] text-on-dark-soft">{project.description[locale]}</p>
-                <p className={`ml-auto whitespace-nowrap text-[11px] text-on-dark-soft ${eyebrowFont(locale, '')}`}>
+                <p className={`ml-auto whitespace-nowrap text-[11px] text-peri-deep ${eyebrowFont(locale, '')}`}>
                   {project.stack.join(' · ')}
                 </p>
               </div>
@@ -87,10 +88,12 @@ export default function WorkGrid({ projects, locale }: { projects: Project[]; lo
                 // a card navigates the visitor away from the portfolio
                 // entirely instead of opening the project in a new tab.
                 <a href={href} target="_blank" rel="noreferrer">
-                  {card}
+                  <TiltCard>{card}</TiltCard>
                 </a>
               ) : (
-                <div>{card}</div>
+                <div>
+                  <TiltCard>{card}</TiltCard>
+                </div>
               )}
             </Reveal>
           );
