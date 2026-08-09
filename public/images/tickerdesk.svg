@@ -1,26 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="800" height="450" viewBox="0 0 800 450" role="img" aria-label="TickerDesk designed cover">
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="450" viewBox="0 0 800 450" role="img" aria-label="TickerDesk">
   <rect width="800" height="450" fill="#101013"/>
-  <text x="48" y="96" font-family="-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="46" font-weight="700" fill="#ffffff" letter-spacing="-1">TickerDesk</text>
-  <text x="48" y="128" font-family="-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="15" fill="rgba(255,255,255,0.6)">US options decision-support briefs</text>
-  <text x="48" y="162" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#a8aecb" letter-spacing="2">SECTOR SCREEN · DAILY</text>
-  <g font-family="ui-monospace,Menlo,monospace" font-size="14">
-    <rect x="48" y="196" width="704" height="54" rx="10" fill="#17171a" stroke="rgba(255,255,255,0.13)"/>
-    <text x="72" y="229" fill="#ffffff">NVDA</text>
-    <text x="180" y="229" fill="rgba(255,255,255,0.6)">Semis</text>
-    <rect x="560" y="212" width="64" height="24" rx="12" fill="#a8aecb"/>
-    <text x="574" y="229" fill="#101013" font-weight="700">CALL</text>
-    <text x="648" y="229" fill="rgba(255,255,255,0.85)">★★★★</text>
-    <rect x="48" y="262" width="704" height="54" rx="10" fill="#17171a" stroke="rgba(255,255,255,0.13)"/>
-    <text x="72" y="295" fill="#ffffff">XLE</text>
-    <text x="180" y="295" fill="rgba(255,255,255,0.6)">Energy</text>
-    <rect x="560" y="278" width="64" height="24" rx="12" fill="rgba(255,255,255,0.13)"/>
-    <text x="578" y="295" fill="#ffffff">PUT</text>
-    <text x="648" y="295" fill="rgba(255,255,255,0.85)">★★★</text>
-    <rect x="48" y="328" width="704" height="54" rx="10" fill="#17171a" stroke="rgba(255,255,255,0.13)"/>
-    <text x="72" y="361" fill="#ffffff">MSFT</text>
-    <text x="180" y="361" fill="rgba(255,255,255,0.6)">Software</text>
-    <rect x="560" y="344" width="64" height="24" rx="12" fill="#a8aecb"/>
-    <text x="574" y="361" fill="#101013" font-weight="700">CALL</text>
-    <text x="648" y="361" fill="rgba(255,255,255,0.85)">★★★★★</text>
-  </g>
+  <text x="48" y="110" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#7d86ad" letter-spacing="3">PYTHON · NOTION API · DAILY</text>
+  <rect x="48" y="304" width="44" height="3" fill="#a8aecb"/>
+  <text x="48" y="374" font-family="-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="64" font-weight="700" fill="#f4f5fa" letter-spacing="-2">TickerDesk</text>
+  <text x="470" y="374" font-family="-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="17" fill="rgba(228,232,246,0.62)">Options briefs before the open.</text>
 </svg>
