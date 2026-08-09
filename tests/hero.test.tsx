@@ -68,8 +68,8 @@ describe('Hero', () => {
     const withPhoto: Profile = { ...profile, photoSrc: '/api/img/page/abc/Photo' };
     const { container } = render(<Hero profile={withPhoto} locale="en" />);
     const img = container.querySelector('img') as HTMLImageElement;
-    expect(img.getAttribute('width')).toBe('118');
-    expect(img.getAttribute('height')).toBe('118');
+    expect(img.getAttribute('width')).toBe('84');
+    expect(img.getAttribute('height')).toBe('84');
     expect(img.getAttribute('alt')).toBe('Suwichak Jarunopratamp');
   });
 
