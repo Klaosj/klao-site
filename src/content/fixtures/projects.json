@@ -29,7 +29,7 @@
     ],
     "liveUrl": null,
     "repoUrl": null,
-    "imageSrc": null,
+    "imageSrc": "/images/tickerdesk.svg",
     "featured": true,
     "order": 4
   },
@@ -63,7 +63,7 @@
     ],
     "liveUrl": null,
     "repoUrl": null,
-    "imageSrc": null,
+    "imageSrc": "/images/aisecretary.svg",
     "featured": true,
     "order": 2
   }

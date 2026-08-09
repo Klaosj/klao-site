@@ -28,7 +28,6 @@ export default function WorkGrid({ projects, locale }: { projects: Project[]; lo
           // set, href is null and the card renders as a plain <div> below
           // -- never a dangling anchor to nowhere.
           const href = project.liveUrl ?? project.repoUrl;
-          const meta = `${project.description[locale]} · ${project.stack.join(' · ')}`;
 
           const card = (
             <>
@@ -59,12 +58,17 @@ export default function WorkGrid({ projects, locale }: { projects: Project[]; lo
                   />
                 </div>
               )}
-              {/* Not conditional on imageSrc -- a project with no cover still
-                  gets its name and meta line, which is what keeps it from
-                  rendering as an empty card. */}
-              <div className="mt-4 flex items-baseline justify-between gap-4">
+              {/* One caption cluster: name + description read together on the left,
+                  stack sits right (wraps under on narrow screens). Previously the
+                  name was far-left and the description+stack far-right, so at
+                  desktop widths the pair lost any visual association. Still not
+                  conditional on imageSrc -- a project with no cover keeps its text. */}
+              <div className="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
                 <p className="text-lg font-semibold text-on-dark">{project.name}</p>
-                <p className={`text-[11px] text-on-dark-soft ${eyebrowFont(locale, '')}`}>{meta}</p>
+                <p className="text-[13px] leading-[1.6] text-on-dark-soft">{project.description[locale]}</p>
+                <p className={`ml-auto whitespace-nowrap text-[11px] text-on-dark-soft ${eyebrowFont(locale, '')}`}>
+                  {project.stack.join(' · ')}
+                </p>
               </div>
             </>
           );
