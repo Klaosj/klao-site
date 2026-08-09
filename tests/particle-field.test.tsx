@@ -2,7 +2,7 @@
 import { StrictMode } from 'react';
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import ParticleField from '@/components/motion/ParticleField';
+import ParticleField, { MORPH_END, STAGE_FADE, CANVAS_FADE } from '@/components/motion/ParticleField';
 import { PARTICLE_COLORS } from '@/lib/theme';
 
 beforeEach(() => {
@@ -51,6 +51,12 @@ describe('ParticleField', () => {
     expect(c.style.width).toBe('100%');
     expect(c.style.height).toBe('100%');
     expect(c.style.pointerEvents).toBe('none');
+  });
+
+  it('locks the choreography timeline ordering', () => {
+    expect(MORPH_END).toBeLessThanOrEqual(STAGE_FADE[1]); // name resolved by the time the stage is fully gone
+    expect(STAGE_FADE[0]).toBeGreaterThan(0);             // copy fully visible at rest
+    expect(CANVAS_FADE[0]).toBeGreaterThan(MORPH_END);    // name holds alone before fading
   });
 });
 

@@ -173,4 +173,14 @@ describe('Hero', () => {
     render(<Hero profile={noMail} locale="en" />);
     expect(screen.queryByRole('button', { name: 'Copy email address' })).toBeNull();
   });
+
+  // --- Task 6: pinned particle wordmark choreography ------------------------
+
+  it('pins the hero: tall section wrapping a sticky full-viewport stage', () => {
+    render(<Hero profile={profile} locale="en" />);
+    const section = document.getElementById('hero')!;
+    expect(section.className).toMatch(/h-\[180vh\]/);
+    const stage = section.querySelector('[data-hero-stage]')!;
+    expect(stage.className).toMatch(/sticky/);
+  });
 });

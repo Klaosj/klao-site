@@ -11,9 +11,16 @@ type Props = { word: string; heroSelector: string };
  *  particles would faithfully assemble into a row of rectangles. */
 const THAI_RANGE = /[฀-๿]/;
 
-const LATIN_STACK = '"Avenir Next", Futura, "Helvetica Neue", -apple-system, sans-serif';
+// Mirrors --font-display in globals.css.
+const LATIN_STACK = '"Space Grotesk", "Avenir Next", Futura, "Helvetica Neue", -apple-system, sans-serif';
 // Mirrors --font-thai in globals.css.
-const THAI_STACK = '-apple-system, "Sukhumvit Set", "IBM Plex Sans Thai", "Noto Sans Thai", sans-serif';
+const THAI_STACK = '"Anuphan", -apple-system, "Sukhumvit Set", "IBM Plex Sans Thai", "Noto Sans Thai", sans-serif';
+
+/** Choreography timeline, as fractions of the hero pin's scroll travel.
+ *  Exported so tests can pin the ordering invariants. */
+export const MORPH_END = 0.45;
+export const STAGE_FADE: readonly [number, number] = [0.22, 0.45];
+export const CANVAS_FADE: readonly [number, number] = [0.85, 1];
 
 const HEAD = `#version 300 es
 precision highp float;
@@ -51,13 +58,14 @@ void main(){
 const FS = `#version 300 es
 precision highp float;
 in float vSeed; in float vAlpha;
-uniform vec3 uColA, uColB; uniform float uFade;
+uniform vec3 uColA, uColB, uColGlow; uniform float uFade, uGlow;
 out vec4 frag;
 void main(){
   vec2 c = gl_PointCoord*2.-1.;
   float r = dot(c,c); if (r > 1.) discard;
   float a = pow(1.-r, 1.6);
-  frag = vec4(mix(uColA, uColB, vSeed) * a * uFade, a * vAlpha * uFade);
+  vec3 col = mix(mix(uColA, uColB, vSeed), uColGlow, uGlow);
+  frag = vec4(col * a * uFade, a * vAlpha * uFade);
 }`;
 
 const LVS = HEAD + `
@@ -256,6 +264,27 @@ export default function ParticleField({ word, heroSelector }: Props) {
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, lattice.links, gl.STATIC_DRAW);
     gl.bindVertexArray(null);
 
+    // next/font loads its webfonts asynchronously, so the very first
+    // rasterise() call above may have hit the fallback face in LATIN_STACK/
+    // THAI_STACK rather than Space Grotesk/Anuphan. Re-rasterise once the
+    // real fonts are ready and refresh the target buffer in place -- the
+    // in-flight morph animation picks up the corrected glyph shapes with no
+    // visible restart.
+    // makeAttrib pushes buffers in call order: [scatter, target, seeds, ebo].
+    const targetBuf = buffers[1];
+    let disposed = false;
+    // Optional chaining, not a bare call: the CSS Font Loading API
+    // (`document.fonts`) is universal in real browsers but absent from
+    // jsdom (the test environment), so a direct `.ready.then(...)` would
+    // throw on every mount under test.
+    document.fonts?.ready?.then(() => {
+      if (disposed) return;
+      const fresh = samplePoints(rasterise(word), lattice.count, 9.2);
+      gl.bindBuffer(gl.ARRAY_BUFFER, targetBuf);
+      gl.bufferData(gl.ARRAY_BUFFER, fresh, gl.STATIC_DRAW);
+      if (reducedMotion) draw(performance.now() / 1000);
+    });
+
     gl.disable(gl.DEPTH_TEST);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
@@ -299,9 +328,11 @@ export default function ParticleField({ word, heroSelector }: Props) {
       gl.uniformMatrix4fv(PT.uniforms.uView, false, view);
       gl.uniform1f(PT.uniforms.uTime, time);
       gl.uniform1f(PT.uniforms.uMorph, morph);
-      gl.uniform1f(PT.uniforms.uSize, 3.4 * dpr);
+      gl.uniform1f(PT.uniforms.uSize, (3.4 + 2.0 * morph) * dpr);
       gl.uniform3fv(PT.uniforms.uColA, PARTICLE_COLORS.pointA);
       gl.uniform3fv(PT.uniforms.uColB, PARTICLE_COLORS.pointB);
+      gl.uniform3fv(PT.uniforms.uColGlow, PARTICLE_COLORS.glow);
+      gl.uniform1f(PT.uniforms.uGlow, 0.6 * morph);
       gl.uniform1f(PT.uniforms.uFade, fade);
       gl.drawArrays(gl.POINTS, 0, lattice.count);
 
@@ -332,10 +363,30 @@ export default function ParticleField({ word, heroSelector }: Props) {
     const onScroll = () => {
       const hero = document.querySelector(heroSelector) as HTMLElement | null;
       if (!hero) return;
-      const p = Math.min(Math.max(window.scrollY / Math.max(hero.offsetHeight, 1), 0), 1);
-      morph = Math.min(p / 0.62, 1);
-      fade = (1 - Math.min(Math.max((p - 0.82) / 0.18, 0), 1)) * 0.85;
+      // Progress through the pin: 0 at rest, 1 when the section's extra
+      // height has fully scrolled past.
+      const travel = Math.max(hero.offsetHeight - window.innerHeight, 1);
+      const p = Math.min(Math.max(window.scrollY - hero.offsetTop, 0) / travel, 1);
+      morph = Math.min(p / MORPH_END, 1);
+      const [f0, f1] = CANVAS_FADE;
+      fade = (1 - Math.min(Math.max((p - f0) / (f1 - f0), 0), 1)) * 0.85;
       canvas.style.opacity = String(fade);
+
+      // Fade the DOM copy out of the particles' way while the name assembles.
+      // Guarded on reducedMotion: under A3 the pin is released by CSS and the
+      // copy must never dim.
+      if (!reducedMotion) {
+        const stage = hero.querySelector('[data-hero-stage]') as HTMLElement | null;
+        if (stage) {
+          const [s0, s1] = STAGE_FADE;
+          const sOut = Math.min(Math.max((p - s0) / (s1 - s0), 0), 1);
+          stage.style.opacity = String(1 - sOut);
+          // visibility (not display) so layout never jumps; also removes the
+          // ghost CTA from the tab order while invisible.
+          stage.style.visibility = sOut >= 1 ? 'hidden' : 'visible';
+        }
+      }
+
       if (fade <= 0.001) {
         running = false;
       } else if (!running && !reducedMotion) {
@@ -356,12 +407,17 @@ export default function ParticleField({ word, heroSelector }: Props) {
     onScroll();
 
     if (reducedMotion) {
+      // One static frame of the resolved wordmark, quiet behind the hero.
+      morph = 1;
+      fade = 0.4;
+      canvas.style.opacity = String(fade);
       draw(performance.now() / 1000);
     } else {
       rafId = requestAnimationFrame(frame);
     }
 
     return () => {
+      disposed = true;
       cancelAnimationFrame(rafId);
       window.removeEventListener('resize', resize);
       window.removeEventListener('scroll', onScroll);

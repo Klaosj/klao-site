@@ -286,6 +286,19 @@ header.nav-on-light .nav-mark { background: var(--color-dark); color: var(--colo
      silent-equal-specificity trap described there. */
   #cursor { display: none !important; }
   .btn { transition: none !important; translate: none !important; }
+  /* Task 6: releases the hero's scroll pin. A reduced-motion visitor should
+     not scroll an extra empty viewport just to watch the particle wordmark
+     assemble -- ParticleField's own onScroll (guarded on reducedMotion)
+     never dims [data-hero-stage], so this only has to stop the pin/height
+     trick from reserving 180vh of otherwise-inert scroll space. */
+  #hero { height: auto !important; min-height: 100vh; }
+  #hero [data-hero-stage] {
+    position: static !important;
+    height: auto !important;
+    min-height: 100vh;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
   /* .nav-mark:hover (SiteNav's monogram badge) rotates and scales on hover
      -- the one hover effect on the page this block didn't already reach.
      Same signposted, gated-behind-the-media-query override as every rule

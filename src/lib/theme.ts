@@ -29,4 +29,7 @@ export const PARTICLE_COLORS = {
   pointA: rgbFloat(HEX.peri),
   pointB: rgbFloat(HEX.periDeep),
   line: rgbFloat('#3d4054'),
+  // Near-white periwinkle the points shift toward as the wordmark resolves;
+  // the scattered cloud stays the muted pair above.
+  glow: rgbFloat('#dfe3f4'),
 } as const;

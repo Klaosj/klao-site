@@ -25,4 +25,12 @@ describe('theme tokens', () => {
   it('derives particle colours from the palette, not from literals', () => {
     expect(PARTICLE_COLORS.pointA).toEqual(rgbFloat(HEX.peri));
   });
+
+  it('defines a glow colour for the resolved wordmark', () => {
+    expect(PARTICLE_COLORS.glow).toHaveLength(3);
+    // Brighter than pointA on every channel — the whole point of the glow.
+    PARTICLE_COLORS.glow.forEach((c, i) => {
+      expect(c).toBeGreaterThanOrEqual(PARTICLE_COLORS.pointA[i]);
+    });
+  });
 });
