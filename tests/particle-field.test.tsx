@@ -39,6 +39,19 @@ describe('ParticleField', () => {
     getContextSpy.mockRestore();
     consoleErrorSpy.mockRestore();
   });
+
+  it('is pinned full-viewport and never intercepts pointer events', () => {
+    // Plain inline style, no GPU involved -- no excuse for this being
+    // unasserted. A fixed decorative canvas that isn't `pointer-events:
+    // none` would silently eat clicks meant for the page underneath it.
+    const { container } = render(<ParticleField word="X" heroSelector="#hero" />);
+    const c = container.querySelector('canvas') as HTMLCanvasElement;
+    expect(c.style.position).toBe('fixed');
+    expect(c.style.inset).toBe('0px');
+    expect(c.style.width).toBe('100%');
+    expect(c.style.height).toBe('100%');
+    expect(c.style.pointerEvents).toBe('none');
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -56,38 +69,55 @@ describe('ParticleField', () => {
 // restarting, and never leaking across unmounts or double-mounts.
 // ---------------------------------------------------------------------------
 
+type ResourceCounts = {
+  buffersCreated: number; buffersDeleted: number;
+  vaosCreated: number; vaosDeleted: number;
+  programsCreated: number; programsDeleted: number;
+  shadersCreated: number; shadersDeleted: number;
+};
+
 type FakeGL = {
   gl: WebGL2RenderingContext;
   bufferDataCalls: ArrayBufferView[];
   drawCalls: number;
   uniform3fvCalls: unknown[][];
+  resources: ResourceCounts;
 };
 
 function makeGL(): FakeGL {
   const bufferDataCalls: ArrayBufferView[] = [];
   const uniform3fvCalls: unknown[][] = [];
   const state = { drawCalls: 0 };
+  const resources: ResourceCounts = {
+    buffersCreated: 0, buffersDeleted: 0,
+    vaosCreated: 0, vaosDeleted: 0,
+    programsCreated: 0, programsDeleted: 0,
+    shadersCreated: 0, shadersDeleted: 0,
+  };
   const stub: Record<string, unknown> = {
     VERTEX_SHADER: 1, FRAGMENT_SHADER: 2, COMPILE_STATUS: 3, LINK_STATUS: 4, ACTIVE_UNIFORMS: 5,
     ARRAY_BUFFER: 6, ELEMENT_ARRAY_BUFFER: 7, STATIC_DRAW: 8, FLOAT: 9,
     DEPTH_TEST: 10, BLEND: 11, SRC_ALPHA: 12, ONE: 13, COLOR_BUFFER_BIT: 14,
     LINES: 15, POINTS: 16, UNSIGNED_INT: 17,
-    createShader: () => ({}),
+    createShader: () => { resources.shadersCreated++; return {}; },
     shaderSource: () => {},
     compileShader: () => {},
     getShaderParameter: () => true,
     getShaderInfoLog: () => '',
-    deleteShader: () => {},
-    createProgram: () => ({}),
+    deleteShader: () => { resources.shadersDeleted++; },
+    createProgram: () => { resources.programsCreated++; return {}; },
     attachShader: () => {},
     linkProgram: () => {},
+    deleteProgram: () => { resources.programsDeleted++; },
     getProgramParameter: (_p: unknown, pname: number) => (pname === stub.ACTIVE_UNIFORMS ? 0 : true),
     getProgramInfoLog: () => '',
     getActiveUniform: () => ({ name: 'u' }),
     getUniformLocation: () => ({}),
-    createVertexArray: () => ({}),
+    createVertexArray: () => { resources.vaosCreated++; return {}; },
+    deleteVertexArray: () => { resources.vaosDeleted++; },
     bindVertexArray: () => {},
-    createBuffer: () => ({}),
+    createBuffer: () => { resources.buffersCreated++; return {}; },
+    deleteBuffer: () => { resources.buffersDeleted++; },
     bindBuffer: () => {},
     bufferData: (_target: number, data: ArrayBufferView) => { bufferDataCalls.push(data); },
     enableVertexAttribArray: () => {},
@@ -108,6 +138,7 @@ function makeGL(): FakeGL {
     gl: stub as unknown as WebGL2RenderingContext,
     bufferDataCalls,
     uniform3fvCalls,
+    resources,
     get drawCalls() { return state.drawCalls; },
   };
 }
@@ -298,6 +329,46 @@ describe('ParticleField (loop lifecycle, WebGL2 mocked)', () => {
     expect(colorArgs).toContainEqual(PARTICLE_COLORS.pointA);
     expect(colorArgs).toContainEqual(PARTICLE_COLORS.pointB);
     expect(colorArgs).toContainEqual(PARTICLE_COLORS.line);
+  });
+
+  it('releases every GL resource it created when unmounted', () => {
+    // canvas.getContext('webgl2') returns the SAME cached context for the
+    // life of the canvas element, so anything not explicitly deleted here
+    // would accumulate on every effect re-run (word changes, Strict-Mode
+    // double-mount) on top of the previous mount's objects.
+    stubMatchMedia();
+    const { unmount } = render(<ParticleField word="TEST" heroSelector="#hero" />);
+    expect(gl.resources.buffersCreated).toBeGreaterThan(0);
+    expect(gl.resources.vaosCreated).toBe(1);
+    expect(gl.resources.programsCreated).toBe(2);
+    expect(gl.resources.buffersDeleted).toBe(0);
+    expect(gl.resources.vaosDeleted).toBe(0);
+    expect(gl.resources.programsDeleted).toBe(0);
+
+    unmount();
+
+    expect(gl.resources.buffersDeleted).toBe(gl.resources.buffersCreated);
+    expect(gl.resources.vaosDeleted).toBe(gl.resources.vaosCreated);
+    expect(gl.resources.programsDeleted).toBe(gl.resources.programsCreated);
+    // Shaders are transient (deleted right after linking, not held for the
+    // component's lifetime), so this holds immediately at mount already --
+    // asserted here too since it's the same leak category the review flagged.
+    expect(gl.resources.shadersDeleted).toBe(gl.resources.shadersCreated);
+    expect(gl.resources.shadersCreated).toBeGreaterThan(0);
+  });
+
+  it('updates canvas pixel dimensions on window resize', () => {
+    stubMatchMedia();
+    Object.defineProperty(window, 'devicePixelRatio', { value: 1, configurable: true });
+    const { container } = render(<ParticleField word="TEST" heroSelector="#hero" />);
+    const canvas = container.querySelector('canvas') as HTMLCanvasElement;
+
+    Object.defineProperty(window, 'innerWidth', { value: 1200, configurable: true });
+    Object.defineProperty(window, 'innerHeight', { value: 900, configurable: true });
+    window.dispatchEvent(new Event('resize'));
+
+    expect(canvas.width).toBe(1200);
+    expect(canvas.height).toBe(900);
   });
 
   it('builds a smaller lattice on coarse pointers', () => {

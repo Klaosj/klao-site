@@ -91,8 +91,18 @@ type LinkedProgram = { program: WebGLProgram; uniforms: Record<string, WebGLUnif
 
 function linkProgram(gl: WebGL2RenderingContext, vs: string, fs: string): LinkedProgram {
   const program = gl.createProgram()!;
-  gl.attachShader(program, compileShader(gl, gl.VERTEX_SHADER, vs));
-  gl.attachShader(program, compileShader(gl, gl.FRAGMENT_SHADER, fs));
+  // Shaders are only needed until the link step. Deleting right after
+  // attaching just flags them -- the driver keeps them alive until they're
+  // detached (which happens when the program itself is deleted) -- so this
+  // is safe even before linkProgram runs, and it means neither this
+  // function nor its caller has to keep a shader handle around past this
+  // point (success or failure).
+  const vertexShader = compileShader(gl, gl.VERTEX_SHADER, vs);
+  gl.attachShader(program, vertexShader);
+  gl.deleteShader(vertexShader);
+  const fragmentShader = compileShader(gl, gl.FRAGMENT_SHADER, fs);
+  gl.attachShader(program, fragmentShader);
+  gl.deleteShader(fragmentShader);
   gl.linkProgram(program);
   if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
     throw new Error(gl.getProgramInfoLog(program) ?? 'program link failed');
@@ -219,10 +229,19 @@ export default function ParticleField({ word, heroSelector }: Props) {
       : buildLattice(17, 10, 17, [6.4, 3.5, 6.4]);
     const targets = samplePoints(rasterise(word), lattice.count, 9.2);
 
+    // `canvas.getContext('webgl2')` returns the same cached context for the
+    // life of the canvas element, so every re-run of this effect (word
+    // changes, or a Strict-Mode double-mount) allocates a fresh VAO,
+    // attribute buffers, element buffer and two linked programs on top of
+    // whatever the previous run created. Track everything created below so
+    // the cleanup can free it -- see the `return () => {...}` block.
+    const buffers: WebGLBuffer[] = [];
+
     const vao = gl.createVertexArray();
     gl.bindVertexArray(vao);
     const makeAttrib = (data: Float32Array, loc: number, size: number) => {
-      const buf = gl.createBuffer();
+      const buf = gl.createBuffer()!;
+      buffers.push(buf);
       gl.bindBuffer(gl.ARRAY_BUFFER, buf);
       gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
       gl.enableVertexAttribArray(loc);
@@ -231,7 +250,8 @@ export default function ParticleField({ word, heroSelector }: Props) {
     makeAttrib(lattice.positions, 0, 3);
     makeAttrib(targets, 1, 3);
     makeAttrib(lattice.seeds, 2, 1);
-    const ebo = gl.createBuffer();
+    const ebo = gl.createBuffer()!;
+    buffers.push(ebo);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, lattice.links, gl.STATIC_DRAW);
     gl.bindVertexArray(null);
@@ -346,6 +366,10 @@ export default function ParticleField({ word, heroSelector }: Props) {
       window.removeEventListener('resize', resize);
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('pointermove', onPointerMove);
+      for (const buf of buffers) gl.deleteBuffer(buf);
+      gl.deleteVertexArray(vao);
+      gl.deleteProgram(PT.program);
+      gl.deleteProgram(LN.program);
     };
     // heroSelector is treated as static configuration, like word: both come
     // from the page shell and aren't expected to change after mount. Re-running
