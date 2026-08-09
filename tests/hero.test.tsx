@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import Hero from '@/components/sections/Hero';
 import type { Profile } from '@/lib/models';
@@ -105,5 +105,100 @@ describe('Hero', () => {
     expect(screen.getByText(/สวัสดีครับ/)).toBeTruthy();
     // Confirms no English copy leaked through for a th render
     expect(screen.queryByText(/close the deal/)).toBeNull();
+  });
+
+  // --- Change 1: identity stack -------------------------------------------
+
+  // Scoped to the identity <ul> itself (via `within`), not `screen`: the
+  // decorative pills div (aria-hidden, PILLS constant above) happens to
+  // share the exact Thai string 'พัฒนาธุรกิจ' with identities.th[0], so an
+  // unscoped `screen.getByText` on that string matches two elements and
+  // throws -- a real collision this test hit while it was being written,
+  // not a hypothetical one. Scoping to the list is also the more honest
+  // assertion: it tests the identity block specifically, not "this text
+  // exists somewhere on the page".
+  it('renders all three EN identity lines in the identity list, and none of the TH ones', () => {
+    const { container } = render(<Hero profile={profile} locale="en" />);
+    const list = within(container.querySelector('ul') as HTMLElement);
+    expect(list.getByText('Business development.')).toBeTruthy();
+    expect(list.getByText('Barista.')).toBeTruthy();
+    expect(list.getByText('Builds his own tools.')).toBeTruthy();
+    expect(list.queryByText('พัฒนาธุรกิจ')).toBeNull();
+    expect(list.queryByText('บาริสต้า')).toBeNull();
+    expect(list.queryByText('สร้างเครื่องมือใช้เอง')).toBeNull();
+  });
+
+  it('renders all three TH identity lines in the identity list, and none of the EN ones', () => {
+    const { container } = render(<Hero profile={profile} locale="th" />);
+    const list = within(container.querySelector('ul') as HTMLElement);
+    expect(list.getByText('พัฒนาธุรกิจ')).toBeTruthy();
+    expect(list.getByText('บาริสต้า')).toBeTruthy();
+    expect(list.getByText('สร้างเครื่องมือใช้เอง')).toBeTruthy();
+    expect(list.queryByText('Business development.')).toBeNull();
+    expect(list.queryByText('Barista.')).toBeNull();
+    expect(list.queryByText('Builds his own tools.')).toBeNull();
+  });
+
+  it('renders the identity stack as a list, not a heading element', () => {
+    // A <h2>/<h3> here would sit above the <h1> in the document's heading
+    // outline. Assert the positive (a <ul> with 3 <li>s) AND the negative
+    // (no h2/h3 anywhere in the hero) so a regression to a heading element
+    // fails this test even if some other list is left in place.
+    const { container } = render(<Hero profile={profile} locale="en" />);
+    const list = container.querySelector('ul');
+    expect(list).toBeTruthy();
+    expect(list?.querySelectorAll('li').length).toBe(3);
+    expect(container.querySelector('h2')).toBeNull();
+    expect(container.querySelector('h3')).toBeNull();
+  });
+
+  // --- Change 2: availability status pill ---------------------------------
+
+  it("renders the status pill with profile.now[locale], preceded by an aria-hidden dot", () => {
+    const { container } = render(<Hero profile={profile} locale="en" />);
+    expect(screen.getByText('Building klao-site')).toBeTruthy();
+    const dot = container.querySelector('[aria-hidden="true"].bg-peri');
+    expect(dot).toBeTruthy();
+  });
+
+  it('renders the Thai status pill text for locale th', () => {
+    render(<Hero profile={profile} locale="th" />);
+    expect(screen.getByText('กำลังสร้าง klao-site')).toBeTruthy();
+  });
+
+  it('renders nothing for the status pill when profile.now[locale] is empty', () => {
+    // Asserts on the pill's own marker, not just the absence of specific
+    // text: with an empty profile.now, the wrong text is trivially absent
+    // whether or not the pill container itself still renders (e.g. an
+    // empty pill shell) -- checking `data-status-pill` is what actually
+    // proves the "render nothing" behaviour, not just "render nothing
+    // that happens to say these words".
+    const noNow: Profile = { ...profile, now: { en: '', th: '' } };
+    const { container } = render(<Hero profile={noNow} locale="en" />);
+    expect(container.querySelector('[data-status-pill]')).toBeNull();
+    expect(screen.queryByText('Building klao-site')).toBeNull();
+    expect(screen.queryByText('กำลังสร้าง klao-site')).toBeNull();
+  });
+
+  // --- Change 3: copy-email control ----------------------------------------
+
+  it('renders a copy-email control wired to the real address, beside the mailto capsule', () => {
+    const { container } = render(<Hero profile={profile} locale="en" />);
+    // CopyEmail renders the plain-text email address as a real fallback,
+    // always in the DOM regardless of clipboard support.
+    expect(screen.getByText('real@example.com')).toBeTruthy();
+    // Its accessible name comes from CopyEmail's own aria-label
+    // (dict.en.copyEmailAction), not from its (mutating) text content.
+    const copyButton = screen.getByRole('button', { name: 'Copy email address' });
+    expect(copyButton).toBeTruthy();
+    // The mailto capsule is still present and still the primary action.
+    const mailLink = container.querySelector('a[href="mailto:real@example.com"]');
+    expect(mailLink).toBeTruthy();
+  });
+
+  it('omits the copy-email control along with the CTA when no email is published', () => {
+    const noMail: Profile = { ...profile, email: '' };
+    render(<Hero profile={noMail} locale="en" />);
+    expect(screen.queryByRole('button', { name: 'Copy email address' })).toBeNull();
   });
 });
