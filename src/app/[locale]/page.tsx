@@ -33,7 +33,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       <AboutBand profile={profile} locale={locale} />
       <CraftBand locale={locale} />
       <WorkGrid projects={projects} locale={locale} />
-      <CvBand entries={career} locale={locale} />
+      <CvBand entries={career} locale={locale} resumeUrl={profile.resumeUrl} />
       <ContactBand profile={profile} locale={locale} />
     </>
   );

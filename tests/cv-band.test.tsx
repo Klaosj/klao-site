@@ -150,4 +150,57 @@ describe('CvBand', () => {
     // 2 roles, but only 1 unique company ("Acme" on both).
     expect(stats).toEqual(['2', '1', '3', '2']);
   });
+
+  // --- Resume download ------------------------------------------------
+  // The career route already surfaces profile.resumeUrl; the home page's CV
+  // band did not, so the published PDF was reachable from only one of the
+  // two places a visitor looks for it.
+
+  it('links to the resume at the exact URL it is given', () => {
+    const { container } = render(
+      <CvBand entries={entries} locale="en" resumeUrl="/some-resume.pdf" />,
+    );
+    const link = container.querySelector('a[href="/some-resume.pdf"]') as HTMLAnchorElement;
+    expect(link).toBeTruthy();
+    // Asserts the href is threaded from the prop rather than hardcoded: a
+    // component that always emitted the real production filename would pass
+    // a "renders a link" test but fail this one.
+    expect(link.getAttribute('href')).toBe('/some-resume.pdf');
+  });
+
+  it('renders no resume link at all when there is no resume to link to', () => {
+    const { container } = render(<CvBand entries={entries} locale="en" resumeUrl={null} />);
+    expect(container.querySelector('a[href$=".pdf"]')).toBeNull();
+    expect(screen.queryByText(new RegExp(dict.en.resume))).toBeNull();
+  });
+
+  it('defaults to no resume link when the prop is omitted entirely', () => {
+    // Guards the default: an implementation defaulting to a truthy
+    // placeholder path would render a link pointing at a 404.
+    const { container } = render(<CvBand entries={entries} locale="en" />);
+    expect(container.querySelector('a[href$=".pdf"]')).toBeNull();
+  });
+
+  it('labels the resume link in the active locale', () => {
+    const { container } = render(<CvBand entries={entries} locale="th" resumeUrl="/r.pdf" />);
+    const link = container.querySelector('a[href="/r.pdf"]') as HTMLAnchorElement;
+    expect(link.textContent).toContain(dict.th.resume);
+    expect(link.textContent).not.toContain(dict.en.resume);
+  });
+
+  it('offers the resume even when Notion has no career rows yet', () => {
+    // The two are independent: an unpublished Notion Career DB says nothing
+    // about whether a resume PDF exists to download.
+    const { container } = render(<CvBand entries={[]} locale="en" resumeUrl="/r.pdf" />);
+    expect(screen.getByText(dict.en.careerUnpublished)).toBeTruthy();
+    expect(container.querySelector('a[href="/r.pdf"]')).toBeTruthy();
+  });
+
+  it('renders the Thai resume label in the Thai font stack, never font-mono', () => {
+    // Same regression class as the eyebrow tests above -- no monospace face
+    // carries Thai glyphs, and this label renders localized text.
+    const { container } = render(<CvBand entries={entries} locale="th" resumeUrl="/r.pdf" />);
+    const link = container.querySelector('a[href="/r.pdf"]') as HTMLAnchorElement;
+    expect(link.className).not.toContain('font-mono');
+  });
 });

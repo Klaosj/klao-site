@@ -6,8 +6,32 @@ import { eyebrowFont } from '@/lib/typography';
 
 // Server component -- no 'use client'. Reveal (T2) is itself a client
 // component but is composed here the same way CraftBand/WorkGrid do it.
-export default function CvBand({ entries, locale }: { entries: CareerEntry[]; locale: Locale }) {
+export default function CvBand({
+  entries,
+  locale,
+  // Defaults to null, matching Profile.resumeUrl's own "no resume published
+  // yet" state. A truthy default would render a link to a 404 on any deploy
+  // whose profile has no PDF.
+  resumeUrl = null,
+}: {
+  entries: CareerEntry[];
+  locale: Locale;
+  resumeUrl?: string | null;
+}) {
   const t = dict[locale];
+
+  // Rendered in both branches below, so it is defined once here. The resume
+  // and the Notion Career DB are independent: an unpopulated DB says nothing
+  // about whether a PDF exists to download. `.btn` opts the capsule into the
+  // magnetic-pointer pull PointerFx drives (globals.css).
+  const resumeLink = resumeUrl && (
+    <a
+      href={resumeUrl}
+      className="btn mt-8 inline-flex items-center gap-2 rounded-full border border-on-dark-faint px-6 py-3 text-[12.5px] text-on-dark-soft"
+    >
+      <span aria-hidden="true">↓</span> {t.resume}
+    </a>
+  );
 
   // No fabricated rows and no fabricated stats: when Notion hasn't been
   // populated yet, entries is empty and the honest thing to show is the
@@ -20,6 +44,7 @@ export default function CvBand({ entries, locale }: { entries: CareerEntry[]; lo
           {t.career}
         </p>
         <p className="text-[14.5px] text-on-dark-soft">{t.careerUnpublished}</p>
+        {resumeLink}
       </section>
     );
   }
@@ -42,13 +67,18 @@ export default function CvBand({ entries, locale }: { entries: CareerEntry[]; lo
         {t.career}
       </p>
       <div className="mt-[70px] grid items-start gap-[clamp(30px,6vw,90px)] md:grid-cols-[1fr_1.4fr]">
-        <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-on-dark-faint bg-on-dark-faint">
-          {stats.map((s) => (
-            <div key={s.v} className="bg-deep px-[22px] py-[26px]">
-              <div className="text-[38px] font-bold tracking-[-0.03em]">{s.k}</div>
-              <div className="mt-[7px] text-[12.5px] leading-[1.7] text-on-dark-soft">{s.v}</div>
-            </div>
-          ))}
+        {/* Wrapper so the resume capsule sits under the stat block and
+            shares its grid column, instead of becoming a third column. */}
+        <div>
+          <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-on-dark-faint bg-on-dark-faint">
+            {stats.map((s) => (
+              <div key={s.v} className="bg-deep px-[22px] py-[26px]">
+                <div className="text-[38px] font-bold tracking-[-0.03em]">{s.k}</div>
+                <div className="mt-[7px] text-[12.5px] leading-[1.7] text-on-dark-soft">{s.v}</div>
+              </div>
+            ))}
+          </div>
+          {resumeLink}
         </div>
 
         <ul className="list-none border-t border-on-dark-faint">
