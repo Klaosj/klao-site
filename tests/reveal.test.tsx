@@ -7,9 +7,11 @@ import Reveal from '@/components/motion/Reveal';
 
 let observed: Element[] = [];
 let trigger: (els: Element[]) => void = () => {};
+let unobserveMock: ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
   observed = [];
+  unobserveMock = vi.fn();
   vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
   class IO {
     constructor(private cb: IntersectionObserverCallback) {
@@ -20,7 +22,7 @@ beforeEach(() => {
         );
     }
     observe(el: Element) { observed.push(el); }
-    unobserve() {}
+    unobserve(el: Element) { unobserveMock(el); }
     disconnect() {}
   }
   vi.stubGlobal('IntersectionObserver', IO);
@@ -39,12 +41,15 @@ describe('Reveal', () => {
     expect(el.className).toContain('rv');
     trigger([el]);
     expect(el.className).toContain('in');
+    expect(unobserveMock).toHaveBeenCalledOnce();
+    expect(unobserveMock).toHaveBeenCalledWith(el);
   });
 
   it('stays visible when the visitor asked for reduced motion', () => {
     vi.stubGlobal('matchMedia', () => ({ matches: true, addEventListener() {}, removeEventListener() {} }));
     const { container } = render(<Reveal>hello</Reveal>);
     expect((container.firstElementChild as HTMLElement).className).not.toContain('rv');
+    expect(observed).toHaveLength(0);
   });
 
   it('sets the stagger index as a custom property', () => {
