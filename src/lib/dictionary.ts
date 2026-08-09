@@ -103,6 +103,16 @@ const en = {
   // profile field.
   identities: ['Business development.', 'Barista.', 'Builds his own tools.'] as readonly string[],
 
+  // About band's story beats. Every sentence is traceable to career.json:
+  // A Bun Dance (business owner), VELA Central World (senior barista),
+  // ActMedia (senior BD) + the projects in projects.json. Fixed copy, same
+  // category as `craft`, hence dictionary not profile.
+  aboutStory: [
+    'Started on the owner side of the table — ran A Bun Dance, a craft-burger shop, where menu R&D, pricing and gross margin were all mine to get right.',
+    'Learned service the honest way, behind the bar at VELA — one quality standard per cup, kept under pressure.',
+    'Now I sell for ActMedia by day and build my own tools at night. When I scope software for a business, I have already sat on both sides of the table.',
+  ] as readonly string[],
+
   // /writing rendered a bare empty <ul> with no message once the two
   // placeholder posts were pulled. Mirrors `careerUnpublished` above: say
   // the content is not there yet rather than showing an empty container the
@@ -176,6 +186,12 @@ const th: typeof en = {
   copyEmailAction: 'คัดลอกที่อยู่อีเมล',
 
   identities: ['พัฒนาธุรกิจ', 'บาริสต้า', 'สร้างเครื่องมือใช้เอง'] as readonly string[],
+
+  aboutStory: [
+    'เริ่มจากฝั่งเจ้าของโต๊ะ — ทำร้าน A Bun Dance เบอร์เกอร์คราฟต์ ที่ทั้งคิดเมนู ตั้งราคา และคุมกำไรขั้นต้นเองทั้งหมด',
+    'เรียนรู้งานบริการแบบตรงไปตรงมาหลังบาร์ที่ VELA — มาตรฐานเดียวกันทุกแก้ว แม้หน้าร้านจะแน่นแค่ไหน',
+    'ตอนนี้ขายงานให้ ActMedia ตอนกลางวัน และสร้างเครื่องมือของตัวเองตอนกลางคืน เวลาคุยเรื่องระบบกับธุรกิจ ผมเลยนั่งมาแล้วทั้งสองฝั่งของโต๊ะ',
+  ] as readonly string[],
 
   writingUnpublished: 'ยังไม่ได้เผยแพร่บทความ',
 

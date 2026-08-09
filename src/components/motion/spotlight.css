@@ -1,0 +1,14 @@
+/* CraftBand principle spotlight. Server markup emphasizes the first line
+   (spot-on), so the band reads correctly with JS off (spec A2). */
+.spot {
+  color: var(--color-on-dark-soft);
+  opacity: 0.35;
+  transition: opacity 0.5s ease, color 0.5s ease;
+}
+.spot.spot-on {
+  color: var(--color-on-dark);
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .spot { opacity: 1 !important; transition: none; }
+}

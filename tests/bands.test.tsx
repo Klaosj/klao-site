@@ -62,12 +62,17 @@ describe('CraftBand', () => {
   });
 
   it('highlights only the first imperative, keeping the rest soft', () => {
+    // Color no longer comes from a Tailwind utility swapped per index --
+    // CraftBand now renders through SpotlightList, which marks the
+    // emphasized line with the `spot-on` class and leaves spotlight.css to
+    // carry the color/opacity transition, driven by scroll position client-
+    // side (T4). Server markup still emphasizes item 0 by default.
     const { container } = render(<CraftBand locale="en" />);
     const items = container.querySelectorAll('li');
-    expect(items[0].className).toContain('text-on-dark');
-    expect(items[0].className).not.toContain('text-on-dark-soft');
+    expect(items[0].classList.contains('spot-on')).toBe(true);
     for (const item of Array.from(items).slice(1)) {
-      expect(item.className).toContain('text-on-dark-soft');
+      expect(item.classList.contains('spot')).toBe(true);
+      expect(item.classList.contains('spot-on')).toBe(false);
     }
   });
 
@@ -113,16 +118,15 @@ describe('CraftBand', () => {
 });
 
 describe('AboutBand', () => {
-  it("renders the prose from the profile's own byline, not hardcoded copy", () => {
+  it('renders the three story beats', () => {
+    // This repo has no jest-dom matchers wired up (no toBeInTheDocument
+    // anywhere else in the tree -- see tests/work-grid.test.tsx) --
+    // getByText itself already throws if no match is found, so toBeTruthy()
+    // here matches the rest of this file's style.
     render(<AboutBand profile={profile} locale="en" />);
-    expect(screen.getByText(profile.byline.en)).toBeTruthy();
-  });
-
-  it('renders a different byline when the profile data changes', () => {
-    const other: Profile = { ...profile, byline: { en: 'A completely different sentence.', th: 'ประโยคที่ต่างไปเลย' } };
-    render(<AboutBand profile={other} locale="en" />);
-    expect(screen.getByText('A completely different sentence.')).toBeTruthy();
-    expect(screen.queryByText(profile.byline.en)).toBeNull();
+    expect(screen.getByText(/A Bun Dance/)).toBeTruthy();
+    expect(screen.getByText(/VELA/)).toBeTruthy();
+    expect(screen.getByText(/ActMedia/)).toBeTruthy();
   });
 
   it('sources the current-focus line from profile.now, not invented static copy', () => {
@@ -140,9 +144,10 @@ describe('AboutBand', () => {
     // t.now (the "Now:" label) must not render as a dangling label with
     // nothing after it.
     expect(screen.queryByText(new RegExp(`^${dict.en.now}:`))).toBeNull();
-    // Scoped to the prose container -- the section's eyebrow is also a <p>,
-    // so counting every <p> in the section would always include it.
-    expect(container.querySelector('[data-prose]')?.querySelectorAll('p')).toHaveLength(1);
+    // The story beats render as <span>s inside an <ol>, not <p>s -- the
+    // "Now:" paragraph is the only <p> the prose column ever produces, so
+    // it's entirely absent when profile.now is empty for this locale.
+    expect(container.querySelector('[data-prose]')?.querySelectorAll('p')).toHaveLength(0);
   });
 
   it('caps the prose column width so it never exceeds the reading measure', () => {
@@ -166,16 +171,17 @@ describe('AboutBand', () => {
     // Dictionary-sourced structural copy (heading + sub-head)
     expect(screen.queryByText(dict.en.aboutHeading)).toBeNull();
     expect(screen.queryByText(dict.en.aboutSubhead)).toBeNull();
-    // Profile-sourced prose -- exact string match, not a RegExp built from
-    // live data (profile.now.en ends in a period, a regex metacharacter).
-    expect(screen.queryByText(profile.byline.en)).toBeNull();
+    // Dictionary-sourced story beats
+    for (const beat of dict.en.aboutStory) expect(screen.queryByText(beat)).toBeNull();
+    // Profile-sourced "now" line -- exact string match, not a RegExp built
+    // from live data (profile.now.en ends in a period, a regex metacharacter).
     expect(screen.queryByText(profile.now.en)).toBeNull();
     // Thai equivalents are present, including the correctly localized
     // heading and sub-head (not just "some non-English text").
     expect(container.querySelector('h2')?.textContent).toBe(dict.th.aboutHeading);
     expect(container.querySelector('h3')?.textContent).toBe(dict.th.aboutSubhead);
     expect(screen.getByText(dict.th.about)).toBeTruthy();
-    expect(screen.getByText(profile.byline.th)).toBeTruthy();
+    for (const beat of dict.th.aboutStory) expect(screen.getByText(beat)).toBeTruthy();
   });
 
   it('renders the Thai eyebrow in the Thai font stack with normal tracking, never font-mono', () => {

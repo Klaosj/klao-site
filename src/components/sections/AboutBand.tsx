@@ -23,24 +23,33 @@ export default function AboutBand({ profile, locale }: { profile: Profile; local
         >
           {t.aboutSubhead}
         </Reveal>
-        {/* Real profile data, not invented biography: the byline is the
-            person's own summary, and `now` (Profile.now) is their current
-            focus line -- both already localized on the Profile object, so
-            no static bilingual filler paragraph is needed here. The width
-            cap lives on this plain wrapper div rather than on <Reveal>
-            itself: Reveal's Props type only accepts children/as/delayIndex/
-            className, so a `data-prose` marker attribute has nowhere to go
-            if placed directly on the <Reveal>. */}
+        {/* The width cap lives on this plain wrapper div rather than on
+            <Reveal> itself: Reveal's Props type only accepts
+            children/as/delayIndex/className, so a `data-prose` marker
+            attribute has nowhere to go if placed directly on the <Reveal>.
+            Story beats are dict.aboutStory -- fixed copy traceable to
+            career.json/projects.json (see dictionary.ts), not profile.byline:
+            the byline already appears verbatim in the hero, so repeating it
+            here was another duplication. */}
         <div data-prose className="max-w-[68ch]">
-          <Reveal as="div" delayIndex={1} className="text-[14.5px] leading-[1.95] text-on-light-soft">
-            <p>{profile.byline[locale]}</p>
-            {profile.now[locale] && (
-              <p className="mt-[18px]">
+          <ol className="flex list-none flex-col gap-7">
+            {t.aboutStory.map((beat, i) => (
+              <Reveal as="li" key={beat} delayIndex={i + 1} className="flex gap-5">
+                <span aria-hidden="true" className={`mt-[2px] text-[11px] font-semibold text-peri-deep ${eyebrowFont(locale, 'tracking-[0.18em]')}`}>
+                  {String(i + 1).padStart(2, '0')}
+                </span>
+                <span className="text-[14.5px] leading-[1.95] text-on-light-soft">{beat}</span>
+              </Reveal>
+            ))}
+          </ol>
+          {profile.now[locale] && (
+            <Reveal as="div" delayIndex={4} className="mt-9 border-t border-on-light-faint pt-6 text-[14.5px] leading-[1.95] text-on-light-soft">
+              <p>
                 <span className="font-semibold text-on-light">{t.now}: </span>
                 {profile.now[locale]}
               </p>
-            )}
-          </Reveal>
+            </Reveal>
+          )}
         </div>
       </div>
     </section>
