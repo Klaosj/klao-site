@@ -2,12 +2,13 @@ import MaskedHeading from '@/components/motion/MaskedHeading';
 import Reveal from '@/components/motion/Reveal';
 import { dict } from '@/lib/dictionary';
 import type { Locale, Profile } from '@/lib/models';
+import { eyebrowFont } from '@/lib/typography';
 
 export default function AboutBand({ profile, locale }: { profile: Profile; locale: Locale }) {
   const t = dict[locale];
   return (
     <section id="about" className="relative z-[2] bg-light px-6 py-[11vh] text-on-light">
-      <p className="mb-5 font-mono text-[9.5px] uppercase tracking-[0.24em] text-on-light-soft">
+      <p className={`mb-5 text-[9.5px] uppercase text-on-light-soft ${eyebrowFont(locale, 'tracking-[0.24em]')}`}>
         {t.about}
       </p>
       <MaskedHeading

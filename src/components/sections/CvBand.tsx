@@ -2,6 +2,7 @@ import Reveal from '@/components/motion/Reveal';
 import { dict } from '@/lib/dictionary';
 import { LOCALES } from '@/lib/models';
 import type { CareerEntry, Locale } from '@/lib/models';
+import { eyebrowFont } from '@/lib/typography';
 
 // Server component -- no 'use client'. Reveal (T2) is itself a client
 // component but is composed here the same way CraftBand/WorkGrid do it.
@@ -15,7 +16,7 @@ export default function CvBand({ entries, locale }: { entries: CareerEntry[]; lo
   if (entries.length === 0) {
     return (
       <section id="cv" className="relative z-[2] bg-deep px-6 py-[11vh]">
-        <p className="mb-5 font-mono text-[9.5px] uppercase tracking-[0.24em] text-on-dark-soft">
+        <p className={`mb-5 text-[9.5px] uppercase text-on-dark-soft ${eyebrowFont(locale, 'tracking-[0.24em]')}`}>
           {t.career}
         </p>
         <p className="text-[14.5px] text-on-dark-soft">{t.careerUnpublished}</p>
@@ -37,7 +38,7 @@ export default function CvBand({ entries, locale }: { entries: CareerEntry[]; lo
 
   return (
     <section id="cv" className="relative z-[2] bg-deep px-6 py-[11vh]">
-      <p className="mb-5 font-mono text-[9.5px] uppercase tracking-[0.24em] text-on-dark-soft">
+      <p className={`mb-5 text-[9.5px] uppercase text-on-dark-soft ${eyebrowFont(locale, 'tracking-[0.24em]')}`}>
         {t.career}
       </p>
       <div className="mt-[70px] grid items-start gap-[clamp(30px,6vw,90px)] md:grid-cols-[1fr_1.4fr]">

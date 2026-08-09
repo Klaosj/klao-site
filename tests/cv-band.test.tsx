@@ -120,6 +120,28 @@ describe('CvBand', () => {
     expect(stats).toEqual(['1', '1', '1', '2']);
   });
 
+  it('renders the Thai eyebrow in the Thai font stack with normal tracking, never font-mono', () => {
+    // Regression test, same class of bug as the other bands' own version of
+    // this test: no monospace face carries Thai glyphs. Scoped to the
+    // eyebrow specifically (not entry.period, a locale-invariant plain
+    // string that never renders Thai text and is left on font-mono).
+    const { container } = render(<CvBand entries={entries} locale="th" />);
+    const eyebrow = container.querySelector('p') as HTMLElement;
+    expect(eyebrow.className).not.toContain('font-mono');
+    expect(eyebrow.className).not.toMatch(/tracking-\[/);
+    expect(eyebrow.className).toContain('font-thai');
+  });
+
+  it('renders the empty-state eyebrow in the Thai font stack too, never font-mono', () => {
+    // The empty-state branch (entries.length === 0) renders its own,
+    // separate copy of the eyebrow <p> -- covered independently since it's
+    // a different code path from the main-branch eyebrow above.
+    const { container } = render(<CvBand entries={[]} locale="th" />);
+    const eyebrow = container.querySelector('p') as HTMLElement;
+    expect(eyebrow.className).not.toContain('font-mono');
+    expect(eyebrow.className).toContain('font-thai');
+  });
+
   it('counts unique companies rather than one per entry when two entries share a company', () => {
     const { container } = render(<CvBand entries={sameCompanyEntries} locale="en" />);
     const stats = Array.from(container.querySelectorAll('.grid-cols-2 > div')).map(

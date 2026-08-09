@@ -89,6 +89,26 @@ describe('CraftBand', () => {
     const { container } = render(<CraftBand locale="en" />);
     expect(container.querySelector('h2')?.textContent).toBe(dict.en.craftHeading);
   });
+
+  it('renders the Thai eyebrow in the Thai font stack with normal tracking, never font-mono', () => {
+    // Regression test: no monospace face carries Thai glyphs, so an eyebrow
+    // rendered through font-mono fell back per character, and the heavy
+    // tracking (2.3px-ish at this size) then pulled each combining mark
+    // away from its base letter (whole-branch review finding, confirmed in
+    // Chrome -- jsdom can't render real glyph fallback or measure tracking).
+    const { container } = render(<CraftBand locale="th" />);
+    const eyebrow = container.querySelector('p') as HTMLElement;
+    expect(eyebrow.className).not.toContain('font-mono');
+    expect(eyebrow.className).not.toMatch(/tracking-\[/);
+    expect(eyebrow.className).toContain('font-thai');
+  });
+
+  it('keeps the English eyebrow on font-mono with its original tracking', () => {
+    const { container } = render(<CraftBand locale="en" />);
+    const eyebrow = container.querySelector('p') as HTMLElement;
+    expect(eyebrow.className).toContain('font-mono');
+    expect(eyebrow.className).toContain('tracking-[0.24em]');
+  });
 });
 
 describe('AboutBand', () => {
@@ -155,5 +175,14 @@ describe('AboutBand', () => {
     expect(container.querySelector('h3')?.textContent).toBe(dict.th.aboutSubhead);
     expect(screen.getByText(dict.th.about)).toBeTruthy();
     expect(screen.getByText(profile.byline.th)).toBeTruthy();
+  });
+
+  it('renders the Thai eyebrow in the Thai font stack with normal tracking, never font-mono', () => {
+    // Same regression as CraftBand's own version of this test above.
+    const { container } = render(<AboutBand profile={profile} locale="th" />);
+    const eyebrow = container.querySelector('p') as HTMLElement;
+    expect(eyebrow.className).not.toContain('font-mono');
+    expect(eyebrow.className).not.toMatch(/tracking-\[/);
+    expect(eyebrow.className).toContain('font-thai');
   });
 });

@@ -2,12 +2,13 @@ import MaskedHeading from '@/components/motion/MaskedHeading';
 import Reveal from '@/components/motion/Reveal';
 import { dict } from '@/lib/dictionary';
 import type { Locale } from '@/lib/models';
+import { eyebrowFont } from '@/lib/typography';
 
 export default function CraftBand({ locale }: { locale: Locale }) {
   const t = dict[locale];
   return (
     <section id="craft" className="relative z-[2] bg-deep px-6 py-[11vh]">
-      <p className="mb-5 font-mono text-[9.5px] uppercase tracking-[0.24em] text-on-dark-soft">
+      <p className={`mb-5 text-[9.5px] uppercase text-on-dark-soft ${eyebrowFont(locale, 'tracking-[0.24em]')}`}>
         {t.howIWork}
       </p>
       <MaskedHeading
