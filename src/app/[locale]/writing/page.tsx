@@ -4,6 +4,7 @@ import { getPosts } from '@/lib/content';
 import { dict } from '@/lib/dictionary';
 import { formatDate } from '@/lib/format';
 import { assertLocale } from '@/lib/locale';
+import type { Locale } from '@/lib/models';
 import { SITE_URL } from '@/lib/site';
 
 // See src/app/[locale]/page.tsx for why this is set per leaf page rather
@@ -11,6 +12,22 @@ import { SITE_URL } from '@/lib/site';
 // page -- not `/[locale]/writing/[slug]`, which deliberately keeps
 // dynamicParams: true and is unaffected by this file.)
 export const dynamicParams = false;
+
+// QA I4 -- see projects/page.tsx's identical comment for why `description`
+// and `openGraph`/`twitter` need to be set here as full objects of their
+// own, not just `title`/`alternates`: without them this route silently
+// serves the home route's description and share card.
+const descriptions: Record<Locale, string> = {
+  en: "Klao's writing on business development, data, and building software solo — posts in both English and Thai.",
+  th: 'งานเขียนของเกลา ว่าด้วยเรื่อง Business Development ข้อมูล และการสร้างซอฟต์แวร์ด้วยตัวคนเดียว มีทั้งภาษาไทยและอังกฤษ',
+};
+
+// Same one pair of site-wide share-card PNGs as projects/page.tsx -- see
+// that file's comment and design/og/README.md.
+const ogAlt: Record<Locale, string> = {
+  en: 'Klao — writing on business development, data, and building software solo.',
+  th: 'เกลา — งานเขียนเรื่อง Business Development ข้อมูล และการสร้างซอฟต์แวร์ด้วยตัวคนเดียว',
+};
 
 // Widen-then-narrow `params`, matching layout.tsx's generateMetadata (Task
 // 10 review's critical type constraint).
@@ -21,9 +38,29 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const l = assertLocale(locale);
+  const title = dict[l].writing;
+  const description = descriptions[l];
+  const url = `${SITE_URL}/${l}/writing`;
+  const ogImage = { url: `/og/og-${l}.png`, width: 1200, height: 630, alt: ogAlt[l] };
   return {
-    title: dict[l].writing,
-    alternates: { canonical: `${SITE_URL}/${l}/writing` },
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      title: `${title} · Klao`,
+      description,
+      type: 'website',
+      locale: l === 'th' ? 'th_TH' : 'en_US',
+      url,
+      siteName: 'Klao',
+      images: [ogImage],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${title} · Klao`,
+      description,
+      images: [ogImage],
+    },
   };
 }
 

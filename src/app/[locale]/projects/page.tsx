@@ -2,12 +2,39 @@ import type { Metadata } from 'next';
 import { getProjects } from '@/lib/content';
 import { dict } from '@/lib/dictionary';
 import { assertLocale } from '@/lib/locale';
+import type { Locale } from '@/lib/models';
 import { SITE_URL } from '@/lib/site';
 import ProjectCard from '@/components/ProjectCard';
 
 // See src/app/[locale]/page.tsx for why this is set per leaf page rather
 // than on the shared layout.
 export const dynamicParams = false;
+
+// QA I4: this route previously set only `title`/`alternates.canonical`, so
+// `description` and `openGraph` (and, by the same mergeMetadata mechanism --
+// see node_modules/next/dist/lib/metadata/resolve-metadata.js's `mergeMetadata`,
+// which replaces a field wholesale only when the leaf's own returned object
+// has that key -- `twitter` too) fell through untouched to whatever the
+// nearest ancestor that DID set them last resolved to, i.e. layout.tsx's
+// site-root copy. Every non-home route was serving the homepage's own
+// description and share-card verbatim. Fixed the same way layout.tsx fixes
+// it for the site root: a per-locale `descriptions` map, and a full
+// `openGraph`/`twitter` object of our own (title/description/type/locale/
+// url/siteName/images) rather than only the fields that changed -- since
+// setting `openGraph` at all replaces the inherited object entirely, a
+// partial one would silently drop e.g. `images`.
+const descriptions: Record<Locale, string> = {
+  en: 'The full list of software projects Klao has built and shipped end to end — with live links and source code where public.',
+  th: 'ผลงานซอฟต์แวร์ที่เกลาออกแบบ สร้าง และส่งมอบเองตั้งแต่ต้นจนจบ พร้อมลิงก์ใช้งานจริงและซอร์สโค้ดเท่าที่เปิดเผยได้',
+};
+
+// Reuses the site's one pair of share-card PNGs (design/og/README.md: "every
+// /en/... page" / "every /th/... page", not one image per route) -- only the
+// alt text is page-specific.
+const ogAlt: Record<Locale, string> = {
+  en: 'Klao — software projects built and shipped end to end, with live links and source where available.',
+  th: 'เกลา — ผลงานซอฟต์แวร์ที่สร้างและส่งมอบเองตั้งแต่ต้นจนจบ พร้อมลิงก์ใช้งานจริง',
+};
 
 // Widen-then-narrow `params`, matching layout.tsx's generateMetadata (Task
 // 10 review's critical type constraint). Gives this page its own title
@@ -21,9 +48,29 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const l = assertLocale(locale);
+  const title = dict[l].projects;
+  const description = descriptions[l];
+  const url = `${SITE_URL}/${l}/projects`;
+  const ogImage = { url: `/og/og-${l}.png`, width: 1200, height: 630, alt: ogAlt[l] };
   return {
-    title: dict[l].projects,
-    alternates: { canonical: `${SITE_URL}/${l}/projects` },
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      title: `${title} · Klao`,
+      description,
+      type: 'website',
+      locale: l === 'th' ? 'th_TH' : 'en_US',
+      url,
+      siteName: 'Klao',
+      images: [ogImage],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${title} · Klao`,
+      description,
+      images: [ogImage],
+    },
   };
 }
 
