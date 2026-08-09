@@ -20,6 +20,16 @@
 - Colours: `--color-dark: #17171a`, `--color-deep: #101013`, `--color-light: #ffffff`, `--color-peri: #a8aecb`.
 - Gate on `npm run check` (tsc + eslint + vitest). Green before every commit.
 - All shell commands run in the **foreground** with an explicit timeout.
+- **Test dependencies — ruling made during Task 2.** This plan's tests were
+  written against `@testing-library/react`, but the repo ran `environment: 'node'`
+  with `react-dom/server`, and `renderToString` never fires `useEffect` — which
+  makes the central assertion of `Reveal` (that the hiding class is added at
+  runtime, not in markup) impossible to test, and a `fireEvent` click test for
+  `CopyEmail` impossible to write at all. `jsdom` and `@testing-library/react`
+  were therefore added as **devDependencies** and jsdom is scoped per-file by
+  pragma, leaving the other test files in the faster node environment. Later
+  tasks may use `render`/`fireEvent` freely and must not re-open this. Adding any
+  **runtime** dependency remains forbidden.
 
 ---
 
