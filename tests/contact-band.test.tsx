@@ -61,6 +61,20 @@ describe('ContactBand', () => {
     expect(screen.getByText(dict.en.workingIn)).toBeTruthy();
   });
 
+  it('never dims a channel label below the WCAG AA text-contrast floor', () => {
+    // Regression test for a real bug the whole-branch review's Lighthouse
+    // pass caught (not something a jsdom-based render can measure directly,
+    // since jsdom doesn't compute colour or contrast): `opacity-55` stacked
+    // on top of the already-60%-alpha `text-on-dark-soft` token measured
+    // 2.9:1 at 9px, against a 4.5:1 requirement. Asserting the opacity
+    // utility is entirely absent from these labels is the closest a unit
+    // test can get to proving the contrast floor holds.
+    const { container } = render(<ContactBand profile={profile} locale="en" />);
+    for (const b of Array.from(container.querySelectorAll('b'))) {
+      expect(b.className).not.toMatch(/\bopacity-\d+\b/);
+    }
+  });
+
   it('pairs each channel label with its own value, not a swapped one', () => {
     // Checking label and value presence independently would still pass if
     // the two channels' values were swapped (basedIn showing "TH / EN",
@@ -74,6 +88,19 @@ describe('ContactBand', () => {
     expect(basedInWrapper?.textContent).not.toContain('TH / EN');
     expect(workingInWrapper?.textContent).toContain('TH / EN');
     expect(workingInWrapper?.textContent).not.toContain('Bangkok, TH');
+  });
+
+  it('renders the Thai channel labels in the Thai font stack with normal tracking, never font-mono', () => {
+    // Regression test, same class of bug as the other bands' own version of
+    // this test: no monospace face carries Thai glyphs.
+    const { container } = render(<ContactBand profile={profile} locale="th" />);
+    const labels = Array.from(container.querySelectorAll('b'));
+    expect(labels.length).toBeGreaterThan(0);
+    for (const b of labels) {
+      expect(b.className).not.toContain('font-mono');
+      expect(b.className).not.toMatch(/tracking-\[/);
+      expect(b.className).toContain('font-thai');
+    }
   });
 
   it('renders only the active locale -- the statement heading, CTA and channel labels switch, and the other language is absent', () => {

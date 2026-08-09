@@ -3,6 +3,7 @@ import MaskedHeading from '@/components/motion/MaskedHeading';
 import Reveal from '@/components/motion/Reveal';
 import { dict } from '@/lib/dictionary';
 import type { Locale, Profile } from '@/lib/models';
+import { eyebrowFont } from '@/lib/typography';
 
 // Fixed facts about Klao, not sourced from Profile -- the model has no
 // location or working-language fields. Same rationale as Hero's PILLS
@@ -37,23 +38,33 @@ export default function ContactBand({ profile, locale }: { profile: Profile; loc
         </Reveal>
       )}
 
+      {/* No `opacity-N` utility on top of `text-on-dark-soft` below: that
+          combination was a real new WCAG AA contrast failure (2.9:1 at 9px
+          against a 4.5:1 requirement, `opacity-55` stacked on an already-
+          60%-alpha colour token) caught by the whole-branch review's
+          Lighthouse pass, which jsdom-based component tests have no way to
+          measure. `text-on-dark-soft` alone is the same token every other
+          eyebrow/label in this codebase uses at full opacity -- see
+          AboutBand/CraftBand/WorkGrid/CvBand/SiteFooter's own `font-mono
+          ... text-on-dark-soft` labels, none of which stack a further
+          opacity on top. */}
       <div className="mt-14 flex flex-wrap justify-center gap-11 text-[13px] text-on-dark-soft">
         {profile.email && (
           <div>
-            <b className="mb-[7px] block font-mono text-[9px] font-normal uppercase tracking-[0.2em] opacity-55">
+            <b className={`mb-[7px] block text-[9px] font-normal uppercase ${eyebrowFont(locale, 'tracking-[0.2em]')}`}>
               {t.email}
             </b>
             <CopyEmail email={profile.email} copiedLabel={t.copied} />
           </div>
         )}
         <div>
-          <b className="mb-[7px] block font-mono text-[9px] font-normal uppercase tracking-[0.2em] opacity-55">
+          <b className={`mb-[7px] block text-[9px] font-normal uppercase ${eyebrowFont(locale, 'tracking-[0.2em]')}`}>
             {t.basedIn}
           </b>
           <span className="font-medium text-on-dark">{LOCATION}</span>
         </div>
         <div>
-          <b className="mb-[7px] block font-mono text-[9px] font-normal uppercase tracking-[0.2em] opacity-55">
+          <b className={`mb-[7px] block text-[9px] font-normal uppercase ${eyebrowFont(locale, 'tracking-[0.2em]')}`}>
             {t.workingIn}
           </b>
           <span className="font-medium text-on-dark">{LANGUAGES}</span>
