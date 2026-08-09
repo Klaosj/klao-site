@@ -138,14 +138,30 @@
     background: var(--color-dark);
     color: var(--color-light);
   }
-  /* LocaleToggle (unchanged by T11) still uses the legacy `text-soft`/
-     `text-ink`/`border-line` names, which the "LEGACY NAMES" block above
-     remaps to the on-dark palette site-wide -- without overriding them
-     here too, it would render invisible-on-white once the header inverts. */
-  header.nav-on-light :where(.text-soft) { color: var(--color-on-light-soft); }
-  header.nav-on-light :where(.text-ink) { color: var(--color-on-light); }
-  header.nav-on-light :where(.border-line) { border-color: var(--color-on-light-faint); }
 }
+
+/* LocaleToggle uses the legacy `text-soft`/`border-line` names, which the
+   "LEGACY NAMES" block remaps to the on-dark palette site-wide. Over the white
+   About band that renders the language switcher and the monogram at 1.00:1 --
+   literally invisible -- and on a bilingual site the switcher is a primary
+   control.
+
+   These rules sit OUTSIDE any @layer deliberately. The previous attempt put
+   them in `@layer components` wrapped in `:where()`, which was dead code:
+   Tailwind's `.text-soft` lives in `@layer utilities`, and layer rank beats
+   specificity outright, so the utility won regardless of how the selector was
+   written. Unlayered CSS outranks every layer -- the only reliable escape
+   hatch here, and the same one the Thai leading rules below use.
+
+   The active link is the subtle half of the bug: it carries `font-semibold`
+   and no colour class at all, so it inherits white from `body` and no
+   `.text-soft` override could ever have reached it. It needs to be targeted
+   by element. */
+header.nav-on-light .text-soft { color: var(--color-on-light-soft); }
+header.nav-on-light .text-ink { color: var(--color-on-light); }
+header.nav-on-light .border-line { border-color: var(--color-on-light-faint); }
+header.nav-on-light nav[aria-label="Language"] a { color: var(--color-on-light); }
+header.nav-on-light .nav-mark { background: var(--color-dark); color: var(--color-light); }
 
 /* Thai script's combining vowel/tone marks stack above and below the base
    letter, and need more vertical room than the tight display-heading
