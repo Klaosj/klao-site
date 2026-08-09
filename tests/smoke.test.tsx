@@ -76,14 +76,10 @@ describe('smoke: pages render in both locales (fixture mode)', () => {
       // string per band composed in page.tsx, none of it routed through
       // MaskedHeading (see the collectText comment above for why that
       // matters here).
-      expect(homeText).toContain(t.about); // AboutBand's eyebrow
-      expect(homeText).toContain(t.howIWork); // CraftBand's eyebrow
       expect(homeText).toContain(t.selectedWork); // WorkGrid's eyebrow
       expect(homeText).toContain(t.career); // CvBand's eyebrow
       // Render only the active locale -- the other language's equivalent
       // eyebrow labels must be entirely absent from the assembled page.
-      expect(homeText).not.toContain(other.about);
-      expect(homeText).not.toContain(other.howIWork);
       expect(homeText).not.toContain(other.selectedWork);
       expect(homeText).not.toContain(other.career);
 

@@ -3,15 +3,11 @@ import Reveal from '@/components/motion/Reveal';
 import SpotlightList from '@/components/motion/SpotlightList';
 import { dict } from '@/lib/dictionary';
 import type { Locale } from '@/lib/models';
-import { eyebrowFont } from '@/lib/typography';
 
 export default function CraftBand({ locale }: { locale: Locale }) {
   const t = dict[locale];
   return (
     <section id="craft" className="relative z-[2] bg-deep px-6 py-[11vh]">
-      <p className={`mb-5 text-[9.5px] uppercase text-on-dark-soft ${eyebrowFont(locale, 'tracking-[0.24em]')}`}>
-        {t.howIWork}
-      </p>
       <MaskedHeading
         text={t.craftHeading}
         level={2}

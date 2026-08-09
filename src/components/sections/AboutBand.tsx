@@ -8,9 +8,6 @@ export default function AboutBand({ profile, locale }: { profile: Profile; local
   const t = dict[locale];
   return (
     <section id="about" className="relative z-[2] -mt-8 rounded-t-[32px] bg-light px-6 py-[11vh] pt-[13vh] text-on-light sm:rounded-t-[44px]">
-      <p className={`mb-5 text-[9.5px] uppercase text-on-light-soft ${eyebrowFont(locale, 'tracking-[0.24em]')}`}>
-        {t.about}
-      </p>
       <MaskedHeading
         text={t.aboutHeading}
         level={2}

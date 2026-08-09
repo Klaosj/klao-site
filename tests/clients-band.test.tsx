@@ -29,12 +29,11 @@ describe('ClientsBand', () => {
 
   it('renders nothing at all for an empty clients array', () => {
     // A Notion profile without the property maps to `[]`. Rendering a
-    // heading/eyebrow with no names under it would look like a broken
-    // section, not an honestly-absent one -- the whole band must not exist.
+    // heading with no names under it would look like a broken section, not
+    // an honestly-absent one -- the whole band must not exist.
     const { container } = render(<ClientsBand clients={[]} locale="en" />);
     expect(container.firstChild).toBeNull();
     expect(container.querySelector('h2')).toBeNull();
-    expect(container.querySelector('p')).toBeNull();
     expect(container.querySelector('li')).toBeNull();
   });
 
@@ -61,32 +60,11 @@ describe('ClientsBand', () => {
     expect(heading?.textContent).toBe(dict.en.clientsHeading);
   });
 
-  it('switches the heading and eyebrow to Thai when locale is th', () => {
+  it('switches the heading to Thai when locale is th', () => {
     const { container } = render(<ClientsBand clients={clients} locale="th" />);
     expect(container.querySelector('h2')?.textContent).toBe(dict.th.clientsHeading);
-    expect(container.querySelector('p')?.textContent).toBe(dict.th.clients);
-    // No English eyebrow or heading leaked through.
+    // No English heading leaked through.
     expect(screen.queryByText(dict.en.clientsHeading)).toBeNull();
-    expect(screen.queryByText(dict.en.clients)).toBeNull();
-  });
-
-  it('gives the eyebrow and the heading distinct text, not the same string twice', () => {
-    const { container } = render(<ClientsBand clients={clients} locale="en" />);
-    const eyebrow = container.querySelector('p')?.textContent;
-    const heading = container.querySelector('h2')?.textContent;
-    expect(eyebrow).toBe(dict.en.clients);
-    expect(heading).toBeTruthy();
-    expect(heading).not.toBe(eyebrow);
-  });
-
-  it('renders the Thai eyebrow in the Thai font stack with normal tracking, never font-mono', () => {
-    // Regression test, same class of bug as the other bands' own version of
-    // this test: no monospace face carries Thai glyphs.
-    const { container } = render(<ClientsBand clients={clients} locale="th" />);
-    const eyebrow = container.querySelector('p') as HTMLElement;
-    expect(eyebrow.className).not.toContain('font-mono');
-    expect(eyebrow.className).not.toMatch(/tracking-\[/);
-    expect(eyebrow.className).toContain('font-thai');
   });
 
   it('never renders the client names through font-mono, in either locale', () => {
