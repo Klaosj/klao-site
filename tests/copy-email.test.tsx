@@ -166,4 +166,87 @@ describe('CopyEmail', () => {
     expect(label.className).toContain('font-mono');
     expect(label.className).toContain('tracking-[0.18em]');
   });
+
+  // --- QA C2: live-region text mutation + stable accessible name --------
+  // The visible "Copied" span above is purely decorative (aria-hidden) as
+  // of the C2 fix, so it is no longer the thing a screen reader announces
+  // from. These tests target the separate sr-only live region and the
+  // button's aria-label directly, via container.querySelector rather than
+  // screen.getByText('Copied') -- once a copy succeeds there are two nodes
+  // with that text (the visible label and the live region), so getByText
+  // would be ambiguous.
+
+  it('mutates the live region text on a successful copy, and clears it again after the timeout', async () => {
+    vi.useFakeTimers();
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal('navigator', { clipboard: { writeText } });
+
+    const { container } = render(<CopyEmail email="a@b.co" copiedLabel="Copied" locale="en" />);
+    const liveRegion = container.querySelector('[aria-live="polite"]');
+    expect(liveRegion).toBeTruthy();
+    // Empty before any click: a live region must actually change text to
+    // announce -- if it already held "Copied" at rest, nothing would fire.
+    expect(liveRegion?.textContent).toBe('');
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button'));
+      await Promise.resolve();
+    });
+    expect(liveRegion?.textContent).toBe('Copied');
+
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
+    // Clearing it back out (not just leaving "Copied" in place) means the
+    // *next* successful copy is a change again, not a no-op repeat.
+    expect(liveRegion?.textContent).toBe('');
+  });
+
+  it("gives the button a fixed accessible name that never includes the copied label", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal('navigator', { clipboard: { writeText } });
+
+    render(<CopyEmail email="a@b.co" copiedLabel="Copied" locale="en" />);
+    // Before any click, the old bug concatenated the always-present
+    // "Copied" text into the accessible name ("a@b.co Copied, button").
+    // Looking the button up by its intended fixed name (dict.en.copyEmailAction)
+    // proves that isn't happening -- this query throws if the computed name
+    // is anything else, including that concatenation.
+    expect(screen.getByRole('button', { name: 'Copy email address' })).toBeTruthy();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Copy email address' }));
+      await Promise.resolve();
+    });
+    // And it must still read the same after a successful copy -- not
+    // "Copy email address Copied".
+    expect(screen.getByRole('button', { name: 'Copy email address' })).toBeTruthy();
+  });
+
+  it('announces nothing in the live region when the clipboard API is entirely absent', async () => {
+    vi.stubGlobal('navigator', {});
+    const { container } = render(<CopyEmail email="a@b.co" copiedLabel="Copied" locale="en" />);
+    const liveRegion = container.querySelector('[aria-live="polite"]');
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button'));
+      await Promise.resolve();
+    });
+
+    expect(liveRegion?.textContent).toBe('');
+  });
+
+  it('announces nothing in the live region when navigator.clipboard.writeText rejects', async () => {
+    const writeText = vi.fn().mockRejectedValue(new Error('denied'));
+    vi.stubGlobal('navigator', { clipboard: { writeText } });
+    const { container } = render(<CopyEmail email="a@b.co" copiedLabel="Copied" locale="en" />);
+    const liveRegion = container.querySelector('[aria-live="polite"]');
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button'));
+      await Promise.resolve();
+    });
+
+    expect(liveRegion?.textContent).toBe('');
+  });
 });
