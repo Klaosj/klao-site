@@ -66,6 +66,32 @@ const en = {
   // .superpowers/brainstorm/11719-1786211516/content/studio.html's #contact
   // bigHead, same as craftHeading/aboutHeading.
   contactHeading: 'Have something that should exist?',
+
+  // --- QA 2026-08-09 additions -------------------------------------------
+  // Skip link (WCAG 2.4.1). The header is fixed and holds ~10 focusable
+  // items, so a keyboard user otherwise tabs the whole nav on every route.
+  skipToContent: 'Skip to content',
+
+  // Custom 404. Next's default ships with no <html lang>, no links out and
+  // none of this site's styling -- see .superpowers/qa/2026-08-09-QA-SUMMARY.md C3.
+  notFoundTitle: 'This page does not exist.',
+  notFoundBody: 'The link may be out of date, or the address mistyped.',
+  backHome: 'Back to home',
+
+  // CvBand had an eyebrow but no heading of its own, so heading navigation
+  // skipped the whole section (QA I5). This is the heading that fixes it.
+  cvHeading: 'Where I have been, and what came of it.',
+
+  // "Companies & brands" band. Names come from profile.json's `clients`,
+  // seeded from the owner's OWN career.json -- employers plus the accounts
+  // he names in his own ActMedia bullet. Nothing here is invented.
+  clients: 'Companies & brands',
+  clientsHeading: 'Rooms I have already been in.',
+
+  // CopyEmail's button label. The visible "Copied" text used to be
+  // concatenated into the button's accessible name before any click; the
+  // button now carries this explicit label instead (QA C2).
+  copyEmailAction: 'Copy email address',
 };
 
 const th: typeof en = {
@@ -111,6 +137,19 @@ const th: typeof en = {
   statWins: 'ผลงานที่ส่งมอบ ทั้งสองภาษา',
   statLanguages: 'สองภาษาที่ใช้ทำงานได้เท่ากัน',
   contactHeading: 'มีของที่ควรมีอยู่จริง แต่ยังไม่มีใครทำ?',
+
+  skipToContent: 'ข้ามไปยังเนื้อหาหลัก',
+
+  notFoundTitle: 'ไม่มีหน้านี้อยู่',
+  notFoundBody: 'ลิงก์อาจเก่าเกินไป หรือพิมพ์ที่อยู่คลาดเคลื่อน',
+  backHome: 'กลับหน้าแรก',
+
+  cvHeading: 'เคยอยู่ที่ไหนมาบ้าง และได้อะไรกลับมา',
+
+  clients: 'บริษัทและแบรนด์',
+  clientsHeading: 'ห้องที่ผมเคยเข้าไปนั่งมาแล้ว',
+
+  copyEmailAction: 'คัดลอกที่อยู่อีเมล',
 };
 
 export type UiDict = typeof en;
