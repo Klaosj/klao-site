@@ -98,6 +98,23 @@ describe('smoke: pages render in both locales (fixture mode)', () => {
     }
   });
 
+  it('tells the visitor the writing index is empty instead of rendering a bare list', async () => {
+    // Runs against the REAL fixtures, which is the point: posts.json is []
+    // after the two placeholder stubs were pulled, so this asserts what a
+    // visitor actually sees today. If the owner publishes a real post the
+    // guard flips to the populated branch rather than going stale.
+    const posts = await getPosts();
+    for (const locale of ['en', 'th'] as const) {
+      const text = collectText(await WritingPage(p(locale)));
+      if (posts.length === 0) {
+        expect(text).toContain(dict[locale].writingUnpublished);
+        expect(text).not.toContain(dict[locale === 'en' ? 'th' : 'en'].writingUnpublished);
+      } else {
+        expect(text).not.toContain(dict[locale].writingUnpublished);
+      }
+    }
+  });
+
   // 'renders a post page' and 'sitemap lists both locales and post slugs'
   // moved to tests/sitemap-posts.test.ts: both hardcoded the real fixture's
   // 'building-gonai-in-a-weekend' slug/title, coupling coverage of routing

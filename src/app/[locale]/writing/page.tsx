@@ -72,6 +72,14 @@ export default async function WritingPage({ params }: { params: Promise<{ locale
     // reading-width column and top padding now.
     <div className="mx-auto w-full max-w-3xl px-6 pb-16 pt-28">
       <h1 className="font-display text-3xl">{dict[locale].writing}</h1>
+      {/* Say so, rather than rendering an empty <ul>. Both fixture posts were
+          placeholder stubs and were pulled on 2026-08-09, which left this page
+          as a heading above nothing -- a visitor cannot tell that apart from a
+          page that failed to load. Same treatment CvBand already gives an
+          unpopulated Career database. */}
+      {posts.length === 0 && (
+        <p className="mt-6 text-[14.5px] text-soft">{dict[locale].writingUnpublished}</p>
+      )}
       <ul className="mt-6 space-y-5">
         {posts.map((post) => (
           <li key={post.id}>
