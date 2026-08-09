@@ -165,7 +165,7 @@ export default function SiteNav({ locale, profile }: { locale: Locale; profile: 
             <Link
               key={a.hash}
               href={anchorHref(a.hash)}
-              className={`nav-link inline-flex items-center justify-center whitespace-nowrap p-2 -m-2 text-[10.5px] uppercase ${eyebrowFont(locale, 'tracking-[0.22em]')}`}
+              className={`nav-link u-draw inline-flex items-center justify-center whitespace-nowrap p-2 -m-2 text-[10.5px] uppercase ${eyebrowFont(locale, 'tracking-[0.22em]')}`}
             >
               {a.label}
             </Link>

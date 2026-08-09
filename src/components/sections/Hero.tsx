@@ -32,7 +32,7 @@ export default function Hero({
         className="sticky top-0 flex h-screen flex-col items-center justify-center px-6 pt-32 pb-24 text-center"
       >
         <Reveal className="relative mb-7 h-[118px] w-[118px]">
-          <span className="pointer-events-none absolute -inset-2 rounded-full border border-dashed border-peri/50" />
+          <span className="halo pointer-events-none absolute -inset-2 rounded-full border border-dashed border-peri/50" />
           {profile.photoSrc ? (
             <img
               src={profile.photoSrc}

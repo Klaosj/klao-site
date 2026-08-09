@@ -31,7 +31,7 @@ export default function ContactBand({ profile, locale }: { profile: Profile; loc
         <Reveal delayIndex={1} className="mt-[38px] inline-block">
           <a
             href={`mailto:${profile.email}`}
-            className="btn inline-flex items-center gap-3 rounded-full bg-light px-8 py-4 text-[13.5px] font-semibold text-dark"
+            className="btn inline-flex items-center gap-3 rounded-full bg-light px-8 py-4 text-[13.5px] font-semibold text-dark transition-shadow hover:shadow-[0_0_0_3px_rgba(168,174,203,0.35),0_18px_60px_-12px_rgba(168,174,203,0.45)]"
           >
             {t.startConversation} <span aria-hidden="true">→</span>
           </a>
