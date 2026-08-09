@@ -1,7 +1,20 @@
 // @vitest-environment jsdom
 import { render } from '@testing-library/react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import MaskedHeading from '@/components/motion/MaskedHeading';
+
+// MaskedHeading now adds `rv-mask`/`w` only from inside its effect (never in
+// JSX), mirroring Reveal.tsx -- see the component's own header comment for
+// the no-JS clipping bug this fixes. Every `render()` below still goes
+// through Testing Library's `act()` wrapper, which flushes the initial
+// mount effect synchronously before `render()` returns, and `beforeEach`
+// always stubs a working `matchMedia`/`IntersectionObserver` pair -- so
+// every assertion here that checks for `rv-mask`/`.w` is implicitly
+// asserting POST-EFFECT state, the same DOM shape the old JSX-based version
+// always had in this test environment. The one case that differs is the
+// true no-JS path, which cannot run any effect at all -- covered by its own
+// test at the bottom of this file via `renderToStaticMarkup`.
 
 let observed: Element[] = [];
 let trigger: (els: Element[]) => void = () => {};
@@ -33,9 +46,11 @@ describe('MaskedHeading', () => {
     expect(container.textContent?.replace(/\s+/g, ' ').trim()).toBe('I close the deal');
   });
 
-  it('puts the mask on a wrapper, never on the observed element itself', () => {
+  it('puts the mask on a wrapper, never on the observed element itself, once the effect has run', () => {
     // Chrome folds an element's own clip into its intersection rect, so a
     // clipped element reports 0% visible and the observer never fires it.
+    // `rv-mask` is added by the effect, not JSX -- see the no-JS test below
+    // for the state before any effect has run.
     const { container } = render(<MaskedHeading text="two words" />);
     const wrapper = container.firstElementChild as HTMLElement;
     expect(wrapper.className).toContain('rv-mask');
@@ -93,5 +108,45 @@ describe('MaskedHeading', () => {
     expect(spans[0].style.getPropertyValue('--wi')).toBe('0');
     expect(spans[1].style.getPropertyValue('--wi')).toBe('1');
     expect(spans[2].style.getPropertyValue('--wi')).toBe('2');
+  });
+
+  it('never clips a single word when JS has not run -- the server-rendered markup carries neither masking class', () => {
+    // The regression this guards against (see the component's own header
+    // comment): a previous version of this component wrote `rv-mask`/`w`
+    // directly into JSX, so globals.css's `.rv-mask{overflow:hidden}` and
+    // `.rv-mask .w{transform:translateY(112%)}` clipped every word away
+    // permanently whenever JS never ran -- no JS at all, a hydration
+    // failure, or an environment without IntersectionObserver.
+    // `renderToStaticMarkup` never executes effects (there is no DOM, no
+    // commit phase, nothing to flush), so its output is exactly the markup
+    // a visitor without working JS receives -- a stronger proof than
+    // stubbing IntersectionObserver as undefined inside a jsdom `render()`,
+    // which still runs the effect (down to its very first early-return
+    // line) as a side effect of mounting into a real DOM.
+    const text = 'Business developer who builds his own tools.';
+    const html = renderToStaticMarkup(<MaskedHeading text={text} level={1} />);
+
+    const parsed = document.createElement('div');
+    parsed.innerHTML = html;
+    expect(parsed.querySelector('.rv-mask')).toBeNull();
+    expect(parsed.querySelector('.w')).toBeNull();
+    // Every word survives, not just "some text remains" -- a regression
+    // that clips only the last word (the real bug found in Chrome) would
+    // still leave a non-empty textContent.
+    expect(parsed.textContent?.replace(/\s+/g, ' ').trim()).toBe(text);
+  });
+
+  it('never observes anything when IntersectionObserver is unavailable, and never masks the words either', () => {
+    // Same bail-out condition the effect checks for `prefers-reduced-motion`
+    // above, exercised for the other guard on the same line: an
+    // environment with no IntersectionObserver support at all (the brief's
+    // third named no-JS-equivalent case, alongside JS-disabled and a
+    // hydration failure) must not mask words it can then never reveal.
+    vi.stubGlobal('IntersectionObserver', undefined);
+    const { container } = render(<MaskedHeading text="two words" />);
+    const wrapper = container.firstElementChild as HTMLElement;
+    expect(wrapper.className).not.toContain('rv-mask');
+    expect(container.querySelectorAll('.w')).toHaveLength(0);
+    expect(container.textContent?.replace(/\s+/g, ' ').trim()).toBe('two words');
   });
 });
