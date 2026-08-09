@@ -1,6 +1,10 @@
 import type { Locale } from './models';
 
 const en = {
+  // T11: SiteNav's four in-page anchors reuse each section's own eyebrow
+  // label where one already exists (about/selectedWork/career) -- `home`
+  // is the one genuinely new label, since Hero has no eyebrow of its own.
+  home: 'Home',
   projects: 'Projects',
   writing: 'Writing',
   career: 'Career',
@@ -65,6 +69,7 @@ const en = {
 };
 
 const th: typeof en = {
+  home: 'หน้าแรก',
   projects: 'ผลงาน',
   writing: 'บทความ',
   career: 'เส้นทางอาชีพ',

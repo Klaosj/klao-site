@@ -11,7 +11,7 @@ export default function WorkGrid({ projects, locale }: { projects: Project[]; lo
   const t = dict[locale];
 
   return (
-    <section className="relative z-[2] bg-dark px-6 py-[11vh]">
+    <section id="work" className="relative z-[2] bg-dark px-6 py-[11vh]">
       <p className="mb-5 font-mono text-[9.5px] uppercase tracking-[0.24em] text-on-dark-soft">
         {t.selectedWork}
       </p>
@@ -19,7 +19,7 @@ export default function WorkGrid({ projects, locale }: { projects: Project[]; lo
         {projects.map((project, i) => {
           // liveUrl wins over repoUrl when both are set; when neither is
           // set, href is null and the card renders as a plain <div> below
-          // -- never `href="#"`.
+          // -- never a dangling anchor to nowhere.
           const href = project.liveUrl ?? project.repoUrl;
           const meta = `${project.description[locale]} · ${project.stack.join(' · ')}`;
 
@@ -60,7 +60,19 @@ export default function WorkGrid({ projects, locale }: { projects: Project[]; lo
               delayIndex={i}
               className={i === 0 ? 'col-span-12' : 'col-span-12 md:col-span-6'}
             >
-              {href ? <a href={href}>{card}</a> : <div>{card}</div>}
+              {href ? (
+                // Every project's href here is external (a live deployment
+                // or a GitHub repo, never an in-site route -- see
+                // ProjectCard.tsx, which sets the same pair on its own
+                // liveUrl/repoUrl links). Without target="_blank", clicking
+                // a card navigates the visitor away from the portfolio
+                // entirely instead of opening the project in a new tab.
+                <a href={href} target="_blank" rel="noreferrer">
+                  {card}
+                </a>
+              ) : (
+                <div>{card}</div>
+              )}
             </Reveal>
           );
         })}

@@ -29,7 +29,9 @@ export default async function CareerPage({ params }: { params: Promise<{ locale:
   const [career, profile] = await Promise.all([getCareer(), getProfile()]);
 
   return (
-    <div>
+    // See projects/page.tsx and layout.tsx for why this page owns its own
+    // reading-width column and top padding now.
+    <div className="mx-auto w-full max-w-3xl px-6 pb-16 pt-28">
       <div className="flex items-center justify-between">
         <h1 className="font-display text-3xl">{t.career}</h1>
         {profile.resumeUrl && (

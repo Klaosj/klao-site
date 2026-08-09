@@ -19,21 +19,16 @@ export default function CopyEmail({ email, copiedLabel }: { email: string; copie
     } catch {
       // navigator.clipboard is only available in a secure context (HTTPS or
       // localhost), so this branch is real, reachable code in production --
-      // not just a defensive catch. document.execCommand('copy') is
-      // deprecated (MDN flags it as such) and already removed from some
-      // engines, so it is not a durable long-term fallback -- see the task
-      // report for what a proper replacement would look like. Kept here
-      // because the button already degrades to plain readable/selectable
-      // text below it, so a fallback that also fails costs nothing beyond
-      // its own dead code.
-      const t = document.createElement('textarea');
-      t.value = email;
-      t.style.position = 'fixed';
-      t.style.opacity = '0';
-      document.body.appendChild(t);
-      t.select();
-      try { document.execCommand('copy'); } catch { /* nothing left to try */ }
-      t.remove();
+      // not a defensive catch that never fires. There used to be a
+      // document.execCommand('copy') fallback here, but it was dropped
+      // (Task 10/11 review): the API is deprecated, fires only in the same
+      // narrow non-secure-context case this catch already covers, and the
+      // old code called setDone(true) unconditionally even when
+      // execCommand's own return value was false -- telling the visitor an
+      // address was on their clipboard when it might not be. Doing nothing
+      // here is honest; the always-present plain-text <span> below is the
+      // real fallback, still selectable/copyable by hand.
+      return;
     }
     setDone(true);
     if (timer.current) clearTimeout(timer.current);

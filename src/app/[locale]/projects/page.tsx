@@ -33,7 +33,11 @@ export default async function ProjectsPage({ params }: { params: Promise<{ local
   const projects = await getProjects();
 
   return (
-    <div>
+    // See layout.tsx: the shared header is now fixed and transparent, and
+    // <main> no longer constrains width for the redesigned full-bleed home
+    // route -- this page carries its own reading-width column and top
+    // padding to clear the header instead.
+    <div className="mx-auto w-full max-w-3xl px-6 pb-16 pt-28">
       <h1 className="font-display text-3xl">{t.projects}</h1>
       <section className="mt-8">
         <h2 className="text-xs uppercase tracking-widest text-soft">{t.allProjects}</h2>

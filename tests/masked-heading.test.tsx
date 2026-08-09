@@ -65,6 +65,28 @@ describe('MaskedHeading', () => {
     expect(observed).toHaveLength(0);
   });
 
+  it('keeps the separating space outside each word span, not as trailing content inside it', () => {
+    // Regression test for a real bug found in Task 11's browser
+    // verification: a trailing space as the LAST character inside a
+    // `display: inline-block` span is trimmed away by normal CSS
+    // white-space collapsing (the box treats it as trailing whitespace at
+    // the end of its own internal line), so adjacent words rendered with
+    // zero gap between them -- "Business developer" as
+    // "Businessdeveloper". jsdom never computes real layout, so this can
+    // only assert DOM *structure* (space as a sibling text node after the
+    // span, never inside it) -- the actual visual gap was confirmed
+    // separately via a real Chrome instance (getBoundingClientRect showed
+    // 0px between adjacent word boxes before this fix, a normal gap after).
+    const { container } = render(<MaskedHeading text="two words" />);
+    const spans = container.querySelectorAll<HTMLElement>('.w');
+    expect(spans[0].textContent).toBe('two');
+    expect(spans[1].textContent).toBe('words');
+    // The space lives between the two spans as its own text node, a
+    // sibling of both -- not inside either one.
+    expect(spans[0].nextSibling?.textContent).toBe(' ');
+    expect(spans[0].nextSibling?.nodeType).toBe(Node.TEXT_NODE);
+  });
+
   it('sets the word index as a custom property on each span', () => {
     const { container } = render(<MaskedHeading text="a b c" />);
     const spans = container.querySelectorAll<HTMLElement>('.w');

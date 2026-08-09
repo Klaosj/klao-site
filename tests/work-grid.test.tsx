@@ -121,6 +121,17 @@ describe('WorkGrid', () => {
     expect(gridItems[1].className).toContain('md:col-span-6');
   });
 
+  it('opens external project links in a new tab without leaking a referrer', () => {
+    // Every project href here is external (a live deployment or a GitHub
+    // repo, never an in-site route) -- see ProjectCard.tsx, which already
+    // sets this same pair on its own liveUrl/repoUrl links. Without it,
+    // clicking a card navigates the visitor away from the portfolio.
+    const { container } = render(<WorkGrid projects={projects} locale="en" />);
+    const a = container.querySelector('a') as HTMLAnchorElement;
+    expect(a.getAttribute('target')).toBe('_blank');
+    expect(a.getAttribute('rel')).toBe('noreferrer');
+  });
+
   it('renders only the active locale -- the section label and project description switch, and the other language is absent', () => {
     render(<WorkGrid projects={projects} locale="th" />);
     expect(screen.getByText(dict.th.selectedWork)).toBeTruthy();

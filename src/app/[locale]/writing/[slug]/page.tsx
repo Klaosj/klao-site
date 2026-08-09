@@ -83,7 +83,9 @@ export default async function PostPage({
   if (!post) notFound();
   const body = post.body[locale].length ? post.body[locale] : post.body.en;
   return (
-    <article>
+    // See projects/page.tsx and layout.tsx for why this page owns its own
+    // reading-width column and top padding now.
+    <article className="mx-auto w-full max-w-3xl px-6 pb-16 pt-28">
       <p className="text-sm">
         <Link href={`/${locale}/writing`} className="text-soft hover:text-ink">
           ← {dict[locale].back}

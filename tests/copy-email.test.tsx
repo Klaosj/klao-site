@@ -73,12 +73,12 @@ describe('CopyEmail', () => {
     expect(screen.getByText('a@b.co')).toBeTruthy();
   });
 
-  it('falls back to document.execCommand and still shows the copied state when clipboard.writeText is unavailable', async () => {
+  it('does not fall back to document.execCommand when navigator.clipboard is entirely absent', async () => {
     vi.stubGlobal('navigator', {});
     const execCommand = vi.fn().mockReturnValue(true);
-    // jsdom does not implement execCommand; assign a spy directly so the
-    // fallback branch has something real to call and this test can assert
-    // it was reached.
+    // jsdom does not implement execCommand; assign a spy directly so an
+    // accidental reintroduction of the old fallback would have something
+    // real to call, and this test can prove it was never reached.
     document.execCommand = execCommand;
 
     render(<CopyEmail email="a@b.co" copiedLabel="Copied" />);
@@ -90,10 +90,51 @@ describe('CopyEmail', () => {
       await Promise.resolve();
     });
 
-    expect(execCommand).toHaveBeenCalledWith('copy');
-    // The fallback still needs to land the user in the same "it worked"
-    // state as the real clipboard path -- otherwise the button silently
-    // does nothing from the visitor's point of view.
-    expect(label.className).toContain('opacity-100');
+    // The execCommand branch was dropped entirely (Task 10/11 review: it
+    // was near-theatre -- deprecated, and the old code showed "Copied" even
+    // when the call may have silently failed). Nothing should call it.
+    expect(execCommand).not.toHaveBeenCalled();
+  });
+
+  it('shows no false "copied" confirmation when navigator.clipboard is entirely absent', async () => {
+    // Distinct from the execCommand assertion above: this is the actual
+    // user-facing correctness bug the old fallback caused -- a visitor
+    // believing an address is on their clipboard when the browser never
+    // wrote anything there. A regression here would still pass the
+    // execCommand test above (execCommand not being called doesn't by
+    // itself prove the "copied" label stays hidden).
+    vi.stubGlobal('navigator', {});
+
+    render(<CopyEmail email="a@b.co" copiedLabel="Copied" />);
+    const label = screen.getByText('Copied');
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button'));
+      await Promise.resolve();
+    });
+
+    expect(label.className).toContain('opacity-0');
+    expect(label.className).not.toContain('opacity-100');
+  });
+
+  it('shows no false "copied" confirmation when navigator.clipboard.writeText rejects (e.g. permission denied)', async () => {
+    // Same failure mode as the test above, but for the case where the
+    // Clipboard API exists and is called, yet the write itself fails --
+    // the exact scenario the removed execCommand branch used to paper over
+    // with a fake success state.
+    const writeText = vi.fn().mockRejectedValue(new Error('denied'));
+    vi.stubGlobal('navigator', { clipboard: { writeText } });
+
+    render(<CopyEmail email="a@b.co" copiedLabel="Copied" />);
+    const label = screen.getByText('Copied');
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button'));
+      await Promise.resolve();
+    });
+
+    expect(writeText).toHaveBeenCalledWith('a@b.co');
+    expect(label.className).toContain('opacity-0');
+    expect(label.className).not.toContain('opacity-100');
   });
 });

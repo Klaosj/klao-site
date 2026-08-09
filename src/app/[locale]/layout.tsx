@@ -2,6 +2,7 @@ import '../globals.css';
 import type { Metadata } from 'next';
 import SiteNav from '@/components/SiteNav';
 import SiteFooter from '@/components/SiteFooter';
+import { getProfile } from '@/lib/content';
 import { assertLocale } from '@/lib/locale';
 import { LOCALES, type Locale } from '@/lib/models';
 import { SITE_URL } from '@/lib/site';
@@ -121,12 +122,28 @@ export default async function RootLayout({
 }) {
   const { locale } = await params;
   const l = assertLocale(locale);
+  // Fetched here (not inside SiteNav) so SiteNav can stay a plain client
+  // component driven entirely by props -- its own useEffect scroll listener
+  // already needs 'use client', and an async server-fetch has no business
+  // living in the same file as that. getProfile() is cache()-wrapped (see
+  // src/lib/content.ts), so this doesn't double the real fetch SiteFooter
+  // and the page itself also make within the same request.
+  const profile = await getProfile();
   return (
     <html lang={l}>
       <body className="flex min-h-screen flex-col">
-        <SiteNav locale={l} />
-        <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-10">{children}</main>
-        <SiteFooter locale={l} />
+        <SiteNav locale={l} profile={profile} />
+        {/* Unconstrained, unlike the old boxed `max-w-3xl` column: the
+            redesigned home route's bands (Hero, AboutBand, ...) are meant to
+            span the full viewport, with each element capping its own
+            reading width internally (e.g. AboutBand's `max-w-[68ch]`
+            prose). The four untouched routes (projects/writing/career/
+            writing/[slug]) now carry that same `max-w-3xl` column on their
+            own root element instead, plus top padding to clear this header
+            now that it's fixed rather than sitting in normal document
+            flow. */}
+        <main className="flex-1">{children}</main>
+        <SiteFooter />
       </body>
     </html>
   );

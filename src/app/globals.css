@@ -104,6 +104,42 @@
   @media (max-width: 1080px) {
     .pill { display: none; }
   }
+
+  /* SiteNav (T11): a fixed, transparent header layered above every band
+     (z-[60], set in the component itself) with no background of its own --
+     same "no backdrop-filter" reasoning as the pills above, since it also
+     sits over the live WebGL canvas while scrolling through the hero. It
+     therefore has to invert colour whenever a light band is under it;
+     SiteNav's own scroll listener toggles `nav-on-light` on the <header>
+     element itself for that, selecting bands by the existing `bg-light`
+     utility class (currently only AboutBand) rather than a bespoke marker. */
+  .nav-link, .nav-social {
+    color: var(--color-on-dark-soft);
+    transition: color 0.25s;
+  }
+  .nav-link:hover, .nav-social:hover { color: var(--color-on-dark); }
+  .nav-mark { transition: background 0.4s, color 0.4s, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+  .nav-mark:hover { transform: rotate(-12deg) scale(1.06); }
+
+  header.nav-on-light .nav-link,
+  header.nav-on-light .nav-social {
+    color: var(--color-on-light-soft);
+  }
+  header.nav-on-light .nav-link:hover,
+  header.nav-on-light .nav-social:hover {
+    color: var(--color-on-light);
+  }
+  header.nav-on-light .nav-mark {
+    background: var(--color-dark);
+    color: var(--color-light);
+  }
+  /* LocaleToggle (unchanged by T11) still uses the legacy `text-soft`/
+     `text-ink`/`border-line` names, which the "LEGACY NAMES" block above
+     remaps to the on-dark palette site-wide -- without overriding them
+     here too, it would render invisible-on-white once the header inverts. */
+  header.nav-on-light :where(.text-soft) { color: var(--color-on-light-soft); }
+  header.nav-on-light :where(.text-ink) { color: var(--color-on-light); }
+  header.nav-on-light :where(.border-line) { border-color: var(--color-on-light-faint); }
 }
 
 @media (prefers-reduced-motion: reduce) {
