@@ -15,6 +15,7 @@ const testProfile: Profile = {
   github: 'https://github.example/test',
   email: 'test@example.com',
   resumeUrl: null,
+  clients: [],
 };
 
 vi.mock('@/lib/content', async (importOriginal) => {

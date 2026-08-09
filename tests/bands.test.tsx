@@ -29,6 +29,7 @@ const profile: Profile = {
   linkedin: '',
   github: '',
   resumeUrl: '',
+  clients: [],
 };
 
 describe('CraftBand', () => {

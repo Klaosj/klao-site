@@ -66,6 +66,14 @@ export default function CvBand({
       <p className={`mb-5 text-[9.5px] uppercase text-on-dark-soft ${eyebrowFont(locale, 'tracking-[0.24em]')}`}>
         {t.career}
       </p>
+      {/* The eyebrow above is a label, not a heading. Without this <h2> the
+          whole CV section was invisible to heading navigation -- a screen
+          reader jumping by heading skipped straight from Work to Contact
+          (2026-08-09 QA, WCAG 1.3.1). Same eyebrow + big-head pairing every
+          other band already uses. */}
+      <h2 className="max-w-[16ch] text-[clamp(30px,4.4vw,58px)] font-bold leading-[1.06] tracking-[-0.03em]">
+        {t.cvHeading}
+      </h2>
       <div className="mt-[70px] grid items-start gap-[clamp(30px,6vw,90px)] md:grid-cols-[1fr_1.4fr]">
         {/* Wrapper so the resume capsule sits under the stat block and
             shares its grid column, instead of becoming a third column. */}
@@ -91,10 +99,11 @@ export default function CvBand({
             >
               <div>
                 <div className="text-[19px] font-semibold tracking-[-0.012em]">{entry.company}</div>
-                {/* `role` is a plain string on CareerEntry, not Localized --
-                    it renders the same in both locales. Only `wins` below is
-                    picked per-locale. */}
-                <div className="mt-[5px] text-[12.5px] text-on-dark-soft">{entry.role}</div>
+                {/* `role` is Localized as of the 2026-08-09 QA pass -- it used
+                    to be a plain string, which left English job titles on the
+                    Thai pages. Falls back th -> en at the mapper, so an
+                    untranslated title still renders rather than going blank. */}
+                <div className="mt-[5px] text-[12.5px] text-on-dark-soft">{entry.role[locale]}</div>
                 {entry.wins[locale].length > 0 && (
                   <ul className="mt-2 list-disc space-y-1 pl-5 text-[12.5px] text-on-dark-soft">
                     {entry.wins[locale].map((win, wi) => (

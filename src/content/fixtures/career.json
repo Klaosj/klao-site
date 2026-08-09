@@ -1,7 +1,10 @@
 [
   {
     "id": "fx-actmedia",
-    "role": "Senior Business Development",
+    "role": {
+      "en": "Senior Business Development",
+      "th": "นักพัฒนาธุรกิจอาวุโส"
+    },
     "company": "ActMedia",
     "period": "MAR 2026 – Present",
     "wins": {
@@ -22,7 +25,10 @@
   },
   {
     "id": "fx-casetify",
-    "role": "Brand Representative",
+    "role": {
+      "en": "Brand Representative",
+      "th": "ตัวแทนแบรนด์"
+    },
     "company": "Casetify",
     "period": "MAY 2024 – MAR 2026",
     "wins": {
@@ -39,7 +45,10 @@
   },
   {
     "id": "fx-mmb",
-    "role": "Sales Coordinator",
+    "role": {
+      "en": "Sales Coordinator",
+      "th": "ผู้ประสานงานขาย"
+    },
     "company": "MMB Technology Co., Ltd",
     "period": "AUG 2023 – DEC 2023",
     "wins": {
@@ -58,7 +67,10 @@
   },
   {
     "id": "fx-vela",
-    "role": "Senior Barista",
+    "role": {
+      "en": "Senior Barista",
+      "th": "บาริสต้าอาวุโส"
+    },
     "company": "VELA Central World",
     "period": "APR 2023 – AUG 2023",
     "wins": {
@@ -79,7 +91,10 @@
   },
   {
     "id": "fx-abundance",
-    "role": "Business Owner",
+    "role": {
+      "en": "Business Owner",
+      "th": "เจ้าของกิจการ"
+    },
     "company": "A Bun Dance (Craft Burger)",
     "period": "MAY 2021 – DEC 2022",
     "wins": {

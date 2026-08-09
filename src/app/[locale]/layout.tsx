@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import SiteNav from '@/components/SiteNav';
 import SiteFooter from '@/components/SiteFooter';
 import { getProfile } from '@/lib/content';
+import { dict } from '@/lib/dictionary';
 import { assertLocale } from '@/lib/locale';
 import { LOCALES, type Locale } from '@/lib/models';
 import { SITE_URL } from '@/lib/site';
@@ -132,6 +133,18 @@ export default async function RootLayout({
   return (
     <html lang={l}>
       <body className="flex min-h-screen flex-col">
+        {/* Skip link (2026-08-09 QA, WCAG 2.4.1). The header is fixed and
+            holds ~10 focusable items, so without this a keyboard user tabs
+            the whole nav again on every route before reaching content.
+            Deliberately the first focusable node in the body, and
+            deliberately not `hidden` -- it must be reachable by Tab, so it
+            is only visually hidden until focused. */}
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-light focus:px-5 focus:py-3 focus:text-[13px] focus:font-semibold focus:text-dark"
+        >
+          {dict[l].skipToContent}
+        </a>
         <SiteNav locale={l} profile={profile} />
         {/* Unconstrained, unlike the old boxed `max-w-3xl` column: the
             redesigned home route's bands (Hero, AboutBand, ...) are meant to
@@ -142,7 +155,9 @@ export default async function RootLayout({
             own root element instead, plus top padding to clear this header
             now that it's fixed rather than sitting in normal document
             flow. */}
-        <main className="flex-1">{children}</main>
+        <main id="main" className="flex-1">
+          {children}
+        </main>
         <SiteFooter locale={l} />
       </body>
     </html>

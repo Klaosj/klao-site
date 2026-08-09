@@ -72,7 +72,11 @@ describe('mapCareerEntry', () => {
     const c = mapCareerEntry(careerPage)!;
     expect(c).toEqual({
       id: 'c1',
-      role: 'Business Development',
+      // `role` became Localized in the 2026-08-09 QA pass. This fixture page
+      // has no RoleTH property at all -- which is the point: it stands for an
+      // existing Notion database that predates the field, and it must still
+      // map, falling back th -> en.
+      role: { en: 'Business Development', th: 'Business Development' },
       company: 'Actmedia',
       period: '2024 – present',
       wins: { en: ['Win one', 'Win two'], th: ['Win one', 'Win two'] },
@@ -81,6 +85,31 @@ describe('mapCareerEntry', () => {
     // wins.th falls back to wins.en's *content*, not the same array reference,
     // so an in-place mutation (.sort()/.push()) on one locale can't leak into the other.
     expect(c.wins.th).not.toBe(c.wins.en);
+  });
+
+  it('uses the Thai job title when RoleTH is present', () => {
+    // The other half of the contract: the fallback above must not be so
+    // eager that a real Thai title gets ignored.
+    const page = {
+      ...careerPage,
+      properties: { ...careerPage.properties, RoleTH: rich('นักพัฒนาธุรกิจ') },
+    };
+    expect(mapCareerEntry(page)!.role).toEqual({
+      en: 'Business Development',
+      th: 'นักพัฒนาธุรกิจ',
+    });
+  });
+
+  it('still skips the row when the English Role is missing, even if RoleTH is set', () => {
+    // The skip stays gated on `Role` alone, so adding the optional Thai
+    // property cannot accidentally resurrect a row that should be skipped.
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const page = {
+      ...careerPage,
+      properties: { ...careerPage.properties, Role: title(''), RoleTH: rich('นักพัฒนาธุรกิจ') },
+    };
+    expect(mapCareerEntry(page)).toBeNull();
+    warn.mockRestore();
   });
 
   it('returns null and warns on missing Role', () => {
@@ -129,6 +158,11 @@ describe('mapProfile', () => {
       github: 'https://github.com/Klaosj',
       email: 'me@example.com',
       resumeUrl: null,
+      // Same additive treatment as RoleTH: this fixture page has no
+      // `Clients` property, so an existing Profile database maps to an
+      // empty list rather than failing, and the band that reads it simply
+      // does not render.
+      clients: [],
     });
   });
 

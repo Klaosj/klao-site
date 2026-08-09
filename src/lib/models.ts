@@ -63,7 +63,13 @@ export interface Post extends PostMeta {
 
 export interface CareerEntry {
   id: string;
-  role: string;
+  // Localized as of the 2026-08-09 QA pass. It was a plain string, so English
+  // job titles rendered untranslated on /th and /th/career -- the last place
+  // English still leaked into the Thai UI. The Notion side stays backward
+  // compatible: `RoleTH` is a NEW OPTIONAL property and `Role` remains the
+  // English source, so an existing Career database keeps mapping cleanly and
+  // simply falls back th -> en, exactly like `wins` already does.
+  role: Localized;
   company: string;
   period: string;
   wins: { en: string[]; th: string[] };
@@ -80,4 +86,10 @@ export interface Profile {
   github: string;
   email: string;
   resumeUrl: string | null;
+  // Companies and brands the owner has actually worked with, most
+  // recognisable first. Seeded from his own career.json -- employers plus the
+  // accounts he names in his own ActMedia wins -- never invented. Locale
+  // invariant: these are proper nouns and render identically in both
+  // languages, the same reasoning `company` above already relies on.
+  clients: string[];
 }

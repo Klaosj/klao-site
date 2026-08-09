@@ -17,9 +17,20 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const l = assertLocale(locale);
+  // Route-specific description and OG. Without these the page inherited the
+  // homepage's metadata verbatim, so /career, /projects and /writing all
+  // served an identical search snippet (2026-08-09 QA, finding I4).
+  const description = {
+    en: 'Five roles across in-store media, retail brand work, B2B sales coordination, specialty coffee and running a food business — with the numbers each one produced.',
+    th: 'ห้าบทบาท ตั้งแต่สื่อในร้านค้า งานแบรนด์ค้าปลีก ประสานงานขาย B2B กาแฟ specialty ไปจนถึงการทำร้านอาหารของตัวเอง พร้อมตัวเลขที่ทำได้จริงในแต่ละที่',
+  }[l];
+  const title = dict[l].career;
+  const url = `${SITE_URL}/${l}/career`;
   return {
-    title: dict[l].career,
-    alternates: { canonical: `${SITE_URL}/${l}/career` },
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: { title, description, url, locale: l === 'th' ? 'th_TH' : 'en_US', type: 'profile' },
   };
 }
 
@@ -44,7 +55,9 @@ export default async function CareerPage({ params }: { params: Promise<{ locale:
         {career.map((entry) => (
           <li key={entry.id}>
             <h2 className="font-semibold">
-              {entry.role}
+              {/* Localized as of the 2026-08-09 QA pass; falls back th -> en
+                  at the mapper, so an untranslated title still renders. */}
+              {entry.role[locale]}
               {entry.company && <span className="font-normal text-soft"> · {entry.company}</span>}
             </h2>
             {entry.period && <p className="mt-1 text-xs text-soft">{entry.period}</p>}

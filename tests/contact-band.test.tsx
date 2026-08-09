@@ -23,6 +23,7 @@ const profile: Profile = {
   linkedin: '',
   github: '',
   resumeUrl: null,
+  clients: [],
 };
 
 describe('ContactBand', () => {

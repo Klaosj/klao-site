@@ -15,13 +15,15 @@ beforeEach(() => {
   vi.stubGlobal('IntersectionObserver', class { observe() {} unobserve() {} disconnect() {} });
 });
 
-// Field names from src/lib/models.ts: `role` and `company` are plain
-// strings, the date range is a single `period` string, and the only
-// localized field is `wins`. There is no start/end pair.
+// Field names from src/lib/models.ts: `company` is a plain string and the
+// date range is a single `period` string. `role` and `wins` are the
+// localized fields -- `role` became Localized in the 2026-08-09 QA pass,
+// because English job titles were rendering on the Thai pages. There is no
+// start/end pair.
 const entries: CareerEntry[] = [
   {
     id: 'c1',
-    role: 'BD Lead',
+    role: { en: 'BD Lead', th: 'หัวหน้าฝ่ายพัฒนาธุรกิจ' },
     company: 'Acme',
     period: '2024 — present',
     wins: { en: ['Opened two channels'], th: ['เปิดช่องทางใหม่สองช่อง'] },
@@ -29,7 +31,7 @@ const entries: CareerEntry[] = [
   },
   {
     id: 'c2',
-    role: 'BD Associate',
+    role: { en: 'BD Associate', th: 'เจ้าหน้าที่พัฒนาธุรกิจ' },
     company: 'Globex',
     period: '2022 — 2024',
     wins: { en: ['Shipped the first pilot', 'Closed three logos'], th: ['ส่งไพลอตแรกสำเร็จ', 'ปิดดีลสามราย'] },
@@ -61,12 +63,19 @@ describe('CvBand', () => {
     expect(container.querySelectorAll('.border-t.border-on-dark-faint > li')).toHaveLength(1);
   });
 
-  it('renders role identically regardless of locale, since CareerEntry.role is a plain string', () => {
+  it('renders the job title in the active locale, with no English left on the Thai page', () => {
+    // Inverted on 2026-08-09: this test previously asserted the OPPOSITE --
+    // that the title rendered identically in both locales, because `role`
+    // was a plain string. That was the defect, not the contract: English job
+    // titles were showing on /th. Now that role is Localized, the old
+    // assertion would have locked the bug in.
     const { container: en } = render(<CvBand entries={[entries[0]]} locale="en" />);
     expect(en.textContent).toContain('BD Lead');
+    expect(en.textContent).not.toContain('หัวหน้าฝ่ายพัฒนาธุรกิจ');
     cleanup();
     const { container: th } = render(<CvBand entries={[entries[0]]} locale="th" />);
-    expect(th.textContent).toContain('BD Lead');
+    expect(th.textContent).toContain('หัวหน้าฝ่ายพัฒนาธุรกิจ');
+    expect(th.textContent).not.toContain('BD Lead');
   });
 
   it('renders the wins for the active locale only', () => {

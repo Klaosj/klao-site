@@ -46,12 +46,15 @@ export function mapProject(page: NotionPage): Project | null {
 
 export function mapCareerEntry(page: NotionPage): CareerEntry | null {
   const role = text(page.properties.Role);
+  // Still gated on the English `Role` alone, so a Career database that has
+  // never heard of `RoleTH` maps exactly as it did before. `localized` falls
+  // back th -> en, which makes the Thai title purely additive.
   if (!role) return skip('Career', page, 'missing Role');
   const winsEn = lines(text(page.properties.WinsEN));
   const winsTh = lines(text(page.properties.WinsTH));
   return {
     id: page.id,
-    role,
+    role: localized(role, text(page.properties.RoleTH)),
     company: text(page.properties.Company),
     period: text(page.properties.Period),
     wins: { en: winsEn, th: winsTh.length ? winsTh : [...winsEn] },
@@ -72,6 +75,10 @@ export function mapProfile(page: NotionPage): Profile | null {
     github: urlOf(page.properties.GitHub) ?? '',
     email: emailOf(page.properties.Email),
     resumeUrl: urlOf(page.properties.ResumeURL),
+    // Optional multi-select, same additive treatment as RoleTH above: a
+    // Profile database without a `Clients` property maps to [], and the
+    // band that renders it simply does not appear.
+    clients: multi(page.properties.Clients),
   };
 }
 

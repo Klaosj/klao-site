@@ -13,9 +13,15 @@ export default function WorkGrid({ projects, locale }: { projects: Project[]; lo
 
   return (
     <section id="work" className="relative z-[2] bg-dark px-6 py-[11vh]">
-      <p className={`mb-5 text-[9.5px] uppercase text-on-dark-soft ${eyebrowFont(locale, 'tracking-[0.24em]')}`}>
+      {/* An <h2>, not the <p> this used to be: the Work section had no
+          heading of any kind, so heading navigation skipped the whole section
+          (2026-08-09 QA, WCAG 1.3.1). Unlike CvBand -- which gained a real
+          big-head because copy existed for one -- this band has only its
+          eyebrow, so the eyebrow itself carries the heading role. Identical
+          classes, so nothing moves visually. */}
+      <h2 className={`mb-5 text-[9.5px] uppercase text-on-dark-soft ${eyebrowFont(locale, 'tracking-[0.24em]')}`}>
         {t.selectedWork}
-      </p>
+      </h2>
       <div className="grid grid-cols-12 gap-6">
         {projects.map((project, i) => {
           // liveUrl wins over repoUrl when both are set; when neither is

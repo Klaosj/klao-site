@@ -19,6 +19,7 @@ const profile: Profile = {
   github: 'https://github.example/klao',
   email: 'klao@example.com',
   resumeUrl: null,
+  clients: [],
 };
 
 describe('SiteNav', () => {

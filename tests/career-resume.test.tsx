@@ -19,6 +19,7 @@ const nonNullProfile: Profile = {
   github: 'https://github.example/test',
   email: 'test@example.com',
   resumeUrl: 'https://files.example.com/klao-resume.pdf',
+  clients: [],
 };
 const nullProfile: Profile = { ...nonNullProfile, resumeUrl: null };
 
