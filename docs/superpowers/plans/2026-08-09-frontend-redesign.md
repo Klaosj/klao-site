@@ -1195,8 +1195,19 @@ git commit -m "feat: about and craft bands"
 - Test: `tests/work-grid.test.tsx`
 
 **Interfaces:**
-- Consumes: `Reveal` (T2), `dict` (T6), the existing `Project` model
+- Consumes: `Reveal` (T2), `dict` (T6), `Project` and `Locale` from `@/lib/models`
 - Produces: `<WorkGrid projects: Project[] locale: Locale>`
+
+**Model shape — copy exactly, do not guess:**
+```ts
+interface Project {
+  id: string; name: string; description: Localized; stack: string[];
+  liveUrl: string | null; repoUrl: string | null; imageSrc: string | null;
+  featured: boolean; order: number;
+}
+```
+There is no `slug`, `title`, `summary`, `coverSrc` or `year`. The card's link is
+`liveUrl ?? repoUrl`; when both are null render a `<div>`, never `href="#"`.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -1211,17 +1222,22 @@ beforeEach(() => {
   vi.stubGlobal('IntersectionObserver', class { observe() {} unobserve() {} disconnect() {} });
 });
 
-const projects = [
+// Field names taken from src/lib/models.ts — `name` is a plain string,
+// `description` is Localized, the image is `imageSrc`, nullable URLs are
+// `string | null`, and there is no year field.
+const projects: Project[] = [
   {
-    slug: 'gonai',
-    title: { en: 'GoNai', th: 'GoNai' },
-    summary: { en: 'Trip planner', th: 'วางแผนทริป' },
-    coverSrc: '/api/img/page/1/Cover',
-    year: 2026,
+    id: 'p1',
+    name: 'GoNai',
+    description: { en: 'Trip planner', th: 'วางแผนทริป' },
+    stack: ['Next.js', 'Supabase'],
     liveUrl: 'https://gonai.example',
-    repoUrl: '',
+    repoUrl: null,
+    imageSrc: '/api/img/page/1/Cover',
+    featured: true,
+    order: 1,
   },
-] as never[];
+];
 
 describe('WorkGrid', () => {
   it('links each card to its live URL, never to "#"', () => {
@@ -1240,18 +1256,26 @@ describe('WorkGrid', () => {
     expect(img.getAttribute('loading')).toBe('lazy');
   });
 
-  it('renders a project with no cover as text rather than a broken frame', () => {
-    const noCover = [{ ...projects[0], coverSrc: '' }] as never[];
+  it('renders a project with no image as text rather than a broken frame', () => {
+    const noCover: Project[] = [{ ...projects[0], imageSrc: null }];
     const { container } = render(<WorkGrid projects={noCover} locale="en" />);
     expect(container.querySelector('img')).toBeNull();
     expect(screen.getByText('GoNai')).toBeTruthy();
   });
 
   it('renders a non-link card when a project has neither live nor repo URL', () => {
-    const noLink = [{ ...projects[0], liveUrl: '', repoUrl: '' }] as never[];
+    const noLink: Project[] = [{ ...projects[0], liveUrl: null, repoUrl: null }];
     const { container } = render(<WorkGrid projects={noLink} locale="en" />);
     expect(container.querySelector('a')).toBeNull();
     expect(screen.getByText('GoNai')).toBeTruthy();
+  });
+
+  it('falls back to the repo URL when there is no live URL', () => {
+    const repoOnly: Project[] = [{ ...projects[0], liveUrl: null, repoUrl: 'https://github.com/x/y' }];
+    const { container } = render(<WorkGrid projects={repoOnly} locale="en" />);
+    expect((container.querySelector('a') as HTMLAnchorElement).getAttribute('href')).toBe(
+      'https://github.com/x/y',
+    );
   });
 });
 ```
@@ -1298,8 +1322,25 @@ git commit -m "feat: work grid of real product captures in browser chrome"
 - Test: `tests/cv-band.test.tsx`, `tests/copy-email.test.tsx`
 
 **Interfaces:**
-- Consumes: `Reveal` (T2), `MaskedHeading` (T3), `dict` (T6), the existing `CareerEntry` and `Profile` models
+- Consumes: `Reveal` (T2), `MaskedHeading` (T3), `dict` (T6), `CareerEntry`, `Profile` and `Locale` from `@/lib/models`
 - Produces: `<CvBand entries: CareerEntry[] locale: Locale>`, `<ContactBand profile: Profile locale: Locale>`, `<CopyEmail email: string copiedLabel: string>`
+
+**Model shapes — copy exactly, do not guess:**
+```ts
+interface CareerEntry {
+  id: string; role: string; company: string; period: string;
+  wins: { en: string[]; th: string[] }; order: number;
+}
+interface Profile {
+  name: string; headline: Localized; byline: Localized; now: Localized;
+  photoSrc: string | null; linkedin: string; github: string;
+  email: string; resumeUrl: string | null;
+}
+```
+`role` and `company` are plain strings — not `Localized`. The date range is one
+`period` string; there is no `start`/`end`. The only localized career field is
+`wins`. Note `Profile.now` exists and is a good source for the About band's
+current-focus line.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -1343,13 +1384,32 @@ beforeEach(() => {
   vi.stubGlobal('IntersectionObserver', class { observe() {} unobserve() {} disconnect() {} });
 });
 
+// Field names from src/lib/models.ts: `role` and `company` are plain strings,
+// the date range is a single `period` string, and the only localized field is
+// `wins`. There is no start/end pair.
+const entries: CareerEntry[] = [
+  {
+    id: 'c1',
+    role: 'BD Lead',
+    company: 'Acme',
+    period: '2024 — present',
+    wins: { en: ['Opened two channels'], th: ['เปิดช่องทางใหม่สองช่อง'] },
+    order: 1,
+  },
+];
+
 describe('CvBand', () => {
   it('renders real career rows', () => {
-    const entries = [
-      { company: 'Acme', role: { en: 'BD Lead', th: 'หัวหน้า BD' }, start: '2024', end: '' },
-    ] as never[];
     render(<CvBand entries={entries} locale="en" />);
     expect(screen.getByText('Acme')).toBeTruthy();
+    expect(screen.getByText('BD Lead')).toBeTruthy();
+    expect(screen.getByText('2024 — present')).toBeTruthy();
+  });
+
+  it('renders the wins for the active locale only', () => {
+    render(<CvBand entries={entries} locale="th" />);
+    expect(screen.getByText('เปิดช่องทางใหม่สองช่อง')).toBeTruthy();
+    expect(screen.queryByText('Opened two channels')).toBeNull();
   });
 
   it('says the data is missing rather than inventing a company', () => {
