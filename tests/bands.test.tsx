@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import AboutBand, { ABOUT_HEADING, ABOUT_SUBHEAD } from '@/components/sections/AboutBand';
-import CraftBand, { CRAFT_HEADING } from '@/components/sections/CraftBand';
+import AboutBand from '@/components/sections/AboutBand';
+import CraftBand from '@/components/sections/CraftBand';
 import { dict } from '@/lib/dictionary';
 import type { Profile } from '@/lib/models';
 
@@ -73,21 +73,21 @@ describe('CraftBand', () => {
   it('switches the eyebrow, heading, and every imperative to Thai when locale is th', () => {
     const { container } = render(<CraftBand locale="th" />);
     expect(container.querySelector('p')?.textContent).toBe(dict.th.howIWork);
-    expect(container.querySelector('h2')?.textContent).toBe(CRAFT_HEADING.th);
+    expect(container.querySelector('h2')?.textContent).toBe(dict.th.craftHeading);
     for (const line of dict.th.craft) expect(screen.getByText(line)).toBeTruthy();
     // No English eyebrow, heading, or imperative leaked through.
     expect(screen.queryByText(dict.en.howIWork)).toBeNull();
-    expect(screen.queryByText(CRAFT_HEADING.en)).toBeNull();
+    expect(screen.queryByText(dict.en.craftHeading)).toBeNull();
   });
 
   it('renders the English heading text, not a locale-blind copy of it', () => {
     // Distinct from the "distinct text" test above: this pins the heading
     // to its actual expected value per locale, so a mutation that hardcodes
-    // CRAFT_HEADING.en regardless of `locale` -- which would still pass
+    // dict.en.craftHeading regardless of `locale` -- which would still pass
     // "distinct from eyebrow" in a th render, since the eyebrow itself
     // switches to Thai -- gets caught here.
     const { container } = render(<CraftBand locale="en" />);
-    expect(container.querySelector('h2')?.textContent).toBe(CRAFT_HEADING.en);
+    expect(container.querySelector('h2')?.textContent).toBe(dict.en.craftHeading);
   });
 });
 
@@ -105,8 +105,12 @@ describe('AboutBand', () => {
   });
 
   it('sources the current-focus line from profile.now, not invented static copy', () => {
+    // Exact string match, not a RegExp built from live data: profile.now.en
+    // ends in a period, which is a regex metacharacter (wildcard) -- a
+    // RegExp built from arbitrary profile text can match more than the
+    // literal string it was meant to find.
     render(<AboutBand profile={profile} locale="en" />);
-    expect(screen.getByText(new RegExp(profile.now.en))).toBeTruthy();
+    expect(screen.getByText(profile.now.en)).toBeTruthy();
   });
 
   it('omits the now line entirely when profile.now is empty for the locale', () => {
@@ -130,7 +134,7 @@ describe('AboutBand', () => {
     const eyebrow = container.querySelector('p')?.textContent;
     const heading = container.querySelector('h2')?.textContent;
     expect(eyebrow).toBe(dict.en.about);
-    expect(heading).toBe(ABOUT_HEADING.en);
+    expect(heading).toBe(dict.en.aboutHeading);
     expect(heading).not.toBe(eyebrow);
   });
 
@@ -138,16 +142,17 @@ describe('AboutBand', () => {
     const { container } = render(<AboutBand profile={profile} locale="th" />);
     // Dictionary-sourced eyebrow
     expect(screen.queryByText(dict.en.about)).toBeNull();
-    // Local structural copy (heading + sub-head)
-    expect(screen.queryByText(ABOUT_HEADING.en)).toBeNull();
-    expect(screen.queryByText(ABOUT_SUBHEAD.en)).toBeNull();
-    // Profile-sourced prose
+    // Dictionary-sourced structural copy (heading + sub-head)
+    expect(screen.queryByText(dict.en.aboutHeading)).toBeNull();
+    expect(screen.queryByText(dict.en.aboutSubhead)).toBeNull();
+    // Profile-sourced prose -- exact string match, not a RegExp built from
+    // live data (profile.now.en ends in a period, a regex metacharacter).
     expect(screen.queryByText(profile.byline.en)).toBeNull();
-    expect(screen.queryByText(new RegExp(profile.now.en))).toBeNull();
+    expect(screen.queryByText(profile.now.en)).toBeNull();
     // Thai equivalents are present, including the correctly localized
     // heading and sub-head (not just "some non-English text").
-    expect(container.querySelector('h2')?.textContent).toBe(ABOUT_HEADING.th);
-    expect(container.querySelector('h3')?.textContent).toBe(ABOUT_SUBHEAD.th);
+    expect(container.querySelector('h2')?.textContent).toBe(dict.th.aboutHeading);
+    expect(container.querySelector('h3')?.textContent).toBe(dict.th.aboutSubhead);
     expect(screen.getByText(dict.th.about)).toBeTruthy();
     expect(screen.getByText(profile.byline.th)).toBeTruthy();
   });

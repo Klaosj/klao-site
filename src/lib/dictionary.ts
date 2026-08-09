@@ -28,6 +28,20 @@ const en = {
     'Say the number out loud.',
     'Then hand over the keys.',
   ] as readonly string[],
+  // Distinct from `about`/`howIWork` above, which are the short eyebrow
+  // labels: these are the bigger thesis-statement headings (and, for About,
+  // its sub-head) that sit below each eyebrow. Ported verbatim from
+  // .superpowers/brainstorm/11719-1786211516/content/studio.html, which
+  // gives every band its own eyebrow/bigHead pair. Originally kept as
+  // component-local constants (T8 first pass); moved here on review because
+  // `craft` above is the same category of fixed, non-profile copy and
+  // already lives in the dictionary, and because a local constant sits
+  // outside both `th: typeof en`'s compile-time key check and this file's
+  // own empty-string/untranslated-string tests below -- exactly the kind of
+  // guard a translated <h2>/<h3> needs.
+  craftHeading: 'Six things I will not trade away.',
+  aboutHeading: 'I like building things that are simple, and that stay running.',
+  aboutSubhead: 'A short story about how I ended up on both sides of the table.',
   copied: 'Copied',
   startConversation: 'Start a conversation',
   basedIn: 'Based in',
@@ -64,6 +78,9 @@ const th: typeof en = {
     'พูดตัวเลขออกมาตรงๆ',
     'แล้วส่งกุญแจให้',
   ] as readonly string[],
+  craftHeading: 'หกข้อที่ผมไม่ยอมแลก',
+  aboutHeading: 'ผมชอบสร้างของที่เรียบง่าย และยังทำงานอยู่ได้เอง',
+  aboutSubhead: 'เรื่องสั้นๆ ว่าทำไมผมถึงมายืนอยู่ทั้งสองฝั่งของโต๊ะ',
   copied: 'คัดลอกแล้ว',
   startConversation: 'เริ่มคุยกัน',
   basedIn: 'ประจำอยู่',

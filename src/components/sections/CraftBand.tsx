@@ -3,25 +3,6 @@ import Reveal from '@/components/motion/Reveal';
 import { dict } from '@/lib/dictionary';
 import type { Locale } from '@/lib/models';
 
-// The eyebrow above the heading is the short section label from the
-// dictionary (t.howIWork, "How I work"); the big heading below it is a
-// different sentence -- the six-line stack's actual thesis statement. Kept
-// as a local constant rather than a new dictionary key, for the same reason
-// Hero.tsx (T7) keeps its PILLS labels local: this is fixed structural copy
-// for the page's composition, not a personal fact `profile` could supply,
-// so it has no business in dictionary.ts (T6, already reviewed and
-// committed). Ported verbatim from
-// .superpowers/brainstorm/11719-1786211516/content/studio.html -- the file
-// Hero's own CSS comment names as "the spec's named working prototype" --
-// which gives every band a distinct eyebrow/bigHead pair. Reusing
-// `t.howIWork` for both (as an earlier draft of this task did) throws that
-// distinction away and makes the two renders of the same string ambiguous
-// to query in tests.
-export const CRAFT_HEADING: Record<Locale, string> = {
-  en: 'Six things I will not trade away.',
-  th: 'หกข้อที่ผมไม่ยอมแลก',
-};
-
 export default function CraftBand({ locale }: { locale: Locale }) {
   const t = dict[locale];
   return (
@@ -30,7 +11,7 @@ export default function CraftBand({ locale }: { locale: Locale }) {
         {t.howIWork}
       </p>
       <MaskedHeading
-        text={CRAFT_HEADING[locale]}
+        text={t.craftHeading}
         level={2}
         className="max-w-[17ch] text-[clamp(30px,5.1vw,64px)] font-bold leading-[1.1] tracking-[-0.028em]"
       />

@@ -3,21 +3,6 @@ import Reveal from '@/components/motion/Reveal';
 import { dict } from '@/lib/dictionary';
 import type { Locale, Profile } from '@/lib/models';
 
-// Same rationale as CraftBand's CRAFT_HEADING (T8): fixed structural copy
-// for this band's thesis statement and its sub-head, not a personal fact
-// `profile` could supply, ported verbatim from
-// .superpowers/brainstorm/11719-1786211516/content/studio.html rather than
-// invented here.
-export const ABOUT_HEADING: Record<Locale, string> = {
-  en: 'I like building things that are simple, and that stay running.',
-  th: 'ผมชอบสร้างของที่เรียบง่าย และยังทำงานอยู่ได้เอง',
-};
-
-export const ABOUT_SUBHEAD: Record<Locale, string> = {
-  en: 'A short story about how I ended up on both sides of the table.',
-  th: 'เรื่องสั้นๆ ว่าทำไมผมถึงมายืนอยู่ทั้งสองฝั่งของโต๊ะ',
-};
-
 export default function AboutBand({ profile, locale }: { profile: Profile; locale: Locale }) {
   const t = dict[locale];
   return (
@@ -26,7 +11,7 @@ export default function AboutBand({ profile, locale }: { profile: Profile; local
         {t.about}
       </p>
       <MaskedHeading
-        text={ABOUT_HEADING[locale]}
+        text={t.aboutHeading}
         level={2}
         className="max-w-[17ch] text-[clamp(30px,5.1vw,64px)] font-bold leading-[1.1] tracking-[-0.028em]"
       />
@@ -35,7 +20,7 @@ export default function AboutBand({ profile, locale }: { profile: Profile; local
           as="h3"
           className="max-w-[20ch] text-[clamp(20px,2.5vw,30px)] font-semibold leading-[1.28] tracking-[-0.018em]"
         >
-          {ABOUT_SUBHEAD[locale]}
+          {t.aboutSubhead}
         </Reveal>
         {/* Real profile data, not invented biography: the byline is the
             person's own summary, and `now` (Profile.now) is their current
