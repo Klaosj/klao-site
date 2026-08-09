@@ -147,6 +147,37 @@
   header.nav-on-light :where(.border-line) { border-color: var(--color-on-light-faint); }
 }
 
+/* Thai script's combining vowel/tone marks stack above and below the base
+   letter, and need more vertical room than the tight display-heading
+   leading utilities give Latin type (leading-[1.08]/[1.1]/[1.14] on
+   Hero/AboutBand/CraftBand/ContactBand's MaskedHeading headings, applied
+   via the `className` prop MaskedHeading.tsx forwards straight onto the
+   h1/h2/h3 it renders). At `/th` 1280px, the About heading broke
+   mid-syllable and orphaned a tone mark onto its own line -- confirmed in
+   Chrome, not by any unit test (jsdom never computes real line-wrapping).
+   The base `:lang(th)` rule above already raises line-height to 1.75 for
+   exactly this reason, but it sits in `@layer base`, while Tailwind's own
+   utilities (leading-[1.1] etc.) live in `@layer utilities`, generated
+   later by the `@import "tailwindcss"` at the top of this file -- CSS
+   cascade layers rank ABOVE selector specificity, so a later layer's rule
+   beats an earlier layer's even when the earlier one is the more specific
+   selector. This block is deliberately NOT inside any @layer, so per the
+   cascade-layers spec it wins over every layered rule regardless of source
+   order or specificity -- the same escape hatch the reduced-motion block
+   below already relies on. Scoped to h1/h2/h3 (the only elements
+   MaskedHeading ever renders, plus AboutBand's Reveal-based h3 subhead)
+   rather than every element carrying a tight `leading-[...]` utility, so
+   Latin's own leading is untouched on `en` and body copy already at a
+   comfortable 1.95 (Hero's byline, AboutBand's prose) isn't second-guessed
+   here too. 1.5 gives Thai headings enough room for stacked marks without
+   ballooning the giant hero clamp(34px,6.4vw,84px) headline into
+   noticeably looser lines than the design intends. */
+:lang(th) h1,
+:lang(th) h2,
+:lang(th) h3 {
+  line-height: 1.5;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .rv { transition: none !important; opacity: 1 !important; transform: none !important; }
   .rv-mask .w { transform: none !important; transition: none !important; }
