@@ -124,7 +124,11 @@ describe('smoke: pages render in both locales (fixture mode)', () => {
   it('sitemap lists every static page in both locales plus every post slug, and nothing else', async () => {
     const [entries, posts] = await Promise.all([sitemap(), getPosts()]);
     const urls = entries.map((e) => e.url);
-    const staticPaths = ['', '/projects', '/writing', '/career'];
+    // '/projects' and '/career' redirect to home anchors (next.config.ts) as
+    // of Task 8 -- a sitemap must not list URLs that answer 3xx, so they're
+    // dropped here too. See tests/sitemap-posts.test.ts's
+    // 'omits redirected legacy routes' for the negative assertion.
+    const staticPaths = ['', '/writing'];
     for (const locale of locales) {
       for (const path of staticPaths) {
         expect(urls).toContain(`${SITE_URL}/${locale}${path}`);
