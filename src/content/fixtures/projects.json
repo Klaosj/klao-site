@@ -6,10 +6,13 @@
       "en": "Automated news pipeline: RSS to Thai summaries delivered to Notion every morning.",
       "th": "ระบบข่าวอัตโนมัติ: RSS แปลสรุปเป็นไทย ส่งเข้า Notion ทุกเช้า"
     },
-    "stack": ["Python", "Notion API"],
+    "stack": [
+      "Python",
+      "Notion API"
+    ],
     "liveUrl": null,
     "repoUrl": "https://github.com/Klaosj",
-    "imageSrc": "/images/placeholder.svg",
+    "imageSrc": "/images/dailybrief.jpg",
     "featured": true,
     "order": 3
   },
@@ -20,10 +23,13 @@
       "en": "US options decision-support briefs with sector-based screening.",
       "th": "รายงานช่วยตัดสินใจออปชันหุ้นสหรัฐฯ พร้อมการคัดกรองตามกลุ่มอุตสาหกรรม"
     },
-    "stack": ["Python", "Notion API"],
+    "stack": [
+      "Python",
+      "Notion API"
+    ],
     "liveUrl": null,
     "repoUrl": "https://github.com/Klaosj",
-    "imageSrc": "/images/placeholder.svg",
+    "imageSrc": null,
     "featured": true,
     "order": 4
   },
@@ -34,10 +40,13 @@
       "en": "One-day Bangkok trip planner with exact budgets, built as a weekend project.",
       "th": "แอปวางแผนเที่ยวกรุงเทพฯ 1 วัน พร้อมงบประมาณละเอียด สร้างเสร็จในสุดสัปดาห์เดียว"
     },
-    "stack": ["Next.js", "Supabase"],
+    "stack": [
+      "Next.js",
+      "Supabase"
+    ],
     "liveUrl": null,
     "repoUrl": "https://github.com/Klaosj",
-    "imageSrc": "/images/placeholder.svg",
+    "imageSrc": "/images/gonai.jpg",
     "featured": true,
     "order": 1
   },
@@ -48,10 +57,13 @@
       "en": "macOS menu bar app tracking AI usage, quotas, and projects with a morning digest.",
       "th": "แอป menu bar บน macOS ติดตามการใช้ AI โควตา และโปรเจกต์ พร้อมสรุปทุกเช้า"
     },
-    "stack": ["Swift", "SwiftUI"],
+    "stack": [
+      "Swift",
+      "SwiftUI"
+    ],
     "liveUrl": null,
     "repoUrl": "https://github.com/Klaosj",
-    "imageSrc": "/images/placeholder.svg",
+    "imageSrc": null,
     "featured": true,
     "order": 2
   }

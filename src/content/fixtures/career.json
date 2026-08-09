@@ -57,6 +57,27 @@
     "order": 3
   },
   {
+    "id": "fx-vela",
+    "role": "Senior Barista",
+    "company": "VELA Central World",
+    "period": "APR 2023 – AUG 2023",
+    "wins": {
+      "en": [
+        "Led and coached the junior barista team, and helped build a floor people wanted to work on.",
+        "Held brew quality to one consistent standard across the bar.",
+        "Stepped onto the bar whenever the team was overwhelmed or short-handed.",
+        "Worked the counter directly — service that turned first visits into regulars."
+      ],
+      "th": [
+        "ดูแลและสอนงานทีมบาริสต้ารุ่นน้อง และช่วยสร้างบรรยากาศการทำงานที่ดี",
+        "คุมคุณภาพกาแฟทุกแก้วให้ได้มาตรฐานเดียวกัน",
+        "เข้าไปช่วยหน้าบาร์ทุกครั้งที่ทีมล้นมือหรือคนไม่พอ",
+        "ดูแลลูกค้าหน้าร้านเอง จนลูกค้าใหม่กลายเป็นลูกค้าประจำ"
+      ]
+    },
+    "order": 4
+  },
+  {
     "id": "fx-abundance",
     "role": "Business Owner",
     "company": "A Bun Dance (Craft Burger)",
@@ -73,6 +94,6 @@
         "วางแผนการเงินทั้งกำลังคน ต้นทุนวัตถุดิบ และกำไรขั้นต้น"
       ]
     },
-    "order": 4
+    "order": 5
   }
 ]
