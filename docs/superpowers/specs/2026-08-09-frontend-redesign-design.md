@@ -197,6 +197,17 @@ These cost real time. Recorded so the build does not rediscover them.
 | **Career data** | Timeline rows are visible `from Notion · Career` placeholders. Nothing was invented |
 | **Dead links** | 7 of 19 links are `href="#"` |
 
+**These do not block the build, they block "done".** Every task in the plan can be
+implemented against the placeholders. But A7 and A8 in §13 cannot be satisfied until
+the owner supplies the wordmark, portrait, typeface, email, and career data. Treat
+each as a named input with an owner, not as work the implementer can invent — the one
+time a Thai spelling of the owner's name was invented during prototyping, it was wrong
+and had to be pulled.
+
+**Frame-rate target device:** A4's ≥ 60 fps is measured on the owner's machine
+(Apple M5, Chrome, ANGLE/Metal) at 1440×900. Mobile is a separate budget: the particle
+count must drop on coarse pointers, and the target there is ≥ 30 fps.
+
 ---
 
 ## 11. Out of scope
