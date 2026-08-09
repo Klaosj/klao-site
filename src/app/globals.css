@@ -1,17 +1,45 @@
 @import "tailwindcss";
 
+/* Mirrors src/lib/theme.ts — keep the two in step. */
 @theme {
-  --color-paper: #fafaf8;
-  --color-ink: #111111;
-  --color-soft: #666666;
-  --color-line: #e5e5e0;
-  --color-card: #ffffff;
-  --font-display: Georgia, 'Times New Roman', serif;
+  --color-dark: #17171a;
+  --color-deep: #101013;
+  --color-light: #ffffff;
+  --color-peri: #a8aecb;
+  --color-peri-deep: #7d86ad;
+  --color-on-dark: #ffffff;
+  --color-on-dark-soft: rgba(255, 255, 255, 0.60);
+  --color-on-dark-faint: rgba(255, 255, 255, 0.13);
+  --color-on-light: #17171a;
+  --color-on-light-soft: #63636b;
+  --color-on-light-faint: #e6e6ea;
+  --font-display: "Avenir Next", Futura, "Helvetica Neue", -apple-system, sans-serif;
+  --font-thai: -apple-system, "Sukhumvit Set", "IBM Plex Sans Thai", "Noto Sans Thai", sans-serif;
+
+  /* LEGACY NAMES, REMAPPED — DO NOT DELETE.
+     `text-soft` (33 uses), `text-ink` (10), `border-line` (8) and `bg-card` (1)
+     appear across 11 files, including career/, projects/, writing/ and
+     writing/[slug] — four routes this redesign does not otherwise touch. In
+     Tailwind v4 the utility exists only while its token does, so deleting these
+     would strip the classes off those pages while `body` turns charcoal, and
+     they would render dark-on-dark. Pointing the old names at the new palette
+     keeps all 60 usages working and pulls those routes into the dark theme. */
+  --color-paper: #17171a;
+  --color-ink: #ffffff;
+  --color-soft: rgba(255, 255, 255, 0.60);
+  --color-line: rgba(255, 255, 255, 0.13);
+  --color-card: #101013;
 }
 
 @layer base {
   body {
-    background: var(--color-paper);
-    color: var(--color-ink);
+    background: var(--color-dark);
+    color: var(--color-on-dark);
+    -webkit-font-smoothing: antialiased;
+  }
+  /* Thai needs more leading than Latin at the same size. */
+  :lang(th) {
+    font-family: var(--font-thai);
+    line-height: 1.75;
   }
 }
