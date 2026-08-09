@@ -1,4 +1,5 @@
 import ParticleField from '@/components/motion/ParticleField';
+import PointerFx from '@/components/motion/PointerFx';
 import AboutBand from '@/components/sections/AboutBand';
 import ContactBand from '@/components/sections/ContactBand';
 import CraftBand from '@/components/sections/CraftBand';
@@ -27,6 +28,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   return (
     <>
       <ParticleField word={wordmark} heroSelector="#hero" />
+      <PointerFx />
       <Hero profile={profile} locale={locale} />
       <AboutBand profile={profile} locale={locale} />
       <CraftBand locale={locale} />

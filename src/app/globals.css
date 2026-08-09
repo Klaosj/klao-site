@@ -110,6 +110,50 @@
     .pill { display: none; }
   }
 
+  /* Custom cursor (PointerFx). Position rides the `translate` CSS property,
+     written every rAF frame straight onto the node -- never `left`/`top`,
+     which would trigger layout on a fixed element updated 60 times a
+     second. Growing over an interactive target (`.big`) changes `scale`
+     rather than `width`/`height`, for the same reason. `transform`
+     (centering), `translate` (position) and `scale` (size) are three
+     independent CSS properties that compose without clobbering each other
+     -- the same trick #hero .pill already relies on for drift + lag. No
+     backdrop-filter here either: same live-WebGL-canvas reasoning as the
+     pills above. */
+  #cursor {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--color-on-dark);
+    pointer-events: none;
+    z-index: 95;
+    mix-blend-mode: difference;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    transition: scale 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s;
+  }
+  #cursor.on { opacity: 1; }
+  #cursor.big { scale: 3.8333; }
+
+  /* Coarse/no-hover pointers (touch) never get a synthetic cursor -- there
+     is no hovering pointer for it to track. */
+  @media (hover: none), (pointer: coarse) {
+    #cursor { display: none; }
+  }
+
+  /* Magnetic buttons (PointerFx). Same custom-property-feeds-transform
+     shape as #hero .pill's --lagX/--lagY immediately above: PointerFx sets
+     --magX/--magY on pointermove, this is the only rule that ever sets
+     `transform` on .btn, and the transition below smooths between each
+     event's jump instead of needing a per-frame rAF update. */
+  .btn {
+    transform: translate(var(--magX, 0px), var(--magY, 0px));
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
   /* SiteNav (T11): a fixed, transparent header layered above every band
      (z-[60], set in the component itself) with no background of its own --
      same "no backdrop-filter" reasoning as the pills above, since it also
@@ -204,4 +248,12 @@ header.nav-on-light .nav-mark { background: var(--color-dark); color: var(--colo
      .rv above -- so freezing the drift and the pointer lag here is the
      intended behaviour, not an accident of source order. */
   .pill { animation: none !important; transform: none !important; }
+  /* PointerFx never attaches a listener or requests a frame under reduced
+     motion (checked once, before either happens -- see the component), so
+     --magX/--magY/--lagX/--lagY are never set and these would already be
+     inert. Explicit anyway, same belt-and-suspenders reasoning as .pill
+     above: a signposted override gated behind this media query, not the
+     silent-equal-specificity trap described there. */
+  #cursor { display: none !important; }
+  .btn { transition: none !important; transform: none !important; }
 }

@@ -27,7 +27,7 @@ export default function WorkGrid({ projects, locale }: { projects: Project[]; lo
           const card = (
             <>
               {project.imageSrc && (
-                <div className="overflow-hidden rounded-[12px] border border-on-dark-faint bg-deep">
+                <div className="frame overflow-hidden rounded-[12px] border border-on-dark-faint bg-deep">
                   {/* Browser-chrome bar: three dots above a 1px divider. */}
                   <div className="flex items-center gap-1.5 border-b border-on-dark-faint px-3 py-2.5">
                     <span aria-hidden="true" className="h-2 w-2 rounded-full bg-on-dark-faint" />
