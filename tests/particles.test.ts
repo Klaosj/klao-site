@@ -9,6 +9,16 @@ describe('buildLattice', () => {
     expect(l.seeds).toHaveLength(18);
   });
 
+  it('gives each point a varied random seed in [0, 1), not a fixed value', () => {
+    // seeds feed the shader as each particle's animation phase (Task 5); a
+    // regression that zeroes/fixes it would silently lock every particle in
+    // step, so length alone isn't enough — check spread and range too.
+    const l = buildLattice(3, 2, 3, [6, 3, 6]);
+    const seeds = Array.from(l.seeds);
+    expect(seeds.every((s) => s >= 0 && s < 1)).toBe(true);
+    expect(new Set(seeds).size).toBeGreaterThan(1);
+  });
+
   it('links each point to its +x, +y and +z neighbour only', () => {
     // a 2x2x2 cube has 12 edges
     const l = buildLattice(2, 2, 2, [1, 1, 1]);
@@ -44,8 +54,13 @@ describe('samplePoints', () => {
   });
 
   it('falls back to a ring rather than collapsing to the origin on an empty mask', () => {
-    const pts = samplePoints({ width: 4, height: 2, filled: [] }, 50, 8);
+    const spanX = 8;
+    const pts = samplePoints({ width: 4, height: 2, filled: [] }, 50, spanX);
     const radii = Array.from({ length: 50 }, (_, i) => Math.hypot(pts[i * 3], pts[i * 3 + 1]));
     expect(Math.min(...radii)).toBeGreaterThan(0);
+    // A ring of near-zero radius is visually indistinguishable from the
+    // origin-collapse bug this fallback exists to avoid, so pin a real floor
+    // (the implementation's own radius floor is 0.18 * spanX).
+    expect(Math.min(...radii)).toBeGreaterThanOrEqual(spanX * 0.1);
   });
 });
