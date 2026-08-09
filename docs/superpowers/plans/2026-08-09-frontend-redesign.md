@@ -167,6 +167,20 @@ Expected: PASS (4 tests)
   --color-on-light-faint: #e6e6ea;
   --font-display: "Avenir Next", Futura, "Helvetica Neue", -apple-system, sans-serif;
   --font-thai: -apple-system, "Sukhumvit Set", "IBM Plex Sans Thai", "Noto Sans Thai", sans-serif;
+
+  /* LEGACY NAMES, REMAPPED — DO NOT DELETE.
+     `text-soft` (33 uses), `text-ink` (10), `border-line` (8) and `bg-card` (1)
+     appear across 11 files, including career/, projects/, writing/ and
+     writing/[slug] — four routes this redesign does not otherwise touch. In
+     Tailwind v4 the utility exists only while its token does, so deleting these
+     would strip the classes off those pages while `body` turns charcoal, and
+     they would render dark-on-dark. Pointing the old names at the new palette
+     keeps all 60 usages working and pulls those routes into the dark theme. */
+  --color-paper: #17171a;
+  --color-ink: #ffffff;
+  --color-soft: rgba(255, 255, 255, 0.60);
+  --color-line: rgba(255, 255, 255, 0.13);
+  --color-card: #101013;
 }
 
 @layer base {
@@ -183,13 +197,20 @@ Expected: PASS (4 tests)
 }
 ```
 
-- [ ] **Step 6: Run the full gate**
+- [ ] **Step 6: Verify the untouched routes still render**
+
+Run `npm run dev` in the foreground with a 30s timeout and open `/en/projects`,
+`/en/writing` and `/en/career`. Each must show legible light text on the dark
+ground. If any element is invisible, the cause is a hardcoded light colour in
+that component, not a missing token — fix it there and note it in the report.
+
+- [ ] **Step 7: Run the full gate**
 
 Run: `npm run check`
 Expected: tsc clean, eslint clean, tests pass. If `tests/smoke.test.tsx` asserts
 an old token name, update the assertion to the new token — do not delete the test.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
 git add src/lib/theme.ts src/app/globals.css tests/theme.test.ts
