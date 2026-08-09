@@ -4,15 +4,15 @@
 @theme {
   --color-dark: #17171a;
   --color-deep: #101013;
-  --color-light: #ffffff;
+  --color-light: #fafafd;
   --color-peri: #a8aecb;
   --color-peri-deep: #7d86ad;
-  --color-on-dark: #ffffff;
-  --color-on-dark-soft: rgba(255, 255, 255, 0.60);
-  --color-on-dark-faint: rgba(255, 255, 255, 0.13);
+  --color-on-dark: #f4f5fa;
+  --color-on-dark-soft: rgba(228, 232, 246, 0.62);
+  --color-on-dark-faint: rgba(202, 208, 234, 0.15);
   --color-on-light: #17171a;
-  --color-on-light-soft: #63636b;
-  --color-on-light-faint: #e6e6ea;
+  --color-on-light-soft: #61626e;
+  --color-on-light-faint: #e4e5ef;
   --font-display: var(--font-sg), "Avenir Next", Futura, "Helvetica Neue", -apple-system, sans-serif;
   --font-thai: var(--font-anuphan), -apple-system, "Sukhumvit Set", "IBM Plex Sans Thai", "Noto Sans Thai", sans-serif;
 
@@ -30,9 +30,9 @@
      final-fix-report.md) after Task 11 deleted several of the original 60 --
      re-run the same grep before editing this comment again, don't guess. */
   --color-paper: #17171a;
-  --color-ink: #ffffff;
-  --color-soft: rgba(255, 255, 255, 0.60);
-  --color-line: rgba(255, 255, 255, 0.13);
+  --color-ink: #f4f5fa;
+  --color-soft: rgba(228, 232, 246, 0.62);
+  --color-line: rgba(202, 208, 234, 0.15);
   --color-card: #101013;
 }
 

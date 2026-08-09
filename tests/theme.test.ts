@@ -5,7 +5,7 @@ describe('theme tokens', () => {
   it('exposes the approved palette', () => {
     expect(HEX.dark).toBe('#17171a');
     expect(HEX.deep).toBe('#101013');
-    expect(HEX.light).toBe('#ffffff');
+    expect(HEX.light).toBe('#fafafd');
     expect(HEX.peri).toBe('#a8aecb');
   });
 

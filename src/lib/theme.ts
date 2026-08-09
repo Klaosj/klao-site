@@ -7,7 +7,9 @@
 export const HEX = {
   dark: '#17171a',
   deep: '#101013',
-  light: '#ffffff',
+  // Peri-tinted paper, not pure white — every neutral carries a trace of
+  // the periwinkle anchor hue (Hallmark gates 7/22: "tint the greys").
+  light: '#fafafd',
   peri: '#a8aecb',
   periDeep: '#7d86ad',
 } as const;
