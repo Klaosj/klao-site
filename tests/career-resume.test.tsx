@@ -20,6 +20,7 @@ const nonNullProfile: Profile = {
   email: 'test@example.com',
   resumeUrl: 'https://files.example.com/klao-resume.pdf',
   clients: [],
+  nameNative: null,
 };
 const nullProfile: Profile = { ...nonNullProfile, resumeUrl: null };
 

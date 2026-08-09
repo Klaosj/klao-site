@@ -16,6 +16,7 @@ const testProfile: Profile = {
   email: 'test@example.com',
   resumeUrl: null,
   clients: [],
+  nameNative: null,
 };
 
 vi.mock('@/lib/content', async (importOriginal) => {
@@ -60,7 +61,10 @@ describe('SiteFooter', () => {
   it('defaults to the English (font-mono) treatment when no locale is passed, so existing callers are unaffected', async () => {
     const { default: SiteFooter } = await import('@/components/SiteFooter');
     const jsx = (await SiteFooter()) as El;
-    const p = jsx.props?.children as El;
+    // footerNote (T4) added a second <p> above the copyright line, so
+    // `children` is now [footerNote, copyright] rather than a single element.
+    const children = jsx.props?.children as El[];
+    const p = children[1];
     expect(p.props?.className).toContain('font-mono');
     expect(p.props?.className).not.toContain('font-thai');
   });
@@ -74,10 +78,21 @@ describe('SiteFooter', () => {
     // redesign, via the same `eyebrowFont` helper.
     const { default: SiteFooter } = await import('@/components/SiteFooter');
     const jsx = (await SiteFooter({ locale: 'th' })) as El;
-    const p = jsx.props?.children as El;
+    const children = jsx.props?.children as El[];
+    const p = children[1];
     expect(p.props?.className).not.toContain('font-mono');
     expect(p.props?.className).not.toMatch(/tracking-\[/);
     expect(p.props?.className).toContain('font-thai');
+  });
+
+  it('renders the footerNote human line', async () => {
+    // Query by the English string (the default locale) -- T4's SiteFooter's
+    // human micro-copy, personality traceable to profile.now (nights &
+    // weekends), not fabricated.
+    const { default: SiteFooter } = await import('@/components/SiteFooter');
+    const jsx = await SiteFooter();
+    const text = collectText(jsx).join(' ');
+    expect(text).toContain('Built at night, powered by good coffee.');
   });
 
   it('renders no links at all -- nothing to leak a dead href', async () => {

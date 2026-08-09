@@ -27,6 +27,7 @@ const profile: Profile = {
   github: '',
   resumeUrl: '',
   clients: [],
+  nameNative: null,
 };
 
 describe('Hero', () => {

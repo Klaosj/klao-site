@@ -79,6 +79,11 @@ export function mapProfile(page: NotionPage): Profile | null {
     // Profile database without a `Clients` property maps to [], and the
     // band that renders it simply does not appear.
     clients: multi(page.properties.Clients),
+    // Optional rich text, same `text()` helper and null-default treatment
+    // as the other optional text fields above: a Profile database without a
+    // `NameNative` property maps to null, and the /th particle wordmark
+    // falls back to the Latin word (see src/app/[locale]/page.tsx).
+    nameNative: text(page.properties.NameNative) || null,
   };
 }
 

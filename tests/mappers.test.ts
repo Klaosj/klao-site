@@ -163,7 +163,21 @@ describe('mapProfile', () => {
       // empty list rather than failing, and the band that reads it simply
       // does not render.
       clients: [],
+      // NameNative is optional rich text, same additive treatment as RoleTH
+      // above: this fixture page has no `NameNative` property, so an
+      // existing Profile database maps to null rather than failing.
+      nameNative: null,
     });
+  });
+
+  it('uses the native name when NameNative is present', () => {
+    // The other half of the contract: the null-default above must not be so
+    // eager that a real native-script name gets ignored.
+    const page = {
+      ...profilePage,
+      properties: { ...profilePage.properties, NameNative: rich('สุวิจักขณ์') },
+    };
+    expect(mapProfile(page)!.nameNative).toBe('สุวิจักขณ์');
   });
 
   it('returns null and warns on missing Name', () => {

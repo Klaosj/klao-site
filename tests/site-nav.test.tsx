@@ -37,6 +37,7 @@ const profile: Profile = {
   email: 'klao@example.com',
   resumeUrl: null,
   clients: [],
+  nameNative: null,
 };
 
 describe('SiteNav', () => {

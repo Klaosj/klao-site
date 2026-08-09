@@ -92,4 +92,9 @@ export interface Profile {
   // invariant: these are proper nouns and render identically in both
   // languages, the same reasoning `company` above already relies on.
   clients: string[];
+  // Native-script display name (Thai, for this owner). Drives the /th
+  // particle wordmark in src/app/[locale]/page.tsx -- rasterised via
+  // ParticleField's canvas renderer, not plain DOM text. null falls back to
+  // the Latin wordmark (profile.name's first word) on both locales.
+  nameNative: string | null;
 }

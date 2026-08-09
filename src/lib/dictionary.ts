@@ -126,6 +126,10 @@ const en = {
   // pattern this codebase deliberately avoids.
   navMain: 'Main',
   navLanguage: 'Language',
+
+  // SiteFooter's human line. True of the owner (the projects were built
+  // nights-and-weekends per profile.now) — personality, not fabrication.
+  footerNote: 'Built at night, powered by good coffee.',
 };
 
 const th: typeof en = {
@@ -197,6 +201,8 @@ const th: typeof en = {
 
   navMain: 'เมนูหลัก',
   navLanguage: 'ภาษา',
+
+  footerNote: 'สร้างตอนกลางคืน ด้วยกาแฟดีๆ หลายแก้ว',
 };
 
 export type UiDict = typeof en;

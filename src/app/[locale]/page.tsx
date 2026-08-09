@@ -22,9 +22,15 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
     getCareer(),
   ]);
 
-  // Owner-supplied and still undecided. Until it is, derive from the profile
-  // rather than guessing a brand name.
-  const wordmark = (profile.name.split(' ')[0] ?? '').toUpperCase();
+  // Owner-supplied: profile.nameNative (the Thai display name) drives the
+  // /th particle field, so the wordmark reads in Thai rather than a
+  // transliterated Latin fragment. ParticleField already rasterises Thai
+  // (THAI_RANGE/THAI_STACK) -- no changes needed there. Falls back to the
+  // Latin first name (uppercased) on /en, or on /th when nameNative is null.
+  const wordmark =
+    locale === 'th' && profile.nameNative
+      ? profile.nameNative
+      : profile.name.split(' ')[0].toUpperCase();
 
   return (
     <>

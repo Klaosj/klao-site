@@ -24,6 +24,7 @@ const profile: Profile = {
   github: '',
   resumeUrl: null,
   clients: [],
+  nameNative: null,
 };
 
 describe('ContactBand', () => {
