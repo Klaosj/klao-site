@@ -34,4 +34,7 @@ export const PARTICLE_COLORS = {
   // Near-white periwinkle the points shift toward as the wordmark resolves;
   // the scattered cloud stays the muted pair above.
   glow: rgbFloat('#dfe3f4'),
+  // Atmospheric-perspective target: far points fade toward the page's own
+  // deep surface, so distance reads as fog, not as dimmer dots.
+  fog: rgbFloat(HEX.deep),
 } as const;

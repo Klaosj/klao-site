@@ -33,4 +33,9 @@ describe('theme tokens', () => {
       expect(c).toBeGreaterThanOrEqual(PARTICLE_COLORS.pointA[i]);
     });
   });
+
+  it('defines a fog colour matching the page\'s deep surface', () => {
+    expect(PARTICLE_COLORS.fog).toHaveLength(3);
+    expect(PARTICLE_COLORS.fog).toEqual(rgbFloat(HEX.deep));
+  });
 });

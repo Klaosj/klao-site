@@ -45,26 +45,33 @@ vec4 solve(){
 }`;
 
 const VS = HEAD + `
-out float vSeed; out float vAlpha;
+uniform float uFocus, uDof;
+out float vSeed; out float vAlpha; out float vCoc; out float vFog;
 void main(){
   vec4 mv = solve();
   gl_Position = uProj * mv;
   float d = max(-mv.z, .1);
-  gl_PointSize = clamp(uSize*(4.2/d)*(.55+.9*fract(aSeed*137.13))*(1.+.8*uMorph), 1., 48.);
+  // Circle of confusion: 0 on the focal plane, →1 far out of focus.
+  float coc = clamp(abs(d - uFocus) / 5.5, 0., 1.) * uDof;
+  gl_PointSize = clamp(uSize*(4.2/d)*(.55+.9*fract(aSeed*137.13))*(1.+.8*uMorph)*(1.+1.5*coc), 1., 64.);
   vSeed = fract(aSeed*29.7);
-  vAlpha = clamp(1.15-(d-3.)/9., .1, 1.);
+  vAlpha = clamp(1.25-(d-3.)/7., .06, 1.);
+  vCoc = coc;
+  vFog = clamp((d - 6.5) / 7.5, 0., 1.);
 }`;
 
 const FS = `#version 300 es
 precision highp float;
-in float vSeed; in float vAlpha;
-uniform vec3 uColA, uColB, uColGlow; uniform float uFade, uGlow;
+in float vSeed; in float vAlpha; in float vCoc; in float vFog;
+uniform vec3 uColA, uColB, uColGlow, uFog3; uniform float uFade, uGlow;
 out vec4 frag;
 void main(){
   vec2 c = gl_PointCoord*2.-1.;
   float r = dot(c,c); if (r > 1.) discard;
-  float a = pow(1.-r, 1.6);
+  // In focus: tight bright core. Out of focus: flat, soft, dimmer disc.
+  float a = pow(1.-r, mix(2.4, .8, vCoc)) * mix(1., .38, vCoc);
   vec3 col = mix(mix(uColA, uColB, vSeed), uColGlow, uGlow);
+  col = mix(col, uFog3, vFog * (1. - uGlow));
   frag = vec4(col * a * uFade, a * vAlpha * uFade);
 }`;
 
@@ -233,8 +240,8 @@ export default function ParticleField({ word, heroSelector }: Props) {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
     const lattice = coarsePointer
-      ? buildLattice(11, 7, 11, [6.4, 3.5, 6.4])
-      : buildLattice(17, 10, 17, [6.4, 3.5, 6.4]);
+      ? buildLattice(11, 7, 11, [6.4, 3.5, 9.6])
+      : buildLattice(17, 10, 17, [6.4, 3.5, 9.6]);
     const targets = samplePoints(rasterise(word), lattice.count, 9.2);
 
     // `canvas.getContext('webgl2')` returns the same cached context for the
@@ -302,7 +309,7 @@ export default function ParticleField({ word, heroSelector }: Props) {
       const settle = s * s * (3 - 2 * s);
       const orb = time * 0.055 + mx * 0.34;
       const roam = [Math.sin(orb) * 7.6, 1.15 + my * -1.05, Math.cos(orb) * 7.6];
-      const front = [mx * 0.55, my * -0.45, 7.9];
+      const front = [mx * 0.8, my * -0.6, 7.9];
       const eye = [
         roam[0] + (front[0] - roam[0]) * settle,
         roam[1] + (front[1] - roam[1]) * settle,
@@ -334,6 +341,10 @@ export default function ParticleField({ word, heroSelector }: Props) {
       gl.uniform3fv(PT.uniforms.uColGlow, PARTICLE_COLORS.glow);
       gl.uniform1f(PT.uniforms.uGlow, 0.6 * morph);
       gl.uniform1f(PT.uniforms.uFade, fade);
+      gl.uniform1f(PT.uniforms.uFocus, 7.9);
+      // Scattered cloud floats out of focus; the name resolves INTO focus.
+      gl.uniform1f(PT.uniforms.uDof, 1.0 - 0.85 * morph);
+      gl.uniform3fv(PT.uniforms.uFog3, PARTICLE_COLORS.fog);
       gl.drawArrays(gl.POINTS, 0, lattice.count);
 
       gl.bindVertexArray(null);
