@@ -73,7 +73,15 @@ export default function CopyEmail({
     <button
       type="button"
       onClick={copy}
-      aria-label={dict[locale].copyEmailAction}
+      // The email comes FIRST and in full, because it is the button's visible
+      // text. WCAG 2.5.3 Label in Name requires the accessible name to contain
+      // the visible label: a speech-input user says what they can see ("click
+      // suvichuk.j@gmail.com"), and a bare "Copy email address" label -- which
+      // this was, and which Lighthouse caught as
+      // label-content-name-mismatch -- would leave them with no way to hit it.
+      // Naming the action after it keeps the purpose clear for screen readers
+      // without overriding the visible label.
+      aria-label={`${email}, ${dict[locale].copyEmailAction}`}
       className="inline-flex items-center gap-2.5 text-[15px]"
     >
       <span className="border-b border-on-dark-faint pb-[3px]">{email}</span>

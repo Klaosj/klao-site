@@ -219,7 +219,13 @@
 header.nav-on-light .text-soft { color: var(--color-on-light-soft); }
 header.nav-on-light .text-ink { color: var(--color-on-light); }
 header.nav-on-light .border-line { border-color: var(--color-on-light-faint); }
-header.nav-on-light nav[aria-label="Language"] a { color: var(--color-on-light); }
+/* Selected by data attribute, NOT by aria-label. The old
+   nav[aria-label="Language"] selector coupled this colour rule to an English
+   accessible name, so translating that name would have silently stopped it
+   matching on /th -- reintroducing the 1.00:1 invisible language switcher
+   that blocked this branch's merge. Accessible names are content and get
+   translated; styling hooks are structure and must not. */
+header.nav-on-light nav[data-lang-nav] a { color: var(--color-on-light); }
 header.nav-on-light .nav-mark { background: var(--color-dark); color: var(--color-light); }
 
 /* Thai script's combining vowel/tone marks stack above and below the base

@@ -126,7 +126,7 @@ export default function SiteNav({ locale, profile }: { locale: Locale; profile: 
           in-page anchor links until `md` (768px) gives both locales real
           headroom instead of a few px of luck. Verified in Chrome at
           640px, 672px and 768px in both locales. */}
-      <nav aria-label="Main" className="hidden items-center gap-[clamp(20px,3.4vw,54px)] md:flex">
+      <nav aria-label={t.navMain} className="hidden items-center gap-[clamp(20px,3.4vw,54px)] md:flex">
         {anchors.map((a) => (
           <Link
             key={a.hash}

@@ -108,6 +108,14 @@ const en = {
   // the content is not there yet rather than showing an empty container the
   // visitor has to interpret.
   writingUnpublished: 'No posts published yet.',
+
+  // Landmark names. Two <nav> elements need distinguishing accessible names,
+  // and both were hardcoded English on the Thai pages -- a screen reader
+  // reading /th announced "Main navigation" and "Language navigation" in the
+  // wrong language. Not inline strings in the components: that is the
+  // pattern this codebase deliberately avoids.
+  navMain: 'Main',
+  navLanguage: 'Language',
 };
 
 const th: typeof en = {
@@ -170,6 +178,9 @@ const th: typeof en = {
   identities: ['พัฒนาธุรกิจ', 'บาริสต้า', 'สร้างเครื่องมือใช้เอง'] as readonly string[],
 
   writingUnpublished: 'ยังไม่ได้เผยแพร่บทความ',
+
+  navMain: 'เมนูหลัก',
+  navLanguage: 'ภาษา',
 };
 
 export type UiDict = typeof en;

@@ -202,25 +202,38 @@ describe('CopyEmail', () => {
     expect(liveRegion?.textContent).toBe('');
   });
 
-  it("gives the button a fixed accessible name that never includes the copied label", async () => {
+  it('names the button with its visible text plus the action, and never the copied label', async () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     vi.stubGlobal('navigator', { clipboard: { writeText } });
 
     render(<CopyEmail email="a@b.co" copiedLabel="Copied" locale="en" />);
-    // Before any click, the old bug concatenated the always-present
-    // "Copied" text into the accessible name ("a@b.co Copied, button").
-    // Looking the button up by its intended fixed name (dict.en.copyEmailAction)
-    // proves that isn't happening -- this query throws if the computed name
-    // is anything else, including that concatenation.
-    expect(screen.getByRole('button', { name: 'Copy email address' })).toBeTruthy();
+    const nameOf = () => screen.getByRole('button').getAttribute('aria-label') ?? '';
+
+    // Two separate requirements, and an earlier fix satisfied one by breaking
+    // the other:
+    //
+    // 1. WCAG 2.5.3 Label in Name -- the accessible name must CONTAIN the
+    //    visible label. The visible text here is the address itself, so a
+    //    speech-input user says "click a@b.co". A bare "Copy email address"
+    //    name passed the old exact-string assertion but left that user unable
+    //    to target the button at all; Lighthouse flagged it as
+    //    label-content-name-mismatch.
+    // 2. The original defect -- the always-present "Copied" text must never
+    //    be concatenated into the name, before OR after a click.
+    //
+    // Asserting containment rather than one exact string is deliberate: the
+    // exact-string version is what allowed requirement 1 to regress silently.
+    expect(nameOf()).toContain('a@b.co');
+    expect(nameOf()).toContain('Copy email address');
+    expect(nameOf()).not.toContain('Copied');
 
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: 'Copy email address' }));
+      fireEvent.click(screen.getByRole('button'));
       await Promise.resolve();
     });
-    // And it must still read the same after a successful copy -- not
-    // "Copy email address Copied".
-    expect(screen.getByRole('button', { name: 'Copy email address' })).toBeTruthy();
+
+    expect(nameOf()).toContain('a@b.co');
+    expect(nameOf()).not.toContain('Copied');
   });
 
   it('announces nothing in the live region when the clipboard API is entirely absent', async () => {

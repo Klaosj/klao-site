@@ -189,8 +189,12 @@ describe('Hero', () => {
     expect(screen.getByText('real@example.com')).toBeTruthy();
     // Its accessible name comes from CopyEmail's own aria-label
     // (dict.en.copyEmailAction), not from its (mutating) text content.
-    const copyButton = screen.getByRole('button', { name: 'Copy email address' });
-    expect(copyButton).toBeTruthy();
+    // Matched by substring, not exact string: the name must CONTAIN the
+    // visible address to satisfy WCAG 2.5.3 Label in Name, and an exact-match
+    // assertion is exactly what let that regress unnoticed once already.
+    // CopyEmail's own spec owns the full contract.
+    const copyButton = screen.getByRole('button', { name: /Copy email address/ });
+    expect(copyButton.getAttribute('aria-label')).toContain('real@example.com');
     // The mailto capsule is still present and still the primary action.
     const mailLink = container.querySelector('a[href="mailto:real@example.com"]');
     expect(mailLink).toBeTruthy();

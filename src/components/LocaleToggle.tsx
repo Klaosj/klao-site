@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { dict } from '@/lib/dictionary';
 
 export default function LocaleToggle() {
   const pathname = usePathname() ?? '/en';
@@ -19,7 +20,17 @@ export default function LocaleToggle() {
   const linkClass = (active: boolean) =>
     `inline-flex items-center justify-center p-1.5 -m-1.5 ${active ? 'font-semibold' : 'text-soft'}`;
   return (
-    <nav aria-label="Language" className="whitespace-nowrap rounded border border-line px-2 py-1 text-sm">
+    // `data-lang-nav` is the STABLE hook globals.css styles this control by.
+    // It used to be selected as nav[aria-label="Language"], which silently
+    // coupled a visual rule to an English string: localizing the label below
+    // would have stopped that selector matching on /th and brought back the
+    // 1.00:1 invisible language switcher that blocked this branch's merge.
+    // The accessible name is translated; the styling hook is not.
+    <nav
+      data-lang-nav
+      aria-label={dict[current].navLanguage}
+      className="whitespace-nowrap rounded border border-line px-2 py-1 text-sm"
+    >
       <Link
         href={href('en')}
         className={linkClass(current === 'en')}
