@@ -172,7 +172,7 @@
      accepts for `transform` -- just a narrower one.) */
   .btn {
     translate: var(--magX, 0px) var(--magY, 0px);
-    transition: translate 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: translate 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
   /* SiteNav (T11): a fixed, transparent header layered above every band
@@ -227,6 +227,52 @@
   }
   .u-draw:hover::after,
   .u-draw:focus-visible::after { transform: scaleX(1); }
+
+  /* ---- Life injection: ambient light ---------------------------------- */
+  /* Soft periwinkle light source behind the hero copy and the contact CTA.
+     pointer-events none; z-index -1 keeps it under the content while the
+     section background stays beneath both. */
+  #hero [data-hero-stage]::before,
+  #contact::before {
+    content: '';
+    position: absolute;
+    inset: -10% -20%;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(42% 34% at 50% 38%, rgba(168, 174, 203, 0.16), transparent 70%),
+      radial-gradient(30% 24% at 50% 60%, rgba(125, 134, 173, 0.10), transparent 70%);
+  }
+  #contact { position: relative; }
+
+  /* Film grain on dark bands only (never the light bands). Tiny SVG
+     fractal-noise tile, ~0.5KB inline, repeats. Low opacity so it reads as
+     texture, not dirt. */
+  section.bg-dark::after,
+  section.bg-deep::after,
+  #hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0.05;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* The accent finally does a job: interactive states are periwinkle.
+     Placed after the .nav-link:hover / .nav-social:hover rules above (and
+     after their nav-on-light overrides) so these win at equal specificity
+     by source order -- same silent-equal-specificity mechanism documented
+     on .pill and #cursor above. */
+  .nav-link:hover, .nav-social:hover { color: var(--color-peri); }
+  header.nav-on-light .nav-link:hover,
+  header.nav-on-light .nav-social:hover { color: var(--color-peri-deep); }
+  a:focus-visible, button:focus-visible {
+    outline: 2px solid var(--color-peri);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
 }
 
 /* LocaleToggle uses the legacy `text-soft`/`border-line` names, which the
