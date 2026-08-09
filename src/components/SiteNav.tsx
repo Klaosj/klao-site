@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useEffect, useRef } from 'react';
 import { dict } from '@/lib/dictionary';
 import type { Locale, Profile } from '@/lib/models';
@@ -40,6 +42,22 @@ export default function SiteNav({ locale, profile }: { locale: Locale; profile: 
   const headerRef = useRef<HTMLElement | null>(null);
   const monogram = profile.name.trim().charAt(0).toUpperCase();
 
+  // The four in-page anchors (plus the monogram mark, which is a fifth link
+  // to the same #hero id) only resolve on the homepage -- its section ids
+  // (#hero/#about/#work/#cv) don't exist on /projects, /writing or /career
+  // (confirmed by curling each route and grepping for the ids: absent on
+  // all three). Outside the homepage the same links instead point at
+  // `/{locale}#id`, a real cross-route navigation to the matching homepage
+  // section, so the browser's normal navigate-then-jump-to-fragment
+  // behaviour resolves them -- never a dead fragment on the current page.
+  // `usePathname()` returns null outside a mounted App Router (e.g. in this
+  // component's own unit tests), so it defaults to the locale's own root,
+  // which reproduces the homepage in-page-scroll behaviour the tests
+  // already exercise.
+  const pathname = usePathname() ?? `/${locale}`;
+  const isHome = pathname === `/${locale}` || pathname === `/${locale}/`;
+  const anchorHref = (hash: string) => (isHome ? hash : `/${locale}${hash}`);
+
   useEffect(() => {
     const header = headerRef.current;
     if (!header) return;
@@ -63,27 +81,40 @@ export default function SiteNav({ locale, profile }: { locale: Locale; profile: 
 
   // Section ids created by Task 11's page composition: Hero (#hero),
   // AboutBand (#about), WorkGrid (#work -- added in this task), CvBand
-  // (#cv). Each href below names a real in-page anchor, never a bare,
-  // dangling hash.
-  const anchors: { href: string; label: string }[] = [
-    { href: '#hero', label: t.home },
-    { href: '#about', label: t.about },
-    { href: '#work', label: t.selectedWork },
-    { href: '#cv', label: t.career },
+  // (#cv). `hash` (not `href`) -- the real, route-aware href is computed
+  // per-render below via `anchorHref`, so this is never a bare, dangling
+  // hash on its own.
+  const anchors: { hash: string; label: string }[] = [
+    { hash: '#hero', label: t.home },
+    { hash: '#about', label: t.about },
+    { hash: '#work', label: t.selectedWork },
+    { hash: '#cv', label: t.career },
   ];
 
+  // Hit-area fix (WCAG 2.5.8): every text-only link below renders at
+  // 10.5-11px with no padding of its own, well under the 24x24 CSS px
+  // minimum. `p-2` grows the clickable/tappable box in every direction;
+  // the matching `-m-2` cancels that growth for layout purposes (a
+  // negative margin shrinks an element's flow/gap footprint back to its
+  // unpadded size without affecting where its own border-box -- the
+  // actually clickable area -- gets painted or hit-tested), so neither the
+  // visible text nor the gap spacing between items changes at all. Both
+  // the header (`flex` row) and this `nav` (also `flex`) are flex
+  // containers using `gap`, which is exactly the "tight spacing" the
+  // 640-672px overflow comment below warns about -- this is what keeps the
+  // fix from reintroducing that bug.
   return (
     <header
       ref={headerRef}
       className="fixed inset-x-0 top-0 z-[60] flex items-center justify-between gap-4 px-6 py-5 sm:px-10"
     >
-      <a
-        href="#hero"
+      <Link
+        href={anchorHref('#hero')}
         aria-label={t.home}
         className="nav-mark grid h-[42px] w-[42px] shrink-0 place-items-center rounded-full bg-light text-[15px] font-bold tracking-[-0.02em] text-dark"
       >
         {monogram}
-      </a>
+      </Link>
 
       {/* `md:flex` (not `sm:flex`): between ~640px and ~672px on /th, the
           fixed header's content (monogram + 4 anchor links + socials + the
@@ -97,32 +128,46 @@ export default function SiteNav({ locale, profile }: { locale: Locale; profile: 
           640px, 672px and 768px in both locales. */}
       <nav aria-label="Main" className="hidden items-center gap-[clamp(20px,3.4vw,54px)] md:flex">
         {anchors.map((a) => (
-          <a
-            key={a.href}
-            href={a.href}
-            className={`nav-link whitespace-nowrap text-[10.5px] uppercase ${eyebrowFont(locale, 'tracking-[0.22em]')}`}
+          <Link
+            key={a.hash}
+            href={anchorHref(a.hash)}
+            className={`nav-link inline-flex items-center justify-center whitespace-nowrap p-2 -m-2 text-[10.5px] uppercase ${eyebrowFont(locale, 'tracking-[0.22em]')}`}
           >
             {a.label}
-          </a>
+          </Link>
         ))}
       </nav>
 
       <div className="flex items-center gap-3.5 text-[11px]">
         {/* Each social link is gated on its own profile field -- omitted
             entirely (never a dead placeholder href) when that field is
-            empty, same rule the old SiteFooter followed. */}
+            empty, same rule the old SiteFooter followed. External URLs, so
+            plain <a>, not next/link -- Link is for in-site routes. */}
         {profile.linkedin && (
-          <a href={profile.linkedin} target="_blank" rel="noreferrer" className="nav-social whitespace-nowrap">
+          <a
+            href={profile.linkedin}
+            target="_blank"
+            rel="noreferrer"
+            className="nav-social inline-flex items-center justify-center whitespace-nowrap p-2 -m-2"
+          >
             LinkedIn
           </a>
         )}
         {profile.github && (
-          <a href={profile.github} target="_blank" rel="noreferrer" className="nav-social whitespace-nowrap">
+          <a
+            href={profile.github}
+            target="_blank"
+            rel="noreferrer"
+            className="nav-social inline-flex items-center justify-center whitespace-nowrap p-2 -m-2"
+          >
             GitHub
           </a>
         )}
         {profile.email && (
-          <a href={`mailto:${profile.email}`} className="nav-social whitespace-nowrap">
+          <a
+            href={`mailto:${profile.email}`}
+            className="nav-social inline-flex items-center justify-center whitespace-nowrap p-2 -m-2"
+          >
             {t.email}
           </a>
         )}

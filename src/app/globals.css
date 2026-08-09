@@ -271,4 +271,14 @@ header.nav-on-light .nav-mark { background: var(--color-dark); color: var(--colo
      silent-equal-specificity trap described there. */
   #cursor { display: none !important; }
   .btn { transition: none !important; translate: none !important; }
+  /* .nav-mark:hover (SiteNav's monogram badge) rotates and scales on hover
+     -- the one hover effect on the page this block didn't already reach.
+     Same signposted, gated-behind-the-media-query override as every rule
+     above it, not the silent-equal-specificity trap the block's own opening
+     comment describes. Only `transform` is neutralized, not the whole
+     `.nav-mark` transition list: the base rule's `background 0.4s, color
+     0.4s` (the nav-on-light colour inversion) is a colour fade, not motion,
+     so it's left alone -- same distinction #hero .pill's drift-vs-lag split
+     draws elsewhere in this file. */
+  .nav-mark:hover { transform: none !important; }
 }
