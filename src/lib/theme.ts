@@ -1,6 +1,9 @@
 /** Single source of truth for colour. `globals.css` mirrors these into
  *  Tailwind's `@theme`; the WebGL shader reads the float form. Changing a
- *  colour in one place and not the other is the failure this file prevents. */
+ *  colour in one place and not the other is the failure this file prevents.
+ *  Fonts aren't mirrored here: `--font-display`/`--font-thai` chain through
+ *  the `--font-sg`/`--font-anuphan` next/font variables set on `<html>` in
+ *  src/app/[locale]/layout.tsx, so that layout file is their source of truth. */
 export const HEX = {
   dark: '#17171a',
   deep: '#101013',

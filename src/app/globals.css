@@ -13,8 +13,8 @@
   --color-on-light: #17171a;
   --color-on-light-soft: #63636b;
   --color-on-light-faint: #e6e6ea;
-  --font-display: "Avenir Next", Futura, "Helvetica Neue", -apple-system, sans-serif;
-  --font-thai: -apple-system, "Sukhumvit Set", "IBM Plex Sans Thai", "Noto Sans Thai", sans-serif;
+  --font-display: var(--font-sg), "Avenir Next", Futura, "Helvetica Neue", -apple-system, sans-serif;
+  --font-thai: var(--font-anuphan), -apple-system, "Sukhumvit Set", "IBM Plex Sans Thai", "Noto Sans Thai", sans-serif;
 
   /* LEGACY NAMES, REMAPPED — DO NOT DELETE.
      `text-soft` (17 uses), `text-ink` (1), `border-line` (3) and `bg-card` (1)
@@ -46,6 +46,12 @@
   :lang(th) {
     font-family: var(--font-thai);
     line-height: 1.75;
+  }
+  /* Display face for headings only; body copy stays on the system stack.
+     :lang(th) outranks this on specificity (0,1,0 vs 0,0,1), so Thai
+     headings keep --font-thai (Anuphan) automatically. */
+  h1, h2, h3 {
+    font-family: var(--font-display);
   }
 }
 
@@ -258,6 +264,9 @@ header.nav-on-light .nav-mark { background: var(--color-dark); color: var(--colo
 :lang(th) h3 {
   line-height: 1.5;
 }
+
+/* The one place the accent colour is unmissable. */
+::selection { background: var(--color-peri); color: var(--color-deep); }
 
 @media (prefers-reduced-motion: reduce) {
   .rv { transition: none !important; opacity: 1 !important; transform: none !important; }
