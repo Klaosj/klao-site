@@ -78,6 +78,18 @@ describe('SiteNav', () => {
     expect(linkedin?.getAttribute('rel')).toBe('noreferrer');
   });
 
+  it('renders the Thai nav labels in the Thai font stack with normal tracking, never font-mono', () => {
+    // Regression test: no monospace face carries Thai glyphs (whole-branch
+    // review finding, confirmed in Chrome), so the four in-page nav labels
+    // fell back per glyph and the heavy tracking pulled combining marks off
+    // their base letters whenever locale was 'th'.
+    render(<SiteNav locale="th" profile={profile} />);
+    const link = screen.getByText(dict.th.home).closest('a') as HTMLElement;
+    expect(link.className).not.toContain('font-mono');
+    expect(link.className).not.toMatch(/tracking-\[/);
+    expect(link.className).toContain('font-thai');
+  });
+
   it('includes the language switcher', () => {
     render(<SiteNav locale="en" profile={profile} />);
     expect(screen.getByRole('navigation', { name: 'Language' })).toBeTruthy();
@@ -131,5 +143,35 @@ describe('SiteNav', () => {
       ({ top: 900, bottom: 1700, left: 0, right: 0, width: 0, height: 800, x: 0, y: 900, toJSON() {} }) as DOMRect;
     window.dispatchEvent(new Event('scroll'));
     expect(header.classList.contains('nav-on-light')).toBe(false);
+  });
+
+  it("inverts as soon as a light band touches ANY part of the header's real height, not just a single fixed point near its top", () => {
+    // Regression test for a real bug the whole-branch review caught in
+    // Chrome, not by any unit test (jsdom's getBoundingClientRect() is
+    // all-zero by default): an earlier version of this scroll listener
+    // checked a single constant y=40 against the light band's rect, even
+    // though the fixed header's own content is really ~82px tall. A band
+    // that had only reached y=50..900 -- covering the bottom ~32px of the
+    // header, where the nav links and locale toggle actually sit, but not
+    // the old y=40 probe point -- left the nav white-on-white against the
+    // light band underneath it. This stubs the header's own rect (jsdom
+    // never lays it out for real) to a realistic ~82px height and gives
+    // the band exactly that "past the old point, still inside the header"
+    // range.
+    const { container } = render(
+      <>
+        <SiteNav locale="en" profile={profile} />
+        <section className="bg-light" data-testid="light-band" />
+      </>,
+    );
+    const header = container.querySelector('header') as HTMLElement;
+    const band = screen.getByTestId('light-band');
+
+    header.getBoundingClientRect = () =>
+      ({ top: 0, bottom: 82, left: 0, right: 0, width: 0, height: 82, x: 0, y: 0, toJSON() {} }) as DOMRect;
+    band.getBoundingClientRect = () =>
+      ({ top: 50, bottom: 900, left: 0, right: 0, width: 0, height: 850, x: 0, y: 50, toJSON() {} }) as DOMRect;
+    window.dispatchEvent(new Event('scroll'));
+    expect(header.classList.contains('nav-on-light')).toBe(true);
   });
 });

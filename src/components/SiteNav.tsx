@@ -3,14 +3,23 @@
 import { useEffect, useRef } from 'react';
 import { dict } from '@/lib/dictionary';
 import type { Locale, Profile } from '@/lib/models';
+import { eyebrowFont } from '@/lib/typography';
 import LocaleToggle from './LocaleToggle';
 
-// A fixed probe point near the top of the viewport, just under the header's
-// own content -- mirrors the reference prototype's syncNav
-// (.superpowers/brainstorm/11719-1786211516/content/studio.html), which
-// checks a constant y=40 rather than the header's own live height. A light
-// band (currently only AboutBand, tagged with the `bg-light` utility class)
-// crossing this point means the fixed, transparent header needs to invert.
+// The header is `position: fixed`, so its own bounding rect IS the region
+// the fixed, transparent nav actually occupies on screen -- whether the
+// nav needs to invert is decided by whether a light band's rect overlaps
+// that WHOLE box, not one arbitrary point inside it. An earlier version of
+// this file (mirroring the reference prototype's syncNav,
+// .superpowers/brainstorm/11719-1786211516/content/studio.html) checked a
+// single constant y=40 instead -- but the header box is really ~82px tall,
+// so roughly 40px of scroll rendered white nav links directly on the white
+// AboutBand before the old probe point crossed into it (real layout --
+// jsdom's getBoundingClientRect() returns zeros for everything, so this
+// only manifests with a real browser, not any unit test). A light band
+// (currently only AboutBand, tagged with the `bg-light` utility class)
+// overlapping the header's rect means the fixed, transparent header needs
+// to invert.
 //
 // Scoped to `section.bg-light` rather than the bare `.bg-light` class:
 // Hero's and ContactBand's mailto CTAs and this file's own monogram badge
@@ -24,7 +33,6 @@ import LocaleToggle from './LocaleToggle';
 // `<section>` still means any future band that adds `bg-light` to its own
 // section element participates for free, without matching incidental
 // same-coloured buttons.
-const PROBE_Y = 40;
 const LIGHT_BAND_SELECTOR = 'section.bg-light';
 
 export default function SiteNav({ locale, profile }: { locale: Locale; profile: Profile }) {
@@ -36,10 +44,11 @@ export default function SiteNav({ locale, profile }: { locale: Locale; profile: 
     const header = headerRef.current;
     if (!header) return;
     const sync = () => {
+      const headerRect = header.getBoundingClientRect();
       const bands = document.querySelectorAll(LIGHT_BAND_SELECTOR);
       const overLight = Array.from(bands).some((band) => {
         const r = band.getBoundingClientRect();
-        return r.top <= PROBE_Y && r.bottom >= PROBE_Y;
+        return r.top <= headerRect.bottom && r.bottom >= headerRect.top;
       });
       header.classList.toggle('nav-on-light', overLight);
     };
@@ -76,12 +85,22 @@ export default function SiteNav({ locale, profile }: { locale: Locale; profile: 
         {monogram}
       </a>
 
-      <nav aria-label="Main" className="hidden items-center gap-[clamp(20px,3.4vw,54px)] sm:flex">
+      {/* `md:flex` (not `sm:flex`): between ~640px and ~672px on /th, the
+          fixed header's content (monogram + 4 anchor links + socials + the
+          TH/EN toggle) overflowed to ~675px wide. Because the header is
+          `position: fixed`, no scrollbar ever appears for that overflow --
+          the toggle just sits off-screen, unclickable, with no way to
+          reach it (English had only ~8px of slack at 650px, so it was one
+          longer profile name away from the same failure). Hiding the
+          in-page anchor links until `md` (768px) gives both locales real
+          headroom instead of a few px of luck. Verified in Chrome at
+          640px, 672px and 768px in both locales. */}
+      <nav aria-label="Main" className="hidden items-center gap-[clamp(20px,3.4vw,54px)] md:flex">
         {anchors.map((a) => (
           <a
             key={a.href}
             href={a.href}
-            className="nav-link whitespace-nowrap font-mono text-[10.5px] uppercase tracking-[0.22em]"
+            className={`nav-link whitespace-nowrap text-[10.5px] uppercase ${eyebrowFont(locale, 'tracking-[0.22em]')}`}
           >
             {a.label}
           </a>
