@@ -144,14 +144,29 @@
     #cursor { display: none; }
   }
 
-  /* Magnetic buttons (PointerFx). Same custom-property-feeds-transform
-     shape as #hero .pill's --lagX/--lagY immediately above: PointerFx sets
-     --magX/--magY on pointermove, this is the only rule that ever sets
-     `transform` on .btn, and the transition below smooths between each
-     event's jump instead of needing a per-frame rAF update. */
+  /* Magnetic buttons (PointerFx). PointerFx sets --magX/--magY on
+     pointermove; the transition below smooths between each event's jump
+     instead of needing a per-frame rAF update. This rides the standalone
+     `translate` CSS property, NOT `transform` -- deliberately, not for the
+     same reason as #hero .pill above. Tailwind v4 ranks `@layer utilities`
+     above `@layer components` unconditionally (see the LEGACY NAMES /
+     LocaleToggle comments elsewhere in this file for the same fact biting
+     twice already), so any future utility on a `.btn` that sets `transform`
+     -- an arbitrary `[transform:...]`, a plugin composing the legacy
+     matrix, etc. -- would silently win over a `transform`-based rule here
+     regardless of specificity, with no error. Tailwind v4's own
+     scale/rotate/translate utilities are implemented as the same
+     independent CSS properties this file already uses elsewhere
+     (`translate` on the pill-drift keyframes, `scale` on #cursor.big), so a
+     future `.btn` utility is far more likely to target one of THOSE than
+     the composite `transform` property -- putting the magnetic pull on
+     `translate` instead means that utility composes with it instead of
+     replacing it. (A future `translate-x-*`/`translate-y-*` utility on
+     `.btn` would still collide -- same residual risk #hero .pill already
+     accepts for `transform` -- just a narrower one.) */
   .btn {
-    transform: translate(var(--magX, 0px), var(--magY, 0px));
-    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    translate: var(--magX, 0px) var(--magY, 0px);
+    transition: translate 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   /* SiteNav (T11): a fixed, transparent header layered above every band
@@ -255,5 +270,5 @@ header.nav-on-light .nav-mark { background: var(--color-dark); color: var(--colo
      above: a signposted override gated behind this media query, not the
      silent-equal-specificity trap described there. */
   #cursor { display: none !important; }
-  .btn { transition: none !important; transform: none !important; }
+  .btn { transition: none !important; translate: none !important; }
 }

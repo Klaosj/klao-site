@@ -83,14 +83,29 @@ export default function PointerFx() {
       cursorTargetY = e.clientY;
       cursor?.classList.add('on');
     };
-    const onPointerLeaveWindow = () => cursor?.classList.remove('on');
+    // `pointerleave` does not bubble (W3C Pointer Events: Bubbles: No,
+    // Trusted Targets: Element), and a real user agent only ever dispatches
+    // it at the Element being left. `window` is not a valid target for a
+    // non-bubbling event at all, so a listener attached there -- the first
+    // version of this file's mistake, ported unnoticed from the reference
+    // prototype's own identical bug (studio.html:604) -- can never fire from
+    // real pointer input: it silently never fires, the cursor freezes
+    // on-screen at its last position instead of fading out, and nothing
+    // errors. `document.documentElement` (the root <html> element) is the
+    // element whose boundary is actually crossed when the pointer leaves the
+    // viewport, so that's where the browser targets the event and where this
+    // has to listen. Verified against a real Chrome tab, not just the
+    // propagation model: a genuinely non-bubbling dispatch at
+    // document.documentElement reaches this listener; the same dispatch at
+    // window (the old code's target) never did.
+    const onPointerLeaveViewport = () => cursor?.classList.remove('on');
     const onPointerOver = (e: PointerEvent) => {
       const target = e.target as Element | null;
       cursor?.classList.toggle('big', Boolean(target?.closest('a, button, .frame')));
     };
 
     window.addEventListener('pointermove', onPointerMove, { passive: true });
-    window.addEventListener('pointerleave', onPointerLeaveWindow, { passive: true });
+    document.documentElement.addEventListener('pointerleave', onPointerLeaveViewport, { passive: true });
     document.addEventListener('pointerover', onPointerOver, { passive: true });
 
     // Magnetic buttons are event-driven, not part of the rAF loop: each
@@ -139,7 +154,7 @@ export default function PointerFx() {
     return () => {
       cancelAnimationFrame(rafId);
       window.removeEventListener('pointermove', onPointerMove);
-      window.removeEventListener('pointerleave', onPointerLeaveWindow);
+      document.documentElement.removeEventListener('pointerleave', onPointerLeaveViewport);
       document.removeEventListener('pointerover', onPointerOver);
       for (const cleanup of btnCleanups) cleanup();
     };

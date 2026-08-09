@@ -112,18 +112,25 @@ describe('PointerFx', () => {
     stubMatchMedia();
     const addWin = vi.spyOn(window, 'addEventListener');
     const removeWin = vi.spyOn(window, 'removeEventListener');
+    // pointerleave is attached to document.documentElement, not window --
+    // see the "truly leaves the viewport" test above for why window can
+    // never be the right target for this event. Spied separately so this
+    // test still pins down exactly where each listener lives, not just that
+    // *something* was added somewhere.
+    const addDoc = vi.spyOn(document.documentElement, 'addEventListener');
+    const removeDoc = vi.spyOn(document.documentElement, 'removeEventListener');
     const { unmount } = render(<PointerFx />);
 
     expect(rafCtl.pending).toBe(1);
-    const addedTypes = addWin.mock.calls.map((c) => c[0]);
-    expect(addedTypes).toEqual(expect.arrayContaining(['pointermove', 'pointerleave']));
+    expect(addWin.mock.calls.map((c) => c[0])).toContain('pointermove');
+    expect(addDoc.mock.calls.map((c) => c[0])).toContain('pointerleave');
     expect(rafCtl.caf).not.toHaveBeenCalled();
 
     unmount();
 
     expect(rafCtl.caf).toHaveBeenCalledOnce();
-    const removedTypes = removeWin.mock.calls.map((c) => c[0]);
-    expect(removedTypes).toEqual(expect.arrayContaining(['pointermove', 'pointerleave']));
+    expect(removeWin.mock.calls.map((c) => c[0])).toContain('pointermove');
+    expect(removeDoc.mock.calls.map((c) => c[0])).toContain('pointerleave');
   });
 
   it('leaves exactly one active loop after a React Strict-Mode double-mount', () => {
@@ -173,7 +180,7 @@ describe('PointerFx', () => {
     expect(cursor.style.translate).toBe('135.0px 56.6px');
   });
 
-  it('adds "on" when the pointer moves and removes it when the pointer leaves the window', () => {
+  it('adds "on" when the pointer moves and removes it when the pointer truly leaves the viewport', () => {
     stubMatchMedia();
     const { container } = render(<PointerFx />);
     const cursor = container.querySelector('#cursor') as HTMLElement;
@@ -182,7 +189,17 @@ describe('PointerFx', () => {
     pointerMoveOn(window, 10, 10);
     expect(cursor.classList.contains('on')).toBe(true);
 
-    window.dispatchEvent(new PointerEvent('pointerleave'));
+    // `pointerleave` does not bubble (W3C Pointer Events: Bubbles: No,
+    // Trusted Targets: Element) and a real browser only ever dispatches it
+    // at the Element being left -- never at `window`, which isn't a valid
+    // target for this event at all. Reproducing that exactly (non-bubbling,
+    // dispatched at document.documentElement -- the root <html> element,
+    // whose boundary is what "left the viewport" means) is the only way
+    // this assertion can tell a `window`-level listener (broken in every
+    // real browser) apart from a correctly-targeted one: a bubble-phase
+    // listener on `window` sits on an ancestor of documentElement, and
+    // ancestors never see a non-bubbling event no matter what fired it.
+    document.documentElement.dispatchEvent(new PointerEvent('pointerleave', { bubbles: false }));
     expect(cursor.classList.contains('on')).toBe(false);
   });
 
