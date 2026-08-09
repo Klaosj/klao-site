@@ -26,7 +26,7 @@ describe('CopyEmail', () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     vi.stubGlobal('navigator', { clipboard: { writeText } });
 
-    render(<CopyEmail email="a@b.co" copiedLabel="Copied" />);
+    render(<CopyEmail email="a@b.co" copiedLabel="Copied" locale="en" />);
     // The "Copied" text node is always in the DOM (an aria-live region needs
     // something to announce), so asserting it merely exists would pass even
     // if the click handler were a no-op -- the signal is the opacity class
@@ -51,7 +51,7 @@ describe('CopyEmail', () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     vi.stubGlobal('navigator', { clipboard: { writeText } });
 
-    render(<CopyEmail email="a@b.co" copiedLabel="Copied" />);
+    render(<CopyEmail email="a@b.co" copiedLabel="Copied" locale="en" />);
     const label = screen.getByText('Copied');
 
     await act(async () => {
@@ -69,7 +69,7 @@ describe('CopyEmail', () => {
 
   it('still shows the address as readable, selectable text when the clipboard API is absent', () => {
     vi.stubGlobal('navigator', {});
-    render(<CopyEmail email="a@b.co" copiedLabel="Copied" />);
+    render(<CopyEmail email="a@b.co" copiedLabel="Copied" locale="en" />);
     expect(screen.getByText('a@b.co')).toBeTruthy();
   });
 
@@ -81,7 +81,7 @@ describe('CopyEmail', () => {
     // real to call, and this test can prove it was never reached.
     document.execCommand = execCommand;
 
-    render(<CopyEmail email="a@b.co" copiedLabel="Copied" />);
+    render(<CopyEmail email="a@b.co" copiedLabel="Copied" locale="en" />);
     const label = screen.getByText('Copied');
     expect(label.className).toContain('opacity-0');
 
@@ -105,7 +105,7 @@ describe('CopyEmail', () => {
     // itself prove the "copied" label stays hidden).
     vi.stubGlobal('navigator', {});
 
-    render(<CopyEmail email="a@b.co" copiedLabel="Copied" />);
+    render(<CopyEmail email="a@b.co" copiedLabel="Copied" locale="en" />);
     const label = screen.getByText('Copied');
 
     await act(async () => {
@@ -125,7 +125,7 @@ describe('CopyEmail', () => {
     const writeText = vi.fn().mockRejectedValue(new Error('denied'));
     vi.stubGlobal('navigator', { clipboard: { writeText } });
 
-    render(<CopyEmail email="a@b.co" copiedLabel="Copied" />);
+    render(<CopyEmail email="a@b.co" copiedLabel="Copied" locale="en" />);
     const label = screen.getByText('Copied');
 
     await act(async () => {
@@ -136,5 +136,34 @@ describe('CopyEmail', () => {
     expect(writeText).toHaveBeenCalledWith('a@b.co');
     expect(label.className).toContain('opacity-0');
     expect(label.className).not.toContain('opacity-100');
+  });
+
+  // --- Thai label typography ------------------------------------------
+  // Last surviving instance of the FINAL-5 bug class fixed at 11 other call
+  // sites: no monospace face carries Thai glyphs, so `font-mono` forces
+  // per-glyph fallback, and the 0.18em tracking then pulls every combining
+  // vowel and tone mark away from its base letter.
+
+  it('renders the Thai copied label in the Thai stack, never font-mono', () => {
+    render(<CopyEmail email="a@b.co" copiedLabel="คัดลอกแล้ว" locale="th" />);
+    const label = screen.getByText('คัดลอกแล้ว');
+    expect(label.className).not.toContain('font-mono');
+    expect(label.className).toContain('font-thai');
+  });
+
+  it('drops the wide Latin tracking for Thai, which detaches tone marks', () => {
+    render(<CopyEmail email="a@b.co" copiedLabel="คัดลอกแล้ว" locale="th" />);
+    const label = screen.getByText('คัดลอกแล้ว');
+    expect(label.className).not.toMatch(/tracking-\[/);
+    expect(label.className).toContain('tracking-normal');
+  });
+
+  it('keeps font-mono and the Latin tracking for English', () => {
+    // Counterpart assertion: the fix must not strip the intended treatment
+    // from the locale it was designed for.
+    render(<CopyEmail email="a@b.co" copiedLabel="Copied" locale="en" />);
+    const label = screen.getByText('Copied');
+    expect(label.className).toContain('font-mono');
+    expect(label.className).toContain('tracking-[0.18em]');
   });
 });

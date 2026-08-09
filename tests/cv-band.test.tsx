@@ -196,11 +196,21 @@ describe('CvBand', () => {
     expect(container.querySelector('a[href="/r.pdf"]')).toBeTruthy();
   });
 
-  it('renders the Thai resume label in the Thai font stack, never font-mono', () => {
-    // Same regression class as the eyebrow tests above -- no monospace face
-    // carries Thai glyphs, and this label renders localized text.
-    const { container } = render(<CvBand entries={entries} locale="th" resumeUrl="/r.pdf" />);
-    const link = container.querySelector('a[href="/r.pdf"]') as HTMLAnchorElement;
-    expect(link.className).not.toContain('font-mono');
+  it('never applies font-mono or wide tracking to the resume label, in either locale', () => {
+    // Honest framing, after review: this label's className is a single
+    // literal with no locale branch, so it is a forward regression guard
+    // against someone adding font-mono/tracking here later -- NOT a test
+    // that locale selection works. It renders localized text (เรซูเม่), and
+    // no monospace face carries Thai glyphs, which is why the guard exists.
+    // Both locales are checked precisely because the className is shared.
+    for (const locale of ['en', 'th'] as const) {
+      const { container } = render(
+        <CvBand entries={entries} locale={locale} resumeUrl="/r.pdf" />,
+      );
+      const link = container.querySelector('a[href="/r.pdf"]') as HTMLAnchorElement;
+      expect(link.className).not.toContain('font-mono');
+      expect(link.className).not.toMatch(/tracking-\[/);
+      cleanup();
+    }
   });
 });

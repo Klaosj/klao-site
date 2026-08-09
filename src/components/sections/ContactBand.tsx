@@ -54,7 +54,7 @@ export default function ContactBand({ profile, locale }: { profile: Profile; loc
             <b className={`mb-[7px] block text-[9px] font-normal uppercase ${eyebrowFont(locale, 'tracking-[0.2em]')}`}>
               {t.email}
             </b>
-            <CopyEmail email={profile.email} copiedLabel={t.copied} />
+            <CopyEmail email={profile.email} copiedLabel={t.copied} locale={locale} />
           </div>
         )}
         <div>

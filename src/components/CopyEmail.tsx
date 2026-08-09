@@ -1,13 +1,26 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import type { Locale } from '@/lib/models';
+import { eyebrowFont } from '@/lib/typography';
 
 // Rauno Freiberg's clipboard button, ported into React: the address is
 // always plain readable text (a real fallback, not decoration -- it is
 // still selectable/copyable by hand when the button below does nothing),
 // and the "copied" label is always in the DOM so a screen reader's
 // aria-live region has something to announce -- only its opacity toggles.
-export default function CopyEmail({ email, copiedLabel }: { email: string; copiedLabel: string }) {
+// `locale` is required rather than defaulted: the whole point of the prop is
+// to keep Thai out of the monospace stack, and a default of 'en' would hand
+// the broken treatment to exactly the callers that forgot to pass it.
+export default function CopyEmail({
+  email,
+  copiedLabel,
+  locale,
+}: {
+  email: string;
+  copiedLabel: string;
+  locale: Locale;
+}) {
   const [done, setDone] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -40,9 +53,10 @@ export default function CopyEmail({ email, copiedLabel }: { email: string; copie
       <span className="border-b border-on-dark-faint pb-[3px]">{email}</span>
       <span
         aria-live="polite"
-        className={`font-mono text-[9px] uppercase tracking-[0.18em] text-peri transition-opacity ${
-          done ? 'opacity-100' : 'opacity-0'
-        }`}
+        className={`text-[9px] uppercase text-peri transition-opacity ${eyebrowFont(
+          locale,
+          'tracking-[0.18em]',
+        )} ${done ? 'opacity-100' : 'opacity-0'}`}
       >
         {copiedLabel}
       </span>
