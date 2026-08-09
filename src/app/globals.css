@@ -63,9 +63,57 @@
     transition-delay: calc(var(--wi, 0) * 52ms);
   }
   .rv-mask.in .w { transform: none; }
+
+  /* Hero annotation pills (T7). Decoration only -- their container carries
+     aria-hidden, the same three facts already appear in the hero copy.
+     Ported from .superpowers/brainstorm/11719-1786211516/content/studio.html.
+
+     No backdrop-filter: the pills sit over a live WebGL canvas (ParticleField,
+     T5), and a blurred backdrop is recomputed on every frame the canvas
+     paints. A flat translucent fill reads the same against the charcoal
+     hero and costs nothing per frame. */
+  .pill {
+    position: absolute;
+    z-index: 3;
+    white-space: nowrap;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--color-on-dark);
+    background: rgba(38, 38, 44, 0.72);
+    border: 1px solid var(--color-on-dark-faint);
+    border-radius: 100px;
+    padding: 8px 15px;
+  }
+  /* One declaration for the pointer-lag transform, full stop. A second rule
+     setting `transform: none` later in the sheet at equal specificity would
+     silently win on source order -- no error, the lag just stops working.
+     --lagX/--lagY default to 0px, so this is inert until something sets them;
+     the drift keyframes below ride `translate` (a separate CSS property from
+     `transform`), so the two compose instead of one clobbering the other. */
+  #hero .pill { transform: translate(var(--lagX, 0px), var(--lagY, 0px)); }
+
+  .pill-1 { left: 12%; top: 41%; animation: pill-drift-1 9s ease-in-out infinite 1.1s; }
+  .pill-2 { right: 11%; top: 37%; animation: pill-drift-2 11s ease-in-out infinite 1.5s; }
+  .pill-3 { left: 17%; bottom: 24%; animation: pill-drift-3 10s ease-in-out infinite 0.8s; }
+  @keyframes pill-drift-1 { 0%, 100% { translate: 0 0; } 50% { translate: 0 -10px; } }
+  @keyframes pill-drift-2 { 0%, 100% { translate: 0 0; } 50% { translate: 0 12px; } }
+  @keyframes pill-drift-3 { 0%, 100% { translate: 0 0; } 50% { translate: 7px -7px; } }
+
+  /* Below this width the hero portrait and headline crowd the space the
+     pills float in, so the prototype drops them rather than crushing them. */
+  @media (max-width: 1080px) {
+    .pill { display: none; }
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .rv { transition: none !important; opacity: 1 !important; transform: none !important; }
   .rv-mask .w { transform: none !important; transition: none !important; }
+  /* Deliberate override, not the silent-second-rule trap described above:
+     that trap is two *unconditional* rules of equal specificity fighting
+     with no signal either was meant to win. This is a signposted, !important
+     override gated behind the reduced-motion media query -- same pattern as
+     .rv above -- so freezing the drift and the pointer lag here is the
+     intended behaviour, not an accident of source order. */
+  .pill { animation: none !important; transform: none !important; }
 }
