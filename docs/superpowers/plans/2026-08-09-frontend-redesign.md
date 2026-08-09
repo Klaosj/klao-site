@@ -1291,14 +1291,15 @@ Render `<section className="relative z-[2] bg-dark px-6 py-[11vh]">` containing 
 12-column grid (`grid grid-cols-12 gap-6`). The first project spans 12 columns,
 the rest span 6 (`md:col-span-6`). Each card:
 
-- If `project.liveUrl || project.repoUrl` exists, wrap in `<a href={that}>`.
-  Otherwise wrap in a plain `<div>`. **Never emit `href="#"`.**
-- If `project.coverSrc` is non-empty, render the browser-chrome frame — a
-  rounded 12px border with three 8px dots along a 1px divider — then the
-  `<img>` with `width`, `height`, `loading="lazy"`, `decoding="async"` and
-  `alt={`${title} — ${summary}`}`.
-- Below the frame, a flex row with the title and a mono meta line
-  (`{summary} · {year}`).
+- `const href = project.liveUrl ?? project.repoUrl;` — if `href` is non-null wrap
+  in `<a href={href}>`, otherwise wrap in a plain `<div>`. **Never emit `href="#"`.**
+- If `project.imageSrc` is non-null, render the browser-chrome frame — a rounded
+  12px border with three 8px dots along a 1px divider — then the `<img>` with
+  `width`, `height`, `loading="lazy"`, `decoding="async"` and
+  ``alt={`${project.name} — ${project.description[locale]}`}``.
+- Below the frame, a flex row with `project.name` and a mono meta line built from
+  `project.description[locale]` and `project.stack.join(' · ')`. There is no
+  `year` field — do not invent one.
 - Wrap each card in `<Reveal delayIndex={i}>`.
 
 - [ ] **Step 4: Run test to verify it passes**
