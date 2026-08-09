@@ -1,17 +1,274 @@
 @import "tailwindcss";
 
+/* Mirrors src/lib/theme.ts — keep the two in step. */
 @theme {
-  --color-paper: #fafaf8;
-  --color-ink: #111111;
-  --color-soft: #666666;
-  --color-line: #e5e5e0;
-  --color-card: #ffffff;
-  --font-display: Georgia, 'Times New Roman', serif;
+  --color-dark: #17171a;
+  --color-deep: #101013;
+  --color-light: #ffffff;
+  --color-peri: #a8aecb;
+  --color-peri-deep: #7d86ad;
+  --color-on-dark: #ffffff;
+  --color-on-dark-soft: rgba(255, 255, 255, 0.60);
+  --color-on-dark-faint: rgba(255, 255, 255, 0.13);
+  --color-on-light: #17171a;
+  --color-on-light-soft: #63636b;
+  --color-on-light-faint: #e6e6ea;
+  --font-display: "Avenir Next", Futura, "Helvetica Neue", -apple-system, sans-serif;
+  --font-thai: -apple-system, "Sukhumvit Set", "IBM Plex Sans Thai", "Noto Sans Thai", sans-serif;
+
+  /* LEGACY NAMES, REMAPPED — DO NOT DELETE.
+     `text-soft` (17 uses), `text-ink` (1), `border-line` (3) and `bg-card` (1)
+     appear across 7 files -- career/page.tsx, projects/page.tsx,
+     writing/page.tsx, writing/[slug]/page.tsx, PostBody.tsx, ProjectCard.tsx
+     and LocaleToggle.tsx -- four routes this redesign does not otherwise
+     touch, plus the components they render through. In Tailwind v4 the
+     utility exists only while its token does, so deleting these would strip
+     the classes off those pages while `body` turns charcoal, and they would
+     render dark-on-dark. Pointing the old names at the new palette keeps all
+     22 usages working and pulls those routes into the dark theme. Recounted
+     during the whole-branch review fix wave (`grep -rno` per token, see
+     final-fix-report.md) after Task 11 deleted several of the original 60 --
+     re-run the same grep before editing this comment again, don't guess. */
+  --color-paper: #17171a;
+  --color-ink: #ffffff;
+  --color-soft: rgba(255, 255, 255, 0.60);
+  --color-line: rgba(255, 255, 255, 0.13);
+  --color-card: #101013;
 }
 
 @layer base {
   body {
-    background: var(--color-paper);
-    color: var(--color-ink);
+    background: var(--color-dark);
+    color: var(--color-on-dark);
+    -webkit-font-smoothing: antialiased;
   }
+  /* Thai needs more leading than Latin at the same size. */
+  :lang(th) {
+    font-family: var(--font-thai);
+    line-height: 1.75;
+  }
+}
+
+@layer components {
+  .rv {
+    opacity: 0;
+    transform: translateY(26px);
+    transition:
+      opacity 0.95s cubic-bezier(0.16, 1, 0.3, 1),
+      transform 0.95s cubic-bezier(0.16, 1, 0.3, 1);
+    transition-delay: calc(var(--i, 0) * 75ms);
+  }
+  .rv.in { opacity: 1; transform: none; }
+
+  .rv-mask { overflow: hidden; }
+  .rv-mask .w {
+    display: inline-block;
+    transform: translateY(112%);
+    transition: transform 0.95s cubic-bezier(0.16, 1, 0.3, 1);
+    transition-delay: calc(var(--wi, 0) * 52ms);
+  }
+  .rv-mask.in .w { transform: none; }
+
+  /* Hero annotation pills (T7). Decoration only -- their container carries
+     aria-hidden, the same three facts already appear in the hero copy.
+     Ported from .superpowers/brainstorm/11719-1786211516/content/studio.html.
+
+     No backdrop-filter: the pills sit over a live WebGL canvas (ParticleField,
+     T5), and a blurred backdrop is recomputed on every frame the canvas
+     paints. A flat translucent fill reads the same against the charcoal
+     hero and costs nothing per frame. */
+  .pill {
+    position: absolute;
+    z-index: 3;
+    white-space: nowrap;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--color-on-dark);
+    background: rgba(38, 38, 44, 0.72);
+    border: 1px solid var(--color-on-dark-faint);
+    border-radius: 100px;
+    padding: 8px 15px;
+  }
+  /* One declaration for the pointer-lag transform, full stop. A second rule
+     setting `transform: none` later in the sheet at equal specificity would
+     silently win on source order -- no error, the lag just stops working.
+     --lagX/--lagY default to 0px, so this is inert until something sets them;
+     the drift keyframes below ride `translate` (a separate CSS property from
+     `transform`), so the two compose instead of one clobbering the other. */
+  #hero .pill { transform: translate(var(--lagX, 0px), var(--lagY, 0px)); }
+
+  .pill-1 { left: 12%; top: 41%; animation: pill-drift-1 9s ease-in-out infinite 1.1s; }
+  .pill-2 { right: 11%; top: 37%; animation: pill-drift-2 11s ease-in-out infinite 1.5s; }
+  .pill-3 { left: 17%; bottom: 24%; animation: pill-drift-3 10s ease-in-out infinite 0.8s; }
+  @keyframes pill-drift-1 { 0%, 100% { translate: 0 0; } 50% { translate: 0 -10px; } }
+  @keyframes pill-drift-2 { 0%, 100% { translate: 0 0; } 50% { translate: 0 12px; } }
+  @keyframes pill-drift-3 { 0%, 100% { translate: 0 0; } 50% { translate: 7px -7px; } }
+
+  /* Below this width the hero portrait and headline crowd the space the
+     pills float in, so the prototype drops them rather than crushing them. */
+  @media (max-width: 1080px) {
+    .pill { display: none; }
+  }
+
+  /* Custom cursor (PointerFx). Position rides the `translate` CSS property,
+     written every rAF frame straight onto the node -- never `left`/`top`,
+     which would trigger layout on a fixed element updated 60 times a
+     second. Growing over an interactive target (`.big`) changes `scale`
+     rather than `width`/`height`, for the same reason. `transform`
+     (centering), `translate` (position) and `scale` (size) are three
+     independent CSS properties that compose without clobbering each other
+     -- the same trick #hero .pill already relies on for drift + lag. No
+     backdrop-filter here either: same live-WebGL-canvas reasoning as the
+     pills above. */
+  #cursor {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--color-on-dark);
+    pointer-events: none;
+    z-index: 95;
+    mix-blend-mode: difference;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    transition: scale 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s;
+  }
+  #cursor.on { opacity: 1; }
+  #cursor.big { scale: 3.8333; }
+
+  /* Coarse/no-hover pointers (touch) never get a synthetic cursor -- there
+     is no hovering pointer for it to track. */
+  @media (hover: none), (pointer: coarse) {
+    #cursor { display: none; }
+  }
+
+  /* Magnetic buttons (PointerFx). PointerFx sets --magX/--magY on
+     pointermove; the transition below smooths between each event's jump
+     instead of needing a per-frame rAF update. This rides the standalone
+     `translate` CSS property, NOT `transform` -- deliberately, not for the
+     same reason as #hero .pill above. Tailwind v4 ranks `@layer utilities`
+     above `@layer components` unconditionally (see the LEGACY NAMES /
+     LocaleToggle comments elsewhere in this file for the same fact biting
+     twice already), so any future utility on a `.btn` that sets `transform`
+     -- an arbitrary `[transform:...]`, a plugin composing the legacy
+     matrix, etc. -- would silently win over a `transform`-based rule here
+     regardless of specificity, with no error. Tailwind v4's own
+     scale/rotate/translate utilities are implemented as the same
+     independent CSS properties this file already uses elsewhere
+     (`translate` on the pill-drift keyframes, `scale` on #cursor.big), so a
+     future `.btn` utility is far more likely to target one of THOSE than
+     the composite `transform` property -- putting the magnetic pull on
+     `translate` instead means that utility composes with it instead of
+     replacing it. (A future `translate-x-*`/`translate-y-*` utility on
+     `.btn` would still collide -- same residual risk #hero .pill already
+     accepts for `transform` -- just a narrower one.) */
+  .btn {
+    translate: var(--magX, 0px) var(--magY, 0px);
+    transition: translate 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* SiteNav (T11): a fixed, transparent header layered above every band
+     (z-[60], set in the component itself) with no background of its own --
+     same "no backdrop-filter" reasoning as the pills above, since it also
+     sits over the live WebGL canvas while scrolling through the hero. It
+     therefore has to invert colour whenever a light band is under it;
+     SiteNav's own scroll listener toggles `nav-on-light` on the <header>
+     element itself for that, selecting bands by the existing `bg-light`
+     utility class (currently only AboutBand) rather than a bespoke marker. */
+  .nav-link, .nav-social {
+    color: var(--color-on-dark-soft);
+    transition: color 0.25s;
+  }
+  .nav-link:hover, .nav-social:hover { color: var(--color-on-dark); }
+  .nav-mark { transition: background 0.4s, color 0.4s, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+  .nav-mark:hover { transform: rotate(-12deg) scale(1.06); }
+
+  header.nav-on-light .nav-link,
+  header.nav-on-light .nav-social {
+    color: var(--color-on-light-soft);
+  }
+  header.nav-on-light .nav-link:hover,
+  header.nav-on-light .nav-social:hover {
+    color: var(--color-on-light);
+  }
+  header.nav-on-light .nav-mark {
+    background: var(--color-dark);
+    color: var(--color-light);
+  }
+}
+
+/* LocaleToggle uses the legacy `text-soft`/`border-line` names, which the
+   "LEGACY NAMES" block remaps to the on-dark palette site-wide. Over the white
+   About band that renders the language switcher and the monogram at 1.00:1 --
+   literally invisible -- and on a bilingual site the switcher is a primary
+   control.
+
+   These rules sit OUTSIDE any @layer deliberately. The previous attempt put
+   them in `@layer components` wrapped in `:where()`, which was dead code:
+   Tailwind's `.text-soft` lives in `@layer utilities`, and layer rank beats
+   specificity outright, so the utility won regardless of how the selector was
+   written. Unlayered CSS outranks every layer -- the only reliable escape
+   hatch here, and the same one the Thai leading rules below use.
+
+   The active link is the subtle half of the bug: it carries `font-semibold`
+   and no colour class at all, so it inherits white from `body` and no
+   `.text-soft` override could ever have reached it. It needs to be targeted
+   by element. */
+header.nav-on-light .text-soft { color: var(--color-on-light-soft); }
+header.nav-on-light .text-ink { color: var(--color-on-light); }
+header.nav-on-light .border-line { border-color: var(--color-on-light-faint); }
+header.nav-on-light nav[aria-label="Language"] a { color: var(--color-on-light); }
+header.nav-on-light .nav-mark { background: var(--color-dark); color: var(--color-light); }
+
+/* Thai script's combining vowel/tone marks stack above and below the base
+   letter, and need more vertical room than the tight display-heading
+   leading utilities give Latin type (leading-[1.08]/[1.1]/[1.14] on
+   Hero/AboutBand/CraftBand/ContactBand's MaskedHeading headings, applied
+   via the `className` prop MaskedHeading.tsx forwards straight onto the
+   h1/h2/h3 it renders). At `/th` 1280px, the About heading broke
+   mid-syllable and orphaned a tone mark onto its own line -- confirmed in
+   Chrome, not by any unit test (jsdom never computes real line-wrapping).
+   The base `:lang(th)` rule above already raises line-height to 1.75 for
+   exactly this reason, but it sits in `@layer base`, while Tailwind's own
+   utilities (leading-[1.1] etc.) live in `@layer utilities`, generated
+   later by the `@import "tailwindcss"` at the top of this file -- CSS
+   cascade layers rank ABOVE selector specificity, so a later layer's rule
+   beats an earlier layer's even when the earlier one is the more specific
+   selector. This block is deliberately NOT inside any @layer, so per the
+   cascade-layers spec it wins over every layered rule regardless of source
+   order or specificity -- the same escape hatch the reduced-motion block
+   below already relies on. Scoped to h1/h2/h3 (the only elements
+   MaskedHeading ever renders, plus AboutBand's Reveal-based h3 subhead)
+   rather than every element carrying a tight `leading-[...]` utility, so
+   Latin's own leading is untouched on `en` and body copy already at a
+   comfortable 1.95 (Hero's byline, AboutBand's prose) isn't second-guessed
+   here too. 1.5 gives Thai headings enough room for stacked marks without
+   ballooning the giant hero clamp(34px,6.4vw,84px) headline into
+   noticeably looser lines than the design intends. */
+:lang(th) h1,
+:lang(th) h2,
+:lang(th) h3 {
+  line-height: 1.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rv { transition: none !important; opacity: 1 !important; transform: none !important; }
+  .rv-mask .w { transform: none !important; transition: none !important; }
+  /* Deliberate override, not the silent-second-rule trap described above:
+     that trap is two *unconditional* rules of equal specificity fighting
+     with no signal either was meant to win. This is a signposted, !important
+     override gated behind the reduced-motion media query -- same pattern as
+     .rv above -- so freezing the drift and the pointer lag here is the
+     intended behaviour, not an accident of source order. */
+  .pill { animation: none !important; transform: none !important; }
+  /* PointerFx never attaches a listener or requests a frame under reduced
+     motion (checked once, before either happens -- see the component), so
+     --magX/--magY/--lagX/--lagY are never set and these would already be
+     inert. Explicit anyway, same belt-and-suspenders reasoning as .pill
+     above: a signposted override gated behind this media query, not the
+     silent-equal-specificity trap described there. */
+  #cursor { display: none !important; }
+  .btn { transition: none !important; translate: none !important; }
 }

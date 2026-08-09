@@ -1,24 +1,99 @@
 [
   {
-    "id": "fx-casetify",
-    "role": "Business Development",
-    "company": "Casetify",
-    "period": "2022 – 2024",
+    "id": "fx-actmedia",
+    "role": "Senior Business Development",
+    "company": "ActMedia",
+    "period": "MAR 2026 – Present",
     "wins": {
-      "en": ["Sample win — replace with quantified outcomes in Notion."],
-      "th": ["ตัวอย่างผลงาน — แทนที่ด้วยตัวเลขจริงใน Notion"]
+      "en": [
+        "Convert new revenue through digital signage and shopper media for FMCG/CPG brands.",
+        "Build partnerships with Modern Trade retailers to align media inventory against targets.",
+        "Own deals from opportunity sizing through to execution, and run PMO for on-time, on-budget delivery.",
+        "Key projects: Tops digital, Dear Tummy screen, Salesforce implementation, Thai Watsadu."
+      ],
+      "th": [
+        "สร้างรายได้ใหม่จากสื่อดิจิทัลในร้านและ shopper media ให้แบรนด์ FMCG/CPG",
+        "สร้างพาร์ตเนอร์ชิปกับค้าปลีก Modern Trade ให้สื่อในมือตรงกับเป้าหมาย",
+        "ดูแลดีลตั้งแต่ประเมินขนาดโอกาสจนถึงลงมือทำจริง และคุม PMO ให้ส่งงานตรงเวลาและตรงงบ",
+        "โปรเจกต์หลัก: Tops digital, จอ Dear Tummy, การวางระบบ Salesforce, ไทวัสดุ"
+      ]
+    },
+    "order": 1
+  },
+  {
+    "id": "fx-casetify",
+    "role": "Brand Representative",
+    "company": "Casetify",
+    "period": "MAY 2024 – MAR 2026",
+    "wins": {
+      "en": [
+        "Hit a 1.1M THB monthly sales target through direct selling and customer relationships.",
+        "Forecast monthly sales from daily store traffic — 9.7K visitors, 99.7 transactions, 3.42K THB basket — and retuned tactics against a 14.5M THB goal."
+      ],
+      "th": [
+        "ทำยอดขายถึงเป้า 1.1 ล้านบาทต่อเดือน ด้วยการขายตรงและดูแลความสัมพันธ์ลูกค้า",
+        "พยากรณ์ยอดขายรายเดือนจากทราฟฟิกหน้าร้าน — ผู้เข้าร้าน 9.7 พันคน 99.7 บิล ตะกร้าเฉลี่ย 3.42 พันบาท — แล้วปรับกลยุทธ์ให้ชนเป้า 14.5 ล้านบาท"
+      ]
     },
     "order": 2
   },
   {
-    "id": "fx-actmedia",
-    "role": "Business Development",
-    "company": "Actmedia Thailand",
-    "period": "2024 – present",
+    "id": "fx-mmb",
+    "role": "Sales Coordinator",
+    "company": "MMB Technology Co., Ltd",
+    "period": "AUG 2023 – DEC 2023",
     "wins": {
-      "en": ["Sample win — replace with quantified outcomes in Notion.", "In-store retail media partnerships."],
-      "th": ["ตัวอย่างผลงาน — แทนที่ด้วยตัวเลขจริงใน Notion", "พาร์ตเนอร์สื่อ retail ในร้านค้า"]
+      "en": [
+        "Coordinated between the sales team and clients to keep operations and communication moving.",
+        "Prepared quotations, purchase orders and delivery notes, and followed orders, payments and delivery schedules through.",
+        "Kept customer and sales records current in the CRM."
+      ],
+      "th": [
+        "ประสานงานระหว่างทีมขายกับลูกค้าให้งานและการสื่อสารเดินต่อเนื่อง",
+        "จัดทำใบเสนอราคา ใบสั่งซื้อ และใบส่งของ พร้อมติดตามคำสั่งซื้อ การชำระเงิน และกำหนดส่ง",
+        "ดูแลข้อมูลลูกค้าและการขายใน CRM ให้เป็นปัจจุบัน"
+      ]
     },
-    "order": 1
+    "order": 3
+  },
+  {
+    "id": "fx-vela",
+    "role": "Senior Barista",
+    "company": "VELA Central World",
+    "period": "APR 2023 – AUG 2023",
+    "wins": {
+      "en": [
+        "Led and coached the junior barista team, and helped build a floor people wanted to work on.",
+        "Held brew quality to one consistent standard across the bar.",
+        "Stepped onto the bar whenever the team was overwhelmed or short-handed.",
+        "Worked the counter directly — service that turned first visits into regulars."
+      ],
+      "th": [
+        "ดูแลและสอนงานทีมบาริสต้ารุ่นน้อง และช่วยสร้างบรรยากาศการทำงานที่ดี",
+        "คุมคุณภาพกาแฟทุกแก้วให้ได้มาตรฐานเดียวกัน",
+        "เข้าไปช่วยหน้าบาร์ทุกครั้งที่ทีมล้นมือหรือคนไม่พอ",
+        "ดูแลลูกค้าหน้าร้านเอง จนลูกค้าใหม่กลายเป็นลูกค้าประจำ"
+      ]
+    },
+    "order": 4
+  },
+  {
+    "id": "fx-abundance",
+    "role": "Business Owner",
+    "company": "A Bun Dance (Craft Burger)",
+    "period": "MAY 2021 – DEC 2022",
+    "wins": {
+      "en": [
+        "Built customer segmentation and product positioning for a student-focused food shop.",
+        "Led R&D on craft bread, fusion Thai sauces and a Thai-burger menu.",
+        "Ran financial planning across manpower, ingredient cost and gross profit."
+      ],
+      "th": [
+        "วางการแบ่งกลุ่มลูกค้าและตำแหน่งสินค้าสำหรับร้านอาหารที่จับกลุ่มนักศึกษา",
+        "นำการพัฒนาสูตรขนมปังคราฟต์ ซอสไทยฟิวชัน และเมนูเบอร์เกอร์ไทย",
+        "วางแผนการเงินทั้งกำลังคน ต้นทุนวัตถุดิบ และกำไรขั้นต้น"
+      ]
+    },
+    "order": 5
   }
 ]

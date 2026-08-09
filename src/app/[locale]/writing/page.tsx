@@ -31,7 +31,9 @@ export default async function WritingPage({ params }: { params: Promise<{ locale
   const locale = assertLocale((await params).locale);
   const posts = await getPosts();
   return (
-    <div>
+    // See projects/page.tsx and layout.tsx for why this page owns its own
+    // reading-width column and top padding now.
+    <div className="mx-auto w-full max-w-3xl px-6 pb-16 pt-28">
       <h1 className="font-display text-3xl">{dict[locale].writing}</h1>
       <ul className="mt-6 space-y-5">
         {posts.map((post) => (

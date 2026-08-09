@@ -20,6 +20,16 @@
 - Colours: `--color-dark: #17171a`, `--color-deep: #101013`, `--color-light: #ffffff`, `--color-peri: #a8aecb`.
 - Gate on `npm run check` (tsc + eslint + vitest). Green before every commit.
 - All shell commands run in the **foreground** with an explicit timeout.
+- **Test dependencies — ruling made during Task 2.** This plan's tests were
+  written against `@testing-library/react`, but the repo ran `environment: 'node'`
+  with `react-dom/server`, and `renderToString` never fires `useEffect` — which
+  makes the central assertion of `Reveal` (that the hiding class is added at
+  runtime, not in markup) impossible to test, and a `fireEvent` click test for
+  `CopyEmail` impossible to write at all. `jsdom` and `@testing-library/react`
+  were therefore added as **devDependencies** and jsdom is scoped per-file by
+  pragma, leaving the other test files in the faster node environment. Later
+  tasks may use `render`/`fireEvent` freely and must not re-open this. Adding any
+  **runtime** dependency remains forbidden.
 
 ---
 
@@ -167,6 +177,20 @@ Expected: PASS (4 tests)
   --color-on-light-faint: #e6e6ea;
   --font-display: "Avenir Next", Futura, "Helvetica Neue", -apple-system, sans-serif;
   --font-thai: -apple-system, "Sukhumvit Set", "IBM Plex Sans Thai", "Noto Sans Thai", sans-serif;
+
+  /* LEGACY NAMES, REMAPPED — DO NOT DELETE.
+     `text-soft` (33 uses), `text-ink` (10), `border-line` (8) and `bg-card` (1)
+     appear across 11 files, including career/, projects/, writing/ and
+     writing/[slug] — four routes this redesign does not otherwise touch. In
+     Tailwind v4 the utility exists only while its token does, so deleting these
+     would strip the classes off those pages while `body` turns charcoal, and
+     they would render dark-on-dark. Pointing the old names at the new palette
+     keeps all 60 usages working and pulls those routes into the dark theme. */
+  --color-paper: #17171a;
+  --color-ink: #ffffff;
+  --color-soft: rgba(255, 255, 255, 0.60);
+  --color-line: rgba(255, 255, 255, 0.13);
+  --color-card: #101013;
 }
 
 @layer base {
@@ -183,13 +207,20 @@ Expected: PASS (4 tests)
 }
 ```
 
-- [ ] **Step 6: Run the full gate**
+- [ ] **Step 6: Verify the untouched routes still render**
+
+Run `npm run dev` in the foreground with a 30s timeout and open `/en/projects`,
+`/en/writing` and `/en/career`. Each must show legible light text on the dark
+ground. If any element is invisible, the cause is a hardcoded light colour in
+that component, not a missing token — fix it there and note it in the report.
+
+- [ ] **Step 7: Run the full gate**
 
 Run: `npm run check`
 Expected: tsc clean, eslint clean, tests pass. If `tests/smoke.test.tsx` asserts
 an old token name, update the assertion to the new token — do not delete the test.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
 git add src/lib/theme.ts src/app/globals.css tests/theme.test.ts
@@ -1195,8 +1226,19 @@ git commit -m "feat: about and craft bands"
 - Test: `tests/work-grid.test.tsx`
 
 **Interfaces:**
-- Consumes: `Reveal` (T2), `dict` (T6), the existing `Project` model
+- Consumes: `Reveal` (T2), `dict` (T6), `Project` and `Locale` from `@/lib/models`
 - Produces: `<WorkGrid projects: Project[] locale: Locale>`
+
+**Model shape — copy exactly, do not guess:**
+```ts
+interface Project {
+  id: string; name: string; description: Localized; stack: string[];
+  liveUrl: string | null; repoUrl: string | null; imageSrc: string | null;
+  featured: boolean; order: number;
+}
+```
+There is no `slug`, `title`, `summary`, `coverSrc` or `year`. The card's link is
+`liveUrl ?? repoUrl`; when both are null render a `<div>`, never `href="#"`.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -1211,17 +1253,22 @@ beforeEach(() => {
   vi.stubGlobal('IntersectionObserver', class { observe() {} unobserve() {} disconnect() {} });
 });
 
-const projects = [
+// Field names taken from src/lib/models.ts — `name` is a plain string,
+// `description` is Localized, the image is `imageSrc`, nullable URLs are
+// `string | null`, and there is no year field.
+const projects: Project[] = [
   {
-    slug: 'gonai',
-    title: { en: 'GoNai', th: 'GoNai' },
-    summary: { en: 'Trip planner', th: 'วางแผนทริป' },
-    coverSrc: '/api/img/page/1/Cover',
-    year: 2026,
+    id: 'p1',
+    name: 'GoNai',
+    description: { en: 'Trip planner', th: 'วางแผนทริป' },
+    stack: ['Next.js', 'Supabase'],
     liveUrl: 'https://gonai.example',
-    repoUrl: '',
+    repoUrl: null,
+    imageSrc: '/api/img/page/1/Cover',
+    featured: true,
+    order: 1,
   },
-] as never[];
+];
 
 describe('WorkGrid', () => {
   it('links each card to its live URL, never to "#"', () => {
@@ -1240,18 +1287,26 @@ describe('WorkGrid', () => {
     expect(img.getAttribute('loading')).toBe('lazy');
   });
 
-  it('renders a project with no cover as text rather than a broken frame', () => {
-    const noCover = [{ ...projects[0], coverSrc: '' }] as never[];
+  it('renders a project with no image as text rather than a broken frame', () => {
+    const noCover: Project[] = [{ ...projects[0], imageSrc: null }];
     const { container } = render(<WorkGrid projects={noCover} locale="en" />);
     expect(container.querySelector('img')).toBeNull();
     expect(screen.getByText('GoNai')).toBeTruthy();
   });
 
   it('renders a non-link card when a project has neither live nor repo URL', () => {
-    const noLink = [{ ...projects[0], liveUrl: '', repoUrl: '' }] as never[];
+    const noLink: Project[] = [{ ...projects[0], liveUrl: null, repoUrl: null }];
     const { container } = render(<WorkGrid projects={noLink} locale="en" />);
     expect(container.querySelector('a')).toBeNull();
     expect(screen.getByText('GoNai')).toBeTruthy();
+  });
+
+  it('falls back to the repo URL when there is no live URL', () => {
+    const repoOnly: Project[] = [{ ...projects[0], liveUrl: null, repoUrl: 'https://github.com/x/y' }];
+    const { container } = render(<WorkGrid projects={repoOnly} locale="en" />);
+    expect((container.querySelector('a') as HTMLAnchorElement).getAttribute('href')).toBe(
+      'https://github.com/x/y',
+    );
   });
 });
 ```
@@ -1267,14 +1322,15 @@ Render `<section className="relative z-[2] bg-dark px-6 py-[11vh]">` containing 
 12-column grid (`grid grid-cols-12 gap-6`). The first project spans 12 columns,
 the rest span 6 (`md:col-span-6`). Each card:
 
-- If `project.liveUrl || project.repoUrl` exists, wrap in `<a href={that}>`.
-  Otherwise wrap in a plain `<div>`. **Never emit `href="#"`.**
-- If `project.coverSrc` is non-empty, render the browser-chrome frame — a
-  rounded 12px border with three 8px dots along a 1px divider — then the
-  `<img>` with `width`, `height`, `loading="lazy"`, `decoding="async"` and
-  `alt={`${title} — ${summary}`}`.
-- Below the frame, a flex row with the title and a mono meta line
-  (`{summary} · {year}`).
+- `const href = project.liveUrl ?? project.repoUrl;` — if `href` is non-null wrap
+  in `<a href={href}>`, otherwise wrap in a plain `<div>`. **Never emit `href="#"`.**
+- If `project.imageSrc` is non-null, render the browser-chrome frame — a rounded
+  12px border with three 8px dots along a 1px divider — then the `<img>` with
+  `width`, `height`, `loading="lazy"`, `decoding="async"` and
+  ``alt={`${project.name} — ${project.description[locale]}`}``.
+- Below the frame, a flex row with `project.name` and a mono meta line built from
+  `project.description[locale]` and `project.stack.join(' · ')`. There is no
+  `year` field — do not invent one.
 - Wrap each card in `<Reveal delayIndex={i}>`.
 
 - [ ] **Step 4: Run test to verify it passes**
@@ -1298,8 +1354,25 @@ git commit -m "feat: work grid of real product captures in browser chrome"
 - Test: `tests/cv-band.test.tsx`, `tests/copy-email.test.tsx`
 
 **Interfaces:**
-- Consumes: `Reveal` (T2), `MaskedHeading` (T3), `dict` (T6), the existing `CareerEntry` and `Profile` models
+- Consumes: `Reveal` (T2), `MaskedHeading` (T3), `dict` (T6), `CareerEntry`, `Profile` and `Locale` from `@/lib/models`
 - Produces: `<CvBand entries: CareerEntry[] locale: Locale>`, `<ContactBand profile: Profile locale: Locale>`, `<CopyEmail email: string copiedLabel: string>`
+
+**Model shapes — copy exactly, do not guess:**
+```ts
+interface CareerEntry {
+  id: string; role: string; company: string; period: string;
+  wins: { en: string[]; th: string[] }; order: number;
+}
+interface Profile {
+  name: string; headline: Localized; byline: Localized; now: Localized;
+  photoSrc: string | null; linkedin: string; github: string;
+  email: string; resumeUrl: string | null;
+}
+```
+`role` and `company` are plain strings — not `Localized`. The date range is one
+`period` string; there is no `start`/`end`. The only localized career field is
+`wins`. Note `Profile.now` exists and is a good source for the About band's
+current-focus line.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -1343,13 +1416,32 @@ beforeEach(() => {
   vi.stubGlobal('IntersectionObserver', class { observe() {} unobserve() {} disconnect() {} });
 });
 
+// Field names from src/lib/models.ts: `role` and `company` are plain strings,
+// the date range is a single `period` string, and the only localized field is
+// `wins`. There is no start/end pair.
+const entries: CareerEntry[] = [
+  {
+    id: 'c1',
+    role: 'BD Lead',
+    company: 'Acme',
+    period: '2024 — present',
+    wins: { en: ['Opened two channels'], th: ['เปิดช่องทางใหม่สองช่อง'] },
+    order: 1,
+  },
+];
+
 describe('CvBand', () => {
   it('renders real career rows', () => {
-    const entries = [
-      { company: 'Acme', role: { en: 'BD Lead', th: 'หัวหน้า BD' }, start: '2024', end: '' },
-    ] as never[];
     render(<CvBand entries={entries} locale="en" />);
     expect(screen.getByText('Acme')).toBeTruthy();
+    expect(screen.getByText('BD Lead')).toBeTruthy();
+    expect(screen.getByText('2024 — present')).toBeTruthy();
+  });
+
+  it('renders the wins for the active locale only', () => {
+    render(<CvBand entries={entries} locale="th" />);
+    expect(screen.getByText('เปิดช่องทางใหม่สองช่อง')).toBeTruthy();
+    expect(screen.queryByText('Opened two channels')).toBeNull();
   });
 
   it('says the data is missing rather than inventing a company', () => {

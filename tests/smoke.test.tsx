@@ -1,3 +1,5 @@
+import type { ReactElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, it, expect } from 'vitest';
 import HomePage from '@/app/[locale]/page';
 import ProjectsPage, { generateMetadata as projectsMetadata } from '@/app/[locale]/projects/page';
@@ -15,29 +17,37 @@ import type { Locale } from '@/lib/models';
 const locales: Locale[] = ['en', 'th'];
 const p = (locale: Locale) => ({ params: Promise.resolve({ locale }) });
 
-// Minimal React-element-tree walker. This project has no jsdom/DOM renderer
-// (see vitest.config.ts: environment: 'node'), but a page component's return
-// value is still a plain React element graph -- host elements (lowercase
-// tags) are built eagerly by JSX, so their string children are inspectable
-// without a renderer. Elements whose type is another component (capitalized,
-// e.g. ProjectCard) are NOT expanded by this walker; that's fine here since
-// every assertion below targets text embedded directly in the page shell.
-type El = { type: unknown; props?: { children?: unknown } };
-function isEl(x: unknown): x is El {
-  return typeof x === 'object' && x !== null && 'props' in x;
-}
-function collectText(node: unknown, acc: string[] = []): string[] {
-  if (node == null || typeof node === 'boolean') return acc;
-  if (typeof node === 'string' || typeof node === 'number') {
-    acc.push(String(node));
-    return acc;
-  }
-  if (Array.isArray(node)) {
-    for (const child of node) collectText(child, acc);
-    return acc;
-  }
-  if (isEl(node)) collectText(node.props?.children, acc);
-  return acc;
+// Renders a page's element tree to real HTML via ReactDOMServer and returns
+// the entity-decoded text. This replaces an earlier raw-element-tree walker
+// that only read a JSX descriptor's own `.props.children` -- which worked
+// for e.g. `<Link href="...">{t.back}</Link>` (text passed literally as
+// `children`) but could never see anything rendered *inside* a capitalized
+// component that takes its text via a named prop instead of `children`
+// (Hero's `profile.headline`, WorkGrid's `project.name`, CvBand's stats --
+// none of them pass `children`). A real render, by contrast, actually calls
+// every component function the way React would, so it sees straight through
+// Hero/AboutBand/CraftBand/WorkGrid/CvBand/ContactBand -- this project's
+// home route composes nothing else. renderToStaticMarkup never runs
+// useEffect (only the render-phase function body), so the 'use client'
+// hook-using descendants it also passes through -- Reveal, MaskedHeading,
+// CopyEmail, ParticleField, next/link's Link -- render their initial
+// synchronous markup without needing jsdom, matchMedia, or
+// IntersectionObserver stubs (verified empirically: no such stub is set up
+// anywhere in this file, and the suite is green).
+//
+// One consequence worth flagging for future assertions here: MaskedHeading
+// splits its `text` prop into one <span> per word, so a multi-word heading
+// (e.g. t.aboutHeading) is NOT a contiguous substring of the rendered HTML
+// -- each word is separated by closing/opening span tags. Assertions below
+// stick to plain, unsplit text (eyebrow labels, profile prose, list items)
+// for exactly this reason.
+function collectText(node: ReactElement): string {
+  return renderToStaticMarkup(node)
+    .replace(/&quot;/g, '"')
+    .replace(/&#x27;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&');
 }
 
 describe('smoke: pages render in both locales (fixture mode)', () => {
@@ -56,9 +66,27 @@ describe('smoke: pages render in both locales (fixture mode)', () => {
     // the tree.
     for (const locale of locales) {
       const t = dict[locale];
+      const other = dict[locale === 'en' ? 'th' : 'en'];
       const home = await HomePage(p(locale));
-      expect(collectText(home)).toContain(t.selectedProjects);
-      expect(collectText(home)).toContain(t.latestWriting);
+      const homeText = collectText(home);
+      // The redesigned home route has no writing section at all (spec's
+      // page structure is Hero/About/Craft/Work/CV/Contact) -- the old
+      // dict.selectedProjects/dict.latestWriting assertions here had
+      // nowhere to land and were deleted, not weakened. These four replace
+      // them with text that is genuinely rendered by the new page, one
+      // string per band composed in page.tsx, none of it routed through
+      // MaskedHeading (see the collectText comment above for why that
+      // matters here).
+      expect(homeText).toContain(t.about); // AboutBand's eyebrow
+      expect(homeText).toContain(t.howIWork); // CraftBand's eyebrow
+      expect(homeText).toContain(t.selectedWork); // WorkGrid's eyebrow
+      expect(homeText).toContain(t.career); // CvBand's eyebrow
+      // Render only the active locale -- the other language's equivalent
+      // eyebrow labels must be entirely absent from the assembled page.
+      expect(homeText).not.toContain(other.about);
+      expect(homeText).not.toContain(other.howIWork);
+      expect(homeText).not.toContain(other.selectedWork);
+      expect(homeText).not.toContain(other.career);
 
       const projects = await ProjectsPage(p(locale));
       expect(collectText(projects)).toContain(t.projects);
