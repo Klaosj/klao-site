@@ -8,6 +8,7 @@
 .spot.spot-on {
   color: var(--color-on-dark);
   opacity: 1;
+  text-shadow: 0 0 24px rgba(168, 174, 203, 0.35);
 }
 @media (prefers-reduced-motion: reduce) {
   .spot { opacity: 1 !important; transition: none; }

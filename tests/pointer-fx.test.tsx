@@ -71,7 +71,7 @@ function mountHeroPills(): HTMLElement {
 
 /** A single .btn anchor with a fixed, stubbed bounding rect -- jsdom always
  *  returns an all-zero rect otherwise, which would make every offset
- *  collapse to (0 - 0 - 0) regardless of whether the 0.22/0.32 factors are
+ *  collapse to (0 - 0 - 0) regardless of whether the 0.30/0.42 factors are
  *  even applied. */
 function mountBtn(rect: { left: number; top: number; width: number; height: number }): HTMLElement {
   const btn = document.createElement('a');
@@ -237,7 +237,7 @@ describe('PointerFx', () => {
     expect(cursor.classList.contains('big')).toBe(true);
   });
 
-  it('pulls a .btn toward the pointer at 0.22x horizontal / 0.32x vertical, and resets on pointerleave', () => {
+  it('pulls a .btn toward the pointer at 0.30x horizontal / 0.42x vertical, and resets on pointerleave', () => {
     stubMatchMedia();
     const btn = mountBtn({ left: 100, top: 200, width: 40, height: 20 });
     fixtures.push(btn);
@@ -245,8 +245,8 @@ describe('PointerFx', () => {
 
     // Center is (120, 210). Pointer at (150, 230) is +30/+20 off-center.
     pointerMoveOn(btn, 150, 230);
-    expect(btn.style.getPropertyValue('--magX')).toBe(`${(30 * 0.22).toFixed(1)}px`);
-    expect(btn.style.getPropertyValue('--magY')).toBe(`${(20 * 0.32).toFixed(1)}px`);
+    expect(btn.style.getPropertyValue('--magX')).toBe(`${(30 * 0.3).toFixed(1)}px`);
+    expect(btn.style.getPropertyValue('--magY')).toBe(`${(20 * 0.42).toFixed(1)}px`);
 
     btn.dispatchEvent(new PointerEvent('pointerleave'));
     expect(btn.style.getPropertyValue('--magX')).toBe('0px');
