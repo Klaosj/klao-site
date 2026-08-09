@@ -5,8 +5,8 @@ import { dict } from '@/lib/dictionary';
 import type { Locale, Profile } from '@/lib/models';
 import { eyebrowFont } from '@/lib/typography';
 
-// The same three facts are already stated in the byline copy below, so the
-// pills are pure decoration -- `aria-hidden` on their container, never
+// The pills echo facts already present in the headline and byline, so
+// they are pure decoration -- `aria-hidden` on their container, never
 // something a screen reader visits. They are not sourced from `profile`:
 // unlike the headline/byline/greeting (which must reflect the real person),
 // these three labels are a fixed part of the visual composition.
@@ -82,35 +82,10 @@ export default function Hero({
         {t.greeting} {profile.name.split(' ')[0]}
       </p>
 
-      {/* Identity stack (Change 1), replacing the single roleLine <p> that
-          used to sit here (`t.roleLine` is now unused by this component --
-          left in the dictionary untouched, per spec, since it's a
-          read-only file and other code may still reference it). Three
-          declarative lines, Bobby-Arnot style: the point is that a reader
-          registers three distinct identities belonging to one person,
-          which one wrapped sentence flattens into a single fact.
-          Rendered as a <ul>, not <h2>/<h3>: these are coordinate, parallel
-          items describing the same subject, not a new section of the
-          page, so list semantics (announced as "list, 3 items" by a
-          screen reader) fit better than a heading -- and unlike a
-          heading, a list never enters the page's heading outline, so it
-          can't shadow the <h1> immediately below it. Plain stacked <p>
-          tags were the other reasonable option, but they'd read to
-          assistive tech as three unrelated paragraphs instead of one
-          grouped set. Sized and weighted to have more presence than the
-          12.5px muted line it replaces, while staying well under the
-          <h1>'s clamp(34px,...): the <h1> must remain the visually
-          dominant element in the hero. */}
-      <ul className="mt-2 flex flex-col items-center gap-0.5 text-[15px] font-medium leading-[1.2] text-on-dark sm:text-[17px]">
-        {t.identities.map((line) => (
-          <li key={line}>{line}</li>
-        ))}
-      </ul>
-
       <MaskedHeading
         text={profile.headline[locale]}
         level={1}
-        className="mt-8 max-w-[15ch] text-[clamp(34px,6.4vw,84px)] font-bold leading-[1.08] tracking-[-0.03em]"
+        className="mt-6 max-w-[15ch] text-[clamp(34px,6.4vw,84px)] font-bold leading-[1.08] tracking-[-0.03em]"
       />
 
       <Reveal as="p" className="mt-9 max-w-[60ch] text-[14.5px] leading-[1.95] text-on-dark-soft">

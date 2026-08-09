@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, within } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import Hero from '@/components/sections/Hero';
 import type { Profile } from '@/lib/models';
@@ -107,49 +107,17 @@ describe('Hero', () => {
     expect(screen.queryByText(/close the deal/)).toBeNull();
   });
 
-  // --- Change 1: identity stack -------------------------------------------
+  // --- Change 1: identity stack removed -------------------------------------
 
-  // Scoped to the identity <ul> itself (via `within`), not `screen`: the
-  // decorative pills div (aria-hidden, PILLS constant above) happens to
-  // share the exact Thai string 'พัฒนาธุรกิจ' with identities.th[0], so an
-  // unscoped `screen.getByText` on that string matches two elements and
-  // throws -- a real collision this test hit while it was being written,
-  // not a hypothetical one. Scoping to the list is also the more honest
-  // assertion: it tests the identity block specifically, not "this text
-  // exists somewhere on the page".
-  it('renders all three EN identity lines in the identity list, and none of the TH ones', () => {
-    const { container } = render(<Hero profile={profile} locale="en" />);
-    const list = within(container.querySelector('ul') as HTMLElement);
-    expect(list.getByText('Business development.')).toBeTruthy();
-    expect(list.getByText('Barista.')).toBeTruthy();
-    expect(list.getByText('Builds his own tools.')).toBeTruthy();
-    expect(list.queryByText('พัฒนาธุรกิจ')).toBeNull();
-    expect(list.queryByText('บาริสต้า')).toBeNull();
-    expect(list.queryByText('สร้างเครื่องมือใช้เอง')).toBeNull();
-  });
-
-  it('renders all three TH identity lines in the identity list, and none of the EN ones', () => {
-    const { container } = render(<Hero profile={profile} locale="th" />);
-    const list = within(container.querySelector('ul') as HTMLElement);
-    expect(list.getByText('พัฒนาธุรกิจ')).toBeTruthy();
-    expect(list.getByText('บาริสต้า')).toBeTruthy();
-    expect(list.getByText('สร้างเครื่องมือใช้เอง')).toBeTruthy();
-    expect(list.queryByText('Business development.')).toBeNull();
-    expect(list.queryByText('Barista.')).toBeNull();
-    expect(list.queryByText('Builds his own tools.')).toBeNull();
-  });
-
-  it('renders the identity stack as a list, not a heading element', () => {
-    // A <h2>/<h3> here would sit above the <h1> in the document's heading
-    // outline. Assert the positive (a <ul> with 3 <li>s) AND the negative
-    // (no h2/h3 anywhere in the hero) so a regression to a heading element
-    // fails this test even if some other list is left in place.
-    const { container } = render(<Hero profile={profile} locale="en" />);
-    const list = container.querySelector('ul');
-    expect(list).toBeTruthy();
-    expect(list?.querySelectorAll('li').length).toBe(3);
-    expect(container.querySelector('h2')).toBeNull();
-    expect(container.querySelector('h3')).toBeNull();
+  // The identity stack (a <ul> of three declarative lines) has been removed
+  // so the <h1> is the only statement of who the person is -- the pills and
+  // byline already echo the same facts. This asserts the absence, not a
+  // replacement structure: no <ul> should sit between the greeting and the
+  // heading anymore.
+  it('does not render the identity stack (the h1 is the only statement)', () => {
+    render(<Hero profile={profile} locale="en" />);
+    expect(screen.queryByText('Barista.')).toBeNull();
+    expect(screen.queryByText('Business development.')).toBeNull();
   });
 
   // --- Change 2: availability status pill ---------------------------------
