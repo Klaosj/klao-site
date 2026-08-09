@@ -56,6 +56,29 @@ describe('SiteFooter', () => {
     expect(jsx.props?.className).toContain('border-t');
   });
 
+  it('defaults to the English (font-mono) treatment when no locale is passed, so existing callers are unaffected', async () => {
+    const { default: SiteFooter } = await import('@/components/SiteFooter');
+    const jsx = (await SiteFooter()) as El;
+    const p = jsx.props?.children as El;
+    expect(p.props?.className).toContain('font-mono');
+    expect(p.props?.className).not.toContain('font-thai');
+  });
+
+  it('switches the copyright line to the Thai font stack with normal tracking when locale is th', async () => {
+    // Regression test: no monospace face carries Thai glyphs (whole-branch
+    // review finding). profile.name is a plain, locale-invariant string
+    // (always Latin today, per src/lib/models.ts), so this doesn't change
+    // what text renders -- only that the treatment now follows the same
+    // locale convention as every other eyebrow-style label in the
+    // redesign, via the same `eyebrowFont` helper.
+    const { default: SiteFooter } = await import('@/components/SiteFooter');
+    const jsx = (await SiteFooter({ locale: 'th' })) as El;
+    const p = jsx.props?.children as El;
+    expect(p.props?.className).not.toContain('font-mono');
+    expect(p.props?.className).not.toMatch(/tracking-\[/);
+    expect(p.props?.className).toContain('font-thai');
+  });
+
   it('renders no links at all -- nothing to leak a dead href', async () => {
     const { default: SiteFooter } = await import('@/components/SiteFooter');
     const jsx = await SiteFooter();

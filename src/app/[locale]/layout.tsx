@@ -143,7 +143,7 @@ export default async function RootLayout({
             now that it's fixed rather than sitting in normal document
             flow. */}
         <main className="flex-1">{children}</main>
-        <SiteFooter />
+        <SiteFooter locale={l} />
       </body>
     </html>
   );

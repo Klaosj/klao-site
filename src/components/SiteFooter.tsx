@@ -1,4 +1,6 @@
 import { getProfile } from '@/lib/content';
+import type { Locale } from '@/lib/models';
+import { eyebrowFont } from '@/lib/typography';
 
 // Async server component that fetches its own data, same as before this
 // rewrite -- kept that way (rather than lifted to a `profile` prop) so its
@@ -8,17 +10,27 @@ import { getProfile } from '@/lib/content';
 // RootLayout has already resolved the same call for SiteNav within the same
 // request.
 //
-// No `locale` prop: the dark treatment below (bg-deep, a top hairline, the
-// copyright line) has no locale-dependent copy -- profile.name and the year
-// render identically either way -- so a param that would sit unused was
-// dropped rather than kept for symmetry with SiteNav. Nothing here links to
-// "#": the previous LinkedIn/GitHub/email row was dropped as a duplicate of
-// SiteNav's own social links, per the brief's "nothing that links to #".
-export default async function SiteFooter() {
+// `locale` is optional and defaults to 'en': the dark treatment below
+// (bg-deep, a top hairline) has no locale-dependent COPY -- profile.name
+// and the year render identically either way, which is why an earlier
+// version of this file dropped the prop entirely. It still affects
+// PRESENTATION, though -- the copyright line used a bare `font-mono`
+// treatment regardless of locale (whole-branch review finding: no
+// monospace face carries Thai glyphs, so any Thai text rendered through it
+// falls back per-glyph). profile.name itself is a plain, locale-invariant
+// string per src/lib/models.ts (always Latin today), so this line renders
+// identically either way right now -- the optional default keeps that
+// behaviour and this file's existing tests (which call `SiteFooter()` with
+// no arguments) working unchanged, while still following the same locale
+// convention as every other eyebrow-style label in the redesign. Nothing
+// here links to "#": the previous LinkedIn/GitHub/email row was dropped as
+// a duplicate of SiteNav's own social links, per the brief's "nothing that
+// links to #".
+export default async function SiteFooter({ locale = 'en' }: { locale?: Locale } = {}) {
   const profile = await getProfile();
   return (
     <footer className="relative z-[2] border-t border-on-dark-faint bg-deep px-6 py-8 text-center">
-      <p className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-on-dark-soft">
+      <p className={`text-[10.5px] uppercase text-on-dark-soft ${eyebrowFont(locale, 'tracking-[0.18em]')}`}>
         © {new Date().getFullYear()} {profile.name}
       </p>
     </footer>
