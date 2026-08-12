@@ -4,7 +4,7 @@ import { dict } from '@/lib/dictionary';
 import { SITE_URL } from '@/lib/site';
 import { generateMetadata as projectsMetadata } from '@/app/[locale]/projects/page';
 import { generateMetadata as writingMetadata } from '@/app/[locale]/writing/page';
-import { derivePostDescription } from '@/app/[locale]/writing/[slug]/page';
+import { derivePostDescription } from '@/lib/post-description';
 
 // QA I4: none of the non-home routes set their own `description`/`openGraph`,
 // so every one of them silently inherited layout.tsx's site-root metadata
