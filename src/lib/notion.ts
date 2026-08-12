@@ -1,11 +1,12 @@
 import { Client } from '@notionhq/client';
-import type { CareerEntry, Post, PostMeta, Profile, Project } from './models';
+import type { CareerEntry, Post, PostMeta, Profile, Project, Skill } from './models';
 import {
   mapBlocks,
   mapCareerEntry,
   mapPostMeta,
   mapProfile,
   mapProject,
+  mapSkill,
   splitBilingual,
   type NotionPage,
 } from './notion-mappers';
@@ -16,7 +17,7 @@ import {
 let cachedClient: Client | undefined;
 const client = (): Client => (cachedClient ??= new Client({ auth: process.env.NOTION_TOKEN }));
 
-const dbId = (name: 'PROJECTS' | 'POSTS' | 'CAREER' | 'PROFILE'): string => {
+const dbId = (name: 'PROJECTS' | 'POSTS' | 'CAREER' | 'PROFILE' | 'SKILLS'): string => {
   const id = process.env[`NOTION_DB_${name}`];
   if (!id) throw new Error(`Missing env NOTION_DB_${name}`);
   return id;
@@ -94,6 +95,10 @@ export async function fetchCareer(): Promise<CareerEntry[]> {
 export async function fetchProfile(): Promise<Profile | null> {
   const rows = await queryAll(dbId('PROFILE'), false); // Profile DB has no Published property
   return rows.map(mapProfile).filter(nonNull)[0] ?? null;
+}
+
+export async function fetchSkills(): Promise<Skill[]> {
+  return (await queryAll(dbId('SKILLS'), true)).map(mapSkill).filter(nonNull);
 }
 
 // Notion page/block ids are UUIDs: 32 hex chars, with or without dashes.

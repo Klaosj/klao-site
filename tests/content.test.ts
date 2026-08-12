@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { getProjects, getFeaturedProjects, getPosts, getPost, getCareer, getProfile } from '@/lib/content';
+import { getProjects, getFeaturedProjects, getPosts, getPost, getCareer, getProfile, getSkills } from '@/lib/content';
 import { formatDate } from '@/lib/format';
+import { SKILL_TIERS } from '@/lib/models';
 
 describe('content API (fixture mode)', () => {
   it('returns projects sorted by order', async () => {
@@ -53,6 +54,27 @@ describe('content API (fixture mode)', () => {
     const profile = await getProfile();
     expect(profile.name).toContain('Klao');
     expect(profile.headline.th.length).toBeGreaterThan(0);
+  });
+
+  it('returns skills sorted by tier order (top before daily before working before basic before learning), then by order within a tier', async () => {
+    const skills = await getSkills();
+    expect(skills.length).toBeGreaterThan(0);
+    // Every SKILL_TIERS bucket is represented in the real fixture -- if a
+    // future edit to skills.json ever emptied one, this is the assertion
+    // that would notice, rather than the sort-order check below silently
+    // having nothing to check for that tier.
+    for (const tier of SKILL_TIERS) {
+      expect(skills.some((s) => s.tier === tier), `no skill has tier "${tier}"`).toBe(true);
+    }
+    const tierRank = Object.fromEntries(SKILL_TIERS.map((t, i) => [t, i]));
+    const ranks = skills.map((s) => tierRank[s.tier]);
+    expect(ranks).toEqual([...ranks].sort((a, b) => a - b));
+    // Within a single tier, `order` must be non-decreasing -- the weaker
+    // global check above would pass even if two same-tier rows were swapped.
+    for (const tier of SKILL_TIERS) {
+      const ordersInTier = skills.filter((s) => s.tier === tier).map((s) => s.order);
+      expect(ordersInTier).toEqual([...ordersInTier].sort((a, b) => a - b));
+    }
   });
 });
 

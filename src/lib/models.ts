@@ -98,3 +98,39 @@ export interface Profile {
   // the Latin wordmark (profile.name's first word) on both locales.
   nameNative: string | null;
 }
+
+// "How real is it" -- a Skill's visual prominence on SkillsBand (the
+// Toolbox band) is driven entirely by which of these five buckets it sits
+// in, from "reach for daily, ship with it" down to "still learning, not yet
+// dependable." Ordered biggest/brightest -> smallest/quietest on purpose:
+// this literal declaration order is the single source of truth SKILL_TIERS
+// (below) captures as an array, the same way LOCALES above is the single
+// source of truth for locale order.
+export type SkillTier = 'top' | 'daily' | 'working' | 'basic' | 'learning';
+
+// Single source of truth for two things that must never drift apart: (1)
+// "what counts as a valid Tier" -- notion-mappers.ts's mapSkill skips any
+// row whose Tier isn't one of these five, same as LOCALES' own reasoning
+// above; and (2) "what order do tiers render in" -- content.ts's getSkills
+// sorts on this array's index (top first, learning last) before falling
+// back to each Skill's own `order`. One typed array, not a hand-copied
+// enum-and-sort-order pair in two separate files.
+export const SKILL_TIERS: readonly SkillTier[] = ['top', 'daily', 'working', 'basic', 'learning'];
+
+export interface Skill {
+  id: string;
+  // Locale-invariant: skill names are proper nouns (Claude, Salesforce,
+  // Python, Supabase) or industry-standard terms (B2B sales, Pipeline
+  // management, TAM-SAM-SOM analysis) that read identically in Thai and
+  // English -- same reasoning Profile.clients above already relies on, one
+  // step earlier in this file.
+  name: string;
+  tier: SkillTier;
+  // Free-form Notion Select value (tech/biz/data/fin/human, per
+  // docs/NOTION_SETUP.md) -- not a union here, since SkillsBand only uses
+  // this to pick a muted dot color and quietly falls back to one default
+  // color for any value it doesn't recognise, rather than needing the type
+  // system to enumerate every category a future Skills row might carry.
+  category: string;
+  order: number;
+}

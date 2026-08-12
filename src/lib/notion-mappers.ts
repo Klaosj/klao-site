@@ -1,4 +1,5 @@
-import type { CareerEntry, ContentBlock, Localized, PostMeta, Profile, Project, RichSpan } from './models';
+import type { CareerEntry, ContentBlock, Localized, PostMeta, Profile, Project, RichSpan, Skill, SkillTier } from './models';
+import { SKILL_TIERS } from './models';
 
 export type NotionPage = { id: string; properties: Record<string, unknown> };
 
@@ -15,6 +16,12 @@ const emailOf = (prop: any): string => prop?.email ?? '';
 const multi = (prop: any): string[] =>
   ((prop?.multi_select ?? []) as any[]).map((o) => o?.name ?? '').filter(Boolean);
 const hasFiles = (prop: any): boolean => Array.isArray(prop?.files) && prop.files.length > 0;
+// Skills' Tier/Category are single-value Select properties, not the
+// multi-select `Stack`/`Clients` shape `multi()` above reads -- Notion's API
+// nests a Select's value one level deeper (`{ select: { name } }`) than a
+// title/rich_text property, hence a dedicated reader rather than reusing
+// `text()`.
+const selectOf = (prop: any): string | null => prop?.select?.name ?? null;
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
 const localized = (en: string, th: string): Localized => ({ en, th: th || en });
@@ -84,6 +91,39 @@ export function mapProfile(page: NotionPage): Profile | null {
     // `NameNative` property maps to null, and the /th particle wordmark
     // falls back to the Latin word (see src/app/[locale]/page.tsx).
     nameNative: text(page.properties.NameNative) || null,
+  };
+}
+
+// Reads Tier via `selectOf` above and validates it against SKILL_TIERS
+// (models.ts) -- the same array notion-mappers.ts's caller-facing sort
+// order in content.ts is built from, so "what's a valid Tier" and "what
+// order do tiers render in" can never quietly drift apart.
+function tierOf(page: NotionPage): SkillTier | null {
+  const name = selectOf(page.properties.Tier);
+  return name && (SKILL_TIERS as readonly string[]).includes(name) ? (name as SkillTier) : null;
+}
+
+export function mapSkill(page: NotionPage): Skill | null {
+  const name = text(page.properties.Name);
+  if (!name) return skip('Skills', page, 'missing Name');
+  const tier = tierOf(page);
+  // Missing Tier and an unrecognised Tier value are the same failure here:
+  // SkillsBand's whole layout (which visual tier a skill lands in) is
+  // driven by this one field, so there is no safe default to fall back to
+  // the way Category falls back to 'biz' below -- an unreadable Tier drops
+  // the row, same as a blank Name.
+  if (!tier) return skip('Skills', page, 'missing or unrecognised Tier');
+  return {
+    id: page.id,
+    name,
+    tier,
+    // Optional Select; a Skills database without a Category property (or an
+    // empty one) maps to 'biz' rather than failing the row -- same additive
+    // treatment as CareerEntry.RoleTH/Profile.Clients elsewhere in this
+    // file, just with a non-empty default instead of ''/[]/null, since
+    // SkillsBand always needs *some* category to pick a dot color.
+    category: selectOf(page.properties.Category) || 'biz',
+    order: num(page.properties.Order),
   };
 }
 

@@ -1,8 +1,9 @@
 import { describe, it, expect, vi } from 'vitest';
-import { mapProject, mapCareerEntry, mapProfile } from '@/lib/notion-mappers';
+import { mapProject, mapCareerEntry, mapProfile, mapSkill } from '@/lib/notion-mappers';
 
 const title = (s: string) => ({ title: [{ plain_text: s }] });
 const rich = (s: string) => ({ rich_text: s ? [{ plain_text: s }] : [] });
+const select = (name: string | null) => ({ select: name ? { name } : null });
 
 const projectPage = {
   id: 'p1',
@@ -186,5 +187,67 @@ describe('mapProfile', () => {
     expect(mapProfile(page)).toBeNull();
     expect(warn).toHaveBeenCalled();
     warn.mockRestore();
+  });
+});
+
+const skillPage = {
+  id: 's1',
+  properties: {
+    Name: title('Python'),
+    Tier: select('working'),
+    Category: select('data'),
+    Order: { number: 3 },
+  },
+};
+
+describe('mapSkill', () => {
+  it('maps a full row', () => {
+    expect(mapSkill(skillPage)).toEqual({
+      id: 's1',
+      name: 'Python',
+      tier: 'working',
+      category: 'data',
+      order: 3,
+    });
+  });
+
+  it('returns null and warns on missing Name', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const page = { ...skillPage, properties: { ...skillPage.properties, Name: title('') } };
+    expect(mapSkill(page)).toBeNull();
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it('returns null and warns when Tier is missing', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const page = { ...skillPage, properties: { ...skillPage.properties, Tier: select(null) } };
+    expect(mapSkill(page)).toBeNull();
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it('returns null and warns when Tier is not one of the five recognised values', () => {
+    // A typo'd or stale Select option (e.g. renamed in Notion) must drop the
+    // row rather than silently mis-tiering it -- Tier controls the band's
+    // whole visual hierarchy, so there is no safe guess to fall back to.
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const page = { ...skillPage, properties: { ...skillPage.properties, Tier: select('expert') } };
+    expect(mapSkill(page)).toBeNull();
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it('defaults Category to "biz" when the property is empty', () => {
+    // Additive treatment, same as CareerEntry.RoleTH/Profile.Clients: an
+    // existing Skills database without a Category property (or an empty
+    // one) still maps, it just falls back to a default rather than failing
+    // the row -- unlike Tier, which has no safe default.
+    const page = { ...skillPage, properties: { ...skillPage.properties, Category: select(null) } };
+    expect(mapSkill(page)!.category).toBe('biz');
+  });
+
+  it('uses the real Category when present, not always the default', () => {
+    expect(mapSkill(skillPage)!.category).toBe('data');
   });
 });

@@ -1,0 +1,40 @@
+/* SkillsBand's "currently learning" chips carry a small pulsing dot instead
+   of the flat one every daily/working chip uses (CategoryDot in
+   SkillsBand.tsx) -- a quiet "still moving, not yet dependable" signal, one
+   visual step below the confident, static dots everywhere else in the band.
+
+   Wrapped in `@layer components`: Tailwind v4 ranks `@layer utilities`
+   above `@layer components` unconditionally (see globals.css's LEGACY
+   NAMES / LocaleToggle comments, and site-nav.css/spotlight.css's own
+   copies of the same fact), so this is only safe because nothing here
+   collides with a Tailwind utility landing on the same element -- the dot
+   only ever carries `inline-block`/sizing/`rounded-full`/`bg-peri`
+   utilities (SkillsBand.tsx), none of which touch `animation` or
+   `opacity`, so `.skill-pulse` still wins. If a future className on that
+   span ever adds either, move this rule back outside the layer (same
+   escape hatch globals.css already documents).
+
+   The reduced-motion override mirrors spotlight.css's own `.spot` rule:
+   `!important`, opacity pinned to a fixed value, animation removed -- so a
+   reduced-motion visitor still sees a dot (not a blank chip), it just
+   doesn't move. */
+@layer components {
+  @keyframes skill-pulse {
+    0%,
+    100% {
+      opacity: 0.4;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+  .skill-pulse {
+    animation: skill-pulse 2.4s ease-in-out infinite;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .skill-pulse {
+      animation: none !important;
+      opacity: 1 !important;
+    }
+  }
+}

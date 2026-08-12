@@ -22,7 +22,7 @@ you're actually connected.
    (the site never writes to Notion).
 3. Copy the "Internal Integration Secret" → this is `NOTION_TOKEN`.
 
-## 2. Create four databases
+## 2. Create five databases
 
 Full-page databases, anywhere in your workspace. **Property names must match
 exactly** — same spelling, same capitalization. Most typos are quiet but
@@ -126,6 +126,23 @@ automatically — you don't have to duplicate them just to avoid a blank
 section. **A row with a blank Role is silently dropped**, same as Name on
 Projects above.
 
+### Skills
+
+| Property | Type | Required |
+|---|---|---|
+| Name | Title | **Yes** |
+| Tier | Select (top, daily, working, basic, learning) | **Yes** |
+| Category | Select (tech, biz, data, fin, human) | |
+| Order | Number | |
+| Published | Checkbox | (see above) |
+
+`Tier` controls how prominently a skill renders on the site's Toolbox band —
+bigger and brighter for `top`, smaller and quieter down through `daily`,
+`working`, `basic`, to `learning`. **Rows with a blank Name or a blank/
+unrecognised Tier are silently dropped**, same mechanism as Name on Projects
+and Role on Career above — `Tier` must be spelled exactly one of the five
+values, or the row disappears with no visible error.
+
 ### Profile
 
 | Property | Type | Required |
@@ -156,7 +173,7 @@ no Published property** — do not add one, and don't expect a Published
 toggle to hide it. The site simply reads whatever the single row contains,
 always. (If you want to double-check this against the code: `fetchProfile`
 in `src/lib/notion.ts` queries the Profile database without the Published
-filter the other three fetchers use, with a comment noting exactly this.)
+filter the other four fetchers use, with a comment noting exactly this.)
 
 **Name is required here too, and it's the most deceptive failure mode in
 this guide:** if Name is blank, the site doesn't just drop the row — it
@@ -167,8 +184,8 @@ Profile edits are actually taking effect.
 
 ## 3. Share each database with the integration
 
-On each of the four databases: `•••` menu (top right) → **Connections** →
-add `klao-site`. Do this for all four — a database you forget to share
+On each of the five databases: `•••` menu (top right) → **Connections** →
+add `klao-site`. Do this for all five — a database you forget to share
 returns a "not found" error from Notion, which the site catches and quietly
 falls back to that database's bundled sample content (see below), not to an
 empty page. It will look like nothing changed since before you started this
@@ -188,7 +205,7 @@ URL if there's no `?v=`) is the database ID.
 
 ## 5. Fill in your environment variables
 
-Copy `.env.example` to `.env.local`. It has six lines — the five Notion
+Copy `.env.example` to `.env.local`. It has seven lines — the six Notion
 values below, plus `NEXT_PUBLIC_SITE_URL` (leave that one blank for local
 dev; the site defaults to `http://localhost:3000` automatically. It matters
 only for production — see `docs/DEPLOY.md`):
@@ -199,9 +216,10 @@ NOTION_DB_PROJECTS=...
 NOTION_DB_POSTS=...
 NOTION_DB_CAREER=...
 NOTION_DB_PROFILE=...
+NOTION_DB_SKILLS=...
 ```
 
-Set all five Notion values together, not just some of them. The site
+Set all six Notion values together, not just some of them. The site
 treats "Notion configured" as "the token is present" — so if the token is
 set but a database ID is missing, the code doesn't fail loudly: the missing
 ID check throws *before* any request reaches Notion, and (during a build)
@@ -210,7 +228,7 @@ guide — silent fallback to sample content, not a visible connection error.
 
 Restart `npm run dev`. Your Notion content replaces the sample content.
 
-For the live site, the same five variables go into Vercel — see
+For the live site, the same six variables go into Vercel — see
 `docs/DEPLOY.md`, which also covers a Vercel-specific step (a redeploy)
 that this local setup doesn't need.
 
@@ -232,8 +250,8 @@ instead of expecting one uniform "site shows sample content" behavior.
 ### Mechanism A — the Notion query itself fails
 
 An unshared database, or a typo/omission in a property used *inside a
-query filter* (that's `Published` — every one of Projects/Posts/Career
-filters on it — and, only for a single post's own page, `Slug`). Notion
+query filter* (that's `Published` — every one of Projects/Posts/Career/
+Skills filters on it — and, only for a single post's own page, `Slug`). Notion
 rejects the request outright, the site's error handling catches it, and
 what happens next depends on **when** it happens:
 
@@ -253,8 +271,8 @@ what happens next depends on **when** it happens:
 
 ### Mechanism B — the query succeeds, but a required field is unreadable
 
-A blank `Name` / `Role` / `Slug` / `Date` / `TitleEN` (see the "Required"
-columns above), or — this is the case to know about — a `Slug` property
+A blank `Name` / `Role` / `Tier` / `Slug` / `Date` / `TitleEN` (see the
+"Required" columns above), or — this is the case to know about — a `Slug` property
 that's been renamed or misspelled. `Slug` is *never* part of the query
 that builds the `/writing` list (`fetchPostMetas` in `src/lib/notion.ts`
 filters only on `Published`); it's read per-row, inside the mapper. So a
@@ -265,8 +283,8 @@ fixtures, no fallback, no error.** (Opening one specific post directly,
 `fetchPostBySlug`, *does* filter on `Slug`, so that one request behaves
 like Mechanism A instead.)
 
-For Projects/Posts/Career, a row dropped this way just makes the returned
-list one item shorter — nothing substitutes for it, the content simply
+For Projects/Posts/Career/Skills, a row dropped this way just makes the
+returned list one item shorter — nothing substitutes for it, the content simply
 isn't there. **Profile is the one exception**, and it's the most
 deceptive case in this guide: because Profile is a single row, not a list,
 `mapProfile` returning null (blank Name) cascades into `content.ts`'s
@@ -295,9 +313,10 @@ confirmed it.
 *(Once you've confirmed you're actually connected — see above.)*
 
 - Add or edit rows/pages in Notion as normal.
-- Tick **Published** when a Project, Post, or Career entry is ready to show.
-  Untick it to hide it again — instantly for local dev, within the hour for
-  production (see below). Profile has no Published toggle; it's always live.
+- Tick **Published** when a Project, Post, Career entry, or Skill is ready
+  to show. Untick it to hide it again — instantly for local dev, within the
+  hour for production (see below). Profile has no Published toggle; it's
+  always live.
 - **Local (`npm run dev`):** just reload the page — every request re-reads
   Notion live.
 - **Production:** the site uses Next.js ISR with a 1-hour cache

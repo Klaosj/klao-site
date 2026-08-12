@@ -130,6 +130,21 @@ const en = {
   // SiteFooter's human line. True of the owner (the projects were built
   // nights-and-weekends per profile.now) — personality, not fabrication.
   footerNote: 'Built at night, powered by good coffee.',
+
+  // SkillsBand ("Toolbox" band). Fixed, non-profile UI copy -- same
+  // category as craftHeading/aboutHeading/cvHeading above, hence dictionary
+  // entries rather than component-local constants. The four tier labels sit
+  // between `craftHeading` and dict-level eyebrow labels elsewhere: not the
+  // full-sentence claim a bigHead makes, but not a one-word nav label
+  // either -- they name the five-way honesty scale (top/daily/working/
+  // basic/learning, src/lib/models.ts's SkillTier) the band itself renders
+  // as size and brightness, in that same order.
+  toolbox: 'Toolbox',
+  toolboxHeading: 'What I actually work with.',
+  tierDaily: 'Daily craft',
+  tierWorking: 'Working knowledge',
+  tierBasic: 'Familiar with',
+  tierLearning: 'Currently learning',
 };
 
 const th: typeof en = {
@@ -203,6 +218,13 @@ const th: typeof en = {
   navLanguage: 'ภาษา',
 
   footerNote: 'สร้างตอนกลางคืน ด้วยกาแฟดีๆ หลายแก้ว',
+
+  toolbox: 'กล่องเครื่องมือ',
+  toolboxHeading: 'ของจริงที่ผมใช้ทำงาน',
+  tierDaily: 'ใช้ประจำ',
+  tierWorking: 'ใช้เป็น',
+  tierBasic: 'รู้พื้นฐาน',
+  tierLearning: 'กำลังเรียน',
 };
 
 export type UiDict = typeof en;

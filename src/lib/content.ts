@@ -1,9 +1,11 @@
 import { cache } from 'react';
-import type { CareerEntry, Post, PostMeta, Profile, Project } from './models';
+import type { CareerEntry, Post, PostMeta, Profile, Project, Skill, SkillTier } from './models';
+import { SKILL_TIERS } from './models';
 import projectsFixture from '@/content/fixtures/projects.json';
 import postsFixture from '@/content/fixtures/posts.json';
 import careerFixture from '@/content/fixtures/career.json';
 import profileFixture from '@/content/fixtures/profile.json';
+import skillsFixture from '@/content/fixtures/skills.json';
 
 function isNotionConfigured(): boolean {
   return Boolean(process.env.NOTION_TOKEN);
@@ -99,4 +101,23 @@ const getProfileCached = cache(async (): Promise<Profile> => {
 
 export async function getProfile(): Promise<Profile> {
   return getProfileCached();
+}
+
+// SKILL_TIERS' own declaration order (models.ts: top -> daily -> working ->
+// basic -> learning) IS the render order -- this just turns that array into
+// an O(1) lookup for the comparator below, rather than re-declaring the
+// same five-tier order a second time in this file where it could drift out
+// of sync with notion-mappers.ts's validation of the same array.
+export const TIER_ORDER: Record<SkillTier, number> = Object.fromEntries(
+  SKILL_TIERS.map((tier, i) => [tier, i]),
+) as Record<SkillTier, number>;
+
+// Not wrapped in cache(): unlike getFeaturedProjects (which calls
+// getProjectsCached twice per home render, once directly and once filtered)
+// nothing in this codebase yet calls getSkills more than once per render --
+// same shape as getCareer just above, which has never needed the dedupe
+// either.
+export async function getSkills(): Promise<Skill[]> {
+  const all = await fromNotion((n) => n.fetchSkills(), skillsFixture as Skill[]);
+  return [...all].sort((a, b) => TIER_ORDER[a.tier] - TIER_ORDER[b.tier] || a.order - b.order);
 }
