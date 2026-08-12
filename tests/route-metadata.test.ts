@@ -4,7 +4,7 @@ import { dict } from '@/lib/dictionary';
 import { SITE_URL } from '@/lib/site';
 import { generateMetadata as projectsMetadata } from '@/app/[locale]/projects/page';
 import { generateMetadata as writingMetadata } from '@/app/[locale]/writing/page';
-import { derivePostDescription } from '@/lib/post-description';
+import { derivePostDescription, deriveBodyDescription } from '@/lib/post-description';
 
 // QA I4: none of the non-home routes set their own `description`/`openGraph`,
 // so every one of them silently inherited layout.tsx's site-root metadata
@@ -224,6 +224,18 @@ describe('QA I4: derivePostDescription', () => {
     const post = makePost({ body: { en: [paragraph(text)], th: [] } });
     const thDesc = derivePostDescription(post, 'th');
     expect(thDesc.startsWith('English paragraph used')).toBe(true);
+  });
+});
+
+// --- deriveBodyDescription: the generalized (body, locale, fallbacks) core -
+// wave 1 task 3: post-description.ts's body-summarizing logic, extracted so
+// Task 4 can reuse it for case-study descriptions with a different fallback
+// pair. derivePostDescription becomes a thin wrapper over this.
+
+describe('QA I4/wave1-task3: deriveBodyDescription', () => {
+  it('uses the given fallbacks when the body has no paragraph', () => {
+    const fallbacks = { en: 'EN fallback', th: 'TH fallback' } as const;
+    expect(deriveBodyDescription({ en: [], th: [] }, 'th', fallbacks)).toBe('TH fallback');
   });
 });
 

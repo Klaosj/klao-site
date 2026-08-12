@@ -61,17 +61,32 @@ const fallbackDescriptions: Record<Locale, string> = {
   th: 'บทความจากงานเขียนของเกลา ว่าด้วยเรื่อง Business Development และการสร้างซอฟต์แวร์ด้วยตัวคนเดียว',
 };
 
-export function derivePostDescription(post: Post, locale: Locale): string {
+// Generalized over `derivePostDescription` below: the body-summarizing logic
+// itself has nothing Post-specific about it -- it only ever reads
+// `post.body` and `fallbackDescriptions` -- so wave 1 task 3 lifts it to take
+// those two things as plain parameters. This lets Task 4 reuse the exact
+// same paragraph-finding/truncation/fallback behavior for case-study
+// descriptions, which need a different fallback pair, without duplicating
+// any of the reasoning captured in the comments above.
+export function deriveBodyDescription(
+  body: { en: ContentBlock[]; th: ContentBlock[] },
+  locale: Locale,
+  fallbacks: Record<Locale, string>,
+): string {
   // Mirrors PostPage's own body-resolution fallback (`post.body[locale].length
   // ? post.body[locale] : post.body.en`): an empty TH body still summarizes
   // the EN paragraph rather than falling straight to the generic fallback,
   // and a post empty in both locales falls through to finding no paragraph
-  // at all, landing on `fallbackDescriptions` below.
-  const blocks = post.body[locale].length ? post.body[locale] : post.body.en;
+  // at all, landing on `fallbacks` below.
+  const blocks = body[locale].length ? body[locale] : body.en;
   const paragraph = blocks.find(
     (b): b is Extract<ContentBlock, { type: 'paragraph' }> => b.type === 'paragraph',
   );
   const text = paragraph ? plainText(paragraph.spans).trim() : '';
-  if (!text) return fallbackDescriptions[locale];
+  if (!text) return fallbacks[locale];
   return truncateAtWordBoundary(text, locale, MAX_DESCRIPTION_LENGTH);
+}
+
+export function derivePostDescription(post: Post, locale: Locale): string {
+  return deriveBodyDescription(post.body, locale, fallbackDescriptions);
 }
