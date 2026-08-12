@@ -51,12 +51,41 @@ Each database also needs a **Published** checkbox property, except Profile
 | Screenshot | Files & media | |
 | Featured | Checkbox | |
 | Order | Number | |
+| QuestionEN | Text | |
+| QuestionTH | Text | |
+| Slug | Text | |
 | Published | Checkbox | (see above) |
 
 `Featured` controls which 3 projects show on the home page. `Order` controls
-display order everywhere (lower first). **A row with a blank Name is
-silently dropped** — it won't appear anywhere on the site, with no visible
-error (the only trace is a server log you'll never see).
+display order everywhere (lower first).
+
+`QuestionEN` and `QuestionTH` are the bilingual case-study question (e.g.
+"What if we spent $X to ship this feature in half the time?"). If a project
+has a `Slug` and `QuestionEN` is populated, the project card becomes a
+case-study link instead of a simple card; clicking it opens the story page.
+A project without a `Slug` keeps the classic card display, regardless of
+whether `QuestionEN` is filled.
+
+**`Slug` is the case-study switch.** Fill it *only* when the story is
+written on the row's own page body (the same way as Posts). `Slug` appears in
+the URL (`/en/projects/<slug>`); keep it short, lowercase, hyphenated, and
+unique. **Do not fill Slug before you write the body — the sitemap will
+advertise a URL that 404s until the body exists or Slug is cleared. This
+self-heals within the hour once you fix it, but it's the one trap worth
+knowing about. Slug is the *last* thing you fill, not the first.** (If you
+find yourself tempted to create the slug first as a placeholder, mark a note
+in the row instead, or leave Slug blank until the story is actually written.)
+
+The page body is the story — write it directly on the Notion page's row,
+below the properties. Block support and the bilingual `ไทย` H1 split are
+identical to Posts (see "Bilingual body" in the Posts section above;
+cross-reference it for edge cases and supported block types). The story
+template is: คำถาม (the Question) → สิ่งที่ลอง (what you tried) → สิ่งที่ได้
+(the real numbers: what you got) → สิ่งที่เรียนรู้ (what you learned).
+
+**A row with a blank Name is silently dropped** — it won't appear anywhere
+on the site, with no visible error (the only trace is a server log you'll
+never see).
 
 ### Posts
 
