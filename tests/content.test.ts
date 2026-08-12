@@ -1,5 +1,14 @@
 import { describe, it, expect } from 'vitest';
-import { getProjects, getFeaturedProjects, getPosts, getPost, getCareer, getProfile, getSkills } from '@/lib/content';
+import {
+  getProjects,
+  getFeaturedProjects,
+  getPosts,
+  getPost,
+  getProjectStory,
+  getCareer,
+  getProfile,
+  getSkills,
+} from '@/lib/content';
 import { formatDate } from '@/lib/format';
 import { SKILL_TIERS } from '@/lib/models';
 
@@ -45,6 +54,10 @@ describe('content API (fixture mode)', () => {
 
   it('returns null for an unknown slug', async () => {
     expect(await getPost('no-such-post')).toBeNull();
+  });
+
+  it('resolves a project story to null in fixture mode (no NOTION_TOKEN, no fixture fallback)', async () => {
+    expect(await getProjectStory('anything')).toBeNull();
   });
 
   it('returns career entries sorted by order and a profile', async () => {

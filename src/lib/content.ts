@@ -1,5 +1,5 @@
 import { cache } from 'react';
-import type { CareerEntry, Post, PostMeta, Profile, Project, Skill, SkillTier } from './models';
+import type { CareerEntry, Post, PostMeta, Profile, Project, ProjectStory, Skill, SkillTier } from './models';
 import { SKILL_TIERS } from './models';
 import projectsFixture from '@/content/fixtures/projects.json';
 import postsFixture from '@/content/fixtures/posts.json';
@@ -54,6 +54,22 @@ export async function getProjects(): Promise<Project[]> {
 // project in Notion, not a code decision (owner call, 2026-08-12).
 export async function getFeaturedProjects(): Promise<Project[]> {
   return (await getProjectsCached()).filter((p) => p.featured);
+}
+
+// A future work/[slug]/page.tsx would call getProjectStory(slug) once from
+// generateMetadata and again from the page component itself -- same shape
+// as writing/[slug]/page.tsx's double call to getPost(slug) below, so this
+// is wrapped in cache() for the same reason: without it that's 2x the
+// filtered query and 2x the block-content fetch per story request in live-
+// Notion mode. No fixture fallback (unlike getPostCached): wave 1 has no
+// project-story fixture data yet, so this resolves null outside live Notion
+// mode, same as fromNotion's own no-config short-circuit.
+const getProjectStoryCached = cache(async (slug: string): Promise<ProjectStory | null> => {
+  return fromNotion((n) => n.fetchProjectStory(slug), null);
+});
+
+export async function getProjectStory(slug: string): Promise<ProjectStory | null> {
+  return getProjectStoryCached(slug);
 }
 
 // [locale]/writing/[slug]/page.tsx calls getPosts() (the pre-check for a

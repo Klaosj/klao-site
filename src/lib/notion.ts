@@ -1,5 +1,5 @@
 import { Client } from '@notionhq/client';
-import type { CareerEntry, Post, PostMeta, Profile, Project, Skill } from './models';
+import type { CareerEntry, Post, PostMeta, Profile, Project, ProjectStory, Skill } from './models';
 import {
   mapBlocks,
   mapCareerEntry,
@@ -83,6 +83,17 @@ export async function fetchPostBySlug(slug: string): Promise<Post | null> {
     rich_text: { equals: slug },
   });
   const meta = pages.map(mapPostMeta).filter(nonNull)[0];
+  if (!meta) return null;
+  const body = splitBilingual(mapBlocks(await listBlocks(meta.id)));
+  return { ...meta, body };
+}
+
+export async function fetchProjectStory(slug: string): Promise<ProjectStory | null> {
+  const pages = await queryAll(dbId('PROJECTS'), true, {
+    property: 'Slug',
+    rich_text: { equals: slug },
+  });
+  const meta = pages.map(mapProject).filter(nonNull)[0];
   if (!meta) return null;
   const body = splitBilingual(mapBlocks(await listBlocks(meta.id)));
   return { ...meta, body };

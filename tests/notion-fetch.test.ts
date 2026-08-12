@@ -13,7 +13,7 @@ vi.mock('@notionhq/client', () => ({
   },
 }));
 
-import { fetchProjects, fetchProfile, fetchPostBySlug, resolveImageUrl } from '@/lib/notion';
+import { fetchProjects, fetchProfile, fetchPostBySlug, fetchProjectStory, resolveImageUrl } from '@/lib/notion';
 
 const title = (s: string) => ({ title: [{ plain_text: s }] });
 const richText = (s: string) => ({ rich_text: s ? [{ plain_text: s }] : [] });
@@ -141,6 +141,73 @@ describe('fetchPostBySlug', () => {
   it('returns null when no page matches the slug', async () => {
     queryMock.mockResolvedValueOnce({ results: [], next_cursor: null, has_more: false });
     expect(await fetchPostBySlug('no-such-slug')).toBeNull();
+    expect(blocksListMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('fetchProjectStory', () => {
+  it('composes the Slug filter with Published, and paginates the block children by forwarding the cursor', async () => {
+    queryMock.mockResolvedValueOnce({
+      results: [
+        {
+          id: 'project-1',
+          properties: {
+            Name: title('Duckling'),
+            DescriptionEN: richText('A duck app'),
+            DescriptionTH: richText(''),
+            Stack: { multi_select: [] },
+            LiveURL: { url: null },
+            RepoURL: { url: null },
+            Featured: { checkbox: false },
+            Order: { number: 1 },
+            QuestionEN: richText('Why a duck?'),
+            QuestionTH: richText(''),
+            Slug: richText('duckling'),
+          },
+        },
+      ],
+      next_cursor: null,
+      has_more: false,
+    });
+    blocksListMock
+      .mockResolvedValueOnce({
+        results: [{ type: 'paragraph', id: 'blk-1', paragraph: { rich_text: [{ plain_text: 'Part one' }] } }],
+        next_cursor: 'bc2',
+        has_more: true,
+      })
+      .mockResolvedValueOnce({
+        results: [{ type: 'paragraph', id: 'blk-2', paragraph: { rich_text: [{ plain_text: 'Part two' }] } }],
+        next_cursor: null,
+        has_more: false,
+      });
+
+    const story = await fetchProjectStory('duckling');
+
+    expect(story?.slug).toBe('duckling');
+    expect(queryMock.mock.calls[0][0].filter).toEqual({
+      and: [
+        { property: 'Published', checkbox: { equals: true } },
+        { property: 'Slug', rich_text: { equals: 'duckling' } },
+      ],
+    });
+
+    // listBlocks is its own pagination loop -- a story body over one page
+    // silently truncates unless this is exercised directly, same reasoning
+    // as fetchPostBySlug's equivalent assertion above.
+    expect(blocksListMock).toHaveBeenCalledTimes(2);
+    expect(blocksListMock.mock.calls[0][0].start_cursor).toBeUndefined();
+    expect(blocksListMock.mock.calls[1][0].start_cursor).toBe('bc2');
+
+    const allText = [...story!.body.en, ...story!.body.th]
+      .flatMap((b) => (b.type === 'paragraph' ? b.spans.map((s) => s.text) : []))
+      .join(' ');
+    expect(allText).toContain('Part one');
+    expect(allText).toContain('Part two');
+  });
+
+  it('returns null when no page matches the slug', async () => {
+    queryMock.mockResolvedValueOnce({ results: [], next_cursor: null, has_more: false });
+    expect(await fetchProjectStory('no-such-slug')).toBeNull();
     expect(blocksListMock).not.toHaveBeenCalled();
   });
 });

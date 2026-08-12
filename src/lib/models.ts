@@ -66,6 +66,15 @@ export interface Post extends PostMeta {
   body: { en: ContentBlock[]; th: ContentBlock[] };
 }
 
+// Wave 1 (spec 2026-08-13): the case-study body for a Project whose `slug`
+// is non-null. Mirrors Post extends PostMeta exactly -- same bilingual body
+// shape, same "fetch the meta row, then its blocks" split between
+// fetchProjects/fetchProjectStory as Post already has between
+// fetchPostMetas/fetchPostBySlug.
+export interface ProjectStory extends Project {
+  body: { en: ContentBlock[]; th: ContentBlock[] };
+}
+
 export interface CareerEntry {
   id: string;
   // Localized as of the 2026-08-09 QA pass. It was a plain string, so English
