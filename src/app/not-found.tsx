@@ -1,5 +1,11 @@
 'use client';
 
+// This boundary renders in Next's synthetic shell outside [locale]/layout.tsx
+// (see the file-level comment below) -- layout.tsx is the only other place
+// that imports globals.css, so without this import the 404 ships with zero
+// stylesheets. Verified against the production build.
+import './globals.css';
+
 import Link from 'next/link';
 import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
