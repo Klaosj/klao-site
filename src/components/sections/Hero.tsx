@@ -26,7 +26,11 @@ export default function Hero({
   const now = profile.now[locale];
 
   return (
-    <section id="hero" className="relative z-[2] h-[180vh]">
+    // 130vh, not the particle era's 180vh: the monument's stroke-draw
+    // completes by DRAW_END (see HeroMonument.tsx's choreography constants),
+    // so the pin no longer needs the extra viewport of travel the particle
+    // assembly's long hold at full morph used to want.
+    <section id="hero" className="relative z-[2] h-[130vh]">
       <div
         data-hero-stage
         className="sticky top-0 flex h-screen flex-col justify-center px-6 pt-28 pb-40 sm:px-12"

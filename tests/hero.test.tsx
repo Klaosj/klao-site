@@ -180,7 +180,7 @@ describe('Hero', () => {
   it('pins the hero: tall section wrapping a sticky full-viewport stage', () => {
     render(<Hero profile={profile} locale="en" />);
     const section = document.getElementById('hero')!;
-    expect(section.className).toMatch(/h-\[180vh\]/);
+    expect(section.className).toMatch(/h-\[130vh\]/);
     const stage = section.querySelector('[data-hero-stage]')!;
     expect(stage.className).toMatch(/sticky/);
   });

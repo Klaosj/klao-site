@@ -1,4 +1,4 @@
-import ParticleField from '@/components/motion/ParticleField';
+import HeroMonument from '@/components/motion/HeroMonument';
 import PointerFx from '@/components/motion/PointerFx';
 import AboutBand from '@/components/sections/AboutBand';
 import ClientsBand from '@/components/sections/ClientsBand';
@@ -23,10 +23,10 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   ]);
 
   // Owner-supplied: profile.nameNative (the Thai display name) drives the
-  // /th particle field, so the wordmark reads in Thai rather than a
-  // transliterated Latin fragment. ParticleField already rasterises Thai
-  // (THAI_RANGE/THAI_STACK) -- no changes needed there. Falls back to the
-  // Latin first name (uppercased) on /en, or on /th when nameNative is null.
+  // /th monument text, so the wordmark reads in Thai rather than a
+  // transliterated Latin fragment. HeroMonument already rasterises Thai
+  // (THAI_RANGE) -- no changes needed there. Falls back to the Latin first
+  // name (uppercased) on /en, or on /th when nameNative is null.
   const wordmark =
     locale === 'th' && profile.nameNative
       ? profile.nameNative
@@ -34,7 +34,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
   return (
     <>
-      <ParticleField word={wordmark} heroSelector="#hero" />
+      <HeroMonument word={wordmark} heroSelector="#hero" />
       <PointerFx />
       <Hero profile={profile} locale={locale} />
       <AboutBand profile={profile} locale={locale} />
