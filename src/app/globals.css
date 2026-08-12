@@ -264,6 +264,14 @@
       radial-gradient(30% 24% at 50% 60%, rgba(125, 134, 173, 0.10), transparent 70%);
   }
   #contact { position: relative; }
+  /* The -20% side bleed above extends both sections' scrollable overflow
+     ~20% past the viewport — on phones the whole page could be wiggled
+     sideways (caught in the 2026-08-13 full-QA pass; invisible to jsdom,
+     which never computes layout). `clip`, deliberately not `hidden`:
+     overflow:clip does not create a scroll container, so #hero's sticky
+     [data-hero-stage] keeps sticking, and the glow still paints to the
+     clipped edge. */
+  #hero, #contact { overflow-x: clip; }
 
   /* Film grain on dark bands only (never the light bands). Tiny SVG
      fractal-noise tile, ~0.5KB inline, repeats. Low opacity so it reads as
