@@ -257,6 +257,47 @@ describe('SiteNav', () => {
     expect(en.className).toContain('p-1.5');
     expect(en.className).toContain('-m-1.5');
   });
+
+  it('adds a Writing route link to the desktop nav, after Career, pointed at /{locale}/writing -- never a hash anchor', () => {
+    // /writing is a real, sitemapped route with nothing linking to it
+    // before this fix (confirmed by grepping the pre-fix SiteNav for
+    // "writing": no match). Unlike the four #hero/#about/#work/#cv anchors,
+    // it has no homepage section id, so its href must never come out of
+    // `anchorHref` (which only ever produces a bare or /{locale}-prefixed
+    // hash).
+    const { container } = render(<SiteNav locale="en" profile={profile} />);
+    const nav = screen.getByRole('navigation', { name: dict.en.navMain });
+    const writingLink = within(nav).getByText(dict.en.writing).closest('a') as HTMLElement;
+    expect(writingLink.getAttribute('href')).toBe('/en/writing');
+    expect(writingLink.className).toContain('nav-link');
+    expect(writingLink.className).toContain('u-draw');
+
+    // It comes after the Career link in source order (same position on
+    // desktop and mobile, per the fix spec).
+    const hrefs = Array.from(container.querySelectorAll('nav a')).map((a) => a.getAttribute('href'));
+    const careerIndex = hrefs.indexOf('#cv');
+    const writingIndex = hrefs.indexOf('/en/writing');
+    expect(careerIndex).toBeGreaterThanOrEqual(0);
+    expect(writingIndex).toBeGreaterThan(careerIndex);
+  });
+
+  it('labels the Writing link with the active locale\'s own word, and points /th at /th/writing', () => {
+    render(<SiteNav locale="th" profile={profile} />);
+    const nav = screen.getByRole('navigation', { name: dict.th.navMain });
+    const writingLink = within(nav).getByText(dict.th.writing).closest('a') as HTMLElement;
+    expect(writingLink.getAttribute('href')).toBe('/th/writing');
+    expect(screen.queryByText(dict.en.writing)).toBeNull();
+  });
+
+  it('never rewrites the Writing link\'s href off the homepage -- it is not one of anchorHref\'s hash anchors', () => {
+    // Contrast with the anchors, which DO get /{locale}-prefixed off the
+    // homepage (see the "rewrites the four in-page anchors" tests below).
+    // The Writing link's href is a plain route, identical on every route.
+    vi.mocked(usePathname).mockReturnValue('/en/projects');
+    const { container } = render(<SiteNav locale="en" profile={profile} />);
+    const hrefs = Array.from(container.querySelectorAll('a')).map((a) => a.getAttribute('href'));
+    expect(hrefs).toContain('/en/writing');
+  });
 });
 
 describe('mobile menu', () => {
@@ -268,10 +309,21 @@ describe('mobile menu', () => {
     expect(btn.getAttribute('aria-expanded')).toBe('true');
     const menu = document.getElementById('mobile-menu');
     expect(menu).not.toBeNull();
-    // The four section anchors exist inside the overlay
-    expect(within(menu!).getAllByRole('link')).toHaveLength(4);
+    // The four section anchors plus the Writing route link exist inside the overlay
+    expect(within(menu!).getAllByRole('link')).toHaveLength(5);
     // Clicking a link closes the menu
     fireEvent.click(within(menu!).getAllByRole('link')[0]);
+    expect(btn.getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('includes a Writing route link, and clicking it closes the menu same as the anchor links', () => {
+    render(<SiteNav locale="en" profile={profile} />);
+    const btn = screen.getByRole('button', { name: /main|เมนูหลัก/i });
+    fireEvent.click(btn);
+    const menu = document.getElementById('mobile-menu');
+    const writingLink = within(menu!).getByText(dict.en.writing).closest('a') as HTMLElement;
+    expect(writingLink.getAttribute('href')).toBe('/en/writing');
+    fireEvent.click(writingLink);
     expect(btn.getAttribute('aria-expanded')).toBe('false');
   });
 

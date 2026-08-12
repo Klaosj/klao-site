@@ -124,6 +124,19 @@ export default function SiteNav({ locale, profile }: { locale: Locale; profile: 
     { hash: '#cv', label: t.career },
   ];
 
+  // /writing is a real, sitemapped route (see writing/[slug]/page.tsx),
+  // not a homepage section -- unlike the four anchors above it has no
+  // section id to scroll to, on this route or any other, so it deliberately
+  // does NOT go through `anchorHref`'s isHome bare-hash/prefixed-hash
+  // branching. Its href is just `/{locale}/writing`, always, everywhere.
+  // Combined with the mapped anchors into one list so desktop and mobile
+  // both render it from a single source, in the same position (right after
+  // Career/#cv).
+  const navItems: { key: string; href: string; label: string }[] = [
+    ...anchors.map((a) => ({ key: a.hash, href: anchorHref(a.hash), label: a.label })),
+    { key: 'writing', href: `/${locale}/writing`, label: t.writing },
+  ];
+
   // Hit-area fix (WCAG 2.5.8): every text-only link below renders at
   // 10.5-11px with no padding of its own, well under the 24x24 CSS px
   // minimum. `p-2` grows the clickable/tappable box in every direction;
@@ -161,13 +174,13 @@ export default function SiteNav({ locale, profile }: { locale: Locale; profile: 
             headroom instead of a few px of luck. Verified in Chrome at
             640px, 672px and 768px in both locales. */}
         <nav aria-label={t.navMain} className="hidden items-center gap-[clamp(20px,3.4vw,54px)] md:flex">
-          {anchors.map((a) => (
+          {navItems.map((item) => (
             <Link
-              key={a.hash}
-              href={anchorHref(a.hash)}
+              key={item.key}
+              href={item.href}
               className={`nav-link u-draw inline-flex items-center justify-center whitespace-nowrap p-2 -m-2 text-[10.5px] uppercase ${eyebrowFont(locale, 'tracking-[0.22em]')}`}
             >
-              {a.label}
+              {item.label}
             </Link>
           ))}
         </nav>
@@ -237,14 +250,14 @@ export default function SiteNav({ locale, profile }: { locale: Locale; profile: 
           aria-label={t.navMain}
           className="fixed inset-x-0 bottom-0 top-[82px] z-[59] flex flex-col gap-2 bg-dark/[.97] px-8 pt-10 md:hidden"
         >
-          {anchors.map((a) => (
+          {navItems.map((item) => (
             <Link
-              key={a.hash}
-              href={anchorHref(a.hash)}
+              key={item.key}
+              href={item.href}
               onClick={closeMenu}
               className="py-3 text-[28px] font-bold tracking-[-0.02em] text-on-dark"
             >
-              {a.label}
+              {item.label}
             </Link>
           ))}
         </nav>
