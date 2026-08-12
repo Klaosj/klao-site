@@ -60,28 +60,28 @@ Each database also needs a **Published** checkbox property, except Profile
 display order everywhere (lower first).
 
 `QuestionEN` and `QuestionTH` are the bilingual case-study question (e.g.
-"What if we spent $X to ship this feature in half the time?"). If a project
-has a `Slug` and `QuestionEN` is populated, the project card becomes a
-case-study link instead of a simple card; clicking it opens the story page.
-A project without a `Slug` keeps the classic card display, regardless of
-whether `QuestionEN` is filled.
+"What if we spent $X to ship this feature in half the time?"). A project's
+`Slug` determines whether its card becomes a case-study link (filled Slug =
+link that opens the story page; no Slug = classic card display). `QuestionEN`
+affects only the card's displayed text: if populated, the card shows the
+question instead of the project name.
 
 **`Slug` is the case-study switch.** Fill it *only* when the story is
-written on the row's own page body (the same way as Posts). `Slug` appears in
-the URL (`/en/projects/<slug>`); keep it short, lowercase, hyphenated, and
-unique. **Do not fill Slug before you write the body — the sitemap will
-advertise a URL that 404s until the body exists or Slug is cleared. This
-self-heals within the hour once you fix it, but it's the one trap worth
-knowing about. Slug is the *last* thing you fill, not the first.** (If you
-find yourself tempted to create the slug first as a placeholder, mark a note
-in the row instead, or leave Slug blank until the story is actually written.)
+written on the row's own page body. `Slug` appears in the URL
+(`/en/work/<slug>`); keep it short, lowercase, hyphenated, and unique.
+**Do not fill Slug before you write the body — the sitemap will advertise a
+URL that 404s until the body exists or Slug is cleared. This self-heals
+within the hour once you fix it, but it's the one trap worth knowing about.
+Slug is the *last* thing you fill, not the first.** (If you find yourself
+tempted to create the slug first as a placeholder, mark a note in the row
+instead, or leave Slug blank until the story is actually written.)
 
 The page body is the story — write it directly on the Notion page's row,
-below the properties. Block support and the bilingual `ไทย` H1 split are
-identical to Posts (see "Bilingual body" in the Posts section above;
-cross-reference it for edge cases and supported block types). The story
-template is: คำถาม (the Question) → สิ่งที่ลอง (what you tried) → สิ่งที่ได้
-(the real numbers: what you got) → สิ่งที่เรียนรู้ (what you learned).
+below the properties. Block support and the bilingual `ไทย` H1 split work
+the same way as Posts (see "Bilingual body" in the Posts section above for
+edge cases and supported block types). The story template is: คำถาม (the
+Question) → สิ่งที่ลอง (what you tried) → สิ่งที่ได้ (the real numbers: what
+you got) → สิ่งที่เรียนรู้ (what you learned).
 
 **A row with a blank Name is silently dropped** — it won't appear anywhere
 on the site, with no visible error (the only trace is a server log you'll
