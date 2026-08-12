@@ -3,25 +3,38 @@
    No backdrop-filter anywhere: the header overlaps the live WebGL canvas
    in the hero, and a blurred backdrop would be recomputed on every canvas
    frame (same reasoning as .pill / #cursor in globals.css). A near-opaque
-   flat fill reads fine and costs nothing. */
-header.nav-chrome {
-  transition:
-    transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
-    background-color 0.35s ease;
-}
-header.nav-chrome.nav-hidden { transform: translateY(-100%); }
-header.nav-chrome.nav-solid { background-color: rgba(23, 23, 26, 0.94); }
-/* Over a light band the solid fill must be light, or the inverted
-   dark-on-light link colors land on a dark background. */
-header.nav-chrome.nav-solid.nav-on-light { background-color: rgba(255, 255, 255, 0.96); }
+   flat fill reads fine and costs nothing.
 
-/* Burger inherits currentColor; give it the same inversion the links get. */
-header.nav-chrome .nav-burger { color: var(--color-on-dark); }
-header.nav-on-light .nav-burger { color: var(--color-on-light); }
+   Wrapped in `@layer components`: Tailwind v4 ranks `@layer utilities`
+   above `@layer components` unconditionally (see globals.css's LEGACY
+   NAMES / LocaleToggle comments for the same fact), so this is only safe
+   because nothing here collides with a Tailwind utility that could land on
+   the same element. `header.nav-chrome` in SiteNav.tsx only carries layout
+   utilities (fixed/inset-x-0/flex/gap/padding) -- none set transform,
+   background-color or transition -- and `.nav-burger`'s own utilities
+   (-m-1/inline-flex/h-10/w-10/flex-col/...) don't set color either. If a
+   future utility on either element ever does, move that rule back outside
+   this layer (same escape hatch globals.css already documents). */
+@layer components {
+  header.nav-chrome {
+    transition:
+      transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+      background-color 0.35s ease;
+  }
+  header.nav-chrome.nav-hidden { transform: translateY(-100%); }
+  header.nav-chrome.nav-solid { background-color: rgba(23, 23, 26, 0.94); }
+  /* Over a light band the solid fill must be light, or the inverted
+     dark-on-light link colors land on a dark background. */
+  header.nav-chrome.nav-solid.nav-on-light { background-color: rgba(255, 255, 255, 0.96); }
 
-@media (prefers-reduced-motion: reduce) {
-  header.nav-chrome { transition: none; }
-  /* Never hide the nav from a reduced-motion user mid-scroll: a header that
-     teleports away with no transition is worse than one that stays. */
-  header.nav-chrome.nav-hidden { transform: none; }
+  /* Burger inherits currentColor; give it the same inversion the links get. */
+  header.nav-chrome .nav-burger { color: var(--color-on-dark); }
+  header.nav-on-light .nav-burger { color: var(--color-on-light); }
+
+  @media (prefers-reduced-motion: reduce) {
+    header.nav-chrome { transition: none; }
+    /* Never hide the nav from a reduced-motion user mid-scroll: a header that
+       teleports away with no transition is worse than one that stays. */
+    header.nav-chrome.nav-hidden { transform: none; }
+  }
 }

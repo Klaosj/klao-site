@@ -215,6 +215,19 @@ function stubRaf() {
       const next = queue.shift();
       if (next) next.cb(performance.now());
     },
+    // Runs exactly the callbacks queued at the moment this is called -- not
+    // any new ones a callback schedules while it runs. Lets a test
+    // deterministically drain "every frame this scroll/resize burst
+    // queued" without depending on FIFO interleaving with unrelated
+    // pending work (e.g. the main render loop's own self-rescheduling
+    // frame sitting ahead of a just-queued throttled scroll callback).
+    flushAll() {
+      let remaining = queue.length;
+      while (remaining-- > 0) {
+        const next = queue.shift();
+        if (next) next.cb(performance.now());
+      }
+    },
     get pending() {
       return queue.length;
     },
@@ -261,14 +274,26 @@ describe('ParticleField (loop lifecycle, WebGL2 mocked)', () => {
 
     setScrollY(1000); // p = 1 -> fade = 0
     window.dispatchEvent(new Event('scroll'));
+    // 'scroll' events are now rAF-throttled (coalesced to at most one
+    // updateScroll() per frame -- see ParticleField's onScroll), so the
+    // style change is no longer synchronous with the dispatch. flushAll()
+    // drains everything currently queued: the mount's still-pending main
+    // frame (which just redraws, since `running` is still true at that
+    // point) and the throttled updateScroll() the dispatch above queued.
+    rafCtl.flushAll();
     const canvas = container.querySelector('canvas') as HTMLCanvasElement;
     expect(canvas.style.opacity).toBe('0');
+    // The main frame's own reschedule (queued before updateScroll() flipped
+    // running to false) is still pending -- one more flush proves it now
+    // sees running=false and stops.
+    expect(rafCtl.pending).toBe(1);
 
-    rafCtl.flushOne(); // run the frame that was pending before the scroll
+    rafCtl.flushOne(); // run that last frame; running=false, so it does not reschedule
     expect(rafCtl.pending).toBe(0); // frame() saw running=false and did not reschedule
 
     setScrollY(0); // back to the top: fade > 0 again
     window.dispatchEvent(new Event('scroll'));
+    rafCtl.flushAll(); // run the throttled updateScroll() that queued
     expect(rafCtl.pending).toBe(1); // onScroll restarted the loop
   });
 
@@ -316,14 +341,27 @@ describe('ParticleField (loop lifecycle, WebGL2 mocked)', () => {
     // "Never starts the loop" must still mean something is on screen: the
     // brief requires exactly one static frame, drawn outside the rAF path.
     expect(gl.drawCalls).toBeGreaterThan(0);
+    const drawCallsAtMount = gl.drawCalls;
 
     // A transition that would normally set running=false then true again
-    // (which restarts the loop) must not start it under reduced motion.
+    // (which restarts the loop) must not start the render loop. Dispatching
+    // 'scroll' now DOES call requestAnimationFrame once per event burst --
+    // that's the onScroll throttle coalescing updateScroll() calls, same as
+    // it would in a visible tab, and is expected regardless of reduced
+    // motion (see updateScroll()'s `&& !reducedMotion` guard, which is what
+    // actually keeps the render loop itself from ever being scheduled).
     setScrollY(1000);
     window.dispatchEvent(new Event('scroll'));
     setScrollY(0);
     window.dispatchEvent(new Event('scroll'));
-    expect(rafCtl.raf).not.toHaveBeenCalled();
+    rafCtl.flushAll(); // run the (at most one, coalesced) throttled updateScroll()
+
+    // The loop itself (frame(), which re-schedules itself via
+    // requestAnimationFrame forever once started) never got queued: nothing
+    // is left pending, and no draw happened beyond the one static frame at
+    // mount.
+    expect(rafCtl.pending).toBe(0);
+    expect(gl.drawCalls).toBe(drawCallsAtMount);
   });
 
   it('sends PARTICLE_COLORS to the shader, not inline literals', () => {

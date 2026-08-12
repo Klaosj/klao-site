@@ -1,15 +1,30 @@
 /* CraftBand principle spotlight. Server markup emphasizes the first line
-   (spot-on), so the band reads correctly with JS off (spec A2). */
-.spot {
-  color: var(--color-on-dark-soft);
-  opacity: 0.35;
-  transition: opacity 0.5s ease, color 0.5s ease;
-}
-.spot.spot-on {
-  color: var(--color-on-dark);
-  opacity: 1;
-  text-shadow: 0 0 24px rgba(168, 174, 203, 0.35);
-}
-@media (prefers-reduced-motion: reduce) {
-  .spot { opacity: 1 !important; transition: none; }
+   (spot-on), so the band reads correctly with JS off (spec A2).
+
+   Wrapped in `@layer components`: Tailwind v4 ranks `@layer utilities`
+   above `@layer components` unconditionally (see globals.css's LEGACY
+   NAMES / LocaleToggle comments for the same fact), so this is only safe
+   because nothing here collides with a Tailwind utility applied to the
+   same element. .spot's only consumer is CraftBand.tsx's SpotlightList,
+   whose itemClassName sets font-size/font-weight/line-height/
+   letter-spacing only -- no color or opacity utility -- so .spot's color/
+   opacity/text-shadow still win. The reduced-motion override below keeps
+   its `!important`, which outranks every non-important declaration
+   regardless of layer, so it's unaffected either way. If a future
+   itemClassName ever adds a color or opacity utility, move this rule back
+   outside the layer (same escape hatch globals.css already documents). */
+@layer components {
+  .spot {
+    color: var(--color-on-dark-soft);
+    opacity: 0.35;
+    transition: opacity 0.5s ease, color 0.5s ease;
+  }
+  .spot.spot-on {
+    color: var(--color-on-dark);
+    opacity: 1;
+    text-shadow: 0 0 24px rgba(168, 174, 203, 0.35);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .spot { opacity: 1 !important; transition: none; }
+  }
 }

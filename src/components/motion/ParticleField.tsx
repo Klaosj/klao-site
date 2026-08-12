@@ -237,7 +237,17 @@ export default function ParticleField({ word, heroSelector }: Props) {
 
     const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const coarsePointer = matchMedia('(pointer: coarse)').matches;
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    // Reassigned in resize() so dragging the window to a different-density
+    // display (e.g. built-in -> external monitor) doesn't leave the canvas
+    // rendering at a stale device pixel ratio.
+    let dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    // The hero is a server-rendered sibling of this canvas, so it already
+    // exists by the time this effect runs. Resolve it once here instead of
+    // re-querying the DOM on every scroll event; the null check that used to
+    // guard each per-event query moves into updateScroll() below so a
+    // heroSelector that matches nothing still degrades safely.
+    const hero = document.querySelector(heroSelector) as HTMLElement | null;
 
     const lattice = coarsePointer
       ? buildLattice(11, 7, 11, [6.4, 3.5, 9.6])
@@ -362,6 +372,12 @@ export default function ParticleField({ word, heroSelector }: Props) {
     }
 
     const resize = () => {
+      // Refresh dpr here too, not just at mount: dragging the window to a
+      // different-density display should render at the new density on the
+      // next resize instead of staying pinned to whatever dpr was current
+      // when the effect first ran. draw() reads the same outer `dpr`
+      // binding for uSize, so this takes effect on the very next frame.
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
       canvas.width = Math.floor(window.innerWidth * dpr);
       canvas.height = Math.floor(window.innerHeight * dpr);
       gl.viewport(0, 0, canvas.width, canvas.height);
@@ -371,14 +387,31 @@ export default function ParticleField({ word, heroSelector }: Props) {
       if (reducedMotion) draw(performance.now() / 1000);
     };
 
-    const onScroll = () => {
-      const hero = document.querySelector(heroSelector) as HTMLElement | null;
+    let scrollRaf = 0;
+
+    // The actual scroll-progress work: reads hero geometry + scrollY and
+    // mutates morph/fade, which the render loop (frame/draw above) reads
+    // every animation frame, and can flip `running` back on. Called
+    // directly once at mount for the initial paint (see updateScroll()
+    // below the listeners) and via the rAF-throttled onScroll wrapper for
+    // every 'scroll' event after that.
+    const updateScroll = () => {
+      scrollRaf = 0;
       if (!hero) return;
       // Progress through the pin: 0 at rest, 1 when the section's extra
       // height has fully scrolled past.
       const travel = Math.max(hero.offsetHeight - window.innerHeight, 1);
       const p = Math.min(Math.max(window.scrollY - hero.offsetTop, 0) / travel, 1);
-      morph = Math.min(p / MORPH_END, 1);
+      // Under reduced motion the mount-time block below draws one static,
+      // fully-resolved frame (morph = 1) and no rAF loop ever repaints it.
+      // Letting scroll keep clobbering morph here would leave a later
+      // resize() or fonts-ready redraw painting a half-assembled wordmark,
+      // so morph is frozen once reduced motion is active. fade is left
+      // alone -- the canvas dimming as the visitor scrolls past the hero is
+      // brief-mandated behaviour (A3), not part of the morph choreography.
+      if (!reducedMotion) {
+        morph = Math.min(p / MORPH_END, 1);
+      }
       const [f0, f1] = CANVAS_FADE;
       fade = (1 - Math.min(Math.max((p - f0) / (f1 - f0), 0), 1)) * 0.85;
       canvas.style.opacity = String(fade);
@@ -406,6 +439,13 @@ export default function ParticleField({ word, heroSelector }: Props) {
       }
     };
 
+    // Scroll fires far more often than a frame renders; coalesce to at most
+    // one updateScroll() per animation frame (same idiom as
+    // SpotlightList.tsx's onScroll/update split).
+    const onScroll = () => {
+      if (!scrollRaf) scrollRaf = requestAnimationFrame(updateScroll);
+    };
+
     const onPointerMove = (e: PointerEvent) => {
       tmx = (e.clientX / window.innerWidth - 0.5) * 2;
       tmy = (e.clientY / window.innerHeight - 0.5) * 2;
@@ -415,7 +455,9 @@ export default function ParticleField({ word, heroSelector }: Props) {
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('pointermove', onPointerMove, { passive: true });
     resize();
-    onScroll();
+    // Direct, synchronous call for the initial paint -- only 'scroll'
+    // EVENTS go through the onScroll throttle above.
+    updateScroll();
 
     if (reducedMotion) {
       // One static frame of the resolved wordmark, quiet behind the hero.
@@ -430,6 +472,9 @@ export default function ParticleField({ word, heroSelector }: Props) {
     return () => {
       disposed = true;
       cancelAnimationFrame(rafId);
+      // Cancel any pending throttled scroll frame too, or a rAF scheduled
+      // just before unmount would still fire updateScroll() afterwards.
+      if (scrollRaf) cancelAnimationFrame(scrollRaf);
       window.removeEventListener('resize', resize);
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('pointermove', onPointerMove);
