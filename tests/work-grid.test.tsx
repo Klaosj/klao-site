@@ -101,6 +101,43 @@ describe('WorkGrid', () => {
     );
   });
 
+  it('adds a secondary "View code" link to the repo URL when both URLs are present, without nesting it in the card anchor', () => {
+    // The primary card anchor above only ever carries one href
+    // (liveUrl ?? repoUrl) -- nesting a second <a> inside it would be
+    // invalid HTML, so when both URLs exist the repo link must render as a
+    // sibling of the primary anchor instead of disappearing (the bug
+    // documented in ProjectCard.tsx's own history comment).
+    const both: Project[] = [{ ...projects[0], liveUrl: 'https://live.example', repoUrl: 'https://repo.example' }];
+    const { container } = render(<WorkGrid projects={both} locale="en" />);
+    const anchors = container.querySelectorAll('a');
+    expect(anchors).toHaveLength(2);
+
+    const primary = anchors[0];
+    expect(primary.getAttribute('href')).toBe('https://live.example');
+
+    const secondary = screen.getByText(dict.en.viewCode) as HTMLAnchorElement;
+    expect(secondary.tagName).toBe('A');
+    expect(secondary.getAttribute('href')).toBe('https://repo.example');
+    expect(secondary.getAttribute('target')).toBe('_blank');
+    expect(secondary.getAttribute('rel')).toBe('noreferrer');
+    // Not a descendant of the primary anchor -- a nested <a> is invalid
+    // HTML and browsers silently un-nest it, which would make this
+    // assertion (and querySelector('a') element identity) unreliable.
+    expect(primary.contains(secondary)).toBe(false);
+  });
+
+  it('renders no secondary "View code" link when only the repo URL is set', () => {
+    // Companion to "falls back to the repo URL when there is no live URL"
+    // above: that test only checks the primary anchor's href. This guards
+    // the secondary row specifically -- a mutant that renders it whenever
+    // repoUrl is set (instead of only when BOTH URLs are set) would still
+    // pass every other test in this file.
+    const repoOnly: Project[] = [{ ...projects[0], liveUrl: null, repoUrl: 'https://github.com/x/y' }];
+    const { container } = render(<WorkGrid projects={repoOnly} locale="en" />);
+    expect(container.querySelectorAll('a')).toHaveLength(1);
+    expect(screen.queryByText(dict.en.viewCode)).toBeNull();
+  });
+
   it('makes the first card span all 12 columns and later cards span half', () => {
     const two: Project[] = [
       projects[0],

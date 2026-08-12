@@ -25,9 +25,15 @@ export default function WorkGrid({ projects, locale }: { projects: Project[]; lo
       </h2>
       <div className="grid grid-cols-12 gap-6">
         {projects.map((project, i) => {
-          // liveUrl wins over repoUrl when both are set; when neither is
-          // set, href is null and the card renders as a plain <div> below
-          // -- never a dangling anchor to nowhere.
+          // The whole card stays one primary anchor preferring liveUrl over
+          // repoUrl (never both -- nested <a> is invalid HTML); when neither
+          // is set, href is null and the card renders as a plain <div>
+          // below -- never a dangling anchor to nowhere. When BOTH URLs are
+          // set, repoUrl doesn't get silently dropped: it renders as its own
+          // secondary link, a sibling right after the primary anchor (see
+          // below) -- this is the same bug ProjectCard.tsx's own history
+          // comment documents ("a project with BOTH a live URL and a repo
+          // URL silently dropped the repo link").
           const href = project.liveUrl ?? project.repoUrl;
 
           const card = (
@@ -88,6 +94,26 @@ export default function WorkGrid({ projects, locale }: { projects: Project[]; lo
                 <div>
                   <TiltCard>{card}</TiltCard>
                 </div>
+              )}
+              {project.liveUrl && project.repoUrl && (
+                // Secondary link, a SIBLING of the primary anchor above --
+                // never nested inside it (nested <a> is invalid HTML). Only
+                // rendered when both URLs exist; the repoUrl is otherwise
+                // reachable via the primary anchor already (see href above),
+                // so this row exists solely to recover the link that would
+                // otherwise be silently dropped.
+                <a
+                  href={project.repoUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  // Hit-area fix (WCAG 2.5.8), same idiom as ProjectCard.tsx:
+                  // `p-2` grows the clickable box past the 24x24 CSS px
+                  // minimum; the matching `-m-2` cancels that growth for
+                  // layout purposes so the visible underline stays put.
+                  className="mt-3 inline-flex items-center justify-center p-2 -m-2 text-[11px] text-on-dark-soft underline hover:text-peri"
+                >
+                  {t.viewCode}
+                </a>
               )}
             </Reveal>
           );
