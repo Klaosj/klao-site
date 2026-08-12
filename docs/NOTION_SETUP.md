@@ -136,12 +136,21 @@ Projects above.
 | Order | Number | |
 | Published | Checkbox | (see above) |
 
-`Tier` controls how prominently a skill renders on the site's Toolbox band —
-bigger and brighter for `top`, smaller and quieter down through `daily`,
-`working`, `basic`, to `learning`. **Rows with a blank Name or a blank/
-unrecognised Tier are silently dropped**, same mechanism as Name on Projects
-and Role on Career above — `Tier` must be spelled exactly one of the five
-values, or the row disappears with no visible error.
+`Tier` still controls the full honesty scale a Skill row is fetched and
+sorted by, but as of the 2026-08-12 Toolbox redesign the site itself only
+**renders** three things from it: the `top` tier (statement-scale, one per
+line), a curated row of iconed "Core tools" badges (a fixed allowlist of
+tool names, drawn from skills of any tier — see `TOOLS_ALLOWLIST` in
+`SkillsBand.tsx`), and the `learning` tier as one quiet joined-text line.
+`daily`/`working`/`basic` rows are still fetched and still count toward the
+"same Tier spelling" validation below, but nothing on the site renders them
+— that fuller inventory lives in the Notion database itself (for anyone who
+opens it) and on the owner's GitHub profile, and the render-layer cut can be
+reversed at any time without touching this schema or the fetcher. **Rows
+with a blank Name or a blank/unrecognised Tier are silently dropped**, same
+mechanism as Name on Projects and Role on Career above — `Tier` must be
+spelled exactly one of the five values, or the row disappears with no
+visible error.
 
 ### Profile
 

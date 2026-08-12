@@ -1,38 +1,44 @@
 import MaskedHeading from '@/components/motion/MaskedHeading';
 import Reveal from '@/components/motion/Reveal';
+import { LEARNING_MARKER_ICON, SKILL_ICONS } from '@/components/sections/skill-icons';
 import { dict } from '@/lib/dictionary';
 import type { Locale, Skill } from '@/lib/models';
 import { eyebrowFont } from '@/lib/typography';
-import './skills-band.css';
 
-// Decoration only (aria-hidden, see CategoryDot below) -- deliberately
-// muted, since the whole point of an "honestly-tiered" toolbox is that TIER
-// (top/daily/working/basic/learning) carries the visual weight, not which
-// category a skill happens to belong to. docs/NOTION_SETUP.md's Category
-// Select also allows a fifth option, "human" (soft skills), which has no
-// entry here on purpose -- see the fallback in CategoryDot.
-const CATEGORY_DOT: Record<string, string> = {
-  tech: '#7d86ad',
-  biz: '#c2a06b',
-  data: '#6ba883',
-  fin: '#8fae6f',
-};
+// Owner decision, 2026-08-12: the live band read as overclaiming once every
+// tier stacked up ("มันดูเว่อร์พอมันเยอะ" -- his words). This is a
+// RENDER-LAYER curation only: src/lib/models.ts's five-tier Skill model and
+// src/lib/content.ts's getSkills() fetcher are untouched, so re-expanding
+// the band later needs zero schema work, just deleting the cuts below. The
+// band now renders exactly three things --
+//   1. the `top` tier, statement-scale, one line per skill
+//   2. ONE row of iconed "Core tools" badges (TOOLS_ALLOWLIST below)
+//   3. the `learning` tier, as one quiet joined-text line
+// `daily`/`working`/`basic` are deliberately NOT rendered here anymore --
+// that fuller, honest inventory still lives in the Notion Skills database
+// itself and on the owner's GitHub profile; this band is the identity cut,
+// impact only.
 
-// Inline `style`, not a Tailwind `bg-[#...]` arbitrary-value utility: the
-// color is a JS runtime lookup keyed on Notion content (Skill.category),
-// not a string literal Tailwind's build-time class scanner could ever see
-// in the source. Same reasoning MaskedHeading/Reveal/Hero already rely on
-// for their own `style={{ ['--x']: ... }}` custom-property assignments,
-// just landing on a real CSS property instead of a variable.
-function CategoryDot({ category }: { category: string }) {
-  return (
-    <span
-      aria-hidden="true"
-      className="inline-block h-[6px] w-[6px] shrink-0 rounded-full"
-      style={{ backgroundColor: CATEGORY_DOT[category] ?? CATEGORY_DOT.biz }}
-    />
-  );
-}
+// A fixed, ORDERED allowlist of tool names -- the owner's own curation of
+// which concrete tools earn a badge, in the order he wants them read. Any
+// Skill (from ANY tier -- Salesforce today happens to be `daily`, Python
+// `working`, since the tools row is about WHAT the tool is, not how often
+// it is reached for) whose `name` is not in this list never renders here,
+// and a name in this list with no matching fetched Skill (Published
+// unticked in Notion, or simply not yet added) is silently skipped -- same
+// "trust Notion, don't invent a placeholder" reasoning the rest of this
+// codebase's Notion-sourced bands already follow (see ClientsBand).
+const TOOLS_ALLOWLIST = [
+  'Salesforce',
+  'Excel & Sheets modeling',
+  'Power BI',
+  'Python',
+  'SQL',
+  'Supabase',
+  'Notion API',
+  'Vercel',
+  'Swift',
+] as const;
 
 // Server component -- no 'use client'. Reveal/MaskedHeading are themselves
 // client components but are composed here the same way every other band
@@ -50,16 +56,19 @@ export default function SkillsBand({ skills, locale }: { skills: Skill[]; locale
   }
 
   // getSkills() (src/lib/content.ts) already sorts the full list by tier
-  // order then Skill.order -- this just partitions that already-sorted
-  // list into its five tiers, filter() preserving relative order within
-  // each. Same "trust the caller's ordering, don't re-sort here" contract
-  // ClientsBand/CvBand already rely on for their own `clients`/`entries`
-  // props.
+  // order then Skill.order -- `top`/`learning` just partition that
+  // already-sorted list, filter() preserving relative order. Same "trust
+  // the caller's ordering, don't re-sort here" contract ClientsBand/CvBand
+  // already rely on for their own `clients`/`entries` props.
   const top = skills.filter((s) => s.tier === 'top');
-  const daily = skills.filter((s) => s.tier === 'daily');
-  const working = skills.filter((s) => s.tier === 'working');
-  const basic = skills.filter((s) => s.tier === 'basic');
   const learning = skills.filter((s) => s.tier === 'learning');
+
+  // Tools row: allowlist order wins, not tier order or Notion `Order` --
+  // TOOLS_ALLOWLIST.map(...).filter(...) rather than
+  // skills.filter(...).sort(...), so a tool's badge position is the
+  // owner's own curated call, unrelated to which tier it happens to sit in.
+  const skillByName = new Map(skills.map((s) => [s.name, s] as const));
+  const tools = TOOLS_ALLOWLIST.map((name) => skillByName.get(name)).filter((s): s is Skill => s !== undefined);
 
   return (
     <section id="toolbox" className="relative z-[2] bg-dark px-6 py-[11vh]">
@@ -77,8 +86,11 @@ export default function SkillsBand({ skills, locale }: { skills: Skill[]; locale
       />
 
       {/* Top tier: the honest headline claim, one skill per line at
-          ClientsBand's own statement scale -- a marker, not a rank number,
-          since these four are peers, not a 1-2-3-4 ladder. */}
+          ClientsBand's own statement scale. The marker is that skill's own
+          icon (SKILL_ICONS, keyed by exact name) where the registry has
+          one -- a registry MISS falls back to the original `◆` diamond,
+          same "don't crash on the common case" contract ProjectCard's
+          IMAGE_ALT map documents for itself. */}
       {top.length > 0 && (
         <ul className="mt-14 flex list-none flex-col gap-[2px]">
           {top.map((skill, i) => (
@@ -88,8 +100,8 @@ export default function SkillsBand({ skills, locale }: { skills: Skill[]; locale
               delayIndex={i}
               className="flex items-baseline gap-3 text-[clamp(20px,3.4vw,40px)] font-bold leading-[1.2] tracking-[-0.02em]"
             >
-              <span aria-hidden="true" className="text-[0.5em] text-peri">
-                ◆
+              <span aria-hidden="true" className="inline-flex h-[28px] w-[28px] shrink-0 self-center text-peri">
+                {SKILL_ICONS[skill.name] ?? <span className="text-[0.7em]">◆</span>}
               </span>
               {skill.name}
             </Reveal>
@@ -97,81 +109,49 @@ export default function SkillsBand({ skills, locale }: { skills: Skill[]; locale
         </ul>
       )}
 
-      {/* Daily craft: quiet pill chips, the hero status pill's own "no
-          backdrop-filter, just a border and soft text" look (Hero.tsx's
-          data-status-pill) rather than anything louder. */}
-      {daily.length > 0 && (
-        <Reveal delayIndex={0} className="mt-14">
+      {/* Core tools: ONE row of iconed badges, monochrome (fill/stroke
+          both key off currentColor -- no tool's own brand color ever
+          appears), few, impact-only -- the owner's direct answer to "too
+          many chips reads as overclaiming." Hover is CSS-only (`group` /
+          `group-hover`, no JS): the border and the badge's own icon/label
+          brighten together via `transition-colors`. */}
+      {tools.length > 0 && (
+        <Reveal delayIndex={1} className="mt-14">
           <p className={`mb-4 text-[9.5px] uppercase text-on-dark-soft ${eyebrowFont(locale, 'tracking-[0.2em]')}`}>
-            {t.tierDaily}
+            {t.toolsLabel}
           </p>
-          <ul className="flex list-none flex-wrap gap-2">
-            {daily.map((skill) => (
+          <ul className="flex list-none flex-wrap gap-2.5">
+            {tools.map((skill) => (
               <li
                 key={skill.id}
-                className="inline-flex items-center gap-2 rounded-full border border-on-dark-faint px-4 py-1.5 text-[12.5px] text-on-dark-soft"
+                className="group inline-flex items-center gap-2.5 rounded-[10px] border border-on-dark-faint bg-deep px-4 py-2.5 transition-colors hover:border-peri/40"
               >
-                <CategoryDot category={skill.category} />
-                {skill.name}
+                <span className="inline-flex h-[18px] w-[18px] shrink-0 text-peri/80 transition-colors group-hover:text-peri">
+                  {SKILL_ICONS[skill.name]}
+                </span>
+                <span className="text-[12.5px] text-on-dark-soft transition-colors group-hover:text-on-dark">
+                  {skill.name}
+                </span>
               </li>
             ))}
           </ul>
         </Reveal>
       )}
 
-      {/* Working knowledge: the same chip, one size and one notch of
-          opacity quieter -- smaller/dimmer is the whole "honestly tiered"
-          point, not a different shape. */}
-      {working.length > 0 && (
-        <Reveal delayIndex={1} className="mt-10">
-          <p className={`mb-4 text-[9.5px] uppercase text-on-dark-soft ${eyebrowFont(locale, 'tracking-[0.2em]')}`}>
-            {t.tierWorking}
-          </p>
-          <ul className="flex list-none flex-wrap gap-2 opacity-75">
-            {working.map((skill) => (
-              <li
-                key={skill.id}
-                className="inline-flex items-center gap-2 rounded-full border border-on-dark-faint px-4 py-1.5 text-[11.5px] text-on-dark-soft"
-              >
-                <CategoryDot category={skill.category} />
-                {skill.name}
-              </li>
-            ))}
-          </ul>
-        </Reveal>
-      )}
-
-      {/* Familiar with: deliberately NOT chips -- a single quiet line, same
-          "label: value" idiom AboutBand's own profile.now row uses
-          (`<span className="font-semibold ...">{t.now}: </span>{...}`),
-          adapted to this band's dark palette. Chips at this tier would
-          visually overstate four skills the owner is not shipping with. */}
-      {basic.length > 0 && (
-        <Reveal as="p" delayIndex={2} className="mt-10 text-[12.5px] text-on-dark-soft">
-          <span className="font-semibold text-on-dark">{t.tierBasic}: </span>
-          {basic.map((skill) => skill.name).join(' · ')}
-        </Reveal>
-      )}
-
-      {/* Currently learning: the smallest, dimmest chip, with a slow pulse
-          (skills-band.css) instead of a static dot -- "still in motion,"
-          not yet a settled fact about the owner's toolbox. */}
+      {/* Currently learning: deliberately NOT chips -- one quiet line, a
+          graduation-cap marker (skill-icons.tsx) ahead of the same
+          "label: value" idiom AboutBand's own profile.now row uses. Chips
+          here would visually overstate skills the owner is not yet
+          shipping with. */}
       {learning.length > 0 && (
-        <Reveal delayIndex={3} className="mt-10">
-          <p className={`mb-4 text-[9.5px] uppercase text-on-dark-soft ${eyebrowFont(locale, 'tracking-[0.2em]')}`}>
-            {t.tierLearning}
-          </p>
-          <ul className="flex list-none flex-wrap gap-2">
-            {learning.map((skill) => (
-              <li
-                key={skill.id}
-                className="inline-flex items-center gap-2 rounded-full border border-on-dark-faint px-4 py-1.5 text-[11.5px] text-on-dark-soft opacity-75"
-              >
-                <span aria-hidden="true" className="skill-pulse inline-block h-[6px] w-[6px] shrink-0 rounded-full bg-peri" />
-                {skill.name}
-              </li>
-            ))}
-          </ul>
+        <Reveal as="p" delayIndex={2} className="mt-10 flex items-center gap-2 text-[12.5px] text-on-dark-soft">
+          <span aria-hidden="true" className="inline-flex h-[14px] w-[14px] shrink-0 text-on-dark-soft">
+            {LEARNING_MARKER_ICON}
+          </span>
+          <span>
+            <span className="font-semibold text-on-dark">{t.tierLearning}: </span>
+            {learning.map((skill) => skill.name).join(' · ')}
+          </span>
         </Reveal>
       )}
     </section>

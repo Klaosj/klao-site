@@ -145,6 +145,16 @@ const en = {
   tierWorking: 'Working knowledge',
   tierBasic: 'Familiar with',
   tierLearning: 'Currently learning',
+  // Toolbox redesign, owner decision 2026-08-12: "too many chips reads as
+  // overclaiming" (his words, in Thai, on the live band). The band now
+  // renders only `top` + this one curated row of iconed tool badges +
+  // `learning` -- `tierDaily`/`tierWorking`/`tierBasic` above stay in this
+  // file (harmless, re-expansion later needs no schema work) but nothing
+  // in SkillsBand.tsx reads them anymore. `toolsLabel` is that row's own
+  // mono eyebrow, sized and cased like `tierDaily` et al. but naming a
+  // fixed, curated allowlist (SkillsBand's TOOLS_ALLOWLIST) rather than a
+  // whole honesty tier.
+  toolsLabel: 'Core tools',
 };
 
 const th: typeof en = {
@@ -225,6 +235,7 @@ const th: typeof en = {
   tierWorking: 'ใช้เป็น',
   tierBasic: 'รู้พื้นฐาน',
   tierLearning: 'กำลังเรียน',
+  toolsLabel: 'เครื่องมือหลัก',
 };
 
 export type UiDict = typeof en;

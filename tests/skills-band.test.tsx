@@ -15,19 +15,37 @@ beforeEach(() => {
   vi.stubGlobal('IntersectionObserver', class { observe() {} unobserve() {} disconnect() {} });
 });
 
-// One skill per tier (plus a second `basic` row, to exercise the ' · ' join)
-// -- not a copy of the real fixture (src/content/fixtures/skills.json), same
-// "same contract, different values" reasoning tests/clients-band.test.tsx
-// documents for its own fixture-shaped constant. Already in the tier order
-// getSkills() (src/lib/content.ts) guarantees, since SkillsBand itself
-// trusts that ordering rather than re-sorting.
+// Redesigned contract (owner decision, 2026-08-12): the band renders only
+// `top` + the curated "Core tools" row + `learning`. `daily`/`working`/
+// `basic` skills below exist in this fixture purely to prove they DON'T
+// render -- not a copy of the real fixture (src/content/fixtures/skills.json),
+// same "same contract, different values" reasoning tests/clients-band.test.tsx
+// documents for its own fixture-shaped constant.
+//
+// Deliberate shape choices:
+// - 'AI-assisted building (Claude)' is a real SKILL_ICONS key (top tier) --
+//   proves the icon-registry hit path. 'Test Uncommon Top Skill' is not in
+//   the registry -- proves the `◆` fallback path.
+// - Salesforce/Supabase/Python are on TOOLS_ALLOWLIST but sit at `daily`/
+//   `working` tier in this fixture (matching the real Notion data) and are
+//   listed here OUT of allowlist order (Salesforce, Supabase, Python) --
+//   proves the tools row re-sorts to allowlist order, not prop/tier order.
+// - 'SQL' (allowlisted) is deliberately absent from this fixture entirely --
+//   proves an allowlisted-but-unpublished tool is silently skipped, not
+//   rendered as a broken/empty badge.
+// - 'Test Daily Skill' / 'Test Working Skill' / 'Test Basic Skill' are each
+//   NOT on TOOLS_ALLOWLIST -- proves their tiers render nothing at all.
 const skills: Skill[] = [
-  { id: 's-top-1', name: 'Test Top Skill', tier: 'top', category: 'tech', order: 1 },
+  { id: 's-top-1', name: 'AI-assisted building (Claude)', tier: 'top', category: 'tech', order: 1 },
+  { id: 's-top-2', name: 'Test Uncommon Top Skill', tier: 'top', category: 'tech', order: 2 },
   { id: 's-daily-1', name: 'Test Daily Skill', tier: 'daily', category: 'biz', order: 1 },
+  { id: 's-daily-salesforce', name: 'Salesforce', tier: 'daily', category: 'biz', order: 2 },
+  { id: 's-daily-supabase', name: 'Supabase', tier: 'daily', category: 'tech', order: 3 },
   { id: 's-working-1', name: 'Test Working Skill', tier: 'working', category: 'data', order: 1 },
+  { id: 's-working-python', name: 'Python', tier: 'working', category: 'data', order: 2 },
   { id: 's-basic-1', name: 'Test Basic Skill', tier: 'basic', category: 'fin', order: 1 },
-  { id: 's-basic-2', name: 'Test Basic Skill Two', tier: 'basic', category: 'fin', order: 2 },
   { id: 's-learning-1', name: 'Test Learning Skill', tier: 'learning', category: 'data', order: 1 },
+  { id: 's-learning-2', name: 'Test Learning Skill Two', tier: 'learning', category: 'data', order: 2 },
 ];
 
 describe('SkillsBand', () => {
@@ -42,74 +60,94 @@ describe('SkillsBand', () => {
     expect(container.querySelector('li')).toBeNull();
   });
 
-  it('renders every top-tier skill as a large statement-list item', () => {
+  it('renders every top-tier skill as a large statement-list item, icon-registry hit or ◆ fallback', () => {
     const { container } = render(<SkillsBand skills={skills} locale="en" />);
     const items = Array.from(container.querySelectorAll('li'));
-    const topItem = items.find((li) => li.textContent?.includes('Test Top Skill'));
-    expect(topItem).toBeTruthy();
-    expect(topItem?.className).toContain('text-[clamp(20px,3.4vw,40px)]');
-    // The peri marker is decoration, not part of the accessible name.
-    expect(topItem?.querySelector('[aria-hidden="true"]')).toBeTruthy();
+
+    const knownItem = items.find((li) => li.textContent?.includes('AI-assisted building (Claude)'));
+    expect(knownItem).toBeTruthy();
+    expect(knownItem?.className).toContain('text-[clamp(20px,3.4vw,40px)]');
+    // A SKILL_ICONS hit renders a real <svg aria-hidden="...">, not the ◆
+    // text fallback.
+    expect(knownItem?.querySelector('svg[aria-hidden="true"]')).toBeTruthy();
+    expect(knownItem?.textContent).not.toContain('◆');
+
+    const unknownItem = items.find((li) => li.textContent?.includes('Test Uncommon Top Skill'));
+    expect(unknownItem).toBeTruthy();
+    // A registry MISS keeps the original ◆ marker, no <svg> at all.
+    expect(unknownItem?.querySelector('svg')).toBeNull();
+    expect(unknownItem?.textContent).toContain('◆');
   });
 
-  it('renders daily-tier skills as pill chips under the tierDaily label', () => {
+  it('renders the Core tools row in allowlist order, skipping an unpublished allowlisted tool', () => {
     const { container } = render(<SkillsBand skills={skills} locale="en" />);
-    expect(screen.getByText(dict.en.tierDaily)).toBeTruthy();
+    expect(screen.getByText(dict.en.toolsLabel)).toBeTruthy();
+
     const items = Array.from(container.querySelectorAll('li'));
-    const chip = items.find((li) => li.textContent?.includes('Test Daily Skill'));
-    expect(chip).toBeTruthy();
-    expect(chip?.className).toContain('rounded-full');
-    expect(chip?.className).toContain('border');
+    const toolNames = ['Salesforce', 'Excel & Sheets modeling', 'Power BI', 'Python', 'SQL', 'Supabase', 'Notion API', 'Vercel', 'Swift'];
+    const toolItems = items.filter((li) => toolNames.some((name) => li.textContent?.includes(name)));
+
+    // Fixture only publishes Salesforce, Supabase and Python -- in that
+    // prop order -- yet TOOLS_ALLOWLIST orders them Salesforce, Python,
+    // Supabase. The rendered order must follow the allowlist, not the
+    // fixture's tier-grouped prop order.
+    expect(toolItems.map((li) => li.textContent)).toEqual([
+      expect.stringContaining('Salesforce'),
+      expect.stringContaining('Python'),
+      expect.stringContaining('Supabase'),
+    ]);
+
+    // 'SQL' is on the allowlist but absent from this fixture's skills --
+    // it must not appear anywhere, not even as an empty/broken badge.
+    expect(screen.queryByText('SQL')).toBeNull();
+
+    // Every rendered tool badge carries an icon.
+    for (const li of toolItems) {
+      expect(li.querySelector('svg')).toBeTruthy();
+    }
   });
 
-  it('renders working-tier skills as smaller, dimmer chips under the tierWorking label', () => {
+  it('never renders the retired daily/working/basic tier labels or their non-allowlisted skill names', () => {
+    render(<SkillsBand skills={skills} locale="en" />);
+    expect(screen.queryByText(dict.en.tierDaily)).toBeNull();
+    expect(screen.queryByText(dict.en.tierWorking)).toBeNull();
+    expect(screen.queryByText(dict.en.tierBasic)).toBeNull();
+    // These three are each tier daily/working/basic AND not on
+    // TOOLS_ALLOWLIST, so they must not surface via the tools row either.
+    expect(screen.queryByText('Test Daily Skill')).toBeNull();
+    expect(screen.queryByText('Test Working Skill')).toBeNull();
+    expect(screen.queryByText('Test Basic Skill')).toBeNull();
+  });
+
+  it('renders the learning tier as one quiet joined-text line, not chips, with no pulse dot', () => {
     const { container } = render(<SkillsBand skills={skills} locale="en" />);
-    expect(screen.getByText(dict.en.tierWorking)).toBeTruthy();
+    // No <li> anywhere carries a learning-tier name -- learning is prose now.
     const items = Array.from(container.querySelectorAll('li'));
-    const chip = items.find((li) => li.textContent?.includes('Test Working Skill'));
-    expect(chip).toBeTruthy();
-    expect(chip?.className).toContain('rounded-full');
+    expect(items.some((li) => li.textContent?.includes('Test Learning Skill'))).toBe(false);
+
+    const learningP = Array.from(container.querySelectorAll('p')).find((p) => p.textContent?.includes('Test Learning Skill'));
+    expect(learningP).toBeTruthy();
+    expect(learningP?.textContent).toBe(`${dict.en.tierLearning}: Test Learning Skill · Test Learning Skill Two`);
+    expect(learningP?.querySelector('svg[aria-hidden="true"]')).toBeTruthy();
+
+    // The old pulse-dot marker (skills-band.css) is retired along with the
+    // chip rendering it used to sit inside.
+    expect(container.querySelector('.skill-pulse')).toBeNull();
   });
 
-  it('renders basic-tier skills as one quiet joined text run, not chips', () => {
-    const { container } = render(<SkillsBand skills={skills} locale="en" />);
-    // No <li> anywhere carries a basic-tier name -- basic is prose, not a list.
-    const items = Array.from(container.querySelectorAll('li'));
-    expect(items.some((li) => li.textContent?.includes('Test Basic Skill'))).toBe(false);
-    // Located directly rather than via screen.getByText: the label prefix
-    // (its own <span>) and the full paragraph both start with
-    // dict.en.tierBasic, which makes a getByText(RegExp) query genuinely
-    // ambiguous (two matching nodes) rather than a real assertion.
-    const basicP = Array.from(container.querySelectorAll('p')).find((p) => p.textContent?.includes('Test Basic Skill'));
-    expect(basicP).toBeTruthy();
-    expect(basicP?.textContent).toBe(`${dict.en.tierBasic}: Test Basic Skill · Test Basic Skill Two`);
-  });
-
-  it('renders a pulsing marker on the currently-learning chip', () => {
-    const { container } = render(<SkillsBand skills={skills} locale="en" />);
-    expect(screen.getByText(dict.en.tierLearning)).toBeTruthy();
-    const pulse = container.querySelector('.skill-pulse');
-    expect(pulse).toBeTruthy();
-    expect(pulse?.getAttribute('aria-hidden')).toBe('true');
-    // The pulse marker sits inside the same chip as its skill name.
-    expect(pulse?.closest('li')?.textContent).toContain('Test Learning Skill');
-  });
-
-  it('switches the eyebrow, heading, and every tier label to Thai when locale is th', () => {
+  it('switches the eyebrow, heading, tools label and learning label to Thai when locale is th', () => {
     const { container } = render(<SkillsBand skills={skills} locale="th" />);
     expect(screen.getByText(dict.th.toolbox)).toBeTruthy();
     expect(container.querySelector('h2')?.textContent).toBe(dict.th.toolboxHeading);
-    expect(screen.getByText(dict.th.tierDaily)).toBeTruthy();
-    expect(screen.getByText(dict.th.tierWorking)).toBeTruthy();
-    expect(screen.getByText(dict.th.tierLearning)).toBeTruthy();
-    // Located directly rather than via getByText -- see the English test's
-    // own comment on why a RegExp query against the tierBasic label is
-    // ambiguous here (the label <span> and its parent <p> both match it).
-    const basicP = Array.from(container.querySelectorAll('p')).find((p) => p.textContent?.startsWith(dict.th.tierBasic));
-    expect(basicP).toBeTruthy();
+    expect(screen.getByText(dict.th.toolsLabel)).toBeTruthy();
+
+    const learningP = Array.from(container.querySelectorAll('p')).find((p) => p.textContent?.startsWith(dict.th.tierLearning));
+    expect(learningP).toBeTruthy();
+
     // No English label leaked through.
     expect(screen.queryByText(dict.en.toolbox)).toBeNull();
     expect(screen.queryByText(dict.en.toolboxHeading)).toBeNull();
+    expect(screen.queryByText(dict.en.toolsLabel)).toBeNull();
   });
 
   it('renders a real <h2> whose text comes from the dictionary, not hardcoded copy', () => {
