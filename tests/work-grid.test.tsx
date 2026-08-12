@@ -244,4 +244,43 @@ describe('WorkGrid', () => {
     // reaching for an unavailable matcher.
     expect(within(caption).getByText(/trip planner/i)).toBeTruthy();
   });
+
+  // Wave 1 task 6: a project with a slug ("storied") gets its own case-study
+  // page at /work/[slug] (task 4), so its card should send visitors there
+  // instead of out to an external live/repo URL -- even when liveUrl/repoUrl
+  // are also set, per the brief's three-way contract (storied wins over
+  // external links entirely on the card).
+  it('links a storied project (slug set) to its internal case-study page, not an external URL', () => {
+    const storied: Project[] = [
+      {
+        ...projects[0],
+        question: { en: 'One day in Bangkok — what is the real budget?', th: 'ไปเที่ยวหนึ่งวัน งบจริงๆ เท่าไหร่?' },
+        slug: 'gonai',
+      },
+    ];
+    const { container } = render(<WorkGrid projects={storied} locale="en" />);
+    const anchors = container.querySelectorAll('a');
+    // ONE internal link -- no separate external live/repo anchor, even
+    // though this fixture still carries a liveUrl (see `projects[0]` above).
+    expect(anchors).toHaveLength(1);
+    const a = anchors[0];
+    expect(a.getAttribute('href')).toBe('/en/work/gonai');
+    // Internal route, so no target="_blank" -- that attribute exists only to
+    // keep external navigations from carrying the visitor off-site (see the
+    // unstoried card's own href block below), which doesn't apply here.
+    expect(a.hasAttribute('target')).toBe(false);
+    // The question is the lead line, not the plain project name.
+    expect(within(a).getByText('One day in Bangkok — what is the real budget?')).toBeTruthy();
+  });
+
+  it('falls back to the project name as the lead line when a storied project has no question yet, without duplicating the name', () => {
+    const storiedNoQuestion: Project[] = [{ ...projects[0], question: null, slug: 'gonai' }];
+    const { container } = render(<WorkGrid projects={storiedNoQuestion} locale="en" />);
+    // Exactly one "GoNai" in the caption -- a mutant that renders both the
+    // fallback lead line AND a "name — description" second line would
+    // duplicate the name instead of using the plain description alone.
+    expect(screen.getAllByText('GoNai')).toHaveLength(1);
+    const a = container.querySelector('a') as HTMLAnchorElement;
+    expect(a.getAttribute('href')).toBe('/en/work/gonai');
+  });
 });
