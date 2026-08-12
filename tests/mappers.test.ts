@@ -54,6 +54,28 @@ describe('mapProject', () => {
     const page = { ...projectPage, properties: { ...projectPage.properties, Screenshot: { files: [] } } };
     expect(mapProject(page)!.imageSrc).toBeNull();
   });
+
+  it('maps QuestionEN/TH and Slug', () => {
+    const p = mapProject({
+      ...projectPage,
+      properties: {
+        ...projectPage.properties,
+        Name: title('GoNai'),
+        QuestionEN: rich('One day in Bangkok — what is the real budget?'),
+        QuestionTH: rich('ไปเที่ยวหนึ่งวัน งบจริงเท่าไหร่?'),
+        Slug: rich('gonai'),
+      },
+    })!;
+    expect(p?.question).toEqual({ en: 'One day in Bangkok — what is the real budget?', th: 'ไปเที่ยวหนึ่งวัน งบจริงเท่าไหร่?' });
+    expect(p?.slug).toBe('gonai');
+  });
+
+  it('maps a row without Question/Slug to nulls (not dropped)', () => {
+    const p = mapProject(projectPage);
+    expect(p).not.toBeNull();
+    expect(p?.question).toBeNull();
+    expect(p?.slug).toBeNull();
+  });
 });
 
 const careerPage = {

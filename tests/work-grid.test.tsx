@@ -37,6 +37,8 @@ const projects: Project[] = [
     imageSrc: '/api/img/page/1/Cover',
     featured: true,
     order: 1,
+    question: null,
+    slug: null,
   },
 ];
 
@@ -151,6 +153,8 @@ describe('WorkGrid', () => {
         imageSrc: null,
         featured: false,
         order: 2,
+        question: null,
+        slug: null,
       },
     ];
     const { container } = render(<WorkGrid projects={two} locale="en" />);

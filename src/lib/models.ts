@@ -47,6 +47,11 @@ export interface Project {
   imageSrc: string | null;
   featured: boolean;
   order: number;
+  // Wave 1 (spec 2026-08-13): the originating question and the case-study
+  // slug. Both null on a project that has no written story yet — a null
+  // slug means "no story page", never a placeholder (spec §1 principle 5).
+  question: Localized | null;
+  slug: string | null;
 }
 
 export interface PostMeta {

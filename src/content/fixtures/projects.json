@@ -14,7 +14,12 @@
     "repoUrl": null,
     "imageSrc": "/images/dailybrief.jpg",
     "featured": true,
-    "order": 3
+    "order": 3,
+    "question": {
+      "en": "Why does the morning news take so long to read?",
+      "th": "ทำไมอ่านข่าวเช้าให้จบมันนานนัก?"
+    },
+    "slug": null
   },
   {
     "id": "fx-tickerdesk",
@@ -31,7 +36,12 @@
     "repoUrl": null,
     "imageSrc": "/images/tickerdesk.svg",
     "featured": true,
-    "order": 4
+    "order": 4,
+    "question": {
+      "en": "Which option do I open before the bell?",
+      "th": "ก่อนตลาดเปิด ควรเปิดสัญญาตัวไหน?"
+    },
+    "slug": null
   },
   {
     "id": "fx-gonai",
@@ -48,7 +58,12 @@
     "repoUrl": null,
     "imageSrc": "/images/gonai.jpg",
     "featured": true,
-    "order": 1
+    "order": 1,
+    "question": {
+      "en": "One day in Bangkok — what's the real budget?",
+      "th": "ไปเที่ยวหนึ่งวัน งบจริงๆ เท่าไหร่?"
+    },
+    "slug": null
   },
   {
     "id": "fx-aisecretary",
@@ -65,6 +80,11 @@
     "repoUrl": null,
     "imageSrc": "/images/aisecretary.svg",
     "featured": true,
-    "order": 2
+    "order": 2,
+    "question": {
+      "en": "How much AI am I actually using?",
+      "th": "เดือนนี้ใช้ AI ไปเท่าไหร่กันแน่?"
+    },
+    "slug": null
   }
 ]
