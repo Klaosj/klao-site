@@ -26,6 +26,18 @@ afterEach(() => {
   vi.mocked(usePathname).mockReturnValue('/en');
 });
 
+// SiteNav's scroll/resize handler is now rAF-throttled (structural fix for
+// a parked "unthrottled scroll listener" review finding -- see SiteNav's
+// own comment on the effect) -- a dispatched 'scroll' event only
+// *schedules* the next sync(), it doesn't run it synchronously anymore.
+// Every test below that dispatches 'scroll' and then asserts on the header
+// class it drives awaits one real animation frame first, so the assertion
+// exercises the actual post-throttle sync() call with that test's current
+// stubbed rects, rather than accidentally passing off whatever `nav-on-light`
+// state the component's mount-time (synchronous, un-throttled-path) sync()
+// call already left behind.
+const flushRaf = () => new Promise<void>((resolve) => { requestAnimationFrame(() => resolve()); });
+
 const profile: Profile = {
   name: 'Suwichak Jarunopratamp (Klao)',
   headline: { en: 'Headline EN', th: 'Headline TH' },
@@ -114,7 +126,7 @@ describe('SiteNav', () => {
     expect(screen.getByRole('navigation', { name: 'Language' })).toBeTruthy();
   });
 
-  it("does not invert just because its own monogram badge reuses the bg-light colour -- the badge sits inside the header, always near the probe point", () => {
+  it("does not invert just because its own monogram badge reuses the bg-light colour -- the badge sits inside the header, always near the probe point", async () => {
     // Regression test for a real bug this task's browser verification
     // caught (not by any unit test, since jsdom's getBoundingClientRect()
     // is all-zero by default and never surfaces it): an earlier version of
@@ -131,10 +143,11 @@ describe('SiteNav', () => {
     mark.getBoundingClientRect = () =>
       ({ top: 20, bottom: 62, left: 0, right: 0, width: 42, height: 42, x: 0, y: 20, toJSON() {} }) as DOMRect;
     window.dispatchEvent(new Event('scroll'));
+    await flushRaf();
     expect(header.classList.contains('nav-on-light')).toBe(false);
   });
 
-  it('inverts to the "nav-on-light" state when a bg-light band sits under the fixed header, and back when it scrolls past', () => {
+  it('inverts to the "nav-on-light" state when a bg-light band sits under the fixed header, and back when it scrolls past', async () => {
     // jsdom never computes real layout, so getBoundingClientRect() on any
     // element returns all zeros unless overridden -- this stubs the one
     // element SiteNav's scroll listener actually queries (`section.bg-light`)
@@ -156,15 +169,17 @@ describe('SiteNav', () => {
     band.getBoundingClientRect = () =>
       ({ top: 0, bottom: 800, left: 0, right: 0, width: 0, height: 800, x: 0, y: 0, toJSON() {} }) as DOMRect;
     window.dispatchEvent(new Event('scroll'));
+    await flushRaf();
     expect(header.classList.contains('nav-on-light')).toBe(true);
 
     band.getBoundingClientRect = () =>
       ({ top: 900, bottom: 1700, left: 0, right: 0, width: 0, height: 800, x: 0, y: 900, toJSON() {} }) as DOMRect;
     window.dispatchEvent(new Event('scroll'));
+    await flushRaf();
     expect(header.classList.contains('nav-on-light')).toBe(false);
   });
 
-  it("inverts as soon as a light band touches ANY part of the header's real height, not just a single fixed point near its top", () => {
+  it("inverts as soon as a light band touches ANY part of the header's real height, not just a single fixed point near its top", async () => {
     // Regression test for a real bug the whole-branch review caught in
     // Chrome, not by any unit test (jsdom's getBoundingClientRect() is
     // all-zero by default): an earlier version of this scroll listener
@@ -191,6 +206,7 @@ describe('SiteNav', () => {
     band.getBoundingClientRect = () =>
       ({ top: 50, bottom: 900, left: 0, right: 0, width: 0, height: 850, x: 0, y: 50, toJSON() {} }) as DOMRect;
     window.dispatchEvent(new Event('scroll'));
+    await flushRaf();
     expect(header.classList.contains('nav-on-light')).toBe(true);
   });
 
@@ -309,8 +325,12 @@ describe('mobile menu', () => {
     expect(btn.getAttribute('aria-expanded')).toBe('true');
     const menu = document.getElementById('mobile-menu');
     expect(menu).not.toBeNull();
-    // The four section anchors plus the Writing route link exist inside the overlay
-    expect(within(menu!).getAllByRole('link')).toHaveLength(5);
+    // The four section anchors plus the Writing route link, plus the three
+    // social links folded into the overlay's own bottom row (the `profile`
+    // fixture above has linkedin/github/email all set) -- 5 + 3 = 8. See
+    // the "folds the social links into the mobile overlay" test below for
+    // the social row in isolation.
+    expect(within(menu!).getAllByRole('link')).toHaveLength(8);
     // Clicking a link closes the menu
     fireEvent.click(within(menu!).getAllByRole('link')[0]);
     expect(btn.getAttribute('aria-expanded')).toBe('false');
@@ -345,6 +365,85 @@ describe('mobile menu', () => {
     const menu = document.getElementById('mobile-menu');
     expect(menu).not.toBeNull();
     expect(header.contains(menu)).toBe(false);
+  });
+
+  it('hides the header social links below md, revealing them again at md and up -- they fold into the overlay instead', () => {
+    // The header's own LinkedIn/GitHub/email links stay in the DOM at every
+    // width (unlike the overlay, which only mounts while menuOpen), just
+    // `hidden` by default and switched back to `md:inline-flex` at the `md`
+    // breakpoint -- jsdom doesn't evaluate media queries, so this checks the
+    // class pair rather than actual visibility.
+    render(<SiteNav locale="en" profile={profile} />);
+    const linkedin = screen.getByText('LinkedIn').closest('a') as HTMLElement;
+    const github = screen.getByText('GitHub').closest('a') as HTMLElement;
+    const email = screen.getByText(dict.en.email).closest('a') as HTMLElement;
+    for (const social of [linkedin, github, email]) {
+      expect(social.className).toContain('hidden');
+      expect(social.className).toContain('md:inline-flex');
+    }
+  });
+
+  it('folds the social links into the mobile overlay, gated the same way as the header, omitting any empty field', () => {
+    const { container } = render(<SiteNav locale="en" profile={{ ...profile, github: '' }} />);
+    const btn = screen.getByRole('button', { name: /main|เมนูหลัก/i });
+    fireEvent.click(btn);
+    const menu = document.getElementById('mobile-menu');
+    expect(menu).not.toBeNull();
+    const linkedin = within(menu!).getByText('LinkedIn').closest('a');
+    expect(linkedin?.getAttribute('href')).toBe(profile.linkedin);
+    expect(linkedin?.getAttribute('target')).toBe('_blank');
+    expect(linkedin?.getAttribute('rel')).toBe('noreferrer');
+    // github is emptied out on this render's profile -- omitted, same rule
+    // as the header's own gating (never a dead link).
+    expect(within(menu!).queryByText('GitHub')).toBeNull();
+    const email = within(menu!).getByText(dict.en.email).closest('a');
+    expect(email?.getAttribute('href')).toBe(`mailto:${profile.email}`);
+    // Sanity check against the header's own (now-hidden-below-md) GitHub
+    // link still being in the DOM elsewhere in the tree, unrelated to this
+    // profile's emptied-out overlay copy.
+    expect(container.querySelectorAll('a[href="' + profile.github + '"]')).toHaveLength(0);
+  });
+
+  it('closes the menu on Escape and returns focus to the burger button', () => {
+    render(<SiteNav locale="en" profile={profile} />);
+    const btn = screen.getByRole('button', { name: /main|เมนูหลัก/i });
+    fireEvent.click(btn);
+    expect(document.getElementById('mobile-menu')).not.toBeNull();
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(btn.getAttribute('aria-expanded')).toBe('false');
+    expect(document.getElementById('mobile-menu')).toBeNull();
+    expect(document.activeElement).toBe(btn);
+  });
+
+  it('locks body scroll while the menu is open and restores the prior value on close', () => {
+    render(<SiteNav locale="en" profile={profile} />);
+    expect(document.body.style.overflow).toBe('');
+    const btn = screen.getByRole('button', { name: /main|เมนูหลัก/i });
+    fireEvent.click(btn);
+    expect(document.body.style.overflow).toBe('hidden');
+    fireEvent.click(btn);
+    expect(document.body.style.overflow).toBe('');
+  });
+
+  it('restores body scroll on unmount even if the menu was left open', () => {
+    const { unmount } = render(<SiteNav locale="en" profile={profile} />);
+    const btn = screen.getByRole('button', { name: /main|เมนูหลัก/i });
+    fireEvent.click(btn);
+    expect(document.body.style.overflow).toBe('hidden');
+    unmount();
+    expect(document.body.style.overflow).toBe('');
+  });
+
+  it('moves focus onto the first overlay link the moment the menu opens', () => {
+    // jsdom does support .focus()/document.activeElement for a real,
+    // in-document, naturally-focusable element like an <a href>, so this
+    // does exercise the actual effect rather than merely asserting it ran.
+    render(<SiteNav locale="en" profile={profile} />);
+    const btn = screen.getByRole('button', { name: /main|เมนูหลัก/i });
+    fireEvent.click(btn);
+    const menu = document.getElementById('mobile-menu');
+    const firstLink = within(menu!).getAllByRole('link')[0];
+    expect(document.activeElement).toBe(firstLink);
   });
 });
 
