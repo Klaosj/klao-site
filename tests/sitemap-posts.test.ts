@@ -4,7 +4,7 @@ import { describe, it, expect, vi } from 'vitest';
 import PostPage, { generateMetadata as postMetadata } from '@/app/[locale]/writing/[slug]/page';
 import sitemap from '@/app/sitemap';
 import { SITE_URL } from '@/lib/site';
-import type { Locale, Post, PostMeta } from '@/lib/models';
+import type { Locale, Post, PostMeta, Project } from '@/lib/models';
 
 // Split out of tests/smoke.test.tsx, which is a REAL-fixture smoke test --
 // src/content/fixtures/posts.json holds the owner's actual (currently empty)
@@ -57,12 +57,42 @@ const synthPostMetas: PostMeta[] = synthPosts.map(({ id, slug, title, date, tags
   tags,
 }));
 
+const synthProjects: Project[] = [
+  {
+    id: 'synth-project-1',
+    name: 'Synthetic Project One',
+    description: { en: 'A synthetic project with a slug', th: 'โปรเจกต์สังเคราะห์ที่มี slug' },
+    stack: ['React', 'TypeScript'],
+    liveUrl: null,
+    repoUrl: null,
+    imageSrc: null,
+    featured: true,
+    order: 1,
+    question: { en: 'What is synthetic project one?', th: 'โปรเจกต์สังเคราะห์แรกคืออะไร?' },
+    slug: 'gonai',
+  },
+  {
+    id: 'synth-project-2',
+    name: 'Synthetic Project Two',
+    description: { en: 'A synthetic project without a slug', th: 'โปรเจกต์สังเคราะห์ที่ไม่มี slug' },
+    stack: ['Next.js'],
+    liveUrl: null,
+    repoUrl: null,
+    imageSrc: null,
+    featured: false,
+    order: 2,
+    question: null,
+    slug: null,
+  },
+];
+
 vi.mock('@/lib/content', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/lib/content')>();
   return {
     ...actual,
     getPosts: async () => synthPostMetas,
     getPost: async (slug: string) => synthPosts.find((p) => p.slug === slug) ?? null,
+    getProjects: async () => synthProjects,
   };
 });
 
@@ -166,5 +196,39 @@ describe('post routing logic (synthetic fixtures, decoupled from src/content/fix
     const meta0 = await postMetadata(p('en', synthPosts[0].slug));
     const meta1 = await postMetadata(p('en', synthPosts[1].slug));
     expect(meta0.title).not.toBe(meta1.title);
+  });
+
+  it('sitemap lists case studies (projects with slugs) in both locales with reciprocal hreflang', async () => {
+    const entries = await sitemap();
+    const urls = entries.map((e) => e.url);
+
+    // A project with a slug should appear in both locales.
+    const projectWithSlug = synthProjects.find((p) => p.slug === 'gonai')!;
+    expect(urls.some((u) => u.includes(`/en/work/${projectWithSlug.slug}`))).toBe(true);
+    expect(urls.some((u) => u.includes(`/th/work/${projectWithSlug.slug}`))).toBe(true);
+
+    // A project without a slug should not appear.
+    expect(urls.some((u) => u.includes(`/en/work/`))).toBe(true); // At least one project appears
+    expect(
+      urls.some(
+        (u) => u.includes(`/en/work/`) && !u.includes(`/en/work/${projectWithSlug.slug}`),
+      ),
+    ).toBe(false); // But not the slug-less one
+
+    // Verify reciprocal hreflang for the case study.
+    const enCaseStudy = entries.find((e) => e.url === `${SITE_URL}/en/work/${projectWithSlug.slug}`)!;
+    const thCaseStudy = entries.find((e) => e.url === `${SITE_URL}/th/work/${projectWithSlug.slug}`)!;
+    const expectedCaseStudyLanguages = {
+      en: `${SITE_URL}/en/work/${projectWithSlug.slug}`,
+      th: `${SITE_URL}/th/work/${projectWithSlug.slug}`,
+      'x-default': `${SITE_URL}/en/work/${projectWithSlug.slug}`,
+    };
+    expect(enCaseStudy.alternates?.languages).toEqual(expectedCaseStudyLanguages);
+    expect((enCaseStudy.alternates!.languages as Record<string, string>).th).toBe(
+      thCaseStudy.url,
+    );
+    expect((thCaseStudy.alternates!.languages as Record<string, string>).en).toBe(
+      enCaseStudy.url,
+    );
   });
 });

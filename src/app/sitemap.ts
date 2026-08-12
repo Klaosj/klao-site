@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next';
-import { getPosts } from '@/lib/content';
+import { getPosts, getProjects } from '@/lib/content';
 import { LOCALES } from '@/lib/models';
 import { SITE_URL } from '@/lib/site';
 
@@ -20,6 +20,7 @@ export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const posts = await getPosts();
+  const projects = await getProjects();
 
   // A "logical page" is a path shared by both locales (e.g. '/projects' or
   // '/writing/some-slug'). Each logical page gets one sitemap <url> entry
@@ -39,6 +40,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Post.date is exactly that signal; static pages have no equivalent
     // "last modified" source, so they're left unset rather than faked.
     ...posts.map((post) => ({ path: `/writing/${post.slug}`, lastModified: post.date })),
+    // Case studies: same per-URL reciprocal hreflang treatment as posts.
+    // No lastModified — projects carry no date property, and faking one
+    // violates the same rule the static paths above follow.
+    ...(projects).filter((p) => p.slug).map((p) => ({ path: `/work/${p.slug}` })),
   ];
 
   return pages.flatMap(({ path, lastModified }) =>
