@@ -109,12 +109,16 @@ block.
 | Property | Type | Required |
 |---|---|---|
 | Role | Title | **Yes** |
+| RoleTH | Text | |
 | Company | Text | |
 | Period | Text | |
 | WinsEN | Text | |
 | WinsTH | Text | |
 | Order | Number | |
 | Published | Checkbox | (see above) |
+
+`RoleTH` is the Thai job title; leave it empty and the English `Role` is
+reused on /th automatically, same as WinsTH below.
 
 Put one win per line inside WinsEN / WinsTH (each line becomes one bullet).
 If you leave WinsTH empty, the English wins are reused as the Thai wins
@@ -127,6 +131,7 @@ Projects above.
 | Property | Type | Required |
 |---|---|---|
 | Name | Title | **Yes** |
+| NameNative | Text | |
 | HeadlineEN | Text | |
 | HeadlineTH | Text | |
 | BylineEN | Text | |
@@ -138,6 +143,13 @@ Projects above.
 | GitHub | URL | |
 | Email | Email | |
 | ResumeURL | URL | |
+| Clients | Multi-select | |
+
+`NameNative` is the native-script display name (Thai) that drives the /th
+hero wordmark — empty falls back to the Latin name. `Clients` fills the
+"Companies & brands" band; leave it empty and that band simply doesn't
+render. (Notion multi-select options can't contain commas, so e.g. "MMB
+Technology Co., Ltd" has to be entered without its comma.)
 
 Create exactly **one row**. Unlike the other three databases, **Profile has
 no Published property** — do not add one, and don't expect a Published
@@ -269,14 +281,12 @@ permanently, quietly wrong.
 ### How to actually verify a connection is live
 
 Don't trust the page looking right. Add a throwaway row — a Project named
-`TEST — delete me` works well — tick Published, and check
-**`/en/projects` specifically, not the home page.** (The home page only
-shows up to 3 `Featured` projects; a fresh non-Featured row won't appear
-there even when everything is working correctly, which would look
-identical to a failed check. `/en/projects` always lists every published
-project.) Fixture content cannot pass this test — `TEST — delete me` isn't
-in the bundled sample data — so seeing it appear on `/en/projects` is the
-one check that proves you're actually reading from Notion, not from
+`TEST — delete me` works well — tick **both Published and Featured**, and
+check the home page's Work grid. (The grid shows every Featured+Published
+project, uncapped; `/en/projects` is no longer a page of its own — it
+redirects to the home grid.) Fixture content cannot pass this test —
+`TEST — delete me` isn't in the bundled sample data — so seeing it appear
+is the one check that proves you're actually reading from Notion, not from
 fixtures and not from a frozen stale page. Delete the row once you've
 confirmed it.
 
