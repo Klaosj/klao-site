@@ -32,16 +32,21 @@ export async function generateStaticParams() {
 // degraded or rate-limited. 404-correctness for unknown slugs is permanently
 // coupled to Notion's uptime.
 //
-// The pre-check below narrows that exposure. getPosts() is *not* wrapped in
-// React's cache() (unlike getProjectsCached/getProfileCached in content.ts),
-// and the Notion SDK doesn't go through the global fetch Next.js patches, so
-// this is not a free cache hit in live-Notion mode — it's a second live call.
-// But it's a strictly cheaper one: a single metadata list query, versus
-// getPost()'s per-slug filtered query *plus* a full block-content fetch that
-// a bogus/crawler slug would otherwise trigger on every single request. In
-// fixture mode (no NOTION_TOKEN — how this build currently runs) getPosts()
-// is a synchronous local read, so the check is genuinely free there. Either
-// way, an unknown slug now 404s without ever reaching fetchPostBySlug.
+// The pre-check below narrows that exposure. getPosts() IS wrapped in
+// React's cache() (getPostsCached in content.ts, same as
+// getProjectsCached/getProfileCached and work/[slug]/page.tsx's own
+// getProjects() pre-check), so within a single request the pre-check's own
+// list query is free once either generateMetadata or the page has already
+// paid for it once. But cache() only dedupes calls within a single
+// request/render, not across requests, and the Notion SDK doesn't go
+// through the global fetch Next.js patches — so a bogus/crawler slug still
+// triggers a fresh live list query on every separate request. It's still a
+// strictly cheaper one than getPost()'s per-slug filtered query *plus* a
+// full block-content fetch that a bogus/crawler slug would otherwise
+// trigger on every single request. In fixture mode (no NOTION_TOKEN — how
+// this build currently runs) getPosts() is a synchronous local read, so the
+// check is genuinely free there. Either way, an unknown slug now 404s
+// without ever reaching fetchPostBySlug.
 //
 // This also leaves the `locale` segment on this route dynamically
 // resolvable at the framework level (no ancestor sets dynamicParams: false,

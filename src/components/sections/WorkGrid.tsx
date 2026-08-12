@@ -69,36 +69,32 @@ export default function WorkGrid({ projects, locale }: { projects: Project[]; lo
                   desktop widths the pair lost any visual association. Still not
                   conditional on imageSrc -- a project with no cover keeps its text.
 
-                  Wave 1 task 6: a storied project (slug set) leads with the
-                  question instead of the name -- the case study behind the
-                  slug answers it, so the card itself should ask it. The
-                  unstoried branch below is left completely untouched (same
-                  JSX, not merely equivalent output) precisely because it's
-                  covered by tests asserting byte-identical behavior. */}
-              {project.slug ? (
-                <div className="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                  <p className="text-lg font-semibold text-on-dark">{project.question?.[locale] ?? project.name}</p>
-                  {project.question && (
-                    <p className="text-[13px] leading-[1.6] text-on-dark-soft">
-                      {project.name} — {project.description[locale]}
-                    </p>
-                  )}
-                  {!project.question && (
-                    <p className="text-[13px] leading-[1.6] text-on-dark-soft">{project.description[locale]}</p>
-                  )}
-                  <p className={`ml-auto whitespace-nowrap text-[11px] text-peri-deep ${eyebrowFont(locale, '')}`}>
-                    {project.stack.join(' · ')}
+                  Wave 1 task 6 introduced the question-forward lead line, gated
+                  on project.slug at the time; final-review F1 corrected that --
+                  the approved spec is "show the question when present," not
+                  "show it only for storied projects." The caption now keys on
+                  project.question alone: when set, it becomes the lead line and
+                  name+description fold into "name — description" as the second
+                  line; when absent, the lead line is the plain name and the
+                  second line is the description alone (today's classic caption).
+                  This decouples the caption from the LINK three-way branch below,
+                  which still keys on project.slug exactly as before -- a project
+                  can carry a question with no slug yet (story not written) and
+                  still lead with it here. One conditional block now, not two
+                  duplicated <div>s (also retires a logged DRY nit). */}
+              <div className="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                <p className="text-lg font-semibold text-on-dark">{project.question?.[locale] ?? project.name}</p>
+                {project.question ? (
+                  <p className="text-[13px] leading-[1.6] text-on-dark-soft">
+                    {project.name} — {project.description[locale]}
                   </p>
-                </div>
-              ) : (
-                <div className="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                  <p className="text-lg font-semibold text-on-dark">{project.name}</p>
+                ) : (
                   <p className="text-[13px] leading-[1.6] text-on-dark-soft">{project.description[locale]}</p>
-                  <p className={`ml-auto whitespace-nowrap text-[11px] text-peri-deep ${eyebrowFont(locale, '')}`}>
-                    {project.stack.join(' · ')}
-                  </p>
-                </div>
-              )}
+                )}
+                <p className={`ml-auto whitespace-nowrap text-[11px] text-peri-deep ${eyebrowFont(locale, '')}`}>
+                  {project.stack.join(' · ')}
+                </p>
+              </div>
             </>
           );
 

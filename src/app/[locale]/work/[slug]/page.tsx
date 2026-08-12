@@ -39,11 +39,11 @@ export async function generateStaticParams() {
 // 404-correctness for unknown slugs is permanently coupled to Notion's
 // uptime.
 //
-// The pre-check below narrows that exposure. getProjects() IS wrapped in
-// React's cache() (getProjectsCached in content.ts) -- unlike
-// writing/[slug]/page.tsx's getPosts() pre-check -- so within a single
-// request the pre-check's own list query is free once either
-// generateMetadata or the page has already paid for it once. But cache()
+// The pre-check below narrows that exposure. getProjects() is wrapped in
+// React's cache() (getProjectsCached in content.ts) -- the same as
+// writing/[slug]/page.tsx's getPosts() pre-check (getPostsCached) -- so
+// within a single request the pre-check's own list query is free once
+// either generateMetadata or the page has already paid for it once. But cache()
 // only dedupes calls within a single request/render, not across requests,
 // and the Notion SDK doesn't go through the global fetch Next.js patches --
 // so a bogus/crawler slug still triggers a fresh live list query on every
@@ -141,8 +141,10 @@ export default async function WorkStoryPage({
           ← {dict[locale].back}
         </Link>
       </p>
-      <p className={`text-[9.5px] uppercase text-soft ${eyebrowFont(locale, 'tracking-[0.24em]')}`}>{story.name}</p>
-      <h1 className="mt-4 font-display text-3xl">{story.question?.[locale] ?? story.name}</h1>
+      <p className={`mt-4 text-[9.5px] uppercase text-soft ${eyebrowFont(locale, 'tracking-[0.24em]')}`}>
+        {story.name}
+      </p>
+      <h1 className="mt-2 font-display text-3xl">{story.question?.[locale] ?? story.name}</h1>
       <div className="mt-8">
         <PostBody blocks={body} />
       </div>

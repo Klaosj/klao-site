@@ -76,7 +76,7 @@ export function deriveBodyDescription(
   // Mirrors PostPage's own body-resolution fallback (`post.body[locale].length
   // ? post.body[locale] : post.body.en`): an empty TH body still summarizes
   // the EN paragraph rather than falling straight to the generic fallback,
-  // and a post empty in both locales falls through to finding no paragraph
+  // and a body empty in both locales falls through to finding no paragraph
   // at all, landing on `fallbacks` below.
   const blocks = body[locale].length ? body[locale] : body.en;
   const paragraph = blocks.find(

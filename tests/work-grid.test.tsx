@@ -232,17 +232,31 @@ describe('WorkGrid', () => {
     expect(imgs).toHaveLength(projects.length);
   });
 
-  it('keeps name and description adjacent in the caption', () => {
+  it('keeps question, name+description, and stack together in one caption cluster', () => {
+    // Final-review F1: the caption now keys on project.question, not
+    // project.slug, and every current fixture (including GoNai) carries a
+    // question -- so GoNai's caption leads with the question, and
+    // name+description fold together into "GoNai — <description>" as the
+    // second line instead of a bare standalone "GoNai" text node (the old
+    // `screen.getByText('GoNai')` exact match no longer resolves to
+    // anything on its own, since 'GoNai' is now a substring of that
+    // combined line, not an element's whole text). Re-anchor on the
+    // combined name+description line via a partial regex match instead, and
+    // confirm it shares a caption container with the question lead line and
+    // the stack line -- preserving this test's original "stays visually
+    // associated" intent from when name/description/stack risked drifting
+    // apart at desktop widths.
     const projects = projectsFixture as Project[];
     render(<WorkGrid projects={projects} locale="en" />);
-    const name = screen.getByText('GoNai');
-    const caption = name.parentElement!;
+    const nameAndDescription = screen.getByText(/GoNai — One-day Bangkok trip planner/i);
+    const caption = nameAndDescription.parentElement!;
     // This file has no jest-dom matchers wired up (no toBeInTheDocument
     // anywhere else in the repo's tests) -- getByText itself already throws
     // if no match is found, so toBeTruthy() here matches the existing file's
     // style (see e.g. the "renders a non-link card" test above) rather than
     // reaching for an unavailable matcher.
-    expect(within(caption).getByText(/trip planner/i)).toBeTruthy();
+    expect(within(caption).getByText(/what.s the real budget/i)).toBeTruthy();
+    expect(within(caption).getByText('Next.js · Supabase')).toBeTruthy();
   });
 
   // Wave 1 task 6: a project with a slug ("storied") gets its own case-study

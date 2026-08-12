@@ -169,15 +169,17 @@ sample content is Klao's real name, headline, LinkedIn, email, and project
 list — not placeholder text — so an unconnected site looks completely
 correct even after you've added the vars and reloaded. The only reliable
 check: add a throwaway row in Notion (e.g. a Project named `TEST — delete
-me`), tick Published, redeploy if you haven't already, and open
-**`https://<your-domain>/en/projects`** specifically — not the home page,
-which only shows up to 3 `Featured` projects and won't display a fresh
-non-Featured row even when everything is working. Confirm `TEST — delete
-me` shows up on `/en/projects`. If it doesn't, you're either still looking
-at fixtures or (if this worked before and just stopped) looking at a
-frozen stale page from before whatever broke — see `docs/NOTION_SETUP.md`'s
-"What happens when something's wrong" section for the difference and how
-to tell which one you're looking at.
+me`), tick **both Published and Featured**, redeploy if you haven't already,
+and check the home page's Work grid — not `https://<your-domain>/en/projects`,
+which is no longer a page of its own and just redirects there (307) rather
+than listing anything itself. The grid shows every Featured+Published
+project, uncapped, so a fresh row that's both Featured and Published always
+appears there, with no existing Featured slots to compete for. Confirm
+`TEST — delete me` shows up on the home page. If it doesn't, you're either
+still looking at fixtures or (if this worked before and just stopped)
+looking at a frozen stale page from before whatever broke — see
+`docs/NOTION_SETUP.md`'s "What happens when something's wrong" section for
+the difference and how to tell which one you're looking at.
 
 ## 7. Post-deploy verification
 

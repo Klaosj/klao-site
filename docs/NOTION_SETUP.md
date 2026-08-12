@@ -60,7 +60,7 @@ Each database also needs a **Published** checkbox property, except Profile
 display order everywhere (lower first).
 
 `QuestionEN` and `QuestionTH` are the bilingual case-study question (e.g.
-"What if we spent $X to ship this feature in half the time?"). A project's
+"One day in Bangkok — what's the real budget?"). A project's
 `Slug` determines whether its card becomes a case-study link (filled Slug =
 link that opens the story page; no Slug = classic card display). `QuestionEN`
 affects only the card's displayed text: if populated, the card shows the
