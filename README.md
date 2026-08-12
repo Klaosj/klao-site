@@ -31,22 +31,18 @@ as-is; it is not a regression.)
 ## Local development
 
 `npm run build` runs `next build --turbopack`, and `npm run dev` runs
-`next dev --turbopack` -- neither uses the webpack builder. This is required
-on this checkout: Next's webpack builder generates code for metadata-route
-files (`sitemap.ts`, `robots.ts`, `icon.svg`, etc.) by splicing the file's
-absolute path into a single-quoted JS string without escaping it, and that
-path contains an apostrophe (`Klao's Workspace`) — which breaks the
-generated module's syntax and fails the build (and would break `next dev`
-the same way, since 15.5.23 defaults dev to webpack too). Turbopack doesn't
-go through that loader, so it isn't affected.
+`next dev --turbopack`. `npm run build:webpack` (plain `next build`) is the
+fallback builder; both pass locally. Vercel can use either — see
+[`docs/DEPLOY.md`](docs/DEPLOY.md) if Turbopack ever misbehaves there.
 
-`npm run build:webpack` (plain `next build`) is kept as a fallback. It works
-from a checkout at a path with no apostrophe; it will fail here for the
-reason above. There's no `dev:webpack` equivalent since there's no reason to
-run dev without Turbopack anywhere this fails. On Vercel's build checkout
-(no apostrophe in the path), `build:webpack` works fine and is available as
-a fallback if Turbopack ever misbehaves there — see
-[`docs/DEPLOY.md`](docs/DEPLOY.md).
+(Historical note: until 2026-08-12 this checkout lived under a folder named
+`Klao's Workspace`, and Next's webpack builder splices the absolute path
+into a single-quoted JS string when generating metadata-route modules
+(`sitemap.ts`, `robots.ts`, `icon.svg`) — the apostrophe broke the
+generated syntax and failed every local webpack build. Turbopack doesn't
+use that loader, which is why it became the default here. The folder
+rename fixed webpack locally, and there was never a reason to add a
+`dev:webpack` script.)
 
 ## Deploy
 

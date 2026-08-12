@@ -20,8 +20,8 @@
 
 ## Global Constraints
 
-- Repo path contains an apostrophe (`Klao's Workspace`) — **always double-quote paths** in shell commands.
-- `npm run build` **fails locally** because of that apostrophe (next-metadata-route-loader). Do NOT use build as a gate. Gates are: `npm run check` (tsc + eslint + vitest) and real-browser verification on the dev server already running at `http://localhost:3000`.
+- Repo path contains a space (`Klao Workspace`) — **always double-quote paths** in shell commands. (At execution time the folder was still `Klao's Workspace`; the apostrophe was dropped in the 2026-08-12 rename.)
+- ~~`npm run build` **fails locally** because of that apostrophe (next-metadata-route-loader). Do NOT use build as a gate.~~ Historical: true while this plan ran; the 2026-08-12 folder rename fixed it and `npm run build` now passes locally. Gates at execution time were: `npm run check` (tsc + eslint + vitest) and real-browser verification on the dev server already running at `http://localhost:3000`.
 - Run every command **foreground with a generous timeout** (≥ 300000 ms). Never background `npm install` or dev servers — backgrounded processes get killed at turn end.
 - A harness hook blocks all writes to `eslint.config.mjs`. Do not touch it.
 - `src/lib/dictionary.ts` rule: `th` must satisfy `typeof en` — every key added to `en` must be added to `th`.
@@ -65,7 +65,7 @@ Keep all other hero tests (portrait, status pill, greeting, headline, CTA, CopyE
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `cd "/Users/suvichakjarunopratamp/Desktop/Klao's Workspace/Code/klao-site" && npx vitest run tests/hero.test.tsx`
+Run: `cd "/Users/suvichakjarunopratamp/Desktop/Klao Workspace/Personal/klao-site" && npx vitest run tests/hero.test.tsx`
 Expected: the new absence test FAILS (identity list still renders); any old identity-presence tests you removed no longer run.
 
 - [ ] **Step 3: Remove the identity stack from Hero.tsx**
