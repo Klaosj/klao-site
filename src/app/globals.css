@@ -41,15 +41,35 @@
     background: var(--color-dark);
     color: var(--color-on-dark);
     -webkit-font-smoothing: antialiased;
+    /* Design-checklist item: "the headlines feel chosen, not defaulted."
+       Headings already get a chosen face below; Latin body copy was
+       falling through to the bare system stack, which is the same
+       "defaulted" smell for the other 90% of the page's text. Anuphan
+       becomes the body face for both scripts instead of introducing a
+       second Latin body font. --font-thai is reused rather than a new
+       token: it already IS the Anuphan-first stack (var(--font-anuphan)
+       with system fallbacks, see @theme above), so renaming it would
+       mean touching every existing consumer for zero visual change.
+       Zero new bytes: next/font in [locale]/layout.tsx already loads
+       Anuphan with subsets: ['thai','latin'], so the latin glyphs this
+       adds here were already shipping for /th. One nuance: Anuphan's
+       loaded weights are 500/600/700 -- there's no 400. Body text still
+       requests the browser default (400), so the engine's font-weight
+       matching resolves that request to the closest available file,
+       500, rather than synthesizing a lighter weight. Left deliberate:
+       body copy renders a touch sturdier than the old system-400
+       baseline, which reads fine -- arguably better -- on these dark
+       bands. */
+    font-family: var(--font-thai);
   }
   /* Thai needs more leading than Latin at the same size. */
   :lang(th) {
     font-family: var(--font-thai);
     line-height: 1.75;
   }
-  /* Display face for headings only; body copy stays on the system stack.
-     :lang(th) outranks this on specificity (0,1,0 vs 0,0,1), so Thai
-     headings keep --font-thai (Anuphan) automatically. */
+  /* Display face for headings only; body copy now runs on --font-thai
+     (Anuphan) above. :lang(th) outranks this on specificity (0,1,0 vs
+     0,0,1), so Thai headings keep --font-thai (Anuphan) automatically. */
   h1, h2, h3 {
     font-family: var(--font-display);
   }
