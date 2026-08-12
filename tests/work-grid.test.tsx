@@ -1,9 +1,15 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import WorkGrid from '@/components/sections/WorkGrid';
 import { dict } from '@/lib/dictionary';
 import type { Project } from '@/lib/models';
+// Same fixture-import pattern as src/lib/content.ts's getProjectsCached: the
+// real fixture (all four current projects) is what the two tests below need
+// -- unlike the rest of this file's single-project `projects` mock, "every
+// project" and "adjacent caption" only mean something against the actual
+// fixture set (two of which start with imageSrc: null).
+import projectsFixture from '@/content/fixtures/projects.json';
 
 // No RTL auto-cleanup is wired up in this project (no setupFiles in
 // vitest.config.ts). Without this, render() output from an earlier test
@@ -95,6 +101,43 @@ describe('WorkGrid', () => {
     );
   });
 
+  it('adds a secondary "View code" link to the repo URL when both URLs are present, without nesting it in the card anchor', () => {
+    // The primary card anchor above only ever carries one href
+    // (liveUrl ?? repoUrl) -- nesting a second <a> inside it would be
+    // invalid HTML, so when both URLs exist the repo link must render as a
+    // sibling of the primary anchor instead of disappearing (the bug
+    // documented in ProjectCard.tsx's own history comment).
+    const both: Project[] = [{ ...projects[0], liveUrl: 'https://live.example', repoUrl: 'https://repo.example' }];
+    const { container } = render(<WorkGrid projects={both} locale="en" />);
+    const anchors = container.querySelectorAll('a');
+    expect(anchors).toHaveLength(2);
+
+    const primary = anchors[0];
+    expect(primary.getAttribute('href')).toBe('https://live.example');
+
+    const secondary = screen.getByText(dict.en.viewCode) as HTMLAnchorElement;
+    expect(secondary.tagName).toBe('A');
+    expect(secondary.getAttribute('href')).toBe('https://repo.example');
+    expect(secondary.getAttribute('target')).toBe('_blank');
+    expect(secondary.getAttribute('rel')).toBe('noreferrer');
+    // Not a descendant of the primary anchor -- a nested <a> is invalid
+    // HTML and browsers silently un-nest it, which would make this
+    // assertion (and querySelector('a') element identity) unreliable.
+    expect(primary.contains(secondary)).toBe(false);
+  });
+
+  it('renders no secondary "View code" link when only the repo URL is set', () => {
+    // Companion to "falls back to the repo URL when there is no live URL"
+    // above: that test only checks the primary anchor's href. This guards
+    // the secondary row specifically -- a mutant that renders it whenever
+    // repoUrl is set (instead of only when BOTH URLs are set) would still
+    // pass every other test in this file.
+    const repoOnly: Project[] = [{ ...projects[0], liveUrl: null, repoUrl: 'https://github.com/x/y' }];
+    const { container } = render(<WorkGrid projects={repoOnly} locale="en" />);
+    expect(container.querySelectorAll('a')).toHaveLength(1);
+    expect(screen.queryByText(dict.en.viewCode)).toBeNull();
+  });
+
   it('makes the first card span all 12 columns and later cards span half', () => {
     const two: Project[] = [
       projects[0],
@@ -157,22 +200,44 @@ describe('WorkGrid', () => {
     expect(img.getAttribute('height')).toBe('450');
   });
 
-  it('renders the Thai eyebrow and meta line in the Thai font stack, never font-mono', () => {
+  it('renders the Thai eyebrow and stack line in the Thai font stack, never font-mono', () => {
     // Regression test, same class of bug as SiteNav/AboutBand/CraftBand's
-    // own version of this test: no monospace face carries Thai glyphs, and
-    // the meta line composes the localized project description directly,
-    // so a Thai render put real Thai text through font-mono too. Scoped to
-    // the eyebrow and the meta line specifically -- the project name <p>
-    // right next to the meta line was never font-mono to begin with (it's
-    // a plain heading-weight name, not an eyebrow/label), so asserting
-    // every <p> in the section would wrongly demand font-thai on it too.
+    // own version of this test: no monospace face carries Thai glyphs. This
+    // used to check a single combined "meta" line (description + stack in
+    // one <p>, eyebrowFont-styled); T3 split that into separate name/
+    // description/stack paragraphs and only the stack line keeps the
+    // mono-eyebrow treatment now, so it's the one still at risk of the
+    // font-mono override this test guards against. The description
+    // paragraph carries no font-mono class at all, so it already inherits
+    // --font-thai for free from globals.css's `:lang(th)` rule -- asserting
+    // font-thai on it would test nothing.
     render(<WorkGrid projects={projects} locale="th" />);
     const eyebrow = screen.getByText(dict.th.selectedWork);
     expect(eyebrow.className).not.toContain('font-mono');
     expect(eyebrow.className).toContain('font-thai');
 
-    const meta = screen.getByText(projects[0].description.th, { exact: false });
-    expect(meta.className).not.toContain('font-mono');
-    expect(meta.className).toContain('font-thai');
+    const stackLine = screen.getByText(projects[0].stack.join(' · '));
+    expect(stackLine.className).not.toContain('font-mono');
+    expect(stackLine.className).toContain('font-thai');
+  });
+
+  it('renders a cover image for every project', () => {
+    const projects = projectsFixture as Project[];
+    render(<WorkGrid projects={projects} locale="en" />);
+    const imgs = screen.getAllByRole('img');
+    expect(imgs).toHaveLength(projects.length);
+  });
+
+  it('keeps name and description adjacent in the caption', () => {
+    const projects = projectsFixture as Project[];
+    render(<WorkGrid projects={projects} locale="en" />);
+    const name = screen.getByText('GoNai');
+    const caption = name.parentElement!;
+    // This file has no jest-dom matchers wired up (no toBeInTheDocument
+    // anywhere else in the repo's tests) -- getByText itself already throws
+    // if no match is found, so toBeTruthy() here matches the existing file's
+    // style (see e.g. the "renders a non-link card" test above) rather than
+    // reaching for an unavailable matcher.
+    expect(within(caption).getByText(/trip planner/i)).toBeTruthy();
   });
 });

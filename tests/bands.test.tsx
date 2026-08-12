@@ -30,6 +30,7 @@ const profile: Profile = {
   github: '',
   resumeUrl: '',
   clients: [],
+  nameNative: null,
 };
 
 describe('CraftBand', () => {
@@ -46,38 +47,39 @@ describe('CraftBand', () => {
     expect(container.querySelectorAll('li')).toHaveLength(6);
   });
 
-  it('gives the eyebrow and the big heading distinct text, not the same string twice', () => {
-    // This is the trap flagged in the task brief: an earlier draft of
-    // CraftBand rendered t.howIWork as both the eyebrow <p> and the
-    // MaskedHeading text, which makes screen.getByText(t.howIWork)
-    // ambiguous and throws away the reference design's real heading copy
-    // ("Six things I will not trade away."). Asserting the two are
-    // different strings guards against that regression coming back.
+  it('renders a real heading whose text is not the dictionary imperative label', () => {
+    // Regression guard, kept from an earlier eyebrow-vs-heading test: an
+    // earlier draft of CraftBand rendered t.howIWork as both an eyebrow <p>
+    // and the MaskedHeading text, which made screen.getByText(t.howIWork)
+    // ambiguous and threw away the reference design's real heading copy
+    // ("Six things I will not trade away."). The eyebrow itself is gone now
+    // (task 4, eyebrow diet) but the heading must still stand alone.
     const { container } = render(<CraftBand locale="en" />);
-    const eyebrow = container.querySelector('p')?.textContent;
     const heading = container.querySelector('h2')?.textContent;
-    expect(eyebrow).toBe(dict.en.howIWork);
     expect(heading).toBeTruthy();
-    expect(heading).not.toBe(eyebrow);
+    expect(heading).not.toBe(dict.en.howIWork);
   });
 
   it('highlights only the first imperative, keeping the rest soft', () => {
+    // Color no longer comes from a Tailwind utility swapped per index --
+    // CraftBand now renders through SpotlightList, which marks the
+    // emphasized line with the `spot-on` class and leaves spotlight.css to
+    // carry the color/opacity transition, driven by scroll position client-
+    // side (T4). Server markup still emphasizes item 0 by default.
     const { container } = render(<CraftBand locale="en" />);
     const items = container.querySelectorAll('li');
-    expect(items[0].className).toContain('text-on-dark');
-    expect(items[0].className).not.toContain('text-on-dark-soft');
+    expect(items[0].classList.contains('spot-on')).toBe(true);
     for (const item of Array.from(items).slice(1)) {
-      expect(item.className).toContain('text-on-dark-soft');
+      expect(item.classList.contains('spot')).toBe(true);
+      expect(item.classList.contains('spot-on')).toBe(false);
     }
   });
 
-  it('switches the eyebrow, heading, and every imperative to Thai when locale is th', () => {
+  it('switches the heading and every imperative to Thai when locale is th', () => {
     const { container } = render(<CraftBand locale="th" />);
-    expect(container.querySelector('p')?.textContent).toBe(dict.th.howIWork);
     expect(container.querySelector('h2')?.textContent).toBe(dict.th.craftHeading);
     for (const line of dict.th.craft) expect(screen.getByText(line)).toBeTruthy();
-    // No English eyebrow, heading, or imperative leaked through.
-    expect(screen.queryByText(dict.en.howIWork)).toBeNull();
+    // No English heading or imperative leaked through.
     expect(screen.queryByText(dict.en.craftHeading)).toBeNull();
   });
 
@@ -91,38 +93,18 @@ describe('CraftBand', () => {
     expect(container.querySelector('h2')?.textContent).toBe(dict.en.craftHeading);
   });
 
-  it('renders the Thai eyebrow in the Thai font stack with normal tracking, never font-mono', () => {
-    // Regression test: no monospace face carries Thai glyphs, so an eyebrow
-    // rendered through font-mono fell back per character, and the heavy
-    // tracking (2.3px-ish at this size) then pulled each combining mark
-    // away from its base letter (whole-branch review finding, confirmed in
-    // Chrome -- jsdom can't render real glyph fallback or measure tracking).
-    const { container } = render(<CraftBand locale="th" />);
-    const eyebrow = container.querySelector('p') as HTMLElement;
-    expect(eyebrow.className).not.toContain('font-mono');
-    expect(eyebrow.className).not.toMatch(/tracking-\[/);
-    expect(eyebrow.className).toContain('font-thai');
-  });
-
-  it('keeps the English eyebrow on font-mono with its original tracking', () => {
-    const { container } = render(<CraftBand locale="en" />);
-    const eyebrow = container.querySelector('p') as HTMLElement;
-    expect(eyebrow.className).toContain('font-mono');
-    expect(eyebrow.className).toContain('tracking-[0.24em]');
-  });
 });
 
 describe('AboutBand', () => {
-  it("renders the prose from the profile's own byline, not hardcoded copy", () => {
+  it('renders the three story beats', () => {
+    // This repo has no jest-dom matchers wired up (no toBeInTheDocument
+    // anywhere else in the tree -- see tests/work-grid.test.tsx) --
+    // getByText itself already throws if no match is found, so toBeTruthy()
+    // here matches the rest of this file's style.
     render(<AboutBand profile={profile} locale="en" />);
-    expect(screen.getByText(profile.byline.en)).toBeTruthy();
-  });
-
-  it('renders a different byline when the profile data changes', () => {
-    const other: Profile = { ...profile, byline: { en: 'A completely different sentence.', th: 'ประโยคที่ต่างไปเลย' } };
-    render(<AboutBand profile={other} locale="en" />);
-    expect(screen.getByText('A completely different sentence.')).toBeTruthy();
-    expect(screen.queryByText(profile.byline.en)).toBeNull();
+    expect(screen.getByText(/A Bun Dance/)).toBeTruthy();
+    expect(screen.getByText(/VELA/)).toBeTruthy();
+    expect(screen.getByText(/ActMedia/)).toBeTruthy();
   });
 
   it('sources the current-focus line from profile.now, not invented static copy', () => {
@@ -140,9 +122,10 @@ describe('AboutBand', () => {
     // t.now (the "Now:" label) must not render as a dangling label with
     // nothing after it.
     expect(screen.queryByText(new RegExp(`^${dict.en.now}:`))).toBeNull();
-    // Scoped to the prose container -- the section's eyebrow is also a <p>,
-    // so counting every <p> in the section would always include it.
-    expect(container.querySelector('[data-prose]')?.querySelectorAll('p')).toHaveLength(1);
+    // The story beats render as <span>s inside an <ol>, not <p>s -- the
+    // "Now:" paragraph is the only <p> the prose column ever produces, so
+    // it's entirely absent when profile.now is empty for this locale.
+    expect(container.querySelector('[data-prose]')?.querySelectorAll('p')).toHaveLength(0);
   });
 
   it('caps the prose column width so it never exceeds the reading measure', () => {
@@ -150,40 +133,26 @@ describe('AboutBand', () => {
     expect(container.querySelector('[data-prose]')?.className).toContain('max-w-[68ch]');
   });
 
-  it('gives the eyebrow and the big heading distinct, correctly localized text', () => {
+  it('renders the big heading with correctly localized text', () => {
     const { container } = render(<AboutBand profile={profile} locale="en" />);
-    const eyebrow = container.querySelector('p')?.textContent;
     const heading = container.querySelector('h2')?.textContent;
-    expect(eyebrow).toBe(dict.en.about);
     expect(heading).toBe(dict.en.aboutHeading);
-    expect(heading).not.toBe(eyebrow);
   });
 
   it('renders only the active locale -- the other language is entirely absent from the DOM', () => {
     const { container } = render(<AboutBand profile={profile} locale="th" />);
-    // Dictionary-sourced eyebrow
-    expect(screen.queryByText(dict.en.about)).toBeNull();
     // Dictionary-sourced structural copy (heading + sub-head)
     expect(screen.queryByText(dict.en.aboutHeading)).toBeNull();
     expect(screen.queryByText(dict.en.aboutSubhead)).toBeNull();
-    // Profile-sourced prose -- exact string match, not a RegExp built from
-    // live data (profile.now.en ends in a period, a regex metacharacter).
-    expect(screen.queryByText(profile.byline.en)).toBeNull();
+    // Dictionary-sourced story beats
+    for (const beat of dict.en.aboutStory) expect(screen.queryByText(beat)).toBeNull();
+    // Profile-sourced "now" line -- exact string match, not a RegExp built
+    // from live data (profile.now.en ends in a period, a regex metacharacter).
     expect(screen.queryByText(profile.now.en)).toBeNull();
     // Thai equivalents are present, including the correctly localized
     // heading and sub-head (not just "some non-English text").
     expect(container.querySelector('h2')?.textContent).toBe(dict.th.aboutHeading);
     expect(container.querySelector('h3')?.textContent).toBe(dict.th.aboutSubhead);
-    expect(screen.getByText(dict.th.about)).toBeTruthy();
-    expect(screen.getByText(profile.byline.th)).toBeTruthy();
-  });
-
-  it('renders the Thai eyebrow in the Thai font stack with normal tracking, never font-mono', () => {
-    // Same regression as CraftBand's own version of this test above.
-    const { container } = render(<AboutBand profile={profile} locale="th" />);
-    const eyebrow = container.querySelector('p') as HTMLElement;
-    expect(eyebrow.className).not.toContain('font-mono');
-    expect(eyebrow.className).not.toMatch(/tracking-\[/);
-    expect(eyebrow.className).toContain('font-thai');
+    for (const beat of dict.th.aboutStory) expect(screen.getByText(beat)).toBeTruthy();
   });
 });

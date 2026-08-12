@@ -92,7 +92,17 @@ describe('post routing logic (synthetic fixtures, decoupled from src/content/fix
     const entries = await sitemap();
     const urls = entries.map((e) => e.url);
     expect(urls.some((u) => u.includes(`/en/writing/${synthPosts[0].slug}`))).toBe(true);
-    expect(urls.some((u) => u.includes('/th/career'))).toBe(true);
+    // '/career' redirects to the home anchor as of Task 8 and no longer
+    // appears in the sitemap (see 'omits redirected legacy routes' below) --
+    // '/th/writing' still stands in for "both locales are present".
+    expect(urls.some((u) => u.includes('/th/writing'))).toBe(true);
+  });
+
+  it('omits redirected legacy routes', async () => {
+    const entries = await sitemap();
+    const urls = entries.map((e) => e.url);
+    expect(urls.some((u) => u.endsWith('/projects'))).toBe(false);
+    expect(urls.some((u) => u.endsWith('/career'))).toBe(false);
   });
 
   it('sitemap emits reciprocal per-URL hreflang with x-default, and lastModified on post entries only', async () => {

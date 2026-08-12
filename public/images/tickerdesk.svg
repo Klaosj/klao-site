@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="450" viewBox="0 0 800 450" role="img" aria-label="TickerDesk">
+  <rect width="800" height="450" fill="#101013"/>
+  <text x="48" y="110" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#7d86ad" letter-spacing="3">PYTHON · NOTION API · DAILY</text>
+  <rect x="48" y="304" width="44" height="3" fill="#a8aecb"/>
+  <text x="48" y="374" font-family="-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="64" font-weight="700" fill="#f4f5fa" letter-spacing="-2">TickerDesk</text>
+  <text x="470" y="374" font-family="-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="17" fill="rgba(228,232,246,0.62)">Options briefs before the open.</text>
+</svg>

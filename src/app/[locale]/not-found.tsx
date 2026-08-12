@@ -1,5 +1,11 @@
 'use client';
 
+// This boundary's 404 error document ships without [locale]/layout.tsx's
+// stylesheet link -- layout.tsx is the only other importer of globals.css,
+// so without this import the page renders unstyled. Verified against the
+// production build.
+import '../globals.css';
+
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { dict } from '@/lib/dictionary';

@@ -2,7 +2,6 @@ import MaskedHeading from '@/components/motion/MaskedHeading';
 import Reveal from '@/components/motion/Reveal';
 import { dict } from '@/lib/dictionary';
 import type { Locale } from '@/lib/models';
-import { eyebrowFont } from '@/lib/typography';
 
 // Server component -- no 'use client'. Reveal/MaskedHeading are themselves
 // client components but are composed here the same way CraftBand/CvBand do
@@ -20,10 +19,7 @@ export default function ClientsBand({ clients, locale }: { clients: string[]; lo
   }
 
   return (
-    <section id="clients" className="relative z-[2] bg-light px-6 py-[11vh] text-on-light">
-      <p className={`mb-5 text-[9.5px] uppercase text-on-light-soft ${eyebrowFont(locale, 'tracking-[0.24em]')}`}>
-        {t.clients}
-      </p>
+    <section id="clients" className="relative z-[2] -mt-8 rounded-t-[32px] bg-light px-6 py-[11vh] pt-[13vh] text-on-light sm:rounded-t-[44px]">
       <MaskedHeading
         text={t.clientsHeading}
         level={2}

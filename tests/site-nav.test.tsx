@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { usePathname } from 'next/navigation';
 import SiteNav from '@/components/SiteNav';
@@ -26,6 +26,18 @@ afterEach(() => {
   vi.mocked(usePathname).mockReturnValue('/en');
 });
 
+// SiteNav's scroll/resize handler is now rAF-throttled (structural fix for
+// a parked "unthrottled scroll listener" review finding -- see SiteNav's
+// own comment on the effect) -- a dispatched 'scroll' event only
+// *schedules* the next sync(), it doesn't run it synchronously anymore.
+// Every test below that dispatches 'scroll' and then asserts on the header
+// class it drives awaits one real animation frame first, so the assertion
+// exercises the actual post-throttle sync() call with that test's current
+// stubbed rects, rather than accidentally passing off whatever `nav-on-light`
+// state the component's mount-time (synchronous, un-throttled-path) sync()
+// call already left behind.
+const flushRaf = () => new Promise<void>((resolve) => { requestAnimationFrame(() => resolve()); });
+
 const profile: Profile = {
   name: 'Suwichak Jarunopratamp (Klao)',
   headline: { en: 'Headline EN', th: 'Headline TH' },
@@ -37,6 +49,7 @@ const profile: Profile = {
   email: 'klao@example.com',
   resumeUrl: null,
   clients: [],
+  nameNative: null,
 };
 
 describe('SiteNav', () => {
@@ -113,7 +126,7 @@ describe('SiteNav', () => {
     expect(screen.getByRole('navigation', { name: 'Language' })).toBeTruthy();
   });
 
-  it("does not invert just because its own monogram badge reuses the bg-light colour -- the badge sits inside the header, always near the probe point", () => {
+  it("does not invert just because its own monogram badge reuses the bg-light colour -- the badge sits inside the header, always near the probe point", async () => {
     // Regression test for a real bug this task's browser verification
     // caught (not by any unit test, since jsdom's getBoundingClientRect()
     // is all-zero by default and never surfaces it): an earlier version of
@@ -130,10 +143,11 @@ describe('SiteNav', () => {
     mark.getBoundingClientRect = () =>
       ({ top: 20, bottom: 62, left: 0, right: 0, width: 42, height: 42, x: 0, y: 20, toJSON() {} }) as DOMRect;
     window.dispatchEvent(new Event('scroll'));
+    await flushRaf();
     expect(header.classList.contains('nav-on-light')).toBe(false);
   });
 
-  it('inverts to the "nav-on-light" state when a bg-light band sits under the fixed header, and back when it scrolls past', () => {
+  it('inverts to the "nav-on-light" state when a bg-light band sits under the fixed header, and back when it scrolls past', async () => {
     // jsdom never computes real layout, so getBoundingClientRect() on any
     // element returns all zeros unless overridden -- this stubs the one
     // element SiteNav's scroll listener actually queries (`section.bg-light`)
@@ -155,15 +169,17 @@ describe('SiteNav', () => {
     band.getBoundingClientRect = () =>
       ({ top: 0, bottom: 800, left: 0, right: 0, width: 0, height: 800, x: 0, y: 0, toJSON() {} }) as DOMRect;
     window.dispatchEvent(new Event('scroll'));
+    await flushRaf();
     expect(header.classList.contains('nav-on-light')).toBe(true);
 
     band.getBoundingClientRect = () =>
       ({ top: 900, bottom: 1700, left: 0, right: 0, width: 0, height: 800, x: 0, y: 900, toJSON() {} }) as DOMRect;
     window.dispatchEvent(new Event('scroll'));
+    await flushRaf();
     expect(header.classList.contains('nav-on-light')).toBe(false);
   });
 
-  it("inverts as soon as a light band touches ANY part of the header's real height, not just a single fixed point near its top", () => {
+  it("inverts as soon as a light band touches ANY part of the header's real height, not just a single fixed point near its top", async () => {
     // Regression test for a real bug the whole-branch review caught in
     // Chrome, not by any unit test (jsdom's getBoundingClientRect() is
     // all-zero by default): an earlier version of this scroll listener
@@ -190,6 +206,7 @@ describe('SiteNav', () => {
     band.getBoundingClientRect = () =>
       ({ top: 50, bottom: 900, left: 0, right: 0, width: 0, height: 850, x: 0, y: 50, toJSON() {} }) as DOMRect;
     window.dispatchEvent(new Event('scroll'));
+    await flushRaf();
     expect(header.classList.contains('nav-on-light')).toBe(true);
   });
 
@@ -256,4 +273,181 @@ describe('SiteNav', () => {
     expect(en.className).toContain('p-1.5');
     expect(en.className).toContain('-m-1.5');
   });
+
+  it('adds a Writing route link to the desktop nav, after Career, pointed at /{locale}/writing -- never a hash anchor', () => {
+    // /writing is a real, sitemapped route with nothing linking to it
+    // before this fix (confirmed by grepping the pre-fix SiteNav for
+    // "writing": no match). Unlike the four #hero/#about/#work/#cv anchors,
+    // it has no homepage section id, so its href must never come out of
+    // `anchorHref` (which only ever produces a bare or /{locale}-prefixed
+    // hash).
+    const { container } = render(<SiteNav locale="en" profile={profile} />);
+    const nav = screen.getByRole('navigation', { name: dict.en.navMain });
+    const writingLink = within(nav).getByText(dict.en.writing).closest('a') as HTMLElement;
+    expect(writingLink.getAttribute('href')).toBe('/en/writing');
+    expect(writingLink.className).toContain('nav-link');
+    expect(writingLink.className).toContain('u-draw');
+
+    // It comes after the Career link in source order (same position on
+    // desktop and mobile, per the fix spec).
+    const hrefs = Array.from(container.querySelectorAll('nav a')).map((a) => a.getAttribute('href'));
+    const careerIndex = hrefs.indexOf('#cv');
+    const writingIndex = hrefs.indexOf('/en/writing');
+    expect(careerIndex).toBeGreaterThanOrEqual(0);
+    expect(writingIndex).toBeGreaterThan(careerIndex);
+  });
+
+  it('labels the Writing link with the active locale\'s own word, and points /th at /th/writing', () => {
+    render(<SiteNav locale="th" profile={profile} />);
+    const nav = screen.getByRole('navigation', { name: dict.th.navMain });
+    const writingLink = within(nav).getByText(dict.th.writing).closest('a') as HTMLElement;
+    expect(writingLink.getAttribute('href')).toBe('/th/writing');
+    expect(screen.queryByText(dict.en.writing)).toBeNull();
+  });
+
+  it('never rewrites the Writing link\'s href off the homepage -- it is not one of anchorHref\'s hash anchors', () => {
+    // Contrast with the anchors, which DO get /{locale}-prefixed off the
+    // homepage (see the "rewrites the four in-page anchors" tests below).
+    // The Writing link's href is a plain route, identical on every route.
+    vi.mocked(usePathname).mockReturnValue('/en/projects');
+    const { container } = render(<SiteNav locale="en" profile={profile} />);
+    const hrefs = Array.from(container.querySelectorAll('a')).map((a) => a.getAttribute('href'));
+    expect(hrefs).toContain('/en/writing');
+  });
+});
+
+describe('mobile menu', () => {
+  it('renders a menu button that toggles the overlay', () => {
+    render(<SiteNav locale="en" profile={profile} />);
+    const btn = screen.getByRole('button', { name: /main|เมนูหลัก/i });
+    expect(btn.getAttribute('aria-expanded')).toBe('false');
+    fireEvent.click(btn);
+    expect(btn.getAttribute('aria-expanded')).toBe('true');
+    const menu = document.getElementById('mobile-menu');
+    expect(menu).not.toBeNull();
+    // The four section anchors plus the Writing route link, plus the three
+    // social links folded into the overlay's own bottom row (the `profile`
+    // fixture above has linkedin/github/email all set) -- 5 + 3 = 8. See
+    // the "folds the social links into the mobile overlay" test below for
+    // the social row in isolation.
+    expect(within(menu!).getAllByRole('link')).toHaveLength(8);
+    // Clicking a link closes the menu
+    fireEvent.click(within(menu!).getAllByRole('link')[0]);
+    expect(btn.getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('includes a Writing route link, and clicking it closes the menu same as the anchor links', () => {
+    render(<SiteNav locale="en" profile={profile} />);
+    const btn = screen.getByRole('button', { name: /main|เมนูหลัก/i });
+    fireEvent.click(btn);
+    const menu = document.getElementById('mobile-menu');
+    const writingLink = within(menu!).getByText(dict.en.writing).closest('a') as HTMLElement;
+    expect(writingLink.getAttribute('href')).toBe('/en/writing');
+    fireEvent.click(writingLink);
+    expect(btn.getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('renders the overlay as a sibling of the header, never a descendant', () => {
+    // Regression test (fix round 1): the header carries `nav-hidden`, which
+    // applies a CSS transform (translateY) when the user scrolls down --
+    // and a transformed ancestor establishes a new containing block for any
+    // `position: fixed` descendant. An overlay nested inside the header
+    // would silently re-anchor to the header's own ~82px box instead of the
+    // viewport the instant the header hid mid-scroll (nothing locks
+    // background scroll while the menu is open, so that's reachable in
+    // practice, not just in theory). The overlay must live outside the
+    // header in the DOM so its `fixed` positioning is never at the mercy of
+    // the header's own transform.
+    const { container } = render(<SiteNav locale="en" profile={profile} />);
+    const header = container.querySelector('header') as HTMLElement;
+    const btn = screen.getByRole('button', { name: /main|เมนูหลัก/i });
+    fireEvent.click(btn);
+    const menu = document.getElementById('mobile-menu');
+    expect(menu).not.toBeNull();
+    expect(header.contains(menu)).toBe(false);
+  });
+
+  it('hides the header social links below md, revealing them again at md and up -- they fold into the overlay instead', () => {
+    // The header's own LinkedIn/GitHub/email links stay in the DOM at every
+    // width (unlike the overlay, which only mounts while menuOpen), just
+    // `hidden` by default and switched back to `md:inline-flex` at the `md`
+    // breakpoint -- jsdom doesn't evaluate media queries, so this checks the
+    // class pair rather than actual visibility.
+    render(<SiteNav locale="en" profile={profile} />);
+    const linkedin = screen.getByText('LinkedIn').closest('a') as HTMLElement;
+    const github = screen.getByText('GitHub').closest('a') as HTMLElement;
+    const email = screen.getByText(dict.en.email).closest('a') as HTMLElement;
+    for (const social of [linkedin, github, email]) {
+      expect(social.className).toContain('hidden');
+      expect(social.className).toContain('md:inline-flex');
+    }
+  });
+
+  it('folds the social links into the mobile overlay, gated the same way as the header, omitting any empty field', () => {
+    const { container } = render(<SiteNav locale="en" profile={{ ...profile, github: '' }} />);
+    const btn = screen.getByRole('button', { name: /main|เมนูหลัก/i });
+    fireEvent.click(btn);
+    const menu = document.getElementById('mobile-menu');
+    expect(menu).not.toBeNull();
+    const linkedin = within(menu!).getByText('LinkedIn').closest('a');
+    expect(linkedin?.getAttribute('href')).toBe(profile.linkedin);
+    expect(linkedin?.getAttribute('target')).toBe('_blank');
+    expect(linkedin?.getAttribute('rel')).toBe('noreferrer');
+    // github is emptied out on this render's profile -- omitted, same rule
+    // as the header's own gating (never a dead link).
+    expect(within(menu!).queryByText('GitHub')).toBeNull();
+    const email = within(menu!).getByText(dict.en.email).closest('a');
+    expect(email?.getAttribute('href')).toBe(`mailto:${profile.email}`);
+    // Sanity check against the header's own (now-hidden-below-md) GitHub
+    // link still being in the DOM elsewhere in the tree, unrelated to this
+    // profile's emptied-out overlay copy.
+    expect(container.querySelectorAll('a[href="' + profile.github + '"]')).toHaveLength(0);
+  });
+
+  it('closes the menu on Escape and returns focus to the burger button', () => {
+    render(<SiteNav locale="en" profile={profile} />);
+    const btn = screen.getByRole('button', { name: /main|เมนูหลัก/i });
+    fireEvent.click(btn);
+    expect(document.getElementById('mobile-menu')).not.toBeNull();
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(btn.getAttribute('aria-expanded')).toBe('false');
+    expect(document.getElementById('mobile-menu')).toBeNull();
+    expect(document.activeElement).toBe(btn);
+  });
+
+  it('locks body scroll while the menu is open and restores the prior value on close', () => {
+    render(<SiteNav locale="en" profile={profile} />);
+    expect(document.body.style.overflow).toBe('');
+    const btn = screen.getByRole('button', { name: /main|เมนูหลัก/i });
+    fireEvent.click(btn);
+    expect(document.body.style.overflow).toBe('hidden');
+    fireEvent.click(btn);
+    expect(document.body.style.overflow).toBe('');
+  });
+
+  it('restores body scroll on unmount even if the menu was left open', () => {
+    const { unmount } = render(<SiteNav locale="en" profile={profile} />);
+    const btn = screen.getByRole('button', { name: /main|เมนูหลัก/i });
+    fireEvent.click(btn);
+    expect(document.body.style.overflow).toBe('hidden');
+    unmount();
+    expect(document.body.style.overflow).toBe('');
+  });
+
+  it('moves focus onto the first overlay link the moment the menu opens', () => {
+    // jsdom does support .focus()/document.activeElement for a real,
+    // in-document, naturally-focusable element like an <a href>, so this
+    // does exercise the actual effect rather than merely asserting it ran.
+    render(<SiteNav locale="en" profile={profile} />);
+    const btn = screen.getByRole('button', { name: /main|เมนูหลัก/i });
+    fireEvent.click(btn);
+    const menu = document.getElementById('mobile-menu');
+    const firstLink = within(menu!).getAllByRole('link')[0];
+    expect(document.activeElement).toBe(firstLink);
+  });
+});
+
+it('marks the header with nav-chrome for scroll styling', () => {
+  render(<SiteNav locale="en" profile={profile} />);
+  expect(document.querySelector('header')!.classList.contains('nav-chrome')).toBe(true);
 });

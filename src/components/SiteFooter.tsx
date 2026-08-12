@@ -1,4 +1,5 @@
 import { getProfile } from '@/lib/content';
+import { dict } from '@/lib/dictionary';
 import type { Locale } from '@/lib/models';
 import { eyebrowFont } from '@/lib/typography';
 
@@ -28,9 +29,13 @@ import { eyebrowFont } from '@/lib/typography';
 // links to #".
 export default async function SiteFooter({ locale = 'en' }: { locale?: Locale } = {}) {
   const profile = await getProfile();
+  const t = dict[locale];
   return (
     <footer className="relative z-[2] border-t border-on-dark-faint bg-deep px-6 py-8 text-center">
-      <p className={`text-[10.5px] uppercase text-on-dark-soft ${eyebrowFont(locale, 'tracking-[0.18em]')}`}>
+      {/* Human micro-copy (T4), sits above the legal line. Plain text, no
+          emoji -- per the brand voice rules. */}
+      <p className="text-[11px] text-on-dark-soft">{t.footerNote}</p>
+      <p className={`mt-2 text-[10.5px] uppercase text-on-dark-soft ${eyebrowFont(locale, 'tracking-[0.18em]')}`}>
         © {new Date().getFullYear()} {profile.name}
       </p>
     </footer>

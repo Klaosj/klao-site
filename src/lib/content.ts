@@ -47,8 +47,11 @@ export async function getProjects(): Promise<Project[]> {
   return getProjectsCached();
 }
 
+// The home grid shows every project marked Featured in Notion, ordered by
+// Order — no cap here. Capping is a content decision, done by un-featuring a
+// project in Notion, not a code decision (owner call, 2026-08-12).
 export async function getFeaturedProjects(): Promise<Project[]> {
-  return (await getProjectsCached()).filter((p) => p.featured).slice(0, 3);
+  return (await getProjectsCached()).filter((p) => p.featured);
 }
 
 // [locale]/writing/[slug]/page.tsx calls getPosts() (the pre-check for a

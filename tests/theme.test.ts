@@ -5,7 +5,7 @@ describe('theme tokens', () => {
   it('exposes the approved palette', () => {
     expect(HEX.dark).toBe('#17171a');
     expect(HEX.deep).toBe('#101013');
-    expect(HEX.light).toBe('#ffffff');
+    expect(HEX.light).toBe('#fafafd');
     expect(HEX.peri).toBe('#a8aecb');
   });
 
@@ -24,5 +24,18 @@ describe('theme tokens', () => {
 
   it('derives particle colours from the palette, not from literals', () => {
     expect(PARTICLE_COLORS.pointA).toEqual(rgbFloat(HEX.peri));
+  });
+
+  it('defines a glow colour for the resolved wordmark', () => {
+    expect(PARTICLE_COLORS.glow).toHaveLength(3);
+    // Brighter than pointA on every channel — the whole point of the glow.
+    PARTICLE_COLORS.glow.forEach((c, i) => {
+      expect(c).toBeGreaterThanOrEqual(PARTICLE_COLORS.pointA[i]);
+    });
+  });
+
+  it('defines a fog colour matching the page\'s deep surface', () => {
+    expect(PARTICLE_COLORS.fog).toHaveLength(3);
+    expect(PARTICLE_COLORS.fog).toEqual(rgbFloat(HEX.deep));
   });
 });

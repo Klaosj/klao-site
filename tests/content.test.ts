@@ -9,11 +9,15 @@ describe('content API (fixture mode)', () => {
     expect(projects.map((p) => p.order)).toEqual([...projects.map((p) => p.order)].sort((a, b) => a - b));
   });
 
-  it('returns at most 3 featured projects', async () => {
+  it('returns every featured project, uncapped', async () => {
+    const projects = await getProjects();
     const featured = await getFeaturedProjects();
     expect(featured.length).toBeGreaterThan(0);
-    expect(featured.length).toBeLessThanOrEqual(3);
+    expect(featured.length).toBe(projects.filter((p) => p.featured).length);
     expect(featured.every((p) => p.featured)).toBe(true);
+    // Regression guard for the TickerDesk bug: with all 4 fixtures featured,
+    // a 4th-and-beyond project must not be silently dropped by a cap.
+    expect(featured.map((p) => p.name)).toContain('TickerDesk');
   });
 
   it('returns posts newest first', async () => {

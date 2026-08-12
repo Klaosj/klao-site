@@ -3,7 +3,9 @@ import { getPosts } from '@/lib/content';
 import { LOCALES } from '@/lib/models';
 import { SITE_URL } from '@/lib/site';
 
-const staticPaths = ['', '/projects', '/writing', '/career'];
+// '/projects' and '/career' redirect to home anchors (next.config.ts) --
+// a sitemap must not list URLs that answer 3xx.
+const staticPaths = ['', '/writing'];
 
 // Without this, `.next/prerender-manifest.json` shows `/sitemap.xml` with
 // `initialRevalidateSeconds: false` (built once, never again) while every

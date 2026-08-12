@@ -1,4 +1,5 @@
 import Reveal from '@/components/motion/Reveal';
+import TiltCard from '@/components/motion/TiltCard';
 import { dict } from '@/lib/dictionary';
 import type { Locale, Project } from '@/lib/models';
 import { eyebrowFont } from '@/lib/typography';
@@ -24,22 +25,21 @@ export default function WorkGrid({ projects, locale }: { projects: Project[]; lo
       </h2>
       <div className="grid grid-cols-12 gap-6">
         {projects.map((project, i) => {
-          // liveUrl wins over repoUrl when both are set; when neither is
-          // set, href is null and the card renders as a plain <div> below
-          // -- never a dangling anchor to nowhere.
+          // The whole card stays one primary anchor preferring liveUrl over
+          // repoUrl (never both -- nested <a> is invalid HTML); when neither
+          // is set, href is null and the card renders as a plain <div>
+          // below -- never a dangling anchor to nowhere. When BOTH URLs are
+          // set, repoUrl doesn't get silently dropped: it renders as its own
+          // secondary link, a sibling right after the primary anchor (see
+          // below) -- this is the same bug ProjectCard.tsx's own history
+          // comment documents ("a project with BOTH a live URL and a repo
+          // URL silently dropped the repo link").
           const href = project.liveUrl ?? project.repoUrl;
-          const meta = `${project.description[locale]} · ${project.stack.join(' · ')}`;
 
           const card = (
             <>
               {project.imageSrc && (
                 <div className="frame overflow-hidden rounded-[12px] border border-on-dark-faint bg-deep">
-                  {/* Browser-chrome bar: three dots above a 1px divider. */}
-                  <div className="flex items-center gap-1.5 border-b border-on-dark-faint px-3 py-2.5">
-                    <span aria-hidden="true" className="h-2 w-2 rounded-full bg-on-dark-faint" />
-                    <span aria-hidden="true" className="h-2 w-2 rounded-full bg-on-dark-faint" />
-                    <span aria-hidden="true" className="h-2 w-2 rounded-full bg-on-dark-faint" />
-                  </div>
                   {/* 800x450 (16:9), matching the real intrinsic size of the
                       fixture asset (public/images/placeholder.svg). The
                       previous 1440x900 (16:10) was an invented aspect
@@ -59,12 +59,17 @@ export default function WorkGrid({ projects, locale }: { projects: Project[]; lo
                   />
                 </div>
               )}
-              {/* Not conditional on imageSrc -- a project with no cover still
-                  gets its name and meta line, which is what keeps it from
-                  rendering as an empty card. */}
-              <div className="mt-4 flex items-baseline justify-between gap-4">
+              {/* One caption cluster: name + description read together on the left,
+                  stack sits right (wraps under on narrow screens). Previously the
+                  name was far-left and the description+stack far-right, so at
+                  desktop widths the pair lost any visual association. Still not
+                  conditional on imageSrc -- a project with no cover keeps its text. */}
+              <div className="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
                 <p className="text-lg font-semibold text-on-dark">{project.name}</p>
-                <p className={`text-[11px] text-on-dark-soft ${eyebrowFont(locale, '')}`}>{meta}</p>
+                <p className="text-[13px] leading-[1.6] text-on-dark-soft">{project.description[locale]}</p>
+                <p className={`ml-auto whitespace-nowrap text-[11px] text-peri-deep ${eyebrowFont(locale, '')}`}>
+                  {project.stack.join(' · ')}
+                </p>
               </div>
             </>
           );
@@ -83,10 +88,32 @@ export default function WorkGrid({ projects, locale }: { projects: Project[]; lo
                 // a card navigates the visitor away from the portfolio
                 // entirely instead of opening the project in a new tab.
                 <a href={href} target="_blank" rel="noreferrer">
-                  {card}
+                  <TiltCard>{card}</TiltCard>
                 </a>
               ) : (
-                <div>{card}</div>
+                <div>
+                  <TiltCard>{card}</TiltCard>
+                </div>
+              )}
+              {project.liveUrl && project.repoUrl && (
+                // Secondary link, a SIBLING of the primary anchor above --
+                // never nested inside it (nested <a> is invalid HTML). Only
+                // rendered when both URLs exist; the repoUrl is otherwise
+                // reachable via the primary anchor already (see href above),
+                // so this row exists solely to recover the link that would
+                // otherwise be silently dropped.
+                <a
+                  href={project.repoUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  // Hit-area fix (WCAG 2.5.8), same idiom as ProjectCard.tsx:
+                  // `p-2` grows the clickable box past the 24x24 CSS px
+                  // minimum; the matching `-m-2` cancels that growth for
+                  // layout purposes so the visible underline stays put.
+                  className="mt-3 inline-flex items-center justify-center p-2 -m-2 text-[11px] text-on-dark-soft underline hover:text-peri"
+                >
+                  {t.viewCode}
+                </a>
               )}
             </Reveal>
           );

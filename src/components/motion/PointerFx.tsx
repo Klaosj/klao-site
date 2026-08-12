@@ -117,8 +117,8 @@ export default function PointerFx() {
     const btnCleanups = buttons.map((el) => {
       const onMove = (e: PointerEvent) => {
         const r = el.getBoundingClientRect();
-        const mx = (e.clientX - r.left - r.width / 2) * 0.22;
-        const my = (e.clientY - r.top - r.height / 2) * 0.32;
+        const mx = (e.clientX - r.left - r.width / 2) * 0.3;
+        const my = (e.clientY - r.top - r.height / 2) * 0.42;
         el.style.setProperty('--magX', `${mx.toFixed(1)}px`);
         el.style.setProperty('--magY', `${my.toFixed(1)}px`);
       };
