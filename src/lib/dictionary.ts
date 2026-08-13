@@ -168,6 +168,9 @@ const en = {
   // question whose linkSlug points at this story surfaces when it was
   // asked, prefixed by this label.
   askedOn: 'Asked',
+  // Task 5: SiteFooter's honest freshness line -- the newest date across
+  // posts and questions, or nothing at all when neither has a date yet.
+  contentUpdated: 'Content last updated',
 };
 
 const th: typeof en = {
@@ -253,6 +256,7 @@ const th: typeof en = {
   openQuestionsHeading: 'คำถามที่ยังไม่มีคำตอบ',
   statusBuilding: 'กำลังสร้าง',
   askedOn: 'ตั้งคำถามไว้เมื่อ',
+  contentUpdated: 'เนื้อหาอัปเดตล่าสุด',
 };
 
 export type UiDict = typeof en;
