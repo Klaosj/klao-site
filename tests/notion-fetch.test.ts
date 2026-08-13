@@ -13,7 +13,14 @@ vi.mock('@notionhq/client', () => ({
   },
 }));
 
-import { fetchProjects, fetchProfile, fetchPostBySlug, fetchProjectStory, resolveImageUrl } from '@/lib/notion';
+import {
+  fetchProjects,
+  fetchProfile,
+  fetchPostBySlug,
+  fetchProjectStory,
+  fetchQuestions,
+  resolveImageUrl,
+} from '@/lib/notion';
 
 const title = (s: string) => ({ title: [{ plain_text: s }] });
 const richText = (s: string) => ({ rich_text: s ? [{ plain_text: s }] : [] });
@@ -29,6 +36,7 @@ beforeEach(() => {
   vi.stubEnv('NOTION_DB_PROJECTS', 'db-projects');
   vi.stubEnv('NOTION_DB_POSTS', 'db-posts');
   vi.stubEnv('NOTION_DB_PROFILE', 'db-profile');
+  vi.stubEnv('NOTION_DB_QUESTIONS', 'db-questions');
 });
 
 afterEach(() => {
@@ -209,6 +217,38 @@ describe('fetchProjectStory', () => {
     queryMock.mockResolvedValueOnce({ results: [], next_cursor: null, has_more: false });
     expect(await fetchProjectStory('no-such-slug')).toBeNull();
     expect(blocksListMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('fetchQuestions', () => {
+  it('queries published only, maps rows, drops malformed ones', async () => {
+    queryMock.mockResolvedValueOnce({
+      results: [
+        {
+          id: 'q1',
+          created_time: '2026-08-01T00:00:00.000Z',
+          properties: {
+            Question: title('A real question?'),
+            Status: { select: { name: 'wondering' } },
+            Date: { date: { start: '2026-08-05' } },
+          },
+        },
+        { id: 'q2', properties: { Question: title('') } },
+      ],
+      next_cursor: null,
+      has_more: false,
+    });
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const questions = await fetchQuestions();
+    warn.mockRestore();
+    expect(questions).toHaveLength(1);
+    expect(questions[0].question.en).toBe('A real question?');
+    expect(queryMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        database_id: 'db-questions',
+        filter: { property: 'Published', checkbox: { equals: true } },
+      }),
+    );
   });
 });
 

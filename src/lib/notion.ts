@@ -1,11 +1,12 @@
 import { Client } from '@notionhq/client';
-import type { CareerEntry, Post, PostMeta, Profile, Project, ProjectStory, Skill } from './models';
+import type { CareerEntry, OpenQuestion, Post, PostMeta, Profile, Project, ProjectStory, Skill } from './models';
 import {
   mapBlocks,
   mapCareerEntry,
   mapPostMeta,
   mapProfile,
   mapProject,
+  mapQuestion,
   mapSkill,
   splitBilingual,
   type NotionPage,
@@ -17,7 +18,7 @@ import {
 let cachedClient: Client | undefined;
 const client = (): Client => (cachedClient ??= new Client({ auth: process.env.NOTION_TOKEN }));
 
-const dbId = (name: 'PROJECTS' | 'POSTS' | 'CAREER' | 'PROFILE' | 'SKILLS'): string => {
+const dbId = (name: 'PROJECTS' | 'POSTS' | 'CAREER' | 'PROFILE' | 'SKILLS' | 'QUESTIONS'): string => {
   const id = process.env[`NOTION_DB_${name}`];
   if (!id) throw new Error(`Missing env NOTION_DB_${name}`);
   return id;
@@ -110,6 +111,10 @@ export async function fetchProfile(): Promise<Profile | null> {
 
 export async function fetchSkills(): Promise<Skill[]> {
   return (await queryAll(dbId('SKILLS'), true)).map(mapSkill).filter(nonNull);
+}
+
+export async function fetchQuestions(): Promise<OpenQuestion[]> {
+  return (await queryAll(dbId('QUESTIONS'), true)).map(mapQuestion).filter(nonNull);
 }
 
 // Notion page/block ids are UUIDs: 32 hex chars, with or without dashes.
