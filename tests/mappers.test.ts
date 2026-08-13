@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { mapProject, mapCareerEntry, mapProfile, mapSkill } from '@/lib/notion-mappers';
+import { mapProject, mapCareerEntry, mapProfile, mapSkill, mapQuestion } from '@/lib/notion-mappers';
 
 const title = (s: string) => ({ title: [{ plain_text: s }] });
 const rich = (s: string) => ({ rich_text: s ? [{ plain_text: s }] : [] });
@@ -271,5 +271,63 @@ describe('mapSkill', () => {
 
   it('uses the real Category when present, not always the default', () => {
     expect(mapSkill(skillPage)!.category).toBe('data');
+  });
+});
+
+const questionPage = {
+  id: 'q1',
+  created_time: '2026-08-01T09:30:00.000Z',
+  properties: {
+    Question: title('Can a Notion database run a whole website?'),
+    QuestionTH: rich('ฐานข้อมูล Notion อันเดียว รันทั้งเว็บได้ไหม?'),
+    Status: select('building'),
+    LinkSlug: rich(''),
+    Date: { date: { start: '2026-08-05' } },
+    Published: { checkbox: true },
+  },
+};
+
+describe('mapQuestion', () => {
+  it('maps a full row', () => {
+    expect(mapQuestion(questionPage)).toEqual({
+      id: 'q1',
+      question: {
+        en: 'Can a Notion database run a whole website?',
+        th: 'ฐานข้อมูล Notion อันเดียว รันทั้งเว็บได้ไหม?',
+      },
+      status: 'building',
+      linkSlug: null,
+      date: '2026-08-05',
+    });
+  });
+
+  it('falls back TH -> EN when QuestionTH empty', () => {
+    const page = { ...questionPage, properties: { ...questionPage.properties, QuestionTH: rich('') } };
+    expect(mapQuestion(page)!.question.th).toBe('Can a Notion database run a whole website?');
+  });
+
+  it('defaults missing or unrecognised Status to wondering', () => {
+    const missing = { ...questionPage, properties: { ...questionPage.properties, Status: select(null) } };
+    const bogus = { ...questionPage, properties: { ...questionPage.properties, Status: select('someday') } };
+    expect(mapQuestion(missing)!.status).toBe('wondering');
+    expect(mapQuestion(bogus)!.status).toBe('wondering');
+  });
+
+  it('maps a non-empty LinkSlug', () => {
+    const page = { ...questionPage, properties: { ...questionPage.properties, LinkSlug: rich('gonai') } };
+    expect(mapQuestion(page)!.linkSlug).toBe('gonai');
+  });
+
+  it('falls back to created_time date when Date is empty', () => {
+    const page = { ...questionPage, properties: { ...questionPage.properties, Date: { date: null } } };
+    expect(mapQuestion(page)!.date).toBe('2026-08-01');
+  });
+
+  it('returns null and warns on missing Question title', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const page = { ...questionPage, properties: { ...questionPage.properties, Question: title('') } };
+    expect(mapQuestion(page)).toBeNull();
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
   });
 });

@@ -148,3 +148,24 @@ export interface Skill {
   category: string;
   order: number;
 }
+
+// Wave 2 (spec 2026-08-13): the owner's question loop, open side. Status
+// drives band membership (answered questions leave the band) and the
+// building marker; same "valid values + one declaration" idiom as
+// SKILL_TIERS/LOCALES above -- notion-mappers.ts validates against this
+// array.
+export type QuestionStatus = 'wondering' | 'building' | 'answered';
+export const QUESTION_STATUSES: readonly QuestionStatus[] = ['wondering', 'building', 'answered'];
+
+export interface OpenQuestion {
+  id: string;
+  question: Localized;
+  // 'answered' questions never render on the band; their linkSlug feeds the
+  // case page's "born from a question" line instead.
+  status: QuestionStatus;
+  linkSlug: string | null;
+  // YYYY-MM-DD. The Notion Date property when set, else the row's own
+  // created_time -- a real timestamp (when the question was logged), never
+  // an invented one.
+  date: string;
+}
