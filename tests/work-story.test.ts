@@ -1,7 +1,7 @@
 import type { ReactElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, it, expect, vi } from 'vitest';
-import type { Locale, Project, ProjectStory } from '@/lib/models';
+import type { Locale, OpenQuestion, Project, ProjectStory } from '@/lib/models';
 import { dict } from '@/lib/dictionary';
 import { SITE_URL } from '@/lib/site';
 
@@ -95,6 +95,10 @@ const thEmptyBodyStory: ProjectStory = {
 
 let mockProjects: Project[] = [];
 let mockStoryBySlug: Record<string, ProjectStory | null> = {};
+// Task 4 (wave 2): defaults to `[]` so every existing test above, which never
+// touches this variable, keeps passing unchanged -- same per-test override
+// hook as mockProjects/mockStoryBySlug above, just for getQuestions.
+let mockQuestions: OpenQuestion[] = [];
 
 vi.mock('@/lib/content', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/lib/content')>();
@@ -102,6 +106,7 @@ vi.mock('@/lib/content', async (importOriginal) => {
     ...actual,
     getProjects: async () => mockProjects,
     getProjectStory: async (slug: string) => mockStoryBySlug[slug] ?? null,
+    getQuestions: async () => mockQuestions,
   };
 });
 
@@ -219,5 +224,34 @@ describe('work/[slug] case-study route, wired end to end (mocked @/lib/content)'
     const textNoLinks = collectText(jsxNoLinks);
     expect(textNoLinks).not.toContain(dict.en.liveSite);
     expect(textNoLinks).not.toContain(dict.en.viewCode);
+  });
+
+  // Task 4 (wave 2): "born from a question" line -- an `answered` question
+  // whose linkSlug points at this story surfaces when it was asked.
+  it('renders the asked-on line when an answered question points at this slug', async () => {
+    mockProjects = [gonaiStory];
+    mockStoryBySlug = { gonai: gonaiStory };
+    mockQuestions = [
+      { id: 'q1', question: { en: 'Q?', th: 'Q?' }, status: 'answered', linkSlug: 'gonai', date: '2026-06-15' },
+    ];
+    const { default: WorkStoryPage } = await import('@/app/[locale]/work/[slug]/page');
+
+    const jsx = await WorkStoryPage(p('en', 'gonai'));
+    const text = collectText(jsx);
+    expect(text).toContain(dict.en.askedOn);
+    expect(text).toContain('Jun 15, 2026');
+  });
+
+  it('renders no asked-on line when no answered question matches', async () => {
+    mockProjects = [gonaiStory];
+    mockStoryBySlug = { gonai: gonaiStory };
+    mockQuestions = [
+      { id: 'q1', question: { en: 'Q?', th: 'Q?' }, status: 'building', linkSlug: 'gonai', date: '2026-06-15' },
+    ];
+    const { default: WorkStoryPage } = await import('@/app/[locale]/work/[slug]/page');
+
+    const jsx = await WorkStoryPage(p('en', 'gonai'));
+    const text = collectText(jsx);
+    expect(text).not.toContain(dict.en.askedOn);
   });
 });

@@ -164,6 +164,10 @@ const en = {
   openQuestions: 'Open questions',
   openQuestionsHeading: 'Questions I have not answered yet.',
   statusBuilding: 'building',
+  // Task 4: the case page's "born from a question" line -- an `answered`
+  // question whose linkSlug points at this story surfaces when it was
+  // asked, prefixed by this label.
+  askedOn: 'Asked',
 };
 
 const th: typeof en = {
@@ -248,6 +252,7 @@ const th: typeof en = {
   openQuestions: 'คำถามที่ยังเปิดอยู่',
   openQuestionsHeading: 'คำถามที่ยังไม่มีคำตอบ',
   statusBuilding: 'กำลังสร้าง',
+  askedOn: 'ตั้งคำถามไว้เมื่อ',
 };
 
 export type UiDict = typeof en;

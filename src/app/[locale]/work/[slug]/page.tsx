@@ -1,8 +1,9 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getProjects, getProjectStory } from '@/lib/content';
+import { getProjects, getProjectStory, getQuestions } from '@/lib/content';
 import { dict } from '@/lib/dictionary';
+import { formatDate } from '@/lib/format';
 import { assertLocale } from '@/lib/locale';
 import { LOCALES, type Locale } from '@/lib/models';
 import { deriveBodyDescription } from '@/lib/post-description';
@@ -132,6 +133,15 @@ export default async function WorkStoryPage({
   const story = await getProjectStory(slug);
   if (!story || (story.body.en.length === 0 && story.body.th.length === 0)) notFound();
   const body = story.body[locale].length ? story.body[locale] : story.body.en;
+  // Born-from-a-question line (wave 2, spec §5): if an `answered` question
+  // in the Questions DB points its LinkSlug at this story, surface when it
+  // was asked -- the loop's receipt. No match, no line (honest-tier: the
+  // slot is never filled with anything fabricated). getQuestions() is
+  // cache()-wrapped, so this costs one Questions query per story render in
+  // Notion mode and nothing in fixture mode.
+  const origin = (await getQuestions()).find(
+    (question) => question.status === 'answered' && question.linkSlug === slug,
+  );
   return (
     // See projects/page.tsx and layout.tsx for why this page owns its own
     // reading-width column and top padding now.
@@ -145,6 +155,11 @@ export default async function WorkStoryPage({
         {story.name}
       </p>
       <h1 className="mt-2 font-display text-3xl">{story.question?.[locale] ?? story.name}</h1>
+      {origin && (
+        <p className="mt-3 text-xs text-soft">
+          {dict[locale].askedOn} {formatDate(origin.date, locale)}
+        </p>
+      )}
       <div className="mt-8">
         <PostBody blocks={body} />
       </div>
