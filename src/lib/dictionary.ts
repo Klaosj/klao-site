@@ -155,6 +155,15 @@ const en = {
   // fixed, curated allowlist (SkillsBand's TOOLS_ALLOWLIST) rather than a
   // whole honesty tier.
   toolsLabel: 'Core tools',
+  // Open-questions band (wave 2, spec 2026-08-13). The band's copy IS its
+  // question list (owner-authored, from the Questions DB) -- these are just
+  // the frame: the eyebrow, an optional bigger heading (openQuestionsHeading
+  // is dormant until browser review decides the eyebrow alone reads too
+  // quiet -- same keep-the-key reasoning as tierDaily above), and the one
+  // status marker a `building` question carries.
+  openQuestions: 'Open questions',
+  openQuestionsHeading: 'Questions I have not answered yet.',
+  statusBuilding: 'building',
 };
 
 const th: typeof en = {
@@ -236,6 +245,9 @@ const th: typeof en = {
   tierBasic: 'รู้พื้นฐาน',
   tierLearning: 'กำลังเรียน',
   toolsLabel: 'เครื่องมือหลัก',
+  openQuestions: 'คำถามที่ยังเปิดอยู่',
+  openQuestionsHeading: 'คำถามที่ยังไม่มีคำตอบ',
+  statusBuilding: 'กำลังสร้าง',
 };
 
 export type UiDict = typeof en;

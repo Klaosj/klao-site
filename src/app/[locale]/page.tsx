@@ -6,9 +6,10 @@ import ContactBand from '@/components/sections/ContactBand';
 import CraftBand from '@/components/sections/CraftBand';
 import CvBand from '@/components/sections/CvBand';
 import Hero from '@/components/sections/Hero';
+import QuestionsBand from '@/components/sections/QuestionsBand';
 import SkillsBand from '@/components/sections/SkillsBand';
 import WorkGrid from '@/components/sections/WorkGrid';
-import { getCareer, getFeaturedProjects, getProfile, getSkills } from '@/lib/content';
+import { getCareer, getFeaturedProjects, getProfile, getQuestions, getSkills } from '@/lib/content';
 import { assertLocale } from '@/lib/locale';
 
 // See layout.tsx: a layout-level `dynamicParams = false` poisons
@@ -17,11 +18,12 @@ export const dynamicParams = false;
 
 export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
   const locale = assertLocale((await params).locale);
-  const [profile, projects, career, skills] = await Promise.all([
+  const [profile, projects, career, skills, questions] = await Promise.all([
     getProfile(),
     getFeaturedProjects(),
     getCareer(),
     getSkills(),
+    getQuestions(),
   ]);
 
   // Owner-supplied: profile.nameNative (the Thai display name) drives the
@@ -42,6 +44,13 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       <AboutBand profile={profile} locale={locale} />
       <CraftBand locale={locale} />
       <WorkGrid projects={projects} locale={locale} />
+      {/* The loop shown mid-spin: the work grid's cards lead with their
+          (answered) questions, and this band holds the ones still open.
+          Token rhythm stays legal either way: Work(dark) -> Questions(deep)
+          -> Clients(light), or -- while the band hides itself (no open
+          questions / NOTION_DB_QUESTIONS not configured) -- Work(dark) ->
+          Clients(light), both free of same-token neighbors. */}
+      <QuestionsBand questions={questions} locale={locale} />
       {/* Sits right before the Skills/CV pair on purpose: these names are
           the owner's credibility (BD is the client/employer relationships
           he's built), so the visitor sees the roll call of brands
@@ -49,8 +58,8 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           up, not buried at the page's bottom. bg-light also breaks up the
           dark(Work) -> dark(Skills) -> deep(Cv) run that would otherwise
           repeat CraftBand's own `deep` two bands later -- Work(dark) ->
-          Clients(light) -> Skills(dark) -> Cv(deep) -> Contact(dark) keeps
-          no two adjacent bands on the same token. */}
+          Questions(deep) -> Clients(light) -> Skills(dark) -> Cv(deep) ->
+          Contact(dark) keeps no two adjacent bands on the same token. */}
       <ClientsBand clients={profile.clients} locale={locale} />
       <SkillsBand skills={skills} locale={locale} />
       <CvBand entries={career} locale={locale} resumeUrl={profile.resumeUrl} />
