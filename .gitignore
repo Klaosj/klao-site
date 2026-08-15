@@ -9,3 +9,7 @@ next-env.d.ts
 
 # brainstorming prototypes and captures — large, not part of the build
 .superpowers/
+
+# Session worktrees + SDD scratch (superpowers)
+.claude/worktrees/
+.superpowers/
