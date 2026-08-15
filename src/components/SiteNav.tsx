@@ -208,7 +208,7 @@ export default function SiteNav({ locale, profile }: { locale: Locale; profile: 
   }, [menuOpen]);
 
   // Section ids created by Task 11's page composition: Hero (#hero),
-  // AboutBand (#about), WorkGrid (#work -- added in this task), CvBand
+  // AboutBand (#about), WorkDeck (#work -- added in this task), CvBand
   // (#cv). `hash` (not `href`) -- the real, route-aware href is computed
   // per-render below via `anchorHref`, so this is never a bare, dangling
   // hash on its own.

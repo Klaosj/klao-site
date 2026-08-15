@@ -22,10 +22,10 @@ const p = (locale: Locale) => ({ params: Promise.resolve({ locale }) });
 // for e.g. `<Link href="...">{t.back}</Link>` (text passed literally as
 // `children`) but could never see anything rendered *inside* a capitalized
 // component that takes its text via a named prop instead of `children`
-// (Hero's `profile.headline`, WorkGrid's `project.name`, CvBand's stats --
+// (Hero's `profile.headline`, WorkDeck's `project.name`, CvBand's stats --
 // none of them pass `children`). A real render, by contrast, actually calls
 // every component function the way React would, so it sees straight through
-// Hero/AboutBand/CraftBand/WorkGrid/CvBand/ContactBand -- this project's
+// Hero/AboutBand/CraftBand/WorkDeck/CvBand/ContactBand -- this project's
 // home route composes nothing else. renderToStaticMarkup never runs
 // useEffect (only the render-phase function body), so the 'use client'
 // hook-using descendants it also passes through -- Reveal, MaskedHeading,
@@ -76,7 +76,7 @@ describe('smoke: pages render in both locales (fixture mode)', () => {
       // string per band composed in page.tsx, none of it routed through
       // MaskedHeading (see the collectText comment above for why that
       // matters here).
-      expect(homeText).toContain(t.selectedWork); // WorkGrid's eyebrow
+      expect(homeText).toContain(t.selectedWork); // WorkDeck's eyebrow
       expect(homeText).toContain(t.career); // CvBand's eyebrow
       // Render only the active locale -- the other language's equivalent
       // eyebrow labels must be entirely absent from the assembled page.

@@ -2,7 +2,7 @@ import { dict } from '@/lib/dictionary';
 import type { Locale, Project } from '@/lib/models';
 
 // Alt text describing what each real screenshot actually SHOWS -- keyed by
-// the asset path, not built from project.name/description like WorkGrid's
+// the asset path, not built from project.name/description like WorkDeck's
 // `${name} — ${description}` alt on this same pair of images. That format
 // duplicates the card's own visible <h3> name and <p> description right
 // below the image, so a screen reader announces the same two facts twice

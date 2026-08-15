@@ -45,7 +45,7 @@ export default function ContactBand({ profile, locale }: { profile: Profile; loc
           Lighthouse pass, which jsdom-based component tests have no way to
           measure. `text-on-dark-soft` alone is the same token every other
           eyebrow/label in this codebase uses at full opacity -- see
-          AboutBand/CraftBand/WorkGrid/CvBand/SiteFooter's own `font-mono
+          AboutBand/CraftBand/WorkDeck/CvBand/SiteFooter's own `font-mono
           ... text-on-dark-soft` labels, none of which stack a further
           opacity on top. */}
       <div className="mt-14 flex flex-wrap justify-center gap-11 text-[13px] text-on-dark-soft">

@@ -7,7 +7,7 @@ import CraftBand from '@/components/sections/CraftBand';
 import CvBand from '@/components/sections/CvBand';
 import Hero from '@/components/sections/Hero';
 import SkillsBand from '@/components/sections/SkillsBand';
-import WorkGrid from '@/components/sections/WorkGrid';
+import WorkDeck from '@/components/sections/WorkDeck';
 import { getCareer, getFeaturedProjects, getProfile, getSkills } from '@/lib/content';
 import { assertLocale } from '@/lib/locale';
 
@@ -41,7 +41,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       <Hero profile={profile} locale={locale} />
       <AboutBand profile={profile} locale={locale} />
       <CraftBand locale={locale} />
-      <WorkGrid projects={projects} locale={locale} />
+      <WorkDeck projects={projects} locale={locale} />
       {/* Sits right before the Skills/CV pair on purpose: these names are
           the owner's credibility (BD is the client/employer relationships
           he's built), so the visitor sees the roll call of brands

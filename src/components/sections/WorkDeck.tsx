@@ -16,7 +16,7 @@ const GROUPS = [
 ] as const;
 
 // Server component — no 'use client'; Reveal/TiltCard own their client
-// boundaries, same composition as WorkGrid had.
+// boundaries.
 export default function WorkDeck({ projects, locale }: { projects: Project[]; locale: Locale }) {
   const t = dict[locale];
   const slides = GROUPS.flatMap((g) =>
@@ -31,8 +31,8 @@ export default function WorkDeck({ projects, locale }: { projects: Project[]; lo
   return (
     <section id="work" className="relative z-[2] bg-dark px-6 py-[11vh]">
       {/* The eyebrow carries the section's heading role — same WCAG 1.3.1
-          rationale as WorkGrid's h2 (2026-08-09 QA), and smoke.test.tsx
-          pins this exact text on the home page. */}
+          rationale applied since the 2026-08-09 QA finding, and
+          smoke.test.tsx pins this exact text on the home page. */}
       <h2 className={`text-[9.5px] uppercase text-on-dark-soft ${eyebrowFont(locale, 'tracking-[0.24em]')}`}>
         {t.selectedWork}
       </h2>
@@ -100,7 +100,7 @@ export default function WorkDeck({ projects, locale }: { projects: Project[]; lo
 
         return (
           <Reveal key={project.id} delayIndex={i}>
-            {/* Three-way link contract, unchanged from WorkGrid/wave 1:
+            {/* Three-way link contract, unchanged from wave 1:
                 1. storied — ONE internal Link to the case-study page;
                    live/repo live on that page's receipts footer, never here.
                 2. unstoried + URL — external anchor, live preferred over
@@ -118,7 +118,7 @@ export default function WorkDeck({ projects, locale }: { projects: Project[]; lo
             {!project.slug && project.liveUrl && project.repoUrl && (
               // Secondary repo link — a SIBLING of the primary anchor, never
               // nested (invalid HTML). Same hit-area idiom (p-2/-m-2,
-              // WCAG 2.5.8) as ProjectCard and the old WorkGrid.
+              // WCAG 2.5.8) as ProjectCard.
               <a
                 href={project.repoUrl}
                 target="_blank"

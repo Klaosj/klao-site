@@ -5,7 +5,7 @@ import type { CareerEntry, Locale } from '@/lib/models';
 import { eyebrowFont } from '@/lib/typography';
 
 // Server component -- no 'use client'. Reveal (T2) is itself a client
-// component but is composed here the same way CraftBand/WorkGrid do it.
+// component but is composed here the same way CraftBand/WorkDeck do it.
 export default function CvBand({
   entries,
   locale,
