@@ -51,7 +51,7 @@ Each database also needs a **Published** checkbox property, except Profile
 | Screenshot | Files & media | |
 | Featured | Checkbox | |
 | Order | Number | |
-| Type | Select: `Business` / `Build` | |
+| Type | Select (Business, Build) | |
 | OutcomeEN | Text | |
 | OutcomeTH | Text | |
 | QuestionEN | Text | |

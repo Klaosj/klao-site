@@ -80,11 +80,17 @@ export default async function ProjectsPage({ params }: { params: Promise<{ local
   const t = dict[locale];
   const projects = await getProjects();
   // Business first, same chapter order as WorkDeck; an empty group renders
-  // nothing (fixture mode has no business rows yet).
-  const groups = [
-    { label: t.workTypeBusiness, items: projects.filter((p) => p.type === 'business') },
-    { label: t.workTypeBuild, items: projects.filter((p) => p.type === 'build') },
-  ].filter((g) => g.items.length > 0);
+  // nothing (fixture mode has no business rows yet). Each group carries its
+  // own `type` so the React key can be the stable data value rather than
+  // `label`, which is translated display copy and changes with the locale.
+  const groups = (
+    [
+      { type: 'business', label: t.workTypeBusiness },
+      { type: 'build', label: t.workTypeBuild },
+    ] as const
+  )
+    .map((g) => ({ ...g, items: projects.filter((p) => p.type === g.type) }))
+    .filter((g) => g.items.length > 0);
 
   return (
     // See layout.tsx: the shared header is now fixed and transparent, and
@@ -94,7 +100,7 @@ export default async function ProjectsPage({ params }: { params: Promise<{ local
     <div className="mx-auto w-full max-w-3xl px-6 pb-16 pt-28">
       <h1 className="font-display text-3xl">{t.projects}</h1>
       {groups.map((g) => (
-        <section key={g.label} className="mt-8">
+        <section key={g.type} className="mt-8">
           <SectionLabel as="h2" text={g.label} locale={locale} />
           {/* Blog-index shape (owner request 2026-08-15): one row per
               project, hairline-divided, replacing the old 2/3-column card

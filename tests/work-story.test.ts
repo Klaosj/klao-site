@@ -95,6 +95,25 @@ const thEmptyBodyStory: ProjectStory = {
   },
 };
 
+// A BUSINESS story that still carries Stack values in Notion -- the exact
+// row shape the receipts-footer gate (`story.type === 'build' && ...`) in
+// work/[slug]/page.tsx exists to defend against. Its stack strings are
+// deliberately absent from every other field of this fixture so a
+// `not.toContain` on them can only fail because the footer rendered them.
+const businessStory: ProjectStory = {
+  ...baseProject,
+  id: 'fx-biz-test',
+  name: 'SME Studio',
+  type: 'business',
+  stack: ['LINE Messaging API', 'Airtable'],
+  question: { en: 'Can a solo operator serve Thai SMEs?', th: 'คนเดียวดูแล SME ไทยได้ไหม?' },
+  slug: 'sme-studio',
+  body: {
+    en: [{ type: 'paragraph', spans: [{ text: 'The business story body.' }] }],
+    th: [],
+  },
+};
+
 let mockProjects: Project[] = [];
 let mockStoryBySlug: Record<string, ProjectStory | null> = {};
 
@@ -221,5 +240,22 @@ describe('work/[slug] case-study route, wired end to end (mocked @/lib/content)'
     const textNoLinks = collectText(jsxNoLinks);
     expect(textNoLinks).not.toContain(dict.en.liveSite);
     expect(textNoLinks).not.toContain(dict.en.viewCode);
+  });
+
+  it("the receipts footer is type-gated: a BUSINESS story renders no stack even with a non-empty Stack, while a build story does -- same invariant ProjectCard and WorkDeck enforce", async () => {
+    mockProjects = [businessStory, gonaiStory];
+    mockStoryBySlug = { 'sme-studio': businessStory, gonai: gonaiStory };
+    const { default: WorkStoryPage } = await import('@/app/[locale]/work/[slug]/page');
+
+    const bizText = collectText(await WorkStoryPage(p('en', 'sme-studio')));
+    // Sanity: the page really rendered (and its OTHER receipts did too) --
+    // otherwise the negative assertions below would pass vacuously.
+    expect(bizText).toContain(businessStory.question!.en);
+    expect(bizText).toContain(dict.en.liveSite);
+    expect(bizText).not.toContain(businessStory.stack.join(' · '));
+    for (const item of businessStory.stack) expect(bizText).not.toContain(item);
+
+    const buildText = collectText(await WorkStoryPage(p('en', 'gonai')));
+    expect(buildText).toContain(gonaiStory.stack.join(' · '));
   });
 });

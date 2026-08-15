@@ -5,8 +5,12 @@ import WorkDeck from '@/components/sections/WorkDeck';
 import { dict } from '@/lib/dictionary';
 import type { Project } from '@/lib/models';
 
-// Same manual-cleanup + stub setup as every other jsdom test in this repo
-// (no setupFiles in vitest.config.ts — see work-grid.test.tsx's history).
+// Same manual-cleanup + stub setup as every other jsdom test in this repo.
+// vitest.config.ts DOES declare setupFiles: ['./tests/setup.ts'], but that
+// file only mocks next/font/google (which resolves to `{}` outside Next's
+// own compiler) — it registers no RTL auto-cleanup and defines no browser
+// globals. So every jsdom file still owns its own afterEach(cleanup) plus
+// the matchMedia/IntersectionObserver stubs Reveal/TiltCard reach for.
 afterEach(cleanup);
 
 beforeEach(() => {
@@ -93,6 +97,12 @@ describe('WorkDeck', () => {
     expect(screen.getByText(`T·01 — ${dict.en.workTypeBuild}`)).toBeTruthy();
   });
 
+  it('renders no Build chapter at all when every project is a business (the mirror case)', () => {
+    render(<WorkDeck projects={[business]} locale="en" />);
+    expect(screen.queryByText(/^T·\d{2} — /)).toBeNull();
+    expect(screen.getByText(`B·01 — ${dict.en.workTypeBusiness}`)).toBeTruthy();
+  });
+
   it('never renders stack on a business slide, even when set', () => {
     render(<WorkDeck projects={[business]} locale="en" />);
     expect(screen.queryByText('LINE API')).toBeNull();
@@ -101,6 +111,24 @@ describe('WorkDeck', () => {
   it('renders the stack join line on a build slide', () => {
     render(<WorkDeck projects={[build]} locale="en" />);
     expect(screen.getByText('Next.js · Supabase')).toBeTruthy();
+  });
+
+  it('renders no empty stack paragraph for a build slide with an empty stack', () => {
+    // Mirrors tests/project-card.test.tsx's own empty-stack guard: the
+    // length check on the stack line is what stops an empty <p> from
+    // painting a stray mt-4 gap under the description.
+    const { container } = render(<WorkDeck projects={[{ ...build, stack: [] }]} locale="en" />);
+    const paragraphs = Array.from(container.querySelectorAll('p'));
+    expect(paragraphs.some((p) => p.textContent === '')).toBe(false);
+  });
+
+  it('renders the outcome receipt line on a build slide too — the line is type-agnostic', () => {
+    const buildWithOutcome: Project = {
+      ...build,
+      outcome: { en: 'Cut trip planning from 3 hours to 12 minutes', th: 'ลดเวลาวางแผนทริปจาก 3 ชั่วโมงเหลือ 12 นาที' },
+    };
+    render(<WorkDeck projects={[buildWithOutcome]} locale="en" />);
+    expect(screen.getByText('Cut trip planning from 3 hours to 12 minutes')).toBeTruthy();
   });
 
   it('renders the outcome receipt line when present and omits it when null', () => {
