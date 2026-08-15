@@ -3,6 +3,7 @@ import { cleanup, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import WorkDeck from '@/components/sections/WorkDeck';
 import { dict } from '@/lib/dictionary';
+import { IMAGE_ALT, imageAlt } from '@/lib/image-alt';
 import type { Project } from '@/lib/models';
 
 // Same manual-cleanup + stub setup as every other jsdom test in this repo.
@@ -10,7 +11,8 @@ import type { Project } from '@/lib/models';
 // file only mocks next/font/google (which resolves to `{}` outside Next's
 // own compiler) — it registers no RTL auto-cleanup and defines no browser
 // globals. So every jsdom file still owns its own afterEach(cleanup) plus
-// the matchMedia/IntersectionObserver stubs Reveal/TiltCard reach for.
+// the matchMedia/IntersectionObserver stubs Reveal/TiltCard/MaskedHeading
+// reach for.
 afterEach(cleanup);
 
 beforeEach(() => {
@@ -33,6 +35,8 @@ const build: Project = {
   question: { en: 'One day in Bangkok — what is the real budget?', th: 'ไปเที่ยวหนึ่งวัน งบจริงเท่าไหร่?' },
   slug: null,
 };
+
+const secondBuild: Project = { ...build, id: 'p-build2', name: 'AISecretary', order: 4 };
 
 const business: Project = {
   id: 'p-biz',
@@ -62,45 +66,93 @@ const slideAnchors = (container: HTMLElement) =>
   );
 
 describe('WorkDeck', () => {
-  it('keeps the #work anchor and the selectedProjects eyebrow heading', () => {
+  it('keeps the #work anchor and opens with a display-scale h2, the eyebrow demoted to a <p>', () => {
     const { container } = render(<WorkDeck projects={[build]} locale="en" />);
     expect(container.querySelector('section#work')).toBeTruthy();
-    const h2 = container.querySelector('h2');
-    expect(h2?.textContent).toBe(dict.en.selectedProjects);
+    // QA finding 1: the band's h2 used to BE the 12px SectionLabel. It is
+    // now the deck's own statement, at the same clamp every other band
+    // uses. (MaskedHeading splits the text into per-word spans, so this
+    // compares textContent, not a single text node.)
+    const headings = container.querySelectorAll('h2');
+    expect(headings).toHaveLength(1);
+    expect(headings[0].textContent).toBe(dict.en.deckHeading);
+    // The eyebrow still renders — smoke.test.tsx pins this exact string on
+    // the home page — but as a plain paragraph label.
+    const eyebrow = screen.getByText(dict.en.selectedProjects);
+    expect(eyebrow.tagName).toBe('P');
+  });
+
+  it('renders the build-only subtitle when no business project is present, and the full one when it is', () => {
+    // Finding 7: "Business first." above zero business slides was a promise
+    // the data did not keep (and fixture mode is exactly that case).
+    render(<WorkDeck projects={[build]} locale="en" />);
+    expect(screen.getByText(dict.en.deckSubtitleBuildOnly)).toBeTruthy();
+    expect(screen.queryByText(dict.en.deckSubtitle)).toBeNull();
+    cleanup();
+    render(<WorkDeck projects={[business, build]} locale="en" />);
+    expect(screen.getByText(dict.en.deckSubtitle)).toBeTruthy();
+    expect(screen.queryByText(dict.en.deckSubtitleBuildOnly)).toBeNull();
   });
 
   it('always links to the full projects listing from the deck footer', () => {
-    render(<WorkDeck projects={[build]} locale="en" />);
-    const footer = screen.getByText(`${dict.en.allProjects} →`) as HTMLAnchorElement;
+    const { container } = render(<WorkDeck projects={[build]} locale="en" />);
+    // Finding 18: the arrow is now a decorative aria-hidden span, so the
+    // link's own text node is just the label (its accessible name) while
+    // textContent still carries the glyph.
+    const footer = screen.getByText(dict.en.allProjects) as HTMLAnchorElement;
     expect(footer.tagName).toBe('A');
     expect(footer.getAttribute('href')).toBe('/en/projects');
     // Internal route — no new-tab treatment.
     expect(footer.hasAttribute('target')).toBe(false);
+    expect(footer.textContent).toContain('→');
+    expect(footer.querySelector('span[aria-hidden="true"]')?.textContent).toBe('→');
+    expect(slideAnchors(container)).toHaveLength(1); // the slide's own live link, not a second footer
   });
 
   it('renders business slides before build slides regardless of input order, with per-chapter kicker numbering', () => {
     const secondBiz: Project = { ...business, id: 'p-biz2', name: 'Little Duck', order: 3 };
     render(<WorkDeck projects={[build, business, secondBiz]} locale="en" />);
-    const kickers = screen.getAllByText(/^[BT]·\d{2} — /);
-    expect(kickers.map((k) => k.textContent)).toEqual([
-      `B·01 — ${dict.en.workTypeBusiness}`,
-      `B·02 — ${dict.en.workTypeBusiness}`,
-      `T·01 — ${dict.en.workTypeBuild}`,
-    ]);
+    // Finding 24: the kicker is the number alone now — the chapter word is
+    // spelled out once, as a marker above the chapter's first slide.
+    const kickers = screen.getAllByText(/^[BT]·\d{2}$/);
+    expect(kickers.map((k) => k.textContent)).toEqual(['B·01', 'B·02', 'T·01']);
+    expect(screen.getAllByText(dict.en.workTypeBuild)).toHaveLength(1);
+  });
+
+  it('spells the chapter word exactly once for a multi-slide chapter', () => {
+    render(<WorkDeck projects={[build, secondBuild]} locale="en" />);
+    expect(screen.getAllByText(dict.en.workTypeBuild)).toHaveLength(1);
+    expect(screen.getAllByText(/^T·\d{2}$/).map((k) => k.textContent)).toEqual(['T·01', 'T·02']);
   });
 
   it('renders no Business chapter at all when every project is a build (fixture mode)', () => {
     render(<WorkDeck projects={[build]} locale="en" />);
     // Query the kicker shape, not the bare word "Business" — the deck
-    // subtitle legitimately contains that word on every render.
-    expect(screen.queryByText(/^B·\d{2} — /)).toBeNull();
-    expect(screen.getByText(`T·01 — ${dict.en.workTypeBuild}`)).toBeTruthy();
+    // heading legitimately contains that word on every render (and
+    // MaskedHeading makes each word its own element).
+    expect(screen.queryByText(/^B·\d{2}$/)).toBeNull();
+    expect(screen.getByText('T·01')).toBeTruthy();
+    expect(screen.getAllByText(dict.en.workTypeBuild)).toHaveLength(1);
   });
 
   it('renders no Build chapter at all when every project is a business (the mirror case)', () => {
     render(<WorkDeck projects={[business]} locale="en" />);
-    expect(screen.queryByText(/^T·\d{2} — /)).toBeNull();
-    expect(screen.getByText(`B·01 — ${dict.en.workTypeBusiness}`)).toBeTruthy();
+    expect(screen.queryByText(/^T·\d{2}$/)).toBeNull();
+    expect(screen.getByText('B·01')).toBeTruthy();
+    // An absent chapter contributes no marker either — not an empty header.
+    expect(screen.queryByText(dict.en.workTypeBuild)).toBeNull();
+  });
+
+  it('opens the band with no rule and rules only BETWEEN slides of a chapter', () => {
+    // Finding 2: the subtitle and the first slide's border-t measured 0px
+    // apart, so the rule read as an underline on the subtitle. A chapter's
+    // first slide now carries no rule — the chapter marker opens it.
+    const { container } = render(<WorkDeck projects={[business, build, secondBuild]} locale="en" />);
+    const grids = Array.from(container.querySelectorAll('div.grid'));
+    expect(grids).toHaveLength(3);
+    expect(grids[0].className).not.toContain('border-t'); // B·01 — opens the deck
+    expect(grids[1].className).not.toContain('border-t'); // T·01 — opens its chapter
+    expect(grids[2].className).toContain('border-t'); // T·02 — a real divider
   });
 
   it('never renders stack on a business slide, even when set', () => {
@@ -155,6 +207,25 @@ describe('WorkDeck', () => {
     expect(within(anchors[0] as HTMLElement).getByText('One day in Bangkok — what is the real budget?')).toBeTruthy();
   });
 
+  it('gives a storied slide a standing read-the-story affordance, and gives an unstoried one none', () => {
+    // Finding 8a: the whole 492px block was a link with no hover response
+    // and no visible cue at all. The cue must be visible WITHOUT hover —
+    // a touch user never hovers — so hover only brightens it.
+    const storied: Project = { ...build, slug: 'gonai' };
+    const { container } = render(<WorkDeck projects={[storied]} locale="en" />);
+    const link = slideAnchors(container)[0] as HTMLElement;
+    expect(link.className).toContain('group');
+    const cue = within(link).getByText(dict.en.readStory);
+    expect(cue.className).not.toContain('opacity-0');
+    expect(cue.className).toContain('group-hover:');
+    expect(cue.querySelector('span[aria-hidden="true"]')?.textContent).toBe('→');
+    // The name itself answers to the same hover.
+    expect(within(link).getByText('GoNai').className).toContain('group-hover:text-peri');
+    cleanup();
+    render(<WorkDeck projects={[build]} locale="en" />);
+    expect(screen.queryByText(dict.en.readStory)).toBeNull();
+  });
+
   it('prefers live over repo on an unstoried slide and recovers the repo as a sibling View code link when both are set', () => {
     const both: Project = { ...build, liveUrl: 'https://live.example', repoUrl: 'https://repo.example' };
     const { container } = render(<WorkDeck projects={[both]} locale="en" />);
@@ -166,6 +237,13 @@ describe('WorkDeck', () => {
     const secondary = screen.getByText(dict.en.viewCode) as HTMLAnchorElement;
     expect(secondary.getAttribute('href')).toBe('https://repo.example');
     expect((anchors[0] as HTMLElement).contains(secondary)).toBe(false);
+    // Findings 6 + 14: the secondary pill is the shared `sm` step (12px, not
+    // an 11px outlier), sits on the ≥3:1 border token, and eases on the
+    // house curve instead of Tailwind's 150ms default.
+    expect(secondary.className).toContain('text-[12px]');
+    expect(secondary.className).toContain('border-on-dark-mid');
+    expect(secondary.className).toContain('duration-300');
+    expect(secondary.className).toContain('ease-[cubic-bezier(0.16,1,0.3,1)]');
   });
 
   it('renders a plain non-link slide when unstoried with neither URL', () => {
@@ -175,14 +253,26 @@ describe('WorkDeck', () => {
     expect(screen.getByText('GoNai')).toBeTruthy();
   });
 
-  it('keeps the exact cover img contract: 800x450, lazy, async, name-dash-description alt', () => {
+  it('keeps the exact cover img contract: 800x450, lazy, async, and alt that never repeats the visible text', () => {
     const { container } = render(<WorkDeck projects={[build]} locale="en" />);
     const img = container.querySelector('img') as HTMLImageElement;
     expect(img.getAttribute('width')).toBe('800');
     expect(img.getAttribute('height')).toBe('450');
     expect(img.getAttribute('loading')).toBe('lazy');
     expect(img.getAttribute('decoding')).toBe('async');
-    expect(img.getAttribute('alt')).toBe('GoNai — Trip planner');
+    // Finding 4: the old `${name} — ${description}` template made a screen
+    // reader announce both facts twice, since both are visible text right
+    // beside the image. The alt now comes from the shared map.
+    const alt = img.getAttribute('alt') ?? '';
+    expect(alt).toBe(imageAlt(build.imageSrc as string));
+    expect(alt).not.toContain(build.name);
+    expect(alt).not.toContain(build.description.en);
+  });
+
+  it('uses the curated screenshot description when the asset has one', () => {
+    const shot: Project = { ...build, imageSrc: '/images/gonai.jpg' };
+    const { container } = render(<WorkDeck projects={[shot]} locale="en" />);
+    expect(container.querySelector('img')?.getAttribute('alt')).toBe(IMAGE_ALT['/images/gonai.jpg']);
   });
 
   it('renders an imageless slide as text with no img element', () => {
@@ -191,7 +281,31 @@ describe('WorkDeck', () => {
     expect(screen.getByText('SME Studio')).toBeTruthy();
   });
 
-  it('renders only the active locale and keeps Thai eyebrow/kicker/stack out of font-mono', () => {
+  it('gives every slide the same reveal delay — deck slides never share a viewport', () => {
+    // Finding 21: delayIndex={i} across the flat slide list produced
+    // 0 / 75 / 150 / 225ms on elements ~492px apart, i.e. a dead beat
+    // before the last slide rather than a stagger.
+    const { container } = render(<WorkDeck projects={[business, build, secondBuild]} locale="en" />);
+    const staggered = Array.from(container.querySelectorAll<HTMLElement>('[style]')).filter(
+      (el) => el.style.getPropertyValue('--i') !== '',
+    );
+    expect(staggered.length).toBeGreaterThanOrEqual(3);
+    for (const el of staggered) expect(el.style.getPropertyValue('--i').trim()).toBe('0');
+  });
+
+  it('sizes the deck micro-labels a step up on Thai (EN baseline for comparison)', () => {
+    // Finding 12: Thai marks live outside the x-height, so 10px collapses
+    // into a smudge. Same helper family switch as before, plus a size bump.
+    const en = render(<WorkDeck projects={[build]} locale="en" />);
+    expect(screen.getByText('T·01').className).toContain('text-[10px]');
+    expect(screen.getByText(dict.en.workTypeBuild).className).toContain('text-[11px]');
+    en.unmount();
+    render(<WorkDeck projects={[build]} locale="th" />);
+    expect(screen.getByText('T·01').className).toContain('text-[11px]');
+    expect(screen.getByText(dict.th.workTypeBuild).className).toContain('text-[12px]');
+  });
+
+  it('renders only the active locale and keeps the Thai eyebrow/chapter marker/stack out of font-mono', () => {
     render(<WorkDeck projects={[build]} locale="th" />);
     expect(screen.getByText(dict.th.selectedProjects)).toBeTruthy();
     expect(screen.queryByText(dict.en.selectedProjects)).toBeNull();
@@ -200,9 +314,11 @@ describe('WorkDeck', () => {
     const eyebrow = screen.getByText(dict.th.selectedProjects);
     expect(eyebrow.className).not.toContain('font-mono');
     expect(eyebrow.className).toContain('font-thai');
-    const kicker = screen.getByText(`T·01 — ${dict.th.workTypeBuild}`);
-    expect(kicker.className).not.toContain('font-mono');
-    expect(kicker.className).toContain('font-thai');
+    // The kicker is Latin-only now, so the chapter marker is the deck's
+    // Thai micro-label — it is the one that must never hit font-mono.
+    const marker = screen.getByText(dict.th.workTypeBuild);
+    expect(marker.className).not.toContain('font-mono');
+    expect(marker.className).toContain('font-thai');
     const stackLine = screen.getByText('Next.js · Supabase');
     expect(stackLine.className).not.toContain('font-mono');
     expect(stackLine.className).toContain('font-thai');
