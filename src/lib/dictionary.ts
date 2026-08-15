@@ -24,6 +24,11 @@ const en = {
   about: 'About',
   howIWork: 'How I work',
   selectedWork: 'Selected work',
+  // Pitch deck (spec 2026-08-15 §5): the two chapter labels and the deck
+  // subtitle. Chapter labels also head the /projects listing's two groups.
+  workTypeBusiness: 'Business',
+  workTypeBuild: 'Build',
+  deckSubtitle: 'Business first. Every project opens with the question it answers.',
   craft: [
     'Scope it honestly.',
     'Ship something that runs.',
@@ -178,6 +183,9 @@ const th: typeof en = {
   about: 'เกี่ยวกับ',
   howIWork: 'วิธีทำงานของผม',
   selectedWork: 'ผลงานที่เลือกมา',
+  workTypeBusiness: 'ธุรกิจ',
+  workTypeBuild: 'งานสร้างเอง',
+  deckSubtitle: 'ธุรกิจมาก่อน — ทุกโปรเจกต์เริ่มจากคำถามที่มันตอบ',
   craft: [
     'ประเมินตามจริง',
     'ส่งของที่รันได้จริง',

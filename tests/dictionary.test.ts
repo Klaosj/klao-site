@@ -43,4 +43,13 @@ describe('dictionary', () => {
       }
     }
   });
+
+  it('carries the work-deck chapter labels and subtitle in both locales', () => {
+    expect(dict.en.workTypeBusiness).toBe('Business');
+    expect(dict.en.workTypeBuild).toBe('Build');
+    expect(dict.en.deckSubtitle).toBeTruthy();
+    expect(dict.th.workTypeBusiness).toBeTruthy();
+    expect(dict.th.workTypeBuild).toBeTruthy();
+    expect(dict.th.deckSubtitle).toBeTruthy();
+  });
 });
