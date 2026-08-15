@@ -64,27 +64,29 @@ export default function ProjectCard({ project, locale }: { project: Project; loc
         {project.type === 'build' && project.stack.length > 0 && (
           <p className="mt-3 text-xs text-soft">{project.stack.join(' · ')}</p>
         )}
+        {/* Pill buttons (owner request 2026-08-15: "make the buttons stand
+            out"): the story CTA is the accented one -- peri outline that
+            fills on hover -- while live/repo stay neutral outlines. Real
+            padding gives each pill its WCAG 2.5.8 hit area, so the old
+            p-2/-m-2 hack is gone. */}
         {project.slug ? (
-          <p className="mt-3 text-xs">
-            {/* Hit-area idiom (WCAG 2.5.8): p-2 grows the clickable box past
-                24x24 CSS px, -m-2 cancels the growth for layout -- same as
-                the external links below and WorkDeck's secondary repo link. */}
+          <p className="mt-4 text-xs">
             <Link
               href={`/${locale}/work/${project.slug}`}
-              className="inline-flex items-center justify-center p-2 -m-2 font-medium text-peri hover:text-ink"
+              className="inline-flex items-center rounded-full border border-peri-deep px-4 py-2 font-semibold text-peri transition-colors hover:bg-peri hover:text-dark"
             >
               {t.readStory} →
             </Link>
           </p>
         ) : (
           (project.liveUrl || project.repoUrl) && (
-            <p className="mt-3 flex gap-4 text-xs">
+            <p className="mt-4 flex gap-3 text-xs">
               {project.liveUrl && (
                 <a
                   href={project.liveUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center justify-center p-2 -m-2 underline hover:text-soft"
+                  className="inline-flex items-center rounded-full border border-line px-4 py-2 font-medium transition-colors hover:border-peri hover:text-peri"
                 >
                   {t.liveSite}
                 </a>
@@ -94,7 +96,7 @@ export default function ProjectCard({ project, locale }: { project: Project; loc
                   href={project.repoUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center justify-center p-2 -m-2 underline hover:text-soft"
+                  className="inline-flex items-center rounded-full border border-line px-4 py-2 font-medium transition-colors hover:border-peri hover:text-peri"
                 >
                   {t.viewCode}
                 </a>

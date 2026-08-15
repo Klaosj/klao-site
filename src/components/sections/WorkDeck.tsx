@@ -123,7 +123,7 @@ export default function WorkDeck({ projects, locale }: { projects: Project[]; lo
                 href={project.repoUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="mt-3 inline-flex items-center justify-center p-2 -m-2 text-[11px] text-on-dark-soft underline hover:text-peri"
+                className="mt-4 inline-flex items-center rounded-full border border-on-dark-faint px-4 py-2 text-[11px] font-medium text-on-dark-soft transition-colors hover:border-peri hover:text-peri"
               >
                 {t.viewCode}
               </a>
@@ -133,12 +133,14 @@ export default function WorkDeck({ projects, locale }: { projects: Project[]; lo
       })}
       {/* The deck shows FEATURED projects only (getFeaturedProjects on the
           home route) — this is the way into the full grouped listing, the
-          blog-style /projects index. Same hit-area idiom (p-2/-m-2,
-          WCAG 2.5.8) as the secondary repo link above. */}
+          blog-style /projects index. Styled as the site's primary pill
+          (ContactBand's idiom: filled bg-light + peri glow + `.btn`
+          magnetic hover); the pill's own padding provides the WCAG 2.5.8
+          hit area, so no p-2/-m-2 hack needed. */}
       <p className="mt-12">
         <Link
           href={`/${locale}/projects`}
-          className="inline-flex items-center justify-center p-2 -m-2 text-[13px] font-medium text-peri hover:text-on-dark"
+          className="btn inline-flex items-center gap-2 rounded-full bg-light px-6 py-3 text-[13px] font-semibold text-dark transition-shadow hover:shadow-[0_0_0_3px_rgba(168,174,203,0.35),0_18px_60px_-12px_rgba(168,174,203,0.45)]"
         >
           {t.allProjects} →
         </Link>
