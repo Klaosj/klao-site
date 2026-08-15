@@ -3,9 +3,11 @@ import { getPosts, getProjects } from '@/lib/content';
 import { LOCALES } from '@/lib/models';
 import { SITE_URL } from '@/lib/site';
 
-// '/projects' and '/career' redirect to home anchors (next.config.ts) --
-// a sitemap must not list URLs that answer 3xx.
-const staticPaths = ['', '/writing'];
+// '/career' redirects to a home anchor (next.config.ts) -- a sitemap must
+// not list URLs that answer 3xx. '/projects' rejoined this list on
+// 2026-08-15 when its redirect was removed and it became the blog-style
+// project index again.
+const staticPaths = ['', '/writing', '/projects'];
 
 // Without this, `.next/prerender-manifest.json` shows `/sitemap.xml` with
 // `initialRevalidateSeconds: false` (built once, never again) while every

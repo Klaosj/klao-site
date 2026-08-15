@@ -127,15 +127,19 @@ describe('post routing logic (synthetic fixtures, decoupled from src/content/fix
     const urls = entries.map((e) => e.url);
     expect(urls.some((u) => u.includes(`/en/writing/${synthPosts[0].slug}`))).toBe(true);
     // '/career' redirects to the home anchor as of Task 8 and no longer
-    // appears in the sitemap (see 'omits redirected legacy routes' below) --
+    // appears in the sitemap (see the revived-/projects test below) --
     // '/th/writing' still stands in for "both locales are present".
     expect(urls.some((u) => u.includes('/th/writing'))).toBe(true);
   });
 
-  it('omits redirected legacy routes', async () => {
+  it('lists the revived /projects index but still omits the redirected /career route', async () => {
     const entries = await sitemap();
     const urls = entries.map((e) => e.url);
-    expect(urls.some((u) => u.endsWith('/projects'))).toBe(false);
+    // '/projects' lost its redirect on 2026-08-15 (blog-style index) and
+    // must be advertised again, in both locales.
+    expect(urls.some((u) => u.endsWith('/en/projects'))).toBe(true);
+    expect(urls.some((u) => u.endsWith('/th/projects'))).toBe(true);
+    // '/career' still answers 307 -- keep it out.
     expect(urls.some((u) => u.endsWith('/career'))).toBe(false);
   });
 
