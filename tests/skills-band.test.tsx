@@ -150,6 +150,18 @@ describe('SkillsBand', () => {
     expect(screen.queryByText(dict.en.toolsLabel)).toBeNull();
   });
 
+  it('puts the Core tools label on the shared sub-label size, bumped for Thai', () => {
+    // QA finding 11 + 12: "Core tools" is the reference site for the site's
+    // second, deliberately quieter label tier (no peri rule, on-dark-soft) --
+    // ContactBand's channel labels and CopyEmail's "Copied" must match this
+    // size, and Thai runs +1px because its marks sit outside the x-height.
+    for (const [locale, size] of [['en', 'text-[10.5px]'], ['th', 'text-[11.5px]']] as const) {
+      render(<SkillsBand skills={skills} locale={locale} />);
+      expect(screen.getByText(dict[locale].toolsLabel).className).toContain(size);
+      cleanup();
+    }
+  });
+
   it('renders a real <h2> whose text comes from the dictionary, not hardcoded copy', () => {
     const { container } = render(<SkillsBand skills={skills} locale="en" />);
     expect(container.querySelector('h2')?.textContent).toBe(dict.en.toolboxHeading);

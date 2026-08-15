@@ -116,19 +116,29 @@ export default function SkillsBand({ skills, locale }: { skills: Skill[]; locale
           brighten together via `transition-colors`. */}
       {tools.length > 0 && (
         <Reveal delayIndex={1} className="mt-14">
-          <p className={`mb-4 text-[9.5px] uppercase text-on-dark-soft ${eyebrowFont(locale, 'tracking-[0.2em]')}`}>
+          {/* SUB-LABEL TIER (the site's second, deliberately quieter label
+              tier): no peri rule, on-dark-soft not peri, and one shared size
+              -- 10.5px Latin / 11.5px Thai -- so it reads as a decided step
+              below SectionLabel rather than as three near-identical sizes
+              (9 / 9.5 / 10.5px) that look like drift. Same two-tier system in
+              ContactBand's channel labels and CopyEmail's "Copied". The Thai
+              bump is SectionLabel's, for the same reason: marks live outside
+              the x-height and collapse into a smudge at the Latin size. */}
+          <p
+            className={`mb-4 ${locale === 'th' ? 'text-[11.5px]' : 'text-[10.5px]'} uppercase text-on-dark-soft ${eyebrowFont(locale, 'tracking-[0.2em]')}`}
+          >
             {t.toolsLabel}
           </p>
           <ul className="flex list-none flex-wrap gap-2.5">
             {tools.map((skill) => (
               <li
                 key={skill.id}
-                className="group inline-flex items-center gap-2.5 rounded-[10px] border border-on-dark-faint bg-deep px-4 py-2.5 transition-colors hover:border-peri/40"
+                className="group inline-flex items-center gap-2.5 rounded-[10px] border border-on-dark-faint bg-deep px-4 py-2.5 transition-colors duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:border-peri/40"
               >
-                <span className="inline-flex h-[18px] w-[18px] shrink-0 text-peri/80 transition-colors group-hover:text-peri">
+                <span className="inline-flex h-[18px] w-[18px] shrink-0 text-peri/80 transition-colors duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:text-peri">
                   {SKILL_ICONS[skill.name]}
                 </span>
-                <span className="text-[12.5px] text-on-dark-soft transition-colors group-hover:text-on-dark">
+                <span className="text-[12.5px] text-on-dark-soft transition-colors duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:text-on-dark">
                   {skill.name}
                 </span>
               </li>

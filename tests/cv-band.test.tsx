@@ -141,6 +141,19 @@ describe('CvBand', () => {
     expect(eyebrow.className).toContain('font-thai');
   });
 
+  it('renders the section label one pixel larger in Thai than in Latin', () => {
+    // QA finding 12: eyebrowFont() correctly drops caps-tracking + font-mono
+    // for Thai, which also drops the only "this is a label" cue the Latin
+    // version has -- and Thai marks (`ื่`-style clusters) sit outside the
+    // x-height, so at the Latin 12px they collapse into a smudge. The bump
+    // is the compensation, and it is the same class either way otherwise.
+    const th = render(<CvBand entries={entries} locale="th" />).container.querySelector('p') as HTMLElement;
+    expect(th.className).toContain('text-[13px]');
+    cleanup();
+    const en = render(<CvBand entries={entries} locale="en" />).container.querySelector('p') as HTMLElement;
+    expect(en.className).toContain('text-[12px]');
+  });
+
   it('renders the empty-state eyebrow in the Thai font stack too, never font-mono', () => {
     // The empty-state branch (entries.length === 0) renders its own,
     // separate copy of the eyebrow <p> -- covered independently since it's
@@ -203,6 +216,37 @@ describe('CvBand', () => {
     const { container } = render(<CvBand entries={[]} locale="en" resumeUrl="/r.pdf" />);
     expect(screen.getByText(dict.en.careerUnpublished)).toBeTruthy();
     expect(container.querySelector('a[href="/r.pdf"]')).toBeTruthy();
+  });
+
+  it('gives the resume capsule a real hover state, not just the pointer magnet', () => {
+    // QA finding 6 (2026-08-15): this capsule shipped as the pill system's
+    // undocumented fifth variant with NO hover -- its only feedback was
+    // `.btn`'s magnetic pull, which PointerFx never attaches under reduced
+    // motion or on touch, so the control's sole affordance was missing for
+    // exactly the users least able to guess at it. jsdom can't evaluate
+    // `:hover`, so asserting the utilities are present is the closest a unit
+    // test gets; the point is that removing them again fails here.
+    const { container } = render(<CvBand entries={entries} locale="en" resumeUrl="/r.pdf" />);
+    const link = container.querySelector('a[href="/r.pdf"]') as HTMLAnchorElement;
+    expect(link.className).toContain('hover:border-peri');
+    expect(link.className).toContain('hover:text-peri');
+    expect(link.className).toContain('transition-colors');
+  });
+
+  it('gives the resume capsule a boundary at the 3:1 floor and the house timing', () => {
+    // Two separate QA fixes that live in the same className, so they're
+    // pinned together: `border-on-dark-faint` (rgba(...,0.15) = 1.42:1 on
+    // #17171a) is under WCAG 1.4.11's 3:1 for a control's own boundary, and
+    // for an outline pill the border IS the control -- `border-on-dark-mid`
+    // (0.34 alpha) clears it. And an explicit duration/easing keeps this off
+    // Tailwind's default 150ms, which snapped while every hand-written
+    // transition on the page eases on the 250-950ms house curve.
+    const { container } = render(<CvBand entries={entries} locale="en" resumeUrl="/r.pdf" />);
+    const link = container.querySelector('a[href="/r.pdf"]') as HTMLAnchorElement;
+    expect(link.className).toContain('border-on-dark-mid');
+    expect(link.className).not.toContain('border-on-dark-faint');
+    expect(link.className).toContain('duration-300');
+    expect(link.className).toContain('ease-[cubic-bezier(0.16,1,0.3,1)]');
   });
 
   it('never applies font-mono or wide tracking to the resume label, in either locale', () => {

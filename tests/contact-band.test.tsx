@@ -92,6 +92,34 @@ describe('ContactBand', () => {
     expect(workingInWrapper?.textContent).not.toContain('Bangkok, TH');
   });
 
+  it('puts every channel label on the one sub-label size, bumped for Thai', () => {
+    // QA finding 11: the site now runs two DELIBERATE label tiers -- the
+    // 12px peri SectionLabel with its rule, and this quieter sub-label tier.
+    // What was not deliberate was the tier shipping at three sizes within a
+    // pixel of each other (9 / 9.5 / 10.5px), which read as drift. All three
+    // labels must agree, and Thai runs +1px for finding 12's reason (marks
+    // outside the x-height).
+    for (const [locale, size] of [['en', 'text-[10.5px]'], ['th', 'text-[11.5px]']] as const) {
+      const { container } = render(<ContactBand profile={profile} locale={locale} />);
+      const labels = Array.from(container.querySelectorAll('b'));
+      expect(labels).toHaveLength(3);
+      for (const b of labels) expect(b.className).toContain(size);
+      cleanup();
+    }
+  });
+
+  it('runs the primary pill hover on the house curve, not Tailwind default timing', () => {
+    // QA finding 14: bare `transition-shadow` inherits Tailwind's 150ms
+    // ease-in-out, so this pill snapped while every hand-written transition
+    // around it (.rv 0.95s, .btn 0.45s, .u-draw 0.35s, nav-chrome 0.5s) eases
+    // on cubic-bezier(.16,1,.3,1). jsdom computes no timing, so the
+    // utilities themselves are what's pinned.
+    render(<ContactBand profile={profile} locale="en" />);
+    const cta = screen.getByText(dict.en.startConversation).closest('a') as HTMLAnchorElement;
+    expect(cta.className).toContain('duration-300');
+    expect(cta.className).toContain('ease-[cubic-bezier(0.16,1,0.3,1)]');
+  });
+
   it('renders the Thai channel labels in the Thai font stack with normal tracking, never font-mono', () => {
     // Regression test, same class of bug as the other bands' own version of
     // this test: no monospace face carries Thai glyphs.

@@ -85,9 +85,15 @@ export default function CopyEmail({
       className="inline-flex items-center gap-2.5 text-[15px]"
     >
       <span className="border-b border-on-dark-faint pb-[3px]">{email}</span>
+      {/* Sub-label tier -- see SkillsBand's "Core tools" label for what that
+          tier is and why Thai runs +1px. Peri is kept (not the tier's usual
+          on-dark-soft): this one is a state confirmation, not a field name,
+          and the accent is what makes it register at the edge of vision. */}
       <span
         aria-hidden="true"
-        className={`text-[9px] uppercase text-peri transition-opacity ${eyebrowFont(
+        className={`${
+          locale === 'th' ? 'text-[11.5px]' : 'text-[10.5px]'
+        } uppercase text-peri transition-opacity duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${eyebrowFont(
           locale,
           'tracking-[0.18em]',
         )} ${done ? 'opacity-100' : 'opacity-0'}`}

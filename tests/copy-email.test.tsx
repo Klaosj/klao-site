@@ -158,6 +158,18 @@ describe('CopyEmail', () => {
     expect(label.className).toContain('tracking-normal');
   });
 
+  it('puts the copied indicator on the shared sub-label size, bumped for Thai', () => {
+    // QA finding 11 + 12: same second label tier as SkillsBand's "Core
+    // tools" and ContactBand's channel labels. Peri (not the tier's usual
+    // on-dark-soft) is intentional here -- this one is a state confirmation
+    // caught at the edge of vision, not a field name.
+    render(<CopyEmail email="a@b.co" copiedLabel="Copied" locale="en" />);
+    expect(screen.getByText('Copied').className).toContain('text-[10.5px]');
+    cleanup();
+    render(<CopyEmail email="a@b.co" copiedLabel="คัดลอกแล้ว" locale="th" />);
+    expect(screen.getByText('คัดลอกแล้ว').className).toContain('text-[11.5px]');
+  });
+
   it('keeps font-mono and the Latin tracking for English', () => {
     // Counterpart assertion: the fix must not strip the intended treatment
     // from the locale it was designed for.

@@ -8,10 +8,11 @@ import { eyebrowFont } from '@/lib/typography';
 // the class string every band used to repeat, so the next promotion is a
 // one-file change.
 //
-// `as` exists because the label's role differs by band: WorkDeck's label IS
-// the section's heading (h2 — WCAG 1.3.1, smoke test pins its text), while
-// CvBand/SkillsBand pair a plain-<p> label with their own big <h2> right
-// below (cv-band.test.tsx queries the eyebrow as the section's first <p>).
+// `as` exists because the label's role differs by surface: /projects' group
+// labels are that page's real h2s, while the home bands (WorkDeck included,
+// since the QA wave gave the deck its own MaskedHeading h2) pair a
+// plain-<p> label with their own big heading right below (cv-band.test.tsx
+// queries the eyebrow as the section's first <p>).
 export default function SectionLabel({
   text,
   locale,
@@ -25,7 +26,15 @@ export default function SectionLabel({
 }) {
   return (
     <Tag
-      className={`flex items-center gap-3 text-[12px] font-semibold uppercase text-peri ${eyebrowFont(locale, 'tracking-[0.24em]')} ${className}`.trim()}
+      className={`flex items-center gap-3 ${
+        // Thai runs +1px: eyebrowFont() rightly drops the caps-and-tracking
+        // "this is a label" cue for TH (no mono face carries Thai, and wide
+        // tracking detaches tone marks), and Thai marks sit ABOVE and BELOW
+        // the x-height, so at the Latin 12px the `ื่`-style clusters smudge.
+        // The extra pixel buys the marks back without touching the rule,
+        // which carries the label semantics language-independently.
+        locale === 'th' ? 'text-[13px]' : 'text-[12px]'
+      } font-semibold uppercase text-peri ${eyebrowFont(locale, 'tracking-[0.24em]')} ${className}`.trim()}
     >
       {/* Decorative rule; empty span so the label's textContent stays
           exactly `text` (work-deck.test.tsx compares h2.textContent). */}

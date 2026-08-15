@@ -24,10 +24,21 @@ export default function CvBand({
   // and the Notion Career DB are independent: an unpopulated DB says nothing
   // about whether a PDF exists to download. `.btn` opts the capsule into the
   // magnetic-pointer pull PointerFx drives (globals.css).
+  //
+  // This capsule used to be the pill system's undocumented fifth variant
+  // (2026-08-15 QA finding 6): primary geometry, the neutral pill's faint
+  // border at 1.42:1 (under WCAG 1.4.11's 3:1 for a control's own boundary),
+  // body weight, and NO hover -- its only feedback was the `.btn` magnet,
+  // which is off for reduced-motion, touch and keyboard users, i.e. off for
+  // everyone who most needs the affordance. It now borrows the neutral
+  // pill's border token, weight and hover verbatim (ProjectCard's "Live
+  // site"/"View code"), on the house 300ms curve rather than Tailwind's
+  // default 150ms. Geometry stays -- it is the section's own CTA, not a row
+  // action, and the size step is the deliberate part.
   const resumeLink = resumeUrl && (
     <a
       href={resumeUrl}
-      className="btn mt-8 inline-flex items-center gap-2 rounded-full border border-on-dark-faint px-6 py-3 text-[12.5px] text-on-dark-soft"
+      className="btn mt-8 inline-flex items-center gap-2 rounded-full border border-on-dark-mid px-6 py-3 text-[12.5px] font-medium text-on-dark-soft transition-colors duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:border-peri hover:text-peri"
     >
       <span aria-hidden="true">↓</span> {t.resume}
     </a>
