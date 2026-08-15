@@ -89,6 +89,11 @@ describe('content API (fixture mode)', () => {
       expect(ordersInTier).toEqual([...ordersInTier].sort((a, b) => a - b));
     }
   });
+
+  it('resolves questions to [] in fixture mode (no NOTION_TOKEN, empty fixture)', async () => {
+    const { getQuestions } = await import('@/lib/content');
+    await expect(getQuestions()).resolves.toEqual([]);
+  });
 });
 
 describe('formatDate', () => {

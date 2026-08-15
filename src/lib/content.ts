@@ -1,11 +1,12 @@
 import { cache } from 'react';
-import type { CareerEntry, Post, PostMeta, Profile, Project, ProjectStory, Skill, SkillTier } from './models';
+import type { CareerEntry, OpenQuestion, Post, PostMeta, Profile, Project, ProjectStory, Skill, SkillTier } from './models';
 import { SKILL_TIERS } from './models';
 import projectsFixture from '@/content/fixtures/projects.json';
 import postsFixture from '@/content/fixtures/posts.json';
 import careerFixture from '@/content/fixtures/career.json';
 import profileFixture from '@/content/fixtures/profile.json';
 import skillsFixture from '@/content/fixtures/skills.json';
+import questionsFixture from '@/content/fixtures/questions.json';
 
 function isNotionConfigured(): boolean {
   return Boolean(process.env.NOTION_TOKEN);
@@ -136,4 +137,27 @@ export const TIER_ORDER: Record<SkillTier, number> = Object.fromEntries(
 export async function getSkills(): Promise<Skill[]> {
   const all = await fromNotion((n) => n.fetchSkills(), skillsFixture as Skill[]);
   return [...all].sort((a, b) => TIER_ORDER[a.tier] - TIER_ORDER[b.tier] || a.order - b.order);
+}
+
+// cache()-wrapped like getProjectsCached and for the same reason: the home
+// band, the case page's born-from line, and the footer's freshness line can
+// all ask for questions within one render.
+const getQuestionsCached = cache(async (): Promise<OpenQuestion[]> => {
+  // One deliberate divergence from every fetcher above: in Notion mode with
+  // NOTION_DB_QUESTIONS unset, this is "feature not configured", not an
+  // error. The owner adds Vercel env vars separately from code deploys
+  // (NOTION_DB_SKILLS sat unset the same way) -- letting fromNotion rethrow
+  // here would fail EVERY ISR revalidate site-wide (SiteFooter calls this
+  // on every route) until a console action happens. A failing fetch with
+  // the env var present keeps fromNotion's exact semantics: build phase ->
+  // fixture fallback, runtime -> rethrow so ISR serves the last good build.
+  if (process.env.NOTION_TOKEN && !process.env.NOTION_DB_QUESTIONS) return [];
+  const all = await fromNotion((n) => n.fetchQuestions(), questionsFixture as OpenQuestion[]);
+  // date is YYYY-MM-DD, so plain string compare sorts chronologically --
+  // same contract getPostsCached's date sort relies on.
+  return [...all].sort((a, b) => b.date.localeCompare(a.date));
+});
+
+export async function getQuestions(): Promise<OpenQuestion[]> {
+  return getQuestionsCached();
 }

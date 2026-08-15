@@ -171,6 +171,22 @@ const en = {
   // fixed, curated allowlist (SkillsBand's TOOLS_ALLOWLIST) rather than a
   // whole honesty tier.
   toolsLabel: 'Core tools',
+  // Open-questions band (wave 2, spec 2026-08-13). The band's copy IS its
+  // question list (owner-authored, from the Questions DB) -- these are just
+  // the frame: the eyebrow, an optional bigger heading (openQuestionsHeading
+  // is dormant until browser review decides the eyebrow alone reads too
+  // quiet -- same keep-the-key reasoning as tierDaily above), and the one
+  // status marker a `building` question carries.
+  openQuestions: 'Open questions',
+  openQuestionsHeading: 'Questions I have not answered yet.',
+  statusBuilding: 'building',
+  // Task 4: the case page's "born from a question" line -- an `answered`
+  // question whose linkSlug points at this story surfaces when it was
+  // asked, prefixed by this label.
+  askedOn: 'Asked',
+  // Task 5: SiteFooter's honest freshness line -- the newest date across
+  // posts and questions, or nothing at all when neither has a date yet.
+  contentUpdated: 'Content last updated',
 };
 
 const th: typeof en = {
@@ -258,6 +274,11 @@ const th: typeof en = {
   tierBasic: 'รู้พื้นฐาน',
   tierLearning: 'กำลังเรียน',
   toolsLabel: 'เครื่องมือหลัก',
+  openQuestions: 'คำถามที่ยังเปิดอยู่',
+  openQuestionsHeading: 'คำถามที่ยังไม่มีคำตอบ',
+  statusBuilding: 'กำลังสร้าง',
+  askedOn: 'ตั้งคำถามไว้เมื่อ',
+  contentUpdated: 'เนื้อหาอัปเดตล่าสุด',
 };
 
 export type UiDict = typeof en;

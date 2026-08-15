@@ -1,5 +1,6 @@
-import { getProfile } from '@/lib/content';
+import { getPosts, getProfile, getQuestions } from '@/lib/content';
 import { dict } from '@/lib/dictionary';
+import { formatDate } from '@/lib/format';
 import type { Locale } from '@/lib/models';
 import { eyebrowFont } from '@/lib/typography';
 
@@ -28,10 +29,24 @@ import { eyebrowFont } from '@/lib/typography';
 // a duplicate of SiteNav's own social links, per the brief's "nothing that
 // links to #".
 export default async function SiteFooter({ locale = 'en' }: { locale?: Locale } = {}) {
-  const profile = await getProfile();
+  const [profile, posts, questions] = await Promise.all([getProfile(), getPosts(), getQuestions()]);
   const t = dict[locale];
+  // Honest freshness (wave 2, spec §6): the newest date the CMS actually
+  // has -- posts and questions are its only two dated sources (projects
+  // deliberately carry none; see sitemap.ts). Both lists arrive date-desc
+  // sorted, so the newest of each list's head is the site's newest. No
+  // dates -> no line, never a fake one. Costs one Posts + one Questions
+  // list query per ISR render in Notion mode (hourly, cache()-deduped
+  // within a render).
+  const newest =
+    [posts[0]?.date, questions[0]?.date].filter((d): d is string => Boolean(d)).sort().pop() ?? null;
   return (
     <footer className="relative z-[2] border-t border-on-dark-faint bg-deep px-6 py-8 text-center">
+      {newest && (
+        <p className="mb-1 text-[11px] text-on-dark-soft">
+          {t.contentUpdated} {formatDate(newest, locale)}
+        </p>
+      )}
       {/* Human micro-copy (T4), sits above the legal line. Plain text, no
           emoji -- per the brand voice rules. */}
       <p className="text-[11px] text-on-dark-soft">{t.footerNote}</p>

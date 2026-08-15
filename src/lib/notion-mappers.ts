@@ -1,7 +1,7 @@
-import type { CareerEntry, ContentBlock, Localized, PostMeta, Profile, Project, RichSpan, Skill, SkillTier } from './models';
-import { SKILL_TIERS } from './models';
+import type { CareerEntry, ContentBlock, Localized, OpenQuestion, PostMeta, Profile, Project, QuestionStatus, RichSpan, Skill, SkillTier } from './models';
+import { QUESTION_STATUSES, SKILL_TIERS } from './models';
 
-export type NotionPage = { id: string; properties: Record<string, unknown> };
+export type NotionPage = { id: string; created_time?: string; properties: Record<string, unknown> };
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const text = (prop: any): string =>
@@ -132,6 +132,35 @@ export function mapSkill(page: NotionPage): Skill | null {
     // SkillsBand always needs *some* category to pick a dot color.
     category: selectOf(page.properties.Category) || 'biz',
     order: num(page.properties.Order),
+  };
+}
+
+// Validates Status against QUESTION_STATUSES (models.ts) -- but unlike
+// mapSkill's Tier (which drops the row because no safe default exists), an
+// unreadable Status falls back to 'wondering': a question the owner just
+// logged IS a wondering one. Same safe-default reasoning as Category ->
+// 'biz' above.
+function statusOf(page: NotionPage): QuestionStatus {
+  const name = selectOf(page.properties.Status);
+  return name && (QUESTION_STATUSES as readonly string[]).includes(name)
+    ? (name as QuestionStatus)
+    : 'wondering';
+}
+
+export function mapQuestion(page: NotionPage): OpenQuestion | null {
+  const questionEn = text(page.properties.Question);
+  if (!questionEn) return skip('Questions', page, 'missing Question');
+  // Date property when set, else created_time -- both real timestamps.
+  // Same first-10-chars slice as mapPostMeta's "Include time" guard.
+  const dateRaw = (page.properties.Date as { date?: { start?: string } | null } | undefined)?.date?.start;
+  const date =
+    typeof dateRaw === 'string' && dateRaw ? dateRaw.slice(0, 10) : (page.created_time ?? '').slice(0, 10);
+  return {
+    id: page.id,
+    question: localized(questionEn, text(page.properties.QuestionTH)),
+    status: statusOf(page),
+    linkSlug: text(page.properties.LinkSlug) || null,
+    date,
   };
 }
 

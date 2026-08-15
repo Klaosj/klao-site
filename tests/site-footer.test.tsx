@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
-import type { Profile } from '@/lib/models';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { OpenQuestion, PostMeta, Profile } from '@/lib/models';
 
 // Mirrors tests/career-resume.test.tsx's pattern: getProfile is mocked so
 // this file doesn't depend on the real fixture's name string, and the
@@ -19,9 +19,27 @@ const testProfile: Profile = {
   nameNative: null,
 };
 
+// Mutable, reset in beforeEach: Task 5's freshness-line tests override these
+// per-test, while every pre-existing test in this file leaves them at their
+// [] default -- matching the real getPosts()/getQuestions()'s fixture-mode
+// [] return, so the footer's freshness line stays absent (line omitted) and
+// none of the tests above regress.
+let mockPosts: PostMeta[] = [];
+let mockQuestions: OpenQuestion[] = [];
+
+beforeEach(() => {
+  mockPosts = [];
+  mockQuestions = [];
+});
+
 vi.mock('@/lib/content', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/lib/content')>();
-  return { ...actual, getProfile: async () => testProfile };
+  return {
+    ...actual,
+    getProfile: async () => testProfile,
+    getPosts: async () => mockPosts,
+    getQuestions: async () => mockQuestions,
+  };
 });
 
 type El = { type: unknown; props?: { children?: unknown; className?: unknown } };
@@ -61,10 +79,12 @@ describe('SiteFooter', () => {
   it('defaults to the English (font-mono) treatment when no locale is passed, so existing callers are unaffected', async () => {
     const { default: SiteFooter } = await import('@/components/SiteFooter');
     const jsx = (await SiteFooter()) as El;
-    // footerNote (T4) added a second <p> above the copyright line, so
-    // `children` is now [footerNote, copyright] rather than a single element.
+    // footerNote (T4) added a second <p> above the copyright line, and the
+    // freshness line (T5) added a third slot above that (null here, since
+    // mockPosts/mockQuestions default to [] -- still counted as a JSX child
+    // position). `children` is [freshness, footerNote, copyright].
     const children = jsx.props?.children as El[];
-    const p = children[1];
+    const p = children[2];
     expect(p.props?.className).toContain('font-mono');
     expect(p.props?.className).not.toContain('font-thai');
   });
@@ -78,8 +98,10 @@ describe('SiteFooter', () => {
     // redesign, via the same `eyebrowFont` helper.
     const { default: SiteFooter } = await import('@/components/SiteFooter');
     const jsx = (await SiteFooter({ locale: 'th' })) as El;
+    // See the English-default test above: children is [freshness, footerNote,
+    // copyright] since T5's freshness line took the leading slot.
     const children = jsx.props?.children as El[];
-    const p = children[1];
+    const p = children[2];
     expect(p.props?.className).not.toContain('font-mono');
     expect(p.props?.className).not.toMatch(/tracking-\[/);
     expect(p.props?.className).toContain('font-thai');
@@ -109,5 +131,25 @@ describe('SiteFooter', () => {
     };
     find(jsx);
     expect(links).toHaveLength(0);
+  });
+
+  it('renders the freshness line from the newest of post/question dates', async () => {
+    mockPosts = [{ id: 'p1', slug: 's', title: { en: 'T', th: 'T' }, date: '2026-07-01', tags: [] }];
+    mockQuestions = [
+      { id: 'q1', question: { en: 'Q?', th: 'Q?' }, status: 'wondering', linkSlug: null, date: '2026-08-10' },
+    ];
+    const { default: SiteFooter } = await import('@/components/SiteFooter');
+    const text = collectText(await SiteFooter({ locale: 'en' })).join(' ');
+    expect(text).toContain('Content last updated');
+    expect(text).toContain('Aug 10, 2026');
+    expect(text).not.toContain('Jul 1, 2026');
+  });
+
+  it('omits the freshness line entirely when no dated content exists', async () => {
+    mockPosts = [];
+    mockQuestions = [];
+    const { default: SiteFooter } = await import('@/components/SiteFooter');
+    const text = collectText(await SiteFooter()).join(' ');
+    expect(text).not.toContain('Content last updated');
   });
 });

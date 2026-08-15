@@ -22,7 +22,7 @@ you're actually connected.
    (the site never writes to Notion).
 3. Copy the "Internal Integration Secret" → this is `NOTION_TOKEN`.
 
-## 2. Create five databases
+## 2. Create six databases
 
 Full-page databases, anywhere in your workspace. **Property names must match
 exactly** — same spelling, same capitalization. Most typos are quiet but
@@ -194,6 +194,46 @@ mechanism as Name on Projects and Role on Career above — `Tier` must be
 spelled exactly one of the five values, or the row disappears with no
 visible error.
 
+### Questions
+
+| Property | Type | Required |
+|---|---|---|
+| Question | Title | **Yes** |
+| QuestionTH | Text | |
+| Status | Select (wondering, building, answered) | |
+| LinkSlug | Text | |
+| Date | Date | |
+| Published | Checkbox | (see above) |
+
+The home page's open-questions band shows the newest 3 rows whose `Status`
+is `wondering` or `building`, sorted by `Date` descending. `Status` accepts
+exactly those two values plus `answered`; a typo, an unrecognised value, or
+a blank cell reads as `wondering` instead — the safe-default treatment
+(same idea as Skills' `Category` above), not the drop-the-row treatment
+`Question` itself gets. An `answered` row leaves the band entirely; instead
+its `LinkSlug` powers the case page's "Asked …" line — fill `LinkSlug` with
+the `/work/` slug once the question becomes a shipped case study, the same
+value you'd put in a Project's own `Slug`. There's no reward for pre-loading
+questions before you've actually asked them, and no cap to game — leave a
+row `wondering` or `building` for exactly as long as it really is one.
+
+`QuestionTH` is optional; leave it empty and the English `Question` is
+reused on /th, same fallback as `RoleTH`/`WinsTH` on Career above.
+
+`Date` is when the question was actually asked. Leave it empty and the
+row's own Notion created-time is used instead — a real timestamp, never an
+invented one — so an undated row still sorts correctly by when it was
+actually logged. This also feeds the footer's freshness line near the
+bottom of every page: that line now reads the newer of the newest `Post`
+date and the newest `Question` date, so logging or dating a question can
+move it forward even on a day nothing else on the site changed.
+
+An empty band (no `wondering`/`building` rows — including while
+`NOTION_DB_QUESTIONS` isn't set yet, see below) simply doesn't render, same
+as Clients on Profile below: nothing breaks, the section just isn't there.
+**A row with a blank `Question` is silently dropped**, same mechanism as
+Name on Projects and Role on Career above.
+
 ### Profile
 
 | Property | Type | Required |
@@ -224,7 +264,7 @@ no Published property** — do not add one, and don't expect a Published
 toggle to hide it. The site simply reads whatever the single row contains,
 always. (If you want to double-check this against the code: `fetchProfile`
 in `src/lib/notion.ts` queries the Profile database without the Published
-filter the other four fetchers use, with a comment noting exactly this.)
+filter the other five fetchers use, with a comment noting exactly this.)
 
 **Name is required here too, and it's the most deceptive failure mode in
 this guide:** if Name is blank, the site doesn't just drop the row — it
@@ -235,8 +275,8 @@ Profile edits are actually taking effect.
 
 ## 3. Share each database with the integration
 
-On each of the five databases: `•••` menu (top right) → **Connections** →
-add `klao-site`. Do this for all five — a database you forget to share
+On each of the six databases: `•••` menu (top right) → **Connections** →
+add `klao-site`. Do this for all six — a database you forget to share
 returns a "not found" error from Notion, which the site catches and quietly
 falls back to that database's bundled sample content (see below), not to an
 empty page. It will look like nothing changed since before you started this
@@ -256,7 +296,7 @@ URL if there's no `?v=`) is the database ID.
 
 ## 5. Fill in your environment variables
 
-Copy `.env.example` to `.env.local`. It has seven lines — the six Notion
+Copy `.env.example` to `.env.local`. It has eight lines — the seven Notion
 values below, plus `NEXT_PUBLIC_SITE_URL` (leave that one blank for local
 dev; the site defaults to `http://localhost:3000` automatically. It matters
 only for production — see `docs/DEPLOY.md`):
@@ -268,18 +308,29 @@ NOTION_DB_POSTS=...
 NOTION_DB_CAREER=...
 NOTION_DB_PROFILE=...
 NOTION_DB_SKILLS=...
+NOTION_DB_QUESTIONS=...
 ```
 
-Set all six Notion values together, not just some of them. The site
+Set all seven Notion values together, not just some of them. The site
 treats "Notion configured" as "the token is present" — so if the token is
 set but a database ID is missing, the code doesn't fail loudly: the missing
 ID check throws *before* any request reaches Notion, and (during a build)
 that throw is caught the same way as every other Notion failure in this
 guide — silent fallback to sample content, not a visible connection error.
 
+**One exception:** `NOTION_DB_QUESTIONS` doesn't go through that missing-ID
+throw at all. With the token set and `NOTION_DB_QUESTIONS` left blank,
+`getQuestionsCached` (`src/lib/content.ts`) returns an empty list before
+attempting any fetch — no throw, no fixture fallback, no build-vs-runtime
+ISR split. The only visible effect is that the home page's open-questions
+band doesn't render; nothing else on the site is touched. This is
+deliberate — the owner adds Vercel env vars in a separate step from code
+deploys, and Questions is the one database allowed to sit unconfigured
+indefinitely without degrading anything else.
+
 Restart `npm run dev`. Your Notion content replaces the sample content.
 
-For the live site, the same six variables go into Vercel — see
+For the live site, the same seven variables go into Vercel — see
 `docs/DEPLOY.md`, which also covers a Vercel-specific step (a redeploy)
 that this local setup doesn't need.
 
@@ -302,9 +353,9 @@ instead of expecting one uniform "site shows sample content" behavior.
 
 An unshared database, or a typo/omission in a property used *inside a
 query filter* (that's `Published` — every one of Projects/Posts/Career/
-Skills filters on it — and, only for a single post's own page, `Slug`). Notion
-rejects the request outright, the site's error handling catches it, and
-what happens next depends on **when** it happens:
+Skills/Questions filters on it — and, only for a single post's own page,
+`Slug`). Notion rejects the request outright, the site's error handling
+catches it, and what happens next depends on **when** it happens:
 
 - **During a build** (`next build`, including every Vercel deployment
   build) — caught and silently replaced with the bundled sample content
@@ -322,10 +373,10 @@ what happens next depends on **when** it happens:
 
 ### Mechanism B — the query succeeds, but a required field is unreadable
 
-A blank `Name` / `Role` / `Tier` / `Slug` / `Date` / `TitleEN` (see the
-"Required" columns above), or — this is the case to know about — a `Slug` property
-that's been renamed or misspelled. `Slug` is *never* part of the query
-that builds the `/writing` list (`fetchPostMetas` in `src/lib/notion.ts`
+A blank `Name` / `Role` / `Tier` / `Slug` / `Date` / `TitleEN` / `Question`
+(see the "Required" columns above), or — this is the case to know about —
+a `Slug` property that's been renamed or misspelled. `Slug` is *never* part
+of the query that builds the `/writing` list (`fetchPostMetas` in `src/lib/notion.ts`
 filters only on `Published`); it's read per-row, inside the mapper. So a
 broken `Slug` property doesn't fail that listing query at all — every
 row's Slug just reads back empty, every row gets dropped as "missing
@@ -334,11 +385,11 @@ fixtures, no fallback, no error.** (Opening one specific post directly,
 `fetchPostBySlug`, *does* filter on `Slug`, so that one request behaves
 like Mechanism A instead.)
 
-For Projects/Posts/Career/Skills, a row dropped this way just makes the
-returned list one item shorter — nothing substitutes for it, the content simply
-isn't there. **Profile is the one exception**, and it's the most
-deceptive case in this guide: because Profile is a single row, not a list,
-`mapProfile` returning null (blank Name) cascades into `content.ts`'s
+For Projects/Posts/Career/Skills/Questions, a row dropped this way just
+makes the returned list one item shorter — nothing substitutes for it, the
+content simply isn't there. **Profile is the one exception**, and it's the
+most deceptive case in this guide: because Profile is a single row, not a
+list, `mapProfile` returning null (blank Name) cascades into `content.ts`'s
 `profile ?? profileFixture`, which unconditionally substitutes the bundled
 sample profile — at build time **and** at runtime alike, since this path
 never throws and so never goes through the try/catch that Mechanism A's
