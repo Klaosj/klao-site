@@ -152,7 +152,10 @@ export default async function WorkStoryPage({
           ProjectCard's own link row (same classes, same gating on each URL
           existing) so a case study and its listing card look consistent. */}
       <p className="mt-10 flex flex-wrap items-center gap-4 text-xs text-soft">
-        <span>{story.stack.join(' · ')}</span>
+        {/* Gated: a business story has no stack, and an empty <span> is
+            still a flex item — it would paint a stray gap-4 before the
+            first link. */}
+        {story.stack.length > 0 && <span>{story.stack.join(' · ')}</span>}
         {story.liveUrl && (
           <a
             href={story.liveUrl}

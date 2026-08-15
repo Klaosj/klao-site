@@ -24,16 +24,16 @@ export const dynamicParams = false;
 // setting `openGraph` at all replaces the inherited object entirely, a
 // partial one would silently drop e.g. `images`.
 const descriptions: Record<Locale, string> = {
-  en: 'The full list of software projects Klao has built and shipped end to end — with live links and source code where public.',
-  th: 'ผลงานซอฟต์แวร์ที่เกลาออกแบบ สร้าง และส่งมอบเองตั้งแต่ต้นจนจบ พร้อมลิงก์ใช้งานจริงและซอร์สโค้ดเท่าที่เปิดเผยได้',
+  en: "Klao's own projects — business plays and shipped software, grouped into Business and Build — with stories, live links and source code where public.",
+  th: 'โปรเจกต์ของเกลาเอง ทั้งฝั่งธุรกิจและซอฟต์แวร์ที่สร้างจริง แบ่งเป็นสองหมวด พร้อมเรื่องราว ลิงก์ใช้งานจริง และซอร์สโค้ดเท่าที่เปิดเผยได้',
 };
 
 // Reuses the site's one pair of share-card PNGs (design/og/README.md: "every
 // /en/... page" / "every /th/... page", not one image per route) -- only the
 // alt text is page-specific.
 const ogAlt: Record<Locale, string> = {
-  en: 'Klao — software projects built and shipped end to end, with live links and source where available.',
-  th: 'เกลา — ผลงานซอฟต์แวร์ที่สร้างและส่งมอบเองตั้งแต่ต้นจนจบ พร้อมลิงก์ใช้งานจริง',
+  en: 'Klao — own projects across business and build, told as case studies with receipts.',
+  th: 'เกลา — โปรเจกต์ส่วนตัวทั้งฝั่งธุรกิจและฝั่งสร้าง เล่าเป็นเคสพร้อมใบเสร็จของผลลัพธ์',
 };
 
 // Widen-then-narrow `params`, matching layout.tsx's generateMetadata (Task
@@ -78,6 +78,12 @@ export default async function ProjectsPage({ params }: { params: Promise<{ local
   const locale = assertLocale((await params).locale);
   const t = dict[locale];
   const projects = await getProjects();
+  // Business first, same chapter order as WorkDeck; an empty group renders
+  // nothing (fixture mode has no business rows yet).
+  const groups = [
+    { label: t.workTypeBusiness, items: projects.filter((p) => p.type === 'business') },
+    { label: t.workTypeBuild, items: projects.filter((p) => p.type === 'build') },
+  ].filter((g) => g.items.length > 0);
 
   return (
     // See layout.tsx: the shared header is now fixed and transparent, and
@@ -86,14 +92,16 @@ export default async function ProjectsPage({ params }: { params: Promise<{ local
     // padding to clear the header instead.
     <div className="mx-auto w-full max-w-3xl px-6 pb-16 pt-28">
       <h1 className="font-display text-3xl">{t.projects}</h1>
-      <section className="mt-8">
-        <h2 className="text-xs uppercase tracking-widest text-soft">{t.allProjects}</h2>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {projects.map((p) => (
-            <ProjectCard key={p.id} project={p} locale={locale} />
-          ))}
-        </div>
-      </section>
+      {groups.map((g) => (
+        <section key={g.label} className="mt-8">
+          <h2 className="text-xs uppercase tracking-widest text-soft">{g.label}</h2>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {g.items.map((p) => (
+              <ProjectCard key={p.id} project={p} locale={locale} />
+            ))}
+          </div>
+        </section>
+      ))}
     </div>
   );
 }

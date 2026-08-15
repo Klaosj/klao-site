@@ -50,7 +50,11 @@ export default function ProjectCard({ project, locale }: { project: Project; loc
       )}
       <h3 className="font-semibold">{project.name}</h3>
       <p className="mt-1 flex-1 text-sm text-soft">{project.description[locale]}</p>
-      <p className="mt-3 text-xs text-soft">{project.stack.join(' · ')}</p>
+      {/* Stack is a build-type fact (spec 2026-08-15 §4) — business rows
+          never show it, and an empty stack renders no empty element. */}
+      {project.type === 'build' && project.stack.length > 0 && (
+        <p className="mt-3 text-xs text-soft">{project.stack.join(' · ')}</p>
+      )}
       {(project.liveUrl || project.repoUrl) && (
         // Hit-area fix (WCAG 2.5.8): both links render as bare underlined
         // text-xs, under the 24x24 CSS px minimum. `p-2` grows the
