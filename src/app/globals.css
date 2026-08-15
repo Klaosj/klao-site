@@ -10,6 +10,10 @@
   --color-on-dark: #f4f5fa;
   --color-on-dark-soft: rgba(228, 232, 246, 0.62);
   --color-on-dark-faint: rgba(202, 208, 234, 0.15);
+  /* QA 2026-08-15 finding 5: interactive boundaries (outline-pill borders)
+     need >=3:1 against dark (WCAG 1.4.11) — faint's 1.42:1 stays for
+     decorative dividers only. 0.34 alpha over #17171a measures ~3.0:1. */
+  --color-on-dark-mid: rgba(202, 208, 234, 0.34);
   --color-on-light: #17171a;
   --color-on-light-soft: #61626e;
   --color-on-light-faint: #e4e5ef;

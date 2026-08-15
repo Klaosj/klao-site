@@ -31,7 +31,15 @@ const en = {
   // subtitle. Chapter labels also head the /projects listing's two groups.
   workTypeBusiness: 'Business',
   workTypeBuild: 'Build',
+  // QA 2026-08-15 finding 1: the deck gets a display-scale statement like
+  // every other band; the SectionLabel stays as its eyebrow.
+  deckHeading: 'Business plays, and the things I shipped.',
   deckSubtitle: 'Business first. Every project opens with the question it answers.',
+  // Finding 7: rendered instead of deckSubtitle while no business-typed
+  // project exists — the copy never promises a chapter that isn't there.
+  deckSubtitleBuildOnly: 'Every project opens with the question it answers.',
+  // Finding 17: /projects index gets its own one-line voice under the h1.
+  projectsSubtitle: 'Every project, business and build — each opens with the question it answers.',
   craft: [
     'Scope it honestly.',
     'Ship something that runs.',
@@ -188,7 +196,10 @@ const th: typeof en = {
   howIWork: 'วิธีทำงานของผม',
   workTypeBusiness: 'ธุรกิจ',
   workTypeBuild: 'งานสร้างเอง',
+  deckHeading: 'เกมธุรกิจที่ผมเดิน และของที่ผมลงมือสร้าง',
   deckSubtitle: 'ธุรกิจมาก่อน — ทุกโปรเจกต์เริ่มจากคำถามที่มันตอบ',
+  deckSubtitleBuildOnly: 'ทุกโปรเจกต์เริ่มจากคำถามที่มันตอบ',
+  projectsSubtitle: 'ทุกโปรเจกต์ทั้งฝั่งธุรกิจและฝั่งสร้าง — แต่ละอันเริ่มจากคำถามที่มันตอบ',
   craft: [
     'ประเมินตามจริง',
     'ส่งของที่รันได้จริง',
