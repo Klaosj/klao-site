@@ -64,12 +64,16 @@ describe('SiteNav', () => {
     expect(screen.queryByText('S')).toBeNull();
   });
 
-  it('points the four in-page anchors at the real section ids, never a bare "#"', () => {
+  it('points the three in-page anchors at the real section ids, never a bare "#"', () => {
     const { container } = render(<SiteNav locale="en" profile={profile} />);
     const hrefs = Array.from(container.querySelectorAll('a')).map((a) => a.getAttribute('href'));
-    for (const id of ['#hero', '#about', '#work', '#cv']) {
+    for (const id of ['#hero', '#about', '#cv']) {
       expect(hrefs, `expected ${id} among: ${JSON.stringify(hrefs)}`).toContain(id);
     }
+    // "Selected projects" is a real route since 2026-08-15 (owner call),
+    // never a #work anchor -- even on the homepage.
+    expect(hrefs).toContain('/en/projects');
+    expect(hrefs).not.toContain('#work');
     expect(hrefs.some((h) => h === '#')).toBe(false);
   });
 
@@ -210,18 +214,22 @@ describe('SiteNav', () => {
     expect(header.classList.contains('nav-on-light')).toBe(true);
   });
 
-  it('rewrites the four in-page anchors -- plus the monogram, a fifth link to the same #hero id -- to /{locale}#id on a non-home route, never a bare/dead hash', () => {
-    // Defect 1 (WCAG 2.4.4): #hero/#about/#work/#cv only exist on the
+  it('rewrites the three in-page anchors -- plus the monogram, a fourth link to the same #hero id -- to /{locale}#id on a non-home route, never a bare/dead hash', () => {
+    // Defect 1 (WCAG 2.4.4): #hero/#about/#cv only exist on the
     // homepage (confirmed by curling /en/projects, /en/writing, /en/career
     // and grepping for the ids: absent on all three). A bare hash on any
     // other route silently does nothing.
     vi.mocked(usePathname).mockReturnValue('/en/projects');
     const { container } = render(<SiteNav locale="en" profile={profile} />);
     const hrefs = Array.from(container.querySelectorAll('a')).map((a) => a.getAttribute('href'));
-    for (const id of ['#hero', '#about', '#work', '#cv']) {
+    for (const id of ['#hero', '#about', '#cv']) {
       expect(hrefs, `expected /en${id} among: ${JSON.stringify(hrefs)}`).toContain(`/en${id}`);
       expect(hrefs, `expected no bare ${id}`).not.toContain(id);
     }
+    // The Selected-projects entry is a plain route on every page -- it is
+    // NOT an anchorHref hash, so no /en#work should exist anymore.
+    expect(hrefs).toContain('/en/projects');
+    expect(hrefs).not.toContain('/en#work');
     // The monogram badge (aria-label={t.home}) is a second, separate link
     // to #hero -- so '/en#hero' should appear twice: once for it, once for
     // the visible "Home" text link.
@@ -232,10 +240,12 @@ describe('SiteNav', () => {
     vi.mocked(usePathname).mockReturnValue('/th/career');
     const { container } = render(<SiteNav locale="th" profile={profile} />);
     const hrefs = Array.from(container.querySelectorAll('a')).map((a) => a.getAttribute('href'));
-    for (const id of ['#hero', '#about', '#work', '#cv']) {
+    for (const id of ['#hero', '#about', '#cv']) {
       expect(hrefs).toContain(`/th${id}`);
       expect(hrefs).not.toContain(`/en${id}`);
     }
+    expect(hrefs).toContain('/th/projects');
+    expect(hrefs).not.toContain('/en/projects');
   });
 
   it('keeps the anchors as bare in-page hashes when already on the matching-locale homepage, so the homepage still scrolls in-page rather than reloading', () => {
@@ -277,7 +287,7 @@ describe('SiteNav', () => {
   it('adds a Writing route link to the desktop nav, after Career, pointed at /{locale}/writing -- never a hash anchor', () => {
     // /writing is a real, sitemapped route with nothing linking to it
     // before this fix (confirmed by grepping the pre-fix SiteNav for
-    // "writing": no match). Unlike the four #hero/#about/#work/#cv anchors,
+    // "writing": no match). Unlike the #hero/#about/#cv anchors,
     // it has no homepage section id, so its href must never come out of
     // `anchorHref` (which only ever produces a bare or /{locale}-prefixed
     // hash).
@@ -325,7 +335,7 @@ describe('mobile menu', () => {
     expect(btn.getAttribute('aria-expanded')).toBe('true');
     const menu = document.getElementById('mobile-menu');
     expect(menu).not.toBeNull();
-    // The four section anchors plus the Writing route link, plus the three
+    // The three section anchors plus the Projects and Writing route links, plus the three
     // social links folded into the overlay's own bottom row (the `profile`
     // fixture above has linkedin/github/email all set) -- 5 + 3 = 8. See
     // the "folds the social links into the mobile overlay" test below for

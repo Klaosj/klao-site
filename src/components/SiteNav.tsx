@@ -208,14 +208,16 @@ export default function SiteNav({ locale, profile }: { locale: Locale; profile: 
   }, [menuOpen]);
 
   // Section ids created by Task 11's page composition: Hero (#hero),
-  // AboutBand (#about), WorkDeck (#work -- added in this task), CvBand
-  // (#cv). `hash` (not `href`) -- the real, route-aware href is computed
-  // per-render below via `anchorHref`, so this is never a bare, dangling
-  // hash on its own.
+  // AboutBand (#about), CvBand (#cv). `hash` (not `href`) -- the real,
+  // route-aware href is computed per-render below via `anchorHref`, so
+  // this is never a bare, dangling hash on its own. #work left this list
+  // on 2026-08-15 (owner call): the nav's "Selected projects" entry now
+  // opens the full /projects index as a real route (see navItems below)
+  // instead of scrolling to the homepage deck -- the deck keeps its
+  // id="work" for the story pages' back-links and the deck's own anchor.
   const anchors: { hash: string; label: string }[] = [
     { hash: '#hero', label: t.home },
     { hash: '#about', label: t.about },
-    { hash: '#work', label: t.selectedProjects },
     { hash: '#cv', label: t.career },
   ];
 
@@ -228,7 +230,12 @@ export default function SiteNav({ locale, profile }: { locale: Locale; profile: 
   // both render it from a single source, in the same position (right after
   // Career/#cv).
   const navItems: { key: string; href: string; label: string }[] = [
-    ...anchors.map((a) => ({ key: a.hash, href: anchorHref(a.hash), label: a.label })),
+    ...anchors.slice(0, 2).map((a) => ({ key: a.hash, href: anchorHref(a.hash), label: a.label })),
+    // "Selected projects" is a real route like /writing (owner call,
+    // 2026-08-15) -- it keeps its old slot between About and Career but
+    // never goes through anchorHref's isHome branching.
+    { key: 'projects', href: `/${locale}/projects`, label: t.selectedProjects },
+    ...anchors.slice(2).map((a) => ({ key: a.hash, href: anchorHref(a.hash), label: a.label })),
     { key: 'writing', href: `/${locale}/writing`, label: t.writing },
   ];
 
