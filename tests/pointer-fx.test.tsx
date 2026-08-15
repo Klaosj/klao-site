@@ -223,12 +223,40 @@ describe('PointerFx', () => {
     expect(cursor.classList.contains('big')).toBe(false);
   });
 
-  it('swells over a work-card frame, not just <a>/<button>', () => {
+  // Inverted deliberately in the 2026-08-15 QA pass (finding 8b). This used
+  // to assert the opposite -- "swells over a work-card frame, not just
+  // <a>/<button>" -- which pinned a cursor that lied: `.frame` is on EVERY
+  // WorkDeck slide image, storied or not, and has no CSS of its own, so an
+  // unstoried slide (a plain <div>) still grew the cursor as if it were a
+  // link. The rule the cursor now keeps is narrower and honest: it swells
+  // only where a click actually goes somewhere.
+  it('does not swell over a bare .frame -- that hook is on non-linking slides too', () => {
     stubMatchMedia();
     const frame = document.createElement('div');
     frame.className = 'frame';
     document.body.appendChild(frame);
     fixtures.push(frame);
+
+    const { container } = render(<PointerFx />);
+    const cursor = container.querySelector('#cursor') as HTMLElement;
+
+    frame.dispatchEvent(new PointerEvent('pointerover', { bubbles: true }));
+    expect(cursor.classList.contains('big')).toBe(false);
+  });
+
+  // The other half of finding 8b: dropping `.frame` must not cost the LINKED
+  // slides their cue. A storied slide wraps its whole block -- image
+  // included -- in a <Link>, so `closest('a')` still matches from a node
+  // deep inside the frame, which is why `.frame` was never load-bearing here.
+  it('still swells over a .frame nested inside a link', () => {
+    stubMatchMedia();
+    const link = document.createElement('a');
+    link.href = '#';
+    const frame = document.createElement('div');
+    frame.className = 'frame';
+    link.appendChild(frame);
+    document.body.appendChild(link);
+    fixtures.push(link);
 
     const { container } = render(<PointerFx />);
     const cursor = container.querySelector('#cursor') as HTMLElement;

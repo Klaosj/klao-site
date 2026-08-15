@@ -1,6 +1,7 @@
 import '../globals.css';
 import type { Metadata } from 'next';
 import { Anuphan, Space_Grotesk } from 'next/font/google';
+import PointerFx from '@/components/motion/PointerFx';
 import SiteNav from '@/components/SiteNav';
 import SiteFooter from '@/components/SiteFooter';
 import { getProfile } from '@/lib/content';
@@ -170,6 +171,26 @@ export default async function RootLayout({
         >
           {dict[l].skipToContent}
         </a>
+        {/* Moved up from [locale]/page.tsx in the 2026-08-15 QA pass
+            (finding 15): mounted on the home route only, the custom
+            mix-blend cursor and the magnetic `.btn` pull both vanished the
+            instant a visitor followed the deck's footer pill to
+            /projects -- the whole cursor swapping back to the native arrow
+            mid-journey, which is far more perceivable than losing the
+            magnet alone.
+
+            Safe to render on every route under this layout without a
+            per-route guard, because the component already no-ops by
+            construction rather than by luck (see PointerFx.tsx): it
+            returns before attaching anything under reduced motion; its
+            `#hero .pill` query is scoped and simply returns [] off the home
+            route, so the lag loop writes to nothing; its `.btn` query
+            returns whatever that route actually has (the four
+            /projects pills now included); and the cursor node itself is
+            aria-hidden and hidden outright by CSS on coarse/no-hover
+            pointers. It also has to sit inside <body>, not <head>, since it
+            renders a real element. */}
+        <PointerFx />
         <SiteNav locale={l} profile={profile} />
         {/* Unconstrained, unlike the old boxed `max-w-3xl` column: the
             redesigned home route's bands (Hero, AboutBand, ...) are meant to

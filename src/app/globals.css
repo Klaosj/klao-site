@@ -298,12 +298,54 @@
      by source order -- same silent-equal-specificity mechanism documented
      on .pill and #cursor above. */
   .nav-link:hover, .nav-social:hover { color: var(--color-peri); }
+  /* QA 2026-08-15 (contrast table): the accent stops at the light bands.
+     --color-peri-deep (#7d86ad) measures 3.42:1 over the header's own
+     light fill (rgba(255,255,255,0.96) over #fafafd, see site-nav.css) --
+     under the 4.5:1 AA floor for the 13px nav labels, and hover is the
+     state that's supposed to READ more clearly than rest, not less. The
+     non-hover colour here is already --color-on-light-soft (#61626e,
+     5.94:1), so peri-deep was the one hover on the page that made text
+     harder to read. --color-dark (#17171a) is 17.17:1 and restores the
+     intent of the nav-on-light block above; on dark bands hover stays
+     periwinkle (8.16:1), which is where the accent belongs. */
   header.nav-on-light .nav-link:hover,
-  header.nav-on-light .nav-social:hover { color: var(--color-peri-deep); }
+  header.nav-on-light .nav-social:hover { color: var(--color-dark); }
   a:focus-visible, button:focus-visible {
     outline: 2px solid var(--color-peri);
     outline-offset: 3px;
     border-radius: 4px;
+  }
+  /* QA 2026-08-15 finding 3: the same accent fails as a focus INDICATOR
+     over a light surface -- #a8aecb on #fafafd is 2.10:1, against the 3:1
+     WCAG 1.4.11 / 2.4.11 bar (8.16:1 on the dark bands, where the rule
+     above stands). Two contexts are genuinely light, and both are selected
+     by markup that already exists rather than a new marker class:
+
+       - `header.nav-on-light` -- SiteNav.tsx:109 toggles this class on the
+         <header> itself whenever a `section.bg-light` band is under the
+         probe point, so it is true both when the header has painted its
+         light fill (`nav-solid`) and when it is still transparent over the
+         white band. Either way the ring lands on light. This is the case
+         finding 3 actually hit: a keyboard user tabbing the ~10 header
+         controls while AboutBand is behind them.
+       - `section.bg-light` -- the literal class AboutBand.tsx:10 and
+         ClientsBand.tsx:22 carry (same selector SiteNav's own
+         LIGHT_BAND_SELECTOR uses, so the two can't drift apart). Neither
+         band renders a focusable child today; this is here so the next one
+         that does is correct on arrival.
+
+     Deliberately NOT `.bg-light a:focus-visible`: `bg-light` is also the
+     FILL on dark-band controls (Hero/ContactBand/WorkDeck's `.btn` pills,
+     both not-found pages), whose 3px-offset ring sits on the dark section
+     behind them and must stay peri. Descendant-of-a-light-section is the
+     real condition; carrying the class yourself is not. Only
+     `outline-color` is overridden, so the width/offset/radius above stay
+     the single source of truth for the ring's shape. */
+  header.nav-on-light a:focus-visible,
+  header.nav-on-light button:focus-visible,
+  section.bg-light a:focus-visible,
+  section.bg-light button:focus-visible {
+    outline-color: var(--color-dark);
   }
 }
 
@@ -411,6 +453,27 @@ header.nav-on-light .nav-mark { background: var(--color-dark); color: var(--colo
      so it's left alone -- same distinction #hero .pill's drift-vs-lag split
      draws elsewhere in this file. */
   .nav-mark:hover { transform: none !important; }
+  /* QA 2026-08-15 finding 16: the burger's X-morph was the last transform
+     on the page this block didn't reach. SiteNav.tsx gives the top and
+     bottom bars `transition-transform duration-300` and swaps in
+     `translate-y-[6.5px] rotate-45` / the mirror when the menu opens; the
+     middle bar gets `transition-opacity duration-300`.
+
+     `transform: none` is NOT the fix here -- it would delete the X itself
+     and leave three parallel bars in the "open" state, which is a
+     correctness bug, not a motion preference. What has to go is the
+     tweening, so the rotation lands instantly. Narrowing
+     `transition-property` (rather than killing the whole transition) keeps
+     the middle bar's cross-fade, which is a fade and not motion -- the
+     same distinction .nav-mark:hover above draws between its rotate and
+     its colour transition. On the outer two bars, whose opacity never
+     changes, this leaves nothing to animate.
+
+     `.nav-burger span` is a stable selector, not a new hook: the class is
+     already SiteNav.tsx's own and already styled by site-nav.css
+     (`header.nav-on-light .nav-burger`), and the three <span> bars are the
+     button's only children. */
+  .nav-burger span { transition-property: opacity !important; }
   /* Task 7: kills the portrait halo's rotation and the underline-draw
      transition, same signposted, gated-behind-the-media-query pattern as
      every rule above. */

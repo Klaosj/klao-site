@@ -1,5 +1,4 @@
 import HeroMonument from '@/components/motion/HeroMonument';
-import PointerFx from '@/components/motion/PointerFx';
 import AboutBand from '@/components/sections/AboutBand';
 import ClientsBand from '@/components/sections/ClientsBand';
 import ContactBand from '@/components/sections/ContactBand';
@@ -36,8 +35,12 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
   return (
     <>
+      {/* PointerFx is NOT mounted here anymore -- it moved to
+          [locale]/layout.tsx in the 2026-08-15 QA pass (finding 15) so the
+          cursor doesn't revert to the native arrow the moment a visitor
+          follows the deck footer pill to /projects. HeroMonument stays: it
+          rasterises `wordmark`, which only this route computes. */}
       <HeroMonument word={wordmark} heroSelector="#hero" />
-      <PointerFx />
       <Hero profile={profile} locale={locale} />
       <AboutBand profile={profile} locale={locale} />
       <CraftBand locale={locale} />

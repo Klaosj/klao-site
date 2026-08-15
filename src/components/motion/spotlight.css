@@ -14,15 +14,35 @@
    itemClassName ever adds a color or opacity utility, move this rule back
    outside the layer (same escape hatch globals.css already documents). */
 @layer components {
+  /* Resting opacity is 0.55, not the original 0.35 (QA 2026-08-15, finding
+     9). --color-on-dark-soft is itself rgba(...,0.62), so the two alphas
+     multiply: 0.62 x 0.35 = 21.7% effective over CraftBand's #101013 =
+     1.81:1, against a 3:1 bar (these are clamp(24px,4.2vw,52px) bold, so
+     large text). Five of the six principles sit in that state at any
+     moment. 0.62 x 0.55 = 34.1% effective = ~3.2:1, which clears it.
+     The emphasis is unchanged: .spot-on below still goes to full
+     --color-on-dark plus the periwinkle text-shadow, so the spotlight
+     still reads as a spotlight -- it just no longer buys its contrast by
+     pushing everything else under the legibility floor. */
   .spot {
     color: var(--color-on-dark-soft);
-    opacity: 0.35;
+    opacity: 0.55;
     transition: opacity 0.5s ease, color 0.5s ease;
   }
   .spot.spot-on {
     color: var(--color-on-dark);
     opacity: 1;
     text-shadow: 0 0 24px rgba(168, 174, 203, 0.35);
+  }
+  /* Same touch-device idiom tilt.css uses. SpotlightList only ever moves
+     the highlight on `pointermove`, so on a device with no hovering
+     pointer the other five statements would stay dimmed for the entire
+     visit with no way to light them -- a permanent state, not a transient
+     one, and the resting opacity above is tuned for transient. Full
+     opacity here; .spot-on's colour/text-shadow still marks the server-
+     rendered first line, so the band keeps its emphasis without motion. */
+  @media (hover: none) {
+    .spot { opacity: 1; }
   }
   @media (prefers-reduced-motion: reduce) {
     .spot { opacity: 1 !important; transition: none; }

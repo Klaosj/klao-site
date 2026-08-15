@@ -1,7 +1,53 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="800" height="450" viewBox="0 0 800 450" role="img" aria-label="TickerDesk">
-  <rect width="800" height="450" fill="#101013"/>
-  <text x="48" y="110" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#7d86ad" letter-spacing="3">PYTHON · NOTION API · DAILY</text>
-  <rect x="48" y="304" width="44" height="3" fill="#a8aecb"/>
-  <text x="48" y="374" font-family="-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="64" font-weight="700" fill="#f4f5fa" letter-spacing="-2">TickerDesk</text>
-  <text x="470" y="374" font-family="-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="17" fill="rgba(228,232,246,0.62)">Options briefs before the open.</text>
+<!-- Fixture placeholder only (src/content/fixtures/projects.json). Same
+     reasoning as aisecretary.svg beside it: no name, no tagline, no stack,
+     no logo, because the deck's text column already carries all of that,
+     and the old near-black card broke the run of light imagery across the
+     four slides. Deliberately a different figure from that file's rings so
+     the two fixtures don't read as one repeated tile, but the same ground,
+     palette and ink weight so the deck's rhythm stays even. 800x450 (16:9)
+     matches the intrinsic width/height the deck markup declares. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="450" viewBox="0 0 800 450" fill="none">
+  <defs>
+    <linearGradient id="td-glow" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0%" stop-color="#a8aecb" stop-opacity="0.04" />
+      <stop offset="100%" stop-color="#a8aecb" stop-opacity="0.30" />
+    </linearGradient>
+    <linearGradient id="td-bar" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#7d86ad" stop-opacity="0.32" />
+      <stop offset="100%" stop-color="#7d86ad" stop-opacity="0.05" />
+    </linearGradient>
+  </defs>
+  <rect width="800" height="450" fill="#fafafd" />
+  <rect width="800" height="450" fill="url(#td-glow)" />
+  <!-- Baseline plus three rules, all at 0.10 so they read as structure
+       rather than as content. -->
+  <g stroke="#7d86ad" stroke-opacity="0.10" stroke-width="1">
+    <path d="M90 366.5H710M90 286.5H710M90 206.5H710M90 126.5H710" />
+  </g>
+  <!-- Ten columns on a 64px pitch (44 wide, 20 apart), sharing one baseline
+       at y=366. Heights rise unevenly rather than monotonically, so the
+       shape reads as a measurement, not a decorative ramp. -->
+  <g fill="url(#td-bar)">
+    <rect x="90" y="308" width="44" height="58" rx="6" />
+    <rect x="154" y="270" width="44" height="96" rx="6" />
+    <rect x="218" y="292" width="44" height="74" rx="6" />
+    <rect x="282" y="238" width="44" height="128" rx="6" />
+    <rect x="346" y="258" width="44" height="108" rx="6" />
+    <rect x="410" y="200" width="44" height="166" rx="6" />
+    <rect x="474" y="224" width="44" height="142" rx="6" />
+    <rect x="538" y="162" width="44" height="204" rx="6" />
+    <rect x="602" y="188" width="44" height="178" rx="6" />
+    <rect x="666" y="130" width="44" height="236" rx="6" />
+  </g>
+  <!-- Traces the column tops (each column's centre x = 112 + 64i). -->
+  <path
+    d="M112 308L176 270L240 292L304 238L368 258L432 200L496 224L560 162L624 188L688 130"
+    fill="none"
+    stroke="#7d86ad"
+    stroke-opacity="0.42"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <circle cx="688" cy="130" r="7" fill="#a8aecb" fill-opacity="0.55" />
 </svg>

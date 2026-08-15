@@ -99,9 +99,19 @@ export default function PointerFx() {
     // document.documentElement reaches this listener; the same dispatch at
     // window (the old code's target) never did.
     const onPointerLeaveViewport = () => cursor?.classList.remove('on');
+    // `a, button` and nothing else. `.frame` (WorkDeck's image wrapper) used
+    // to be in this list and was removed in the 2026-08-15 QA pass (finding
+    // 8b): `.frame` has no CSS of its own -- it exists purely as this hook --
+    // and it is on EVERY deck slide's image, whether or not that slide is a
+    // link. A slide with no story wraps in a plain <div>, so the cursor was
+    // swelling "this is clickable" over four images that click nowhere. The
+    // cursor now says exactly one thing, and it is true: there is an <a> or
+    // a <button> under here. When a slide IS a link its own <Link> wrapper
+    // contains the image, so `closest('a')` still matches from inside it --
+    // the linked case never needed `.frame` in the first place.
     const onPointerOver = (e: PointerEvent) => {
       const target = e.target as Element | null;
-      cursor?.classList.toggle('big', Boolean(target?.closest('a, button, .frame')));
+      cursor?.classList.toggle('big', Boolean(target?.closest('a, button')));
     };
 
     window.addEventListener('pointermove', onPointerMove, { passive: true });

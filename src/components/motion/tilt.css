@@ -1,14 +1,29 @@
 [data-tilt] {
   transform: perspective(900px) rotateX(var(--tx, 0deg)) rotateY(var(--ty, 0deg)) translateY(var(--lift, 0px));
   transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.45s ease;
-  will-change: transform;
 }
+/* `will-change` lives on :hover, not on the base rule (QA 2026-08-15,
+   finding 19). Unconditionally, it promoted every [data-tilt] node -- four
+   full-bleed ~671x379 CSS-px deck images, so 4 compositor layers at 2x DPR
+   -- for the whole page lifetime, whether or not a pointer ever came near
+   them, and the reduced-motion block below neutralised `transform` while
+   leaving the hint standing. The spec is explicit that this is a
+   last-resort hint to be set shortly before a change and dropped after.
+   :hover IS "shortly before": TiltCard writes --tx/--ty on pointermove,
+   which cannot fire before the pointer is over the element, and the 0.45s
+   transition gives the compositor the rest of the notice it needs. */
 [data-tilt]:hover {
+  will-change: transform;
   box-shadow:
     0 24px 60px -24px rgba(0, 0, 0, 0.55),
     0 0 0 1px rgba(168, 174, 203, 0.22);
 }
 @media (prefers-reduced-motion: reduce), (hover: none) {
   [data-tilt] { transform: none !important; transition: none; }
-  [data-tilt]:hover { box-shadow: none; }
+  /* `will-change: auto` alongside the existing box-shadow reset: with
+     `transform: none !important` above there is nothing left to promote a
+     layer for, so hovering here must not hand the compositor a hint it
+     cannot act on. (On `(hover: none)` this rule barely applies at all;
+     under reduced motion on a mouse it applies on every hover.) */
+  [data-tilt]:hover { will-change: auto; box-shadow: none; }
 }
