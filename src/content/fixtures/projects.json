@@ -15,6 +15,8 @@
     "imageSrc": "/images/dailybrief.jpg",
     "featured": true,
     "order": 3,
+    "type": "build",
+    "outcome": null,
     "question": {
       "en": "Why does the morning news take so long to read?",
       "th": "ทำไมอ่านข่าวเช้าให้จบมันนานนัก?"
@@ -37,6 +39,8 @@
     "imageSrc": "/images/tickerdesk.svg",
     "featured": true,
     "order": 4,
+    "type": "build",
+    "outcome": null,
     "question": {
       "en": "Which option do I open before the bell?",
       "th": "ก่อนตลาดเปิด ควรเปิดสัญญาตัวไหน?"
@@ -59,6 +63,8 @@
     "imageSrc": "/images/gonai.jpg",
     "featured": true,
     "order": 1,
+    "type": "build",
+    "outcome": null,
     "question": {
       "en": "One day in Bangkok — what's the real budget?",
       "th": "ไปเที่ยวหนึ่งวัน งบจริงๆ เท่าไหร่?"
@@ -81,6 +87,8 @@
     "imageSrc": "/images/aisecretary.svg",
     "featured": true,
     "order": 2,
+    "type": "build",
+    "outcome": null,
     "question": {
       "en": "How much AI am I actually using?",
       "th": "เดือนนี้ใช้ AI ไปเท่าไหร่กันแน่?"

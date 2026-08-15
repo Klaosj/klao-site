@@ -37,6 +37,12 @@ export type ContentBlock =
   | { type: 'code'; language: string; code: string }
   | { type: 'image'; src: string; caption: string };
 
+// Which pitch-deck chapter a project belongs to (spec 2026-08-15 §2).
+// 'build' is the mapper's default so a Projects database that has never
+// heard of the Type select keeps rendering exactly as before — the same
+// additive-property treatment as CareerEntry.RoleTH / Profile.Clients.
+export type ProjectType = 'business' | 'build';
+
 export interface Project {
   id: string;
   name: string;
@@ -47,6 +53,11 @@ export interface Project {
   imageSrc: string | null;
   featured: boolean;
   order: number;
+  // Pitch deck (spec 2026-08-15): chapter and the one-line receipt.
+  // outcome is null when Notion's OutcomeEN is blank — the line simply
+  // doesn't render, never a placeholder (owner's receipts rule).
+  type: ProjectType;
+  outcome: Localized | null;
   // Wave 1 (spec 2026-08-13): the originating question and the case-study
   // slug. Both null on a project that has no written story yet — a null
   // slug means "no story page", never a placeholder (spec §1 principle 5).

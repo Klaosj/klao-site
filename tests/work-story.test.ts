@@ -37,6 +37,8 @@ const baseProject: Omit<Project, 'id' | 'name' | 'question' | 'slug'> = {
   imageSrc: null,
   featured: true,
   order: 1,
+  type: 'build',
+  outcome: null,
 };
 
 const gonaiStory: ProjectStory = {

@@ -48,6 +48,10 @@ export function mapProject(page: NotionPage): Project | null {
     imageSrc: fileProxy(page, 'Screenshot'),
     featured: check(page.properties.Featured),
     order: num(page.properties.Order),
+    type: selectOf(page.properties.Type) === 'Business' ? 'business' : 'build',
+    outcome: text(page.properties.OutcomeEN)
+      ? localized(text(page.properties.OutcomeEN), text(page.properties.OutcomeTH))
+      : null,
     question: text(page.properties.QuestionEN)
       ? localized(text(page.properties.QuestionEN), text(page.properties.QuestionTH))
       : null,

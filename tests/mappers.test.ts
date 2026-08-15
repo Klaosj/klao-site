@@ -76,6 +76,43 @@ describe('mapProject', () => {
     expect(p?.question).toBeNull();
     expect(p?.slug).toBeNull();
   });
+
+  it('maps Type select Business to type business', () => {
+    const page = { ...projectPage, properties: { ...projectPage.properties, Type: select('Business') } };
+    expect(mapProject(page)!.type).toBe('business');
+  });
+
+  it('defaults type to build when Type is missing, blank, or unrecognised', () => {
+    // Missing entirely (projectPage has no Type property at all):
+    expect(mapProject(projectPage)!.type).toBe('build');
+    // Present but empty:
+    const blank = { ...projectPage, properties: { ...projectPage.properties, Type: select(null) } };
+    expect(mapProject(blank)!.type).toBe('build');
+    // Present but an unknown option — never a dropped row:
+    const junk = { ...projectPage, properties: { ...projectPage.properties, Type: select('Startup') } };
+    expect(mapProject(junk)!.type).toBe('build');
+  });
+
+  it('maps OutcomeEN/TH with th -> en fallback', () => {
+    const page = {
+      ...projectPage,
+      properties: {
+        ...projectPage.properties,
+        OutcomeEN: rich('Validated with 3 paying pilots'),
+        OutcomeTH: rich(''),
+      },
+    };
+    expect(mapProject(page)!.outcome).toEqual({
+      en: 'Validated with 3 paying pilots',
+      th: 'Validated with 3 paying pilots',
+    });
+  });
+
+  it('maps a row without Outcome to null (not dropped)', () => {
+    const p = mapProject(projectPage);
+    expect(p).not.toBeNull();
+    expect(p!.outcome).toBeNull();
+  });
 });
 
 const careerPage = {
