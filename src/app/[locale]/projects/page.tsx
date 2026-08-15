@@ -95,7 +95,11 @@ export default async function ProjectsPage({ params }: { params: Promise<{ local
       {groups.map((g) => (
         <section key={g.label} className="mt-8">
           <h2 className="text-xs uppercase tracking-widest text-soft">{g.label}</h2>
-          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {/* Blog-index shape (owner request 2026-08-15): one row per
+              project, hairline-divided, replacing the old 2/3-column card
+              grid — ProjectCard renders the row (thumbnail + question-led
+              text) and carries its own vertical padding. */}
+          <div className="mt-2 divide-y divide-line">
             {g.items.map((p) => (
               <ProjectCard key={p.id} project={p} locale={locale} />
             ))}

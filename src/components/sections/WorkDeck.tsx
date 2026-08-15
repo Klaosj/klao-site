@@ -34,7 +34,7 @@ export default function WorkDeck({ projects, locale }: { projects: Project[]; lo
           rationale applied since the 2026-08-09 QA finding, and
           smoke.test.tsx pins this exact text on the home page. */}
       <h2 className={`text-[9.5px] uppercase text-on-dark-soft ${eyebrowFont(locale, 'tracking-[0.24em]')}`}>
-        {t.selectedWork}
+        {t.selectedProjects}
       </h2>
       <p className="mt-2 text-[13px] text-on-dark-soft">{t.deckSubtitle}</p>
       {slides.map(({ project, kicker }, i) => {
@@ -131,6 +131,18 @@ export default function WorkDeck({ projects, locale }: { projects: Project[]; lo
           </Reveal>
         );
       })}
+      {/* The deck shows FEATURED projects only (getFeaturedProjects on the
+          home route) — this is the way into the full grouped listing, the
+          blog-style /projects index. Same hit-area idiom (p-2/-m-2,
+          WCAG 2.5.8) as the secondary repo link above. */}
+      <p className="mt-12">
+        <Link
+          href={`/${locale}/projects`}
+          className="inline-flex items-center justify-center p-2 -m-2 text-[13px] font-medium text-peri hover:text-on-dark"
+        >
+          {t.allProjects} →
+        </Link>
+      </p>
     </section>
   );
 }

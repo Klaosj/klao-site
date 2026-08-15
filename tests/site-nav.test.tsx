@@ -77,7 +77,7 @@ describe('SiteNav', () => {
     render(<SiteNav locale="th" profile={profile} />);
     expect(screen.getByText(dict.th.home)).toBeTruthy();
     expect(screen.getByText(dict.th.about)).toBeTruthy();
-    expect(screen.getByText(dict.th.selectedWork)).toBeTruthy();
+    expect(screen.getByText(dict.th.selectedProjects)).toBeTruthy();
     expect(screen.getByText(dict.th.career)).toBeTruthy();
     // The other language's nav labels are entirely absent.
     expect(screen.queryByText(dict.en.home)).toBeNull();

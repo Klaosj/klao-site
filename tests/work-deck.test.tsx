@@ -48,12 +48,30 @@ const business: Project = {
   slug: null,
 };
 
+// The deck always ends with one internal "All projects →" footer link (to
+// /<locale>/projects, added 2026-08-15). The slide-contract tests below
+// care about the anchors a SLIDE renders, so they filter that ever-present
+// footer link out rather than counting it.
+const slideAnchors = (container: HTMLElement) =>
+  Array.from(container.querySelectorAll('a')).filter(
+    (a) => !(a.getAttribute('href') ?? '').endsWith('/projects'),
+  );
+
 describe('WorkDeck', () => {
-  it('keeps the #work anchor and the selectedWork eyebrow heading', () => {
+  it('keeps the #work anchor and the selectedProjects eyebrow heading', () => {
     const { container } = render(<WorkDeck projects={[build]} locale="en" />);
     expect(container.querySelector('section#work')).toBeTruthy();
     const h2 = container.querySelector('h2');
-    expect(h2?.textContent).toBe(dict.en.selectedWork);
+    expect(h2?.textContent).toBe(dict.en.selectedProjects);
+  });
+
+  it('always links to the full projects listing from the deck footer', () => {
+    render(<WorkDeck projects={[build]} locale="en" />);
+    const footer = screen.getByText(`${dict.en.allProjects} →`) as HTMLAnchorElement;
+    expect(footer.tagName).toBe('A');
+    expect(footer.getAttribute('href')).toBe('/en/projects');
+    // Internal route — no new-tab treatment.
+    expect(footer.hasAttribute('target')).toBe(false);
   });
 
   it('renders business slides before build slides regardless of input order, with per-chapter kicker numbering', () => {
@@ -102,7 +120,7 @@ describe('WorkDeck', () => {
   it('links a storied slide to its internal case-study page as ONE link, no external anchors', () => {
     const storied: Project = { ...build, slug: 'gonai' };
     const { container } = render(<WorkDeck projects={[storied]} locale="en" />);
-    const anchors = container.querySelectorAll('a');
+    const anchors = slideAnchors(container);
     expect(anchors).toHaveLength(1);
     expect(anchors[0].getAttribute('href')).toBe('/en/work/gonai');
     expect(anchors[0].hasAttribute('target')).toBe(false);
@@ -112,7 +130,7 @@ describe('WorkDeck', () => {
   it('prefers live over repo on an unstoried slide and recovers the repo as a sibling View code link when both are set', () => {
     const both: Project = { ...build, liveUrl: 'https://live.example', repoUrl: 'https://repo.example' };
     const { container } = render(<WorkDeck projects={[both]} locale="en" />);
-    const anchors = container.querySelectorAll('a');
+    const anchors = slideAnchors(container);
     expect(anchors).toHaveLength(2);
     expect(anchors[0].getAttribute('href')).toBe('https://live.example');
     expect(anchors[0].getAttribute('target')).toBe('_blank');
@@ -125,7 +143,7 @@ describe('WorkDeck', () => {
   it('renders a plain non-link slide when unstoried with neither URL', () => {
     const bare: Project = { ...build, liveUrl: null, repoUrl: null };
     const { container } = render(<WorkDeck projects={[bare]} locale="en" />);
-    expect(container.querySelector('a')).toBeNull();
+    expect(slideAnchors(container)).toHaveLength(0);
     expect(screen.getByText('GoNai')).toBeTruthy();
   });
 
@@ -147,11 +165,11 @@ describe('WorkDeck', () => {
 
   it('renders only the active locale and keeps Thai eyebrow/kicker/stack out of font-mono', () => {
     render(<WorkDeck projects={[build]} locale="th" />);
-    expect(screen.getByText(dict.th.selectedWork)).toBeTruthy();
-    expect(screen.queryByText(dict.en.selectedWork)).toBeNull();
+    expect(screen.getByText(dict.th.selectedProjects)).toBeTruthy();
+    expect(screen.queryByText(dict.en.selectedProjects)).toBeNull();
     expect(screen.getByText(build.description.th)).toBeTruthy();
     expect(screen.queryByText(build.description.en)).toBeNull();
-    const eyebrow = screen.getByText(dict.th.selectedWork);
+    const eyebrow = screen.getByText(dict.th.selectedProjects);
     expect(eyebrow.className).not.toContain('font-mono');
     expect(eyebrow.className).toContain('font-thai');
     const kicker = screen.getByText(`T·01 — ${dict.th.workTypeBuild}`);

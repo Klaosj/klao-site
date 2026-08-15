@@ -215,7 +215,7 @@ export default function SiteNav({ locale, profile }: { locale: Locale; profile: 
   const anchors: { hash: string; label: string }[] = [
     { hash: '#hero', label: t.home },
     { hash: '#about', label: t.about },
-    { hash: '#work', label: t.selectedWork },
+    { hash: '#work', label: t.selectedProjects },
     { hash: '#cv', label: t.career },
   ];
 

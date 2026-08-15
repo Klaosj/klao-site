@@ -2,8 +2,11 @@ import type { Locale } from './models';
 
 const en = {
   // T11: SiteNav's four in-page anchors reuse each section's own eyebrow
-  // label where one already exists (about/selectedWork/career) -- `home`
+  // label where one already exists (about/selectedProjects/career) -- `home`
   // is the one genuinely new label, since Hero has no eyebrow of its own.
+  // (`selectedWork` was that eyebrow's key until the owner renamed the
+  // section "Selected projects" on 2026-08-15; both call sites now share
+  // the pre-existing `selectedProjects` key.)
   home: 'Home',
   projects: 'Projects',
   writing: 'Writing',
@@ -19,11 +22,11 @@ const en = {
   email: 'Email',
   liveSite: 'Live site',
   viewCode: 'View code',
+  readStory: 'Read the story',
   greeting: "Hi, I'm",
   roleLine: 'Business Development · builds his own tools',
   about: 'About',
   howIWork: 'How I work',
-  selectedWork: 'Selected work',
   // Pitch deck (spec 2026-08-15 §5): the two chapter labels and the deck
   // subtitle. Chapter labels also head the /projects listing's two groups.
   workTypeBusiness: 'Business',
@@ -168,7 +171,7 @@ const th: typeof en = {
   writing: 'บทความ',
   career: 'เส้นทางอาชีพ',
   resume: 'เรซูเม่',
-  selectedProjects: 'ผลงานเด่น',
+  selectedProjects: 'โปรเจกต์ที่เลือกมา',
   latestWriting: 'บทความล่าสุด',
   allProjects: 'ผลงานทั้งหมด',
   allPosts: 'บทความทั้งหมด',
@@ -178,11 +181,11 @@ const th: typeof en = {
   email: 'อีเมล',
   liveSite: 'ดูเว็บไซต์',
   viewCode: 'ดูโค้ด',
+  readStory: 'อ่านเรื่องราว',
   greeting: 'สวัสดีครับ ผม',
   roleLine: 'Business Development · สร้างเครื่องมือเอง',
   about: 'เกี่ยวกับ',
   howIWork: 'วิธีทำงานของผม',
-  selectedWork: 'ผลงานที่เลือกมา',
   workTypeBusiness: 'ธุรกิจ',
   workTypeBuild: 'งานสร้างเอง',
   deckSubtitle: 'ธุรกิจมาก่อน — ทุกโปรเจกต์เริ่มจากคำถามที่มันตอบ',
