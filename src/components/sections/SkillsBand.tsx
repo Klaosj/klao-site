@@ -1,5 +1,6 @@
 import MaskedHeading from '@/components/motion/MaskedHeading';
 import Reveal from '@/components/motion/Reveal';
+import SectionLabel from '@/components/SectionLabel';
 import { LEARNING_MARKER_ICON, SKILL_ICONS } from '@/components/sections/skill-icons';
 import { dict } from '@/lib/dictionary';
 import type { Locale, Skill } from '@/lib/models';
@@ -76,9 +77,7 @@ export default function SkillsBand({ skills, locale }: { skills: Skill[]; locale
           eyebrow label ahead of the band's big-head), not ClientsBand's
           (which has no eyebrow of its own since its heading already reads
           as a self-contained statement). */}
-      <p className={`mb-5 text-[9.5px] uppercase text-on-dark-soft ${eyebrowFont(locale, 'tracking-[0.24em]')}`}>
-        {t.toolbox}
-      </p>
+      <SectionLabel text={t.toolbox} locale={locale} className="mb-5" />
       <MaskedHeading
         text={t.toolboxHeading}
         level={2}

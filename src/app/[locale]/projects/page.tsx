@@ -5,6 +5,7 @@ import { assertLocale } from '@/lib/locale';
 import type { Locale } from '@/lib/models';
 import { SITE_URL } from '@/lib/site';
 import ProjectCard from '@/components/ProjectCard';
+import SectionLabel from '@/components/SectionLabel';
 
 // See src/app/[locale]/page.tsx for why this is set per leaf page rather
 // than on the shared layout.
@@ -94,7 +95,7 @@ export default async function ProjectsPage({ params }: { params: Promise<{ local
       <h1 className="font-display text-3xl">{t.projects}</h1>
       {groups.map((g) => (
         <section key={g.label} className="mt-8">
-          <h2 className="text-xs uppercase tracking-widest text-soft">{g.label}</h2>
+          <SectionLabel as="h2" text={g.label} locale={locale} />
           {/* Blog-index shape (owner request 2026-08-15): one row per
               project, hairline-divided, replacing the old 2/3-column card
               grid — ProjectCard renders the row (thumbnail + question-led

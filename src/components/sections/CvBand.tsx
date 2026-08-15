@@ -2,7 +2,7 @@ import Reveal from '@/components/motion/Reveal';
 import { dict } from '@/lib/dictionary';
 import { LOCALES } from '@/lib/models';
 import type { CareerEntry, Locale } from '@/lib/models';
-import { eyebrowFont } from '@/lib/typography';
+import SectionLabel from '@/components/SectionLabel';
 
 // Server component -- no 'use client'. Reveal (T2) is itself a client
 // component but is composed here the same way CraftBand/WorkDeck do it.
@@ -40,9 +40,7 @@ export default function CvBand({
   if (entries.length === 0) {
     return (
       <section id="cv" className="relative z-[2] bg-deep px-6 py-[11vh]">
-        <p className={`mb-5 text-[9.5px] uppercase text-on-dark-soft ${eyebrowFont(locale, 'tracking-[0.24em]')}`}>
-          {t.career}
-        </p>
+        <SectionLabel text={t.career} locale={locale} className="mb-5" />
         <p className="text-[14.5px] text-on-dark-soft">{t.careerUnpublished}</p>
         {resumeLink}
       </section>
@@ -63,9 +61,7 @@ export default function CvBand({
 
   return (
     <section id="cv" className="relative z-[2] bg-deep px-6 py-[11vh]">
-      <p className={`mb-5 text-[9.5px] uppercase text-on-dark-soft ${eyebrowFont(locale, 'tracking-[0.24em]')}`}>
-        {t.career}
-      </p>
+      <SectionLabel text={t.career} locale={locale} className="mb-5" />
       {/* The eyebrow above is a label, not a heading. Without this <h2> the
           whole CV section was invisible to heading navigation -- a screen
           reader jumping by heading skipped straight from Work to Contact

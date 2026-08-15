@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Reveal from '@/components/motion/Reveal';
 import TiltCard from '@/components/motion/TiltCard';
+import SectionLabel from '@/components/SectionLabel';
 import { dict } from '@/lib/dictionary';
 import type { Locale, Project } from '@/lib/models';
 import { eyebrowFont } from '@/lib/typography';
@@ -30,12 +31,10 @@ export default function WorkDeck({ projects, locale }: { projects: Project[]; lo
 
   return (
     <section id="work" className="relative z-[2] bg-dark px-6 py-[11vh]">
-      {/* The eyebrow carries the section's heading role — same WCAG 1.3.1
+      {/* The label carries the section's heading role — same WCAG 1.3.1
           rationale applied since the 2026-08-09 QA finding, and
           smoke.test.tsx pins this exact text on the home page. */}
-      <h2 className={`text-[9.5px] uppercase text-on-dark-soft ${eyebrowFont(locale, 'tracking-[0.24em]')}`}>
-        {t.selectedProjects}
-      </h2>
+      <SectionLabel as="h2" text={t.selectedProjects} locale={locale} />
       <p className="mt-2 text-[13px] text-on-dark-soft">{t.deckSubtitle}</p>
       {slides.map(({ project, kicker }, i) => {
         // Image side alternates on the GLOBAL slide index so the rhythm
