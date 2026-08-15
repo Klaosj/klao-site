@@ -98,7 +98,16 @@ export default async function ProjectsPage({ params }: { params: Promise<{ local
     // route -- this page carries its own reading-width column and top
     // padding to clear the header instead.
     <div className="mx-auto w-full max-w-3xl px-6 pb-16 pt-28">
-      <h1 className="font-display text-3xl">{t.projects}</h1>
+      {/* QA finding 17: a bare 30px h1 made the site's own project index read
+          as a smaller page than the home deck it feeds. Fluid clamp + the
+          display face's tight tracking gives it the same weight class as the
+          other landing surfaces, and the subtitle answers the question every
+          index page owes its reader -- what am I looking at, and how is it
+          organised -- before the first section label. */}
+      <h1 className="font-display text-[clamp(30px,4vw,46px)] font-bold tracking-[-0.03em]">
+        {t.projects}
+      </h1>
+      <p className="mt-3 max-w-[60ch] text-[14.5px] text-soft">{t.projectsSubtitle}</p>
       {groups.map((g) => (
         <section key={g.type} className="mt-8">
           <SectionLabel as="h2" text={g.label} locale={locale} />

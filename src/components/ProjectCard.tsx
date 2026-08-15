@@ -1,27 +1,14 @@
 import Link from 'next/link';
 import { dict } from '@/lib/dictionary';
+import { imageAlt } from '@/lib/image-alt';
 import type { Locale, Project } from '@/lib/models';
 
-// Alt text describing what each real screenshot actually SHOWS -- keyed by
-// the asset path, not built from project.name/description like WorkDeck's
-// `${name} — ${description}` alt on this same pair of images. That format
-// duplicates the row's own visible <h3> name and <p> description right
-// beside the image, so a screen reader announces the same two facts twice
-// (flagged in review). Real intrinsic size for both is 800x450 (verified
-// with `sips -g pixelWidth -g pixelHeight`). Locale-invariant on purpose:
-// these describe the fixed pixels of a static screenshot (which don't
-// re-render per locale), not translated UI copy, so there is no dictionary
-// key to route this through -- see SiteNav/LocaleToggle's aria-label
-// comments for the pattern this deliberately is NOT (inventing inline Thai
-// strings for UI chrome). Falls back to a generic, still non-duplicating
-// description for any project whose image isn't one of these two known
-// fixture assets (e.g. a future Notion-sourced screenshot with no caption).
-const IMAGE_ALT: Record<string, string> = {
-  '/images/gonai.jpg':
-    'A trip recap screen showing 47 baht actually spent against a 450 baht budget, one cafe expense line item, and share and copy-link buttons.',
-  '/images/dailybrief.jpg':
-    'A Notion page showing a Thai-translated daily news digest split into category cards for economy, AI, tech and US stories.',
-};
+// Alt text now comes from the shared @/lib/image-alt map (QA finding 4/27):
+// this component and WorkDeck render the SAME two screenshots, and keeping
+// two copies of the descriptions here let WorkDeck keep its name-duplicating
+// `${name} — ${description}` format long after this file had already fixed
+// it. Real intrinsic size for both assets is 800x450 (verified with
+// `sips -g pixelWidth -g pixelHeight`).
 
 // Blog-row layout (owner request 2026-08-15): /projects reads as a story
 // index, not a card grid -- thumbnail beside a question-led text block,
@@ -37,25 +24,35 @@ export default function ProjectCard({ project, locale }: { project: Project; loc
   const t = dict[locale];
   return (
     <div className="flex flex-col gap-4 py-6 sm:flex-row sm:items-start sm:gap-6">
+      {/* sm:mt-[3px] is optical, not structural (QA finding 26): flush tops
+          LOOK misaligned because the text column starts with the question's
+          cap-height, not its line-box top. Only from sm up, where the two
+          columns actually sit side by side. */}
       {project.imageSrc ? (
         <img
           src={project.imageSrc}
-          alt={IMAGE_ALT[project.imageSrc] ?? `${project.name} interface screenshot`}
+          alt={imageAlt(project.imageSrc)}
           width={800}
           height={450}
           loading="lazy"
           decoding="async"
-          className="aspect-video w-full rounded object-cover sm:w-64 sm:shrink-0"
+          className="aspect-video w-full rounded object-cover sm:mt-[3px] sm:w-64 sm:shrink-0"
         />
       ) : (
-        <div className="aspect-video w-full rounded bg-line sm:w-64 sm:shrink-0" />
+        <div className="aspect-video w-full rounded bg-line sm:mt-[3px] sm:w-64 sm:shrink-0" />
       )}
       <div className="min-w-0">
         {/* Question leads when present -- same question-forward principle as
             the home deck's slides; absent question, the row starts at the
             name. */}
+        {/* No italic in Thai (QA finding 13): Anuphan ships no italic face,
+            so `italic` only gets a synthesised oblique that mangles Thai
+            vowel/tone marks. The peri color already carries the "this is the
+            question" signal on its own, so TH simply drops the slant. */}
         {project.question && (
-          <p className="text-[13px] italic text-peri">{project.question[locale]}</p>
+          <p className={`${locale === 'th' ? '' : 'italic '}text-[13px] text-peri`}>
+            {project.question[locale]}
+          </p>
         )}
         <h3 className="mt-1 font-semibold">{project.name}</h3>
         <p className="mt-1 text-sm text-soft">{project.description[locale]}</p>
@@ -68,25 +65,37 @@ export default function ProjectCard({ project, locale }: { project: Project; loc
             out"): the story CTA is the accented one -- peri outline that
             fills on hover -- while live/repo stay neutral outlines. Real
             padding gives each pill its WCAG 2.5.8 hit area, so the old
-            p-2/-m-2 hack is gone. */}
+            p-2/-m-2 hack is gone.
+
+            Three QA fixes ride on this row. The neutral border is
+            `on-dark-mid`, not `line`: at rgba(...,0.15) `line` is a hairline
+            below 3:1 against the page, so an interactive control was
+            outlined in something WCAG 1.4.11 doesn't count as visible
+            (finding 5) -- `line` stays correct for non-interactive dividers.
+            Every pill uses the house 300ms ease so hover matches the rest of
+            the site instead of Tailwind's 150ms default (finding 14). The
+            arrow is aria-hidden so it isn't announced as "right arrow" after
+            the link text (finding 6). */}
         {project.slug ? (
-          <p className="mt-4 text-xs">
+          <p className="mt-4">
             <Link
               href={`/${locale}/work/${project.slug}`}
-              className="inline-flex items-center rounded-full border border-peri-deep px-4 py-2 font-semibold text-peri transition-colors hover:bg-peri hover:text-dark"
+              className="inline-flex items-center rounded-full border border-peri-deep px-4 py-2 text-[12px] font-semibold text-peri transition-colors duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:bg-peri hover:text-dark"
             >
-              {t.readStory} →
+              {t.readStory} <span aria-hidden="true">→</span>
             </Link>
           </p>
         ) : (
           (project.liveUrl || project.repoUrl) && (
-            <p className="mt-4 flex gap-3 text-xs">
+            // flex-wrap (finding 23): both pills plus their padding overflow
+            // the narrow text column on small screens otherwise.
+            <p className="mt-4 flex flex-wrap gap-3">
               {project.liveUrl && (
                 <a
                   href={project.liveUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center rounded-full border border-line px-4 py-2 font-medium transition-colors hover:border-peri hover:text-peri"
+                  className="inline-flex items-center rounded-full border border-on-dark-mid px-4 py-2 text-[12px] font-medium transition-colors duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:border-peri hover:text-peri"
                 >
                   {t.liveSite}
                 </a>
@@ -96,7 +105,7 @@ export default function ProjectCard({ project, locale }: { project: Project; loc
                   href={project.repoUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center rounded-full border border-line px-4 py-2 font-medium transition-colors hover:border-peri hover:text-peri"
+                  className="inline-flex items-center rounded-full border border-on-dark-mid px-4 py-2 text-[12px] font-medium transition-colors duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:border-peri hover:text-peri"
                 >
                   {t.viewCode}
                 </a>

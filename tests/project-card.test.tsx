@@ -42,6 +42,27 @@ describe('ProjectCard', () => {
     expect(screen.getByText('One day in Bangkok — what is the real budget?')).toBeTruthy();
   });
 
+  // QA finding 13: Anuphan (the TH face) ships no italic, so `italic` on a
+  // Thai string only gets a synthesised oblique that distorts vowel/tone
+  // marks. EN keeps the slant; TH carries the "this is the question" signal
+  // by peri color alone. Pinned per-locale so a future refactor can't
+  // quietly restore one class string for both.
+  it('drops the italic class on the question line for th, keeps it for en', () => {
+    const questioned: Project = {
+      ...base,
+      question: { en: 'What is the real budget?', th: 'งบจริงเท่าไหร่?' },
+    };
+    const { container: thContainer } = render(<ProjectCard project={questioned} locale="th" />);
+    const thQuestion = thContainer.querySelector('p');
+    expect(thQuestion?.textContent).toBe(questioned.question!.th);
+    expect(thQuestion?.className).not.toContain('italic');
+
+    const { container: enContainer } = render(<ProjectCard project={questioned} locale="en" />);
+    const enQuestion = enContainer.querySelector('p');
+    expect(enQuestion?.textContent).toBe(questioned.question!.en);
+    expect(enQuestion?.className).toContain('italic');
+  });
+
   it('renders one internal Read-the-story link for a storied row, and no external links even when URLs are set', () => {
     const storied: Project = {
       ...base,

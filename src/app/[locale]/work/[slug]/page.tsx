@@ -7,8 +7,8 @@ import { assertLocale } from '@/lib/locale';
 import { LOCALES, type Locale } from '@/lib/models';
 import { deriveBodyDescription } from '@/lib/post-description';
 import { SITE_URL } from '@/lib/site';
-import { eyebrowFont } from '@/lib/typography';
 import PostBody from '@/components/PostBody';
+import SectionLabel from '@/components/SectionLabel';
 
 // Case-study-specific fallback pair for deriveBodyDescription (wave 1 task
 // 3 lifted the body-summarizing logic out of derivePostDescription for
@@ -132,55 +132,70 @@ export default async function WorkStoryPage({
   const story = await getProjectStory(slug);
   if (!story || (story.body.en.length === 0 && story.body.th.length === 0)) notFound();
   const body = story.body[locale].length ? story.body[locale] : story.body.en;
+  // Both halves of the receipts footer are independently optional, so the
+  // pill row has to own the gap to the body whenever the stack line above it
+  // didn't render -- otherwise a business story's pills sat 12px under the
+  // last paragraph instead of the section's own mt-10.
+  const showStack = story.type === 'build' && story.stack.length > 0;
+  const showLinks = Boolean(story.liveUrl || story.repoUrl);
   return (
     // See projects/page.tsx and layout.tsx for why this page owns its own
     // reading-width column and top padding now.
     <article className="mx-auto w-full max-w-3xl px-6 pb-16 pt-28">
       <p className="text-sm">
+        {/* aria-hidden arrow (QA finding 18): the link's accessible name is
+            just "Back", not "left arrow Back". */}
         <Link href={`/${locale}#work`} className="text-soft hover:text-ink">
-          ← {dict[locale].back}
+          <span aria-hidden="true">←</span> {dict[locale].back}
         </Link>
       </p>
-      <p className={`mt-4 text-[9.5px] uppercase text-soft ${eyebrowFont(locale, 'tracking-[0.24em]')}`}>
-        {story.name}
-      </p>
+      {/* The project-name eyebrow is the same marked section break every
+          band uses (QA finding 11) -- it was still the pre-2026-08-15 9.5px
+          on-dark-soft whisper, the one size SectionLabel was created to
+          retire, so this page's own label was the last unpromoted one.
+          Stays a <p>: the h1 below is this page's heading. */}
+      <SectionLabel text={story.name} locale={locale} className="mt-4" />
       <h1 className="mt-2 font-display text-3xl">{story.question?.[locale] ?? story.name}</h1>
       <div className="mt-8">
         <PostBody blocks={body} />
       </div>
-      {/* Receipts footer: stack plus live/repo links, rendered exactly like
-          ProjectCard's own link row (same classes, same gating on each URL
-          existing) so a case study and its listing card look consistent. */}
-      <p className="mt-10 flex flex-wrap items-center gap-4 text-xs text-soft">
-        {/* Type-gated: a business story never shows a stack, even if its
-            Notion row still carries Stack values -- same invariant
-            ProjectCard and WorkDeck enforce. Also gated on length because
-            an empty <span> is still a flex item — it would paint a stray
-            gap-4 before the first link. */}
-        {story.type === 'build' && story.stack.length > 0 && (
-          <span>{story.stack.join(' · ')}</span>
-        )}
-        {story.liveUrl && (
-          <a
-            href={story.liveUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center rounded-full border border-line px-4 py-2 font-medium transition-colors hover:border-peri hover:text-peri"
-          >
-            {dict[locale].liveSite}
-          </a>
-        )}
-        {story.repoUrl && (
-          <a
-            href={story.repoUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center rounded-full border border-line px-4 py-2 font-medium transition-colors hover:border-peri hover:text-peri"
-          >
-            {dict[locale].viewCode}
-          </a>
-        )}
-      </p>
+      {/* Receipts footer (QA finding 25): the stack is a caption, not a
+          button, so it gets its own line ABOVE the pills instead of sitting
+          inside the same flex row where it read as a third, unstyled
+          control. Type-gated exactly as before: a business story never shows
+          a stack, even if its Notion row still carries Stack values -- the
+          same invariant ProjectCard and WorkDeck enforce -- and the length
+          gate keeps an empty <p> from rendering. */}
+      {showStack && <p className="mt-10 text-xs text-soft">{story.stack.join(' · ')}</p>}
+      {/* Live site is the promoted action here (finding 25): on a case-study
+          page the reader has just finished the story, so "go see the thing"
+          outranks "read the source". Pills share ProjectCard's spec --
+          on-dark-mid border (finding 5) and the house 300ms ease
+          (finding 14). */}
+      {showLinks && (
+        <p className={`${showStack ? 'mt-3' : 'mt-10'} flex flex-wrap gap-3`}>
+          {story.liveUrl && (
+            <a
+              href={story.liveUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center rounded-full border border-peri-deep px-4 py-2 text-[12px] font-semibold text-peri transition-colors duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:bg-peri hover:text-dark"
+            >
+              {dict[locale].liveSite}
+            </a>
+          )}
+          {story.repoUrl && (
+            <a
+              href={story.repoUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center rounded-full border border-on-dark-mid px-4 py-2 text-[12px] font-medium transition-colors duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:border-peri hover:text-peri"
+            >
+              {dict[locale].viewCode}
+            </a>
+          )}
+        </p>
+      )}
     </article>
   );
 }
