@@ -51,6 +51,9 @@ Each database also needs a **Published** checkbox property, except Profile
 | Screenshot | Files & media | |
 | Featured | Checkbox | |
 | Order | Number | |
+| Type | Select: `Business` / `Build` | |
+| OutcomeEN | Text | |
+| OutcomeTH | Text | |
 | QuestionEN | Text | |
 | QuestionTH | Text | |
 | Slug | Text | |
@@ -58,6 +61,16 @@ Each database also needs a **Published** checkbox property, except Profile
 
 `Featured` controls which 3 projects show on the home page. `Order` controls
 display order everywhere (lower first).
+
+`Type` decides which pitch-deck chapter the project appears in on the home
+page (and which group on /projects): `Business` rows lead, `Build` rows
+follow. **A blank or unrecognised Type renders as Build** — existing rows
+keep working untouched until you tag them.
+
+`OutcomeEN`/`OutcomeTH` are the one-line receipt shown on the project's
+slide ("Validated with 3 paying pilots"). Only real, checkable results —
+leave blank until you have the number, and the line simply won't render.
+Never write a placeholder here.
 
 `QuestionEN` and `QuestionTH` are the bilingual case-study question (e.g.
 "One day in Bangkok — what's the real budget?"). A project's
