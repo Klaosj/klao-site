@@ -296,13 +296,21 @@ describe('WorkDeck', () => {
   it('sizes the deck micro-labels a step up on Thai (EN baseline for comparison)', () => {
     // Finding 12: Thai marks live outside the x-height, so 10px collapses
     // into a smudge. Same helper family switch as before, plus a size bump.
+    // 2026-08-17: the chapter WORD is no longer a micro-label — it is the
+    // chapter opener in the display face at heading size (Klao: at eyebrow
+    // size "Business/Build" was indistinguishable from the B·01 kickers).
+    // The micro-label that still steps up on Thai is the slide COUNT that
+    // sits beside the word.
     const en = render(<WorkDeck projects={[build]} locale="en" />);
     expect(screen.getByText('T·01').className).toContain('text-[10px]');
-    expect(screen.getByText(dict.en.workTypeBuild).className).toContain('text-[11px]');
+    expect(screen.getByText(dict.en.workTypeBuild).className).toContain('font-display');
+    expect(screen.getByText(dict.en.workTypeBuild).className).toContain('text-[clamp(22px,2.6vw,30px)]');
+    expect(screen.getByText('01').className).toContain('text-[11px]');
     en.unmount();
     render(<WorkDeck projects={[build]} locale="th" />);
     expect(screen.getByText('T·01').className).toContain('text-[11px]');
-    expect(screen.getByText(dict.th.workTypeBuild).className).toContain('text-[12px]');
+    expect(screen.getByText(dict.th.workTypeBuild).className).toContain('font-display');
+    expect(screen.getByText('01').className).toContain('text-[12px]');
   });
 
   it('renders only the active locale and keeps the Thai eyebrow/chapter marker/stack out of font-mono', () => {
@@ -314,11 +322,16 @@ describe('WorkDeck', () => {
     const eyebrow = screen.getByText(dict.th.selectedProjects);
     expect(eyebrow.className).not.toContain('font-mono');
     expect(eyebrow.className).toContain('font-thai');
-    // The kicker is Latin-only now, so the chapter marker is the deck's
-    // Thai micro-label — it is the one that must never hit font-mono.
+    // The chapter word is a display-face heading now; `font-display`
+    // resolves to the Thai stack under :lang(th) (globals.css), so what
+    // must hold is: never font-mono, and it IS the display face.
     const marker = screen.getByText(dict.th.workTypeBuild);
     expect(marker.className).not.toContain('font-mono');
-    expect(marker.className).toContain('font-thai');
+    expect(marker.className).toContain('font-display');
+    // The slide count beside it is the deck's remaining Thai micro-label.
+    const count = screen.getByText('01');
+    expect(count.className).not.toContain('font-mono');
+    expect(count.className).toContain('font-thai');
     const stackLine = screen.getByText('Next.js · Supabase');
     expect(stackLine.className).not.toContain('font-mono');
     expect(stackLine.className).toContain('font-thai');
