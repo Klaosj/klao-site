@@ -37,7 +37,7 @@
       "en": [
         "Met the store’s THB 1.1M monthly sales target as the normal standard, while keeping the whole team’s numbers steady.",
         "Key person running the store on shift — floor process, service standards, escalations, and coaching junior staff on how to close.",
-        "Used store data (9.7K daily visitors, 99.7 daily transactions, THB 3.42K average basket) to plan floor tactics, staffing and peak-hour cover."
+        "Used store data (9.7K daily visitors, 99.7 avg daily transactions, THB 3.42K average basket) to plan floor tactics, staffing and peak-hour cover."
       ],
       "th": [
         "ทำยอดขายถึงเป้าร้าน 1.1 ล้านบาทต่อเดือนเป็นมาตรฐานปกติ พร้อมคุมตัวเลขของทั้งทีมให้นิ่ง",
@@ -94,8 +94,8 @@
   {
     "id": "fx-abundance",
     "role": {
-      "en": "Founder & Commercial Lead",
-      "th": "ผู้ก่อตั้งและดูแลด้านธุรกิจ"
+      "en": "Founder",
+      "th": "ผู้ก่อตั้ง"
     },
     "company": "A Bun Dance (Craft Burger)",
     "period": "MAY 2021 – DEC 2022",
