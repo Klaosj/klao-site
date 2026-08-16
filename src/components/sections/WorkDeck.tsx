@@ -96,13 +96,26 @@ export default function WorkDeck({ projects, locale }: { projects: Project[]; lo
       <div className="mt-10">
         {chapters.map((chapter, ci) => (
           <div key={chapter.key}>
-            <p
-              className={`${markerSize} uppercase text-peri-deep ${eyebrowFont(locale, 'tracking-[0.22em]')} ${
-                ci > 0 ? 'mt-16' : ''
-              }`.trim()}
-            >
-              {chapter.label}
-            </p>
+            {/* Chapter opener. Klao 2026-08-17: at eyebrow size the chapter
+                word was indistinguishable from the B·01 kickers beneath it,
+                so a reader scrolling the deck saw only letters. It is now a
+                real divider — peri rule, then the word in the display face at
+                heading weight, then the slide count in the eyebrow style — so
+                "Business" and "Build" read as the two halves of the deck. The
+                word itself is still spelled exactly once per chapter
+                (finding 24 holds; tests pin it). */}
+            <div className={`flex items-baseline gap-4 ${ci > 0 ? 'mt-20' : ''}`.trim()}>
+              <span aria-hidden="true" className="h-px w-10 shrink-0 translate-y-[-0.35em] bg-peri-deep" />
+              <p className="font-display text-[clamp(22px,2.6vw,30px)] font-semibold leading-none tracking-[-0.01em] text-peri-deep">
+                {chapter.label}
+              </p>
+              <p
+                aria-hidden="true"
+                className={`${markerSize} uppercase text-peri-deep/70 ${eyebrowFont(locale, 'tracking-[0.22em]')}`}
+              >
+                {String(chapter.slides.length).padStart(2, '0')}
+              </p>
+            </div>
             {chapter.slides.map(({ project, kicker }, i) => {
               // Image side alternates on the GLOBAL slide index so the
               // rhythm carries across the chapter boundary. Text stays
