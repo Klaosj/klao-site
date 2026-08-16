@@ -1,5 +1,53 @@
 [
   {
+    "id": "fx-talatify",
+    "name": "Talatify",
+    "description": {
+      "en": "Fresh-market delivery platform: local wet-market vendors sell online and deliver straight to restaurants and cafés. Co-founder; pitched at the TEP startup screening round, 2025.",
+      "th": "แพลตฟอร์มส่งของสดจากตลาด: พ่อค้าแม่ค้าตลาดสดขายออนไลน์และส่งตรงถึงร้านอาหารและคาเฟ่ เป็น Co-founder นำเสนอในรอบคัดเลือก TEP startup ปี 2025"
+    },
+    "stack": [],
+    "liveUrl": null,
+    "repoUrl": null,
+    "imageSrc": null,
+    "featured": true,
+    "order": 1,
+    "type": "business",
+    "outcome": {
+      "en": "Market sized (TAM–SAM–SOM, SOM THB 37M) · 5 revenue streams · first-year financial plan · clickable prototype",
+      "th": "ขนาดตลาด TAM–SAM–SOM (SOM 37 ล้านบาท) · 5 ช่องทางรายได้ · แผนการเงินปีแรก · prototype กดได้จริง"
+    },
+    "question": {
+      "en": "Can a restaurant get wet-market fresh produce without the morning market run?",
+      "th": "ร้านอาหารจะได้ของสดจากตลาด โดยไม่ต้องไปจ่ายตลาดเองตอนเช้า ได้ไหม?"
+    },
+    "slug": null
+  },
+  {
+    "id": "fx-tripedia",
+    "name": "Tripedia",
+    "description": {
+      "en": "Travel-tech startup idea: one platform that plans the whole trip in one place. Co-founder at KATALYST Startup Launchpad 2022 — the idea GoNai was later built from.",
+      "th": "ไอเดียสตาร์ทอัพท่องเที่ยว: แพลตฟอร์มเดียวที่วางแผนทั้งทริปจบในที่เดียว เป็น Co-founder ใน KATALYST Startup Launchpad 2022 — คือไอเดียต้นทางที่ GoNai ถูกสร้างขึ้นจริงในภายหลัง"
+    },
+    "stack": [],
+    "liveUrl": null,
+    "repoUrl": null,
+    "imageSrc": null,
+    "featured": true,
+    "order": 2,
+    "type": "business",
+    "outcome": {
+      "en": "Final 30 of 500 teams · market sized (TAM–SAM–SOM) · subscription + partner-margin revenue model",
+      "th": "เข้ารอบ 30 ทีมสุดท้ายจาก 500 ทีม · ขนาดตลาด TAM–SAM–SOM · โมเดลรายได้ subscription + ส่วนแบ่งจากพาร์ตเนอร์"
+    },
+    "question": {
+      "en": "Why does planning one trip take five apps?",
+      "th": "ทำไมวางแผนทริปเดียวต้องใช้ตั้งห้าแอป?"
+    },
+    "slug": null
+  },
+  {
     "id": "fx-dailybrief",
     "name": "DailyBrief",
     "description": {
@@ -14,7 +62,7 @@
     "repoUrl": null,
     "imageSrc": "/images/dailybrief.jpg",
     "featured": true,
-    "order": 3,
+    "order": 5,
     "type": "build",
     "outcome": null,
     "question": {
@@ -38,7 +86,7 @@
     "repoUrl": null,
     "imageSrc": "/images/tickerdesk.svg",
     "featured": true,
-    "order": 4,
+    "order": 6,
     "type": "build",
     "outcome": null,
     "question": {
@@ -58,11 +106,11 @@
       "Next.js",
       "Supabase"
     ],
-    "liveUrl": null,
+    "liveUrl": "https://gonai-three.vercel.app",
     "repoUrl": null,
     "imageSrc": "/images/gonai.jpg",
     "featured": true,
-    "order": 1,
+    "order": 3,
     "type": "build",
     "outcome": null,
     "question": {
@@ -86,7 +134,7 @@
     "repoUrl": null,
     "imageSrc": "/images/aisecretary.svg",
     "featured": true,
-    "order": 2,
+    "order": 4,
     "type": "build",
     "outcome": null,
     "question": {
