@@ -1,0 +1,131 @@
+/* ProjectTour (spec 2026-09-10 §4). Grid areas `list` and `stage` are assigned
+   by .hero-layout in globals.css; this file styles the two halves. */
+.tour-list-wrap { grid-area: list; }
+.tour-label {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-peri);
+  margin-bottom: 10px;
+}
+:lang(th) .tour-label { font-family: var(--font-thai); letter-spacing: 0; text-transform: none; font-size: 12px; }
+.tour-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--color-line);
+}
+.tour-list > li > button {
+  position: relative;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  column-gap: 12px;
+  align-items: baseline;
+  padding: 11px 8px;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--color-line);
+  border-radius: 0;
+  text-align: left;
+  font: inherit;
+  color: var(--color-soft);
+  cursor: pointer;
+}
+.tour-list > li > button:hover { color: var(--color-ink); }
+.tour-list small {
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--color-peri);
+}
+.tour-list span { font-weight: 600; color: var(--color-ink); }
+.tour-list em {
+  grid-column: 2;
+  margin-top: 3px;
+  font-style: normal;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-soft);
+}
+.tour-list [aria-selected='true'] { color: var(--color-ink); }
+.tour-bar {
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  height: 2px;
+  width: 100%;
+  background: var(--color-peri);
+  transform-origin: left;
+  transform: scaleX(0);
+  animation: tour-fill var(--tour-ms, 7000ms) linear forwards;
+}
+[data-tour-playing='false'] .tour-bar { animation-play-state: paused; }
+@keyframes tour-fill { to { transform: scaleX(1); } }
+
+.tour-stage {
+  grid-area: stage;
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+.tour-stage .pframe { box-shadow: 0 30px 80px -30px rgba(32, 51, 45, 0.35); }
+.tour-enter { animation: tour-in 0.45s cubic-bezier(0.16, 1, 0.3, 1); }
+@keyframes tour-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.tour-caption {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 14px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--color-soft);
+}
+.tour-kicker {
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-peri);
+}
+:lang(th) .tour-kicker { font-family: var(--font-thai); letter-spacing: 0; text-transform: none; font-size: 12px; }
+.tour-line { flex: 1 1 24ch; min-width: 0; }
+.tour-caption a { color: var(--color-peri); font-weight: 600; text-decoration: none; white-space: nowrap; }
+.tour-caption a:hover { text-decoration: underline; text-underline-offset: 4px; }
+.tour-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--color-soft);
+}
+.tour-controls button {
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid #b6c5bc;
+  border-radius: 999px;
+  background: var(--color-light);
+  color: var(--color-ink);
+  font: inherit;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+.tour-controls button:hover { border-color: var(--color-peri); color: var(--color-peri); }
+.tour-controls .tour-toggle { font-size: 12px; }
+.tour-controls .tour-toggle[aria-pressed='true'] { border-color: var(--color-peri); color: var(--color-peri); }
+.tour-count {
+  min-width: 44px;
+  text-align: center;
+  font-family: var(--font-display);
+  letter-spacing: 0.06em;
+}
+.tour-still { margin-left: 4px; }
