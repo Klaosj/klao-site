@@ -107,10 +107,17 @@
   min-width: 0;
 }
 .tour-stage .pframe { box-shadow: 0 30px 80px -30px rgba(0, 0, 0, 0.65); }
+/* 450ms fade/rise on slide change (house curve). globals.css's own
+   reduced-motion block enumerates specific selectors and has no catch-all,
+   so it never reaches a class added after it was written -- THIS file zeroes
+   the animation for `.tour-enter` below, not that one. */
 .tour-enter { animation: tour-in 0.45s cubic-bezier(0.16, 1, 0.3, 1); }
 @keyframes tour-in {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tour-enter { animation: none; }
 }
 .tour-caption {
   display: flex;

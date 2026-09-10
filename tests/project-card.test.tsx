@@ -93,4 +93,14 @@ describe('ProjectCard', () => {
     const paragraphs = Array.from(container.querySelectorAll('p'));
     expect(paragraphs.some((p) => p.textContent === '')).toBe(false);
   });
+
+  it('renders the thumbnail inside the shared window frame, cover when no screenshot', () => {
+    const { container } = render(<ProjectCard project={base} locale="en" />);
+    expect(container.querySelector('[data-project-frame] [data-cover]')?.textContent).toBe('G');
+    cleanup();
+    const shot = render(<ProjectCard project={{ ...base, imageSrc: '/images/gonai.jpg' }} locale="en" />);
+    const img = shot.container.querySelector('[data-project-frame] img') as HTMLImageElement;
+    expect(img.getAttribute('width')).toBe('800');
+    expect(img.getAttribute('loading')).toBe('lazy');
+  });
 });

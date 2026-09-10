@@ -264,7 +264,7 @@ describe('WorkDeck', () => {
     // reader announce both facts twice, since both are visible text right
     // beside the image. The alt now comes from the shared map.
     const alt = img.getAttribute('alt') ?? '';
-    expect(alt).toBe(imageAlt(build.imageSrc as string));
+    expect(alt).toBe(imageAlt(build.imageSrc as string, build.name));
     expect(alt).not.toContain(build.name);
     expect(alt).not.toContain(build.description.en);
   });

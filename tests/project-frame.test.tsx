@@ -32,7 +32,7 @@ describe('ProjectFrame', () => {
     expect(img.getAttribute('height')).toBe('450');
     expect(img.getAttribute('loading')).toBe('lazy');
     expect(img.getAttribute('decoding')).toBe('async');
-    expect(img.getAttribute('alt')).toBe(imageAlt(base.imageSrc as string));
+    expect(img.getAttribute('alt')).toBe(imageAlt(base.imageSrc as string, base.name));
     expect(img.getAttribute('alt')).not.toContain('GoNai');
   });
 

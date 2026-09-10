@@ -26,4 +26,14 @@ describe('image alt map', () => {
   it('still falls back to the generic sentence for Notion-served images', () => {
     expect(imageAlt('/api/img/page/abc/Screenshot')).toBe('Screenshot of the project interface.');
   });
+
+  it('reaches the curated sentence for a Notion-served image via the project name', () => {
+    expect(imageAlt('/api/img/page/abc/Screenshot', 'GoNai')).toBe(IMAGE_ALT['/images/gonai.jpg']);
+  });
+
+  it('falls back to the generic sentence for a project with no curated description', () => {
+    expect(imageAlt('/api/img/page/abc/Screenshot', 'Some New Project')).toBe(
+      'Screenshot of the project interface.',
+    );
+  });
 });

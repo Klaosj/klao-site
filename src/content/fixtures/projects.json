@@ -84,7 +84,7 @@
     ],
     "liveUrl": null,
     "repoUrl": null,
-    "imageSrc": "/images/tickerdesk.svg",
+    "imageSrc": null,
     "featured": true,
     "order": 8,
     "type": "build",

@@ -21,7 +21,7 @@ export default function ProjectTour({ projects, locale }: { projects: Project[];
 
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false); // the visitor pressed pause
-  const [hovering, setHovering] = useState(false); // pointer or focus inside the stage
+  const [hovering, setHovering] = useState(false); // pointer or focus inside the band (tab list or stage), not just the stage
   const [reduced, setReduced] = useState(false);
   const [inView, setInView] = useState(true);
   const [pageVisible, setPageVisible] = useState(true);
@@ -56,6 +56,16 @@ export default function ProjectTour({ projects, locale }: { projects: Project[];
   }, []);
 
   const playing = count > 1 && !reduced && !paused && !hovering && inView && pageVisible;
+
+  // Shared across .tour-list-wrap and .tour-stage so pointer/focus inside
+  // EITHER half of the band holds playback still (not just the stage) — one
+  // object so the two elements cannot drift apart.
+  const holdHandlers = {
+    onMouseEnter: () => setHovering(true),
+    onMouseLeave: () => setHovering(false),
+    onFocus: () => setHovering(true),
+    onBlur: () => setHovering(false),
+  };
 
   // One timeout per slide, re-armed whenever the slide or the playing state
   // changes. Autoplay never announces (spec §4) — only visitor actions do.
@@ -99,7 +109,7 @@ export default function ProjectTour({ projects, locale }: { projects: Project[];
 
   return (
     <>
-      <div className="tour-list-wrap" data-tour-playing={playing ? 'true' : 'false'}>
+      <div className="tour-list-wrap" data-tour-playing={playing ? 'true' : 'false'} {...holdHandlers}>
         {/* The band's real heading. TourBand wraps this component in a
             <section> with no heading of its own, so the label carries the
             section break — styled like SectionLabel (peri rule + 12px) in
@@ -125,7 +135,19 @@ export default function ProjectTour({ projects, locale }: { projects: Project[];
                   <small>{String(i + 1).padStart(2, '0')}</small>
                   <span>{p.name}</span>
                   {active && p.question && <em>{p.question[locale]}</em>}
-                  {active && <i className="tour-bar" aria-hidden="true" style={{ ['--tour-ms' as string]: `${TOUR_MS}ms` }} />}
+                  {active && (
+                    <i
+                      // Remounted whenever playback restarts (index or playing
+                      // changes) so the CSS fill animation always measures the
+                      // timeout that is actually running -- otherwise a pause
+                      // mid-fill leaves the bar full while the re-armed JS
+                      // timer still has most of TOUR_MS left to run.
+                      key={`${safe}-${playing}`}
+                      className="tour-bar"
+                      aria-hidden="true"
+                      style={{ ['--tour-ms' as string]: `${TOUR_MS}ms` }}
+                    />
+                  )}
                 </button>
               </li>
             );
@@ -139,16 +161,15 @@ export default function ProjectTour({ projects, locale }: { projects: Project[];
         role="tabpanel"
         id={panelId}
         aria-labelledby={tabId(safe)}
-        onMouseEnter={() => setHovering(true)}
-        onMouseLeave={() => setHovering(false)}
-        onFocus={() => setHovering(true)}
-        onBlur={() => setHovering(false)}
+        {...holdHandlers}
       >
         {/* key swap = the only image in the DOM is the active one; the class
             fades/rises it in (450 ms, house curve; zeroed under reduced
-            motion by the global rule). */}
+            motion by project-tour.css's own rule, not the global one --
+            globals.css's reduced-motion block lists selectors one by one and
+            does not cover new classes). */}
         <div key={current.id} className="tour-enter">
-          <ProjectFrame project={current} title={windowTitle(current)} priority={safe === 0} />
+          <ProjectFrame project={current} title={windowTitle(current)} />
         </div>
         <div className="tour-caption">
           <span className="tour-kicker">{kicker}</span>

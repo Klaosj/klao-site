@@ -31,7 +31,7 @@ export default function ProjectFrame({ project, title, priority = false, classNa
         {project.imageSrc ? (
           <img
             src={project.imageSrc}
-            alt={imageAlt(project.imageSrc)}
+            alt={imageAlt(project.imageSrc, project.name)}
             width={800}
             height={450}
             loading={priority ? 'eager' : 'lazy'}

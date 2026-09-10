@@ -52,7 +52,7 @@ describe('ProjectTour', () => {
     expect(items[0].getAttribute('aria-selected')).toBe('true');
     expect(items[1].getAttribute('aria-selected')).toBe('false');
     expect(stageImg(container).getAttribute('src')).toBe(gonai.imageSrc);
-    expect(stageImg(container).getAttribute('alt')).toBe(imageAlt(gonai.imageSrc as string));
+    expect(stageImg(container).getAttribute('alt')).toBe(imageAlt(gonai.imageSrc as string, gonai.name));
     // Only the active tab shows its question and progress bar.
     expect(items[0].querySelector('em')?.textContent).toBe('Why GoNai?');
     expect(items[1].querySelector('em')).toBeNull();
@@ -60,9 +60,13 @@ describe('ProjectTour', () => {
     expect(items[1].querySelector('.tour-bar')).toBeNull();
   });
 
-  it('loads the first slide eagerly and later slides lazily', () => {
+  it('loads every slide lazily -- the band sits below a 130vh hero, off-screen on load', () => {
+    // No `priority` prop reaches ProjectFrame from here any more: that was an
+    // LCP argument from when the tour lived inside the hero, and it now only
+    // competes with the real LCP image for a slide that is guaranteed
+    // off-screen on first paint.
     const { container } = render(<ProjectTour projects={three} locale="en" />);
-    expect(stageImg(container).getAttribute('loading')).toBe('eager');
+    expect(stageImg(container).getAttribute('loading')).toBe('lazy');
     fireEvent.click(screen.getAllByRole('tab')[1]);
     expect(stageImg(container).getAttribute('loading')).toBe('lazy');
   });
@@ -106,6 +110,18 @@ describe('ProjectTour', () => {
     tick(TOUR_MS * 2);
     expect(stageImg(container).getAttribute('src')).toBe(gonai.imageSrc);
     fireEvent.mouseLeave(stage);
+    tick(TOUR_MS);
+    expect(stageImg(container).getAttribute('src')).toBe(secretary.imageSrc);
+  });
+
+  it('also holds still while the pointer is over the tab list', () => {
+    vi.useFakeTimers();
+    const { container } = render(<ProjectTour projects={three} locale="en" />);
+    const list = container.querySelector('.tour-list-wrap') as HTMLElement;
+    fireEvent.mouseEnter(list);
+    tick(TOUR_MS * 2);
+    expect(stageImg(container).getAttribute('src')).toBe(gonai.imageSrc);
+    fireEvent.mouseLeave(list);
     tick(TOUR_MS);
     expect(stageImg(container).getAttribute('src')).toBe(secretary.imageSrc);
   });
