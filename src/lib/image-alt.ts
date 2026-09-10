@@ -14,7 +14,7 @@ export const IMAGE_ALT: Record<string, string> = {
   '/images/aje.jpg':
     'A dark blue idea-review screen with a four-step tracker (Describe, Review, Test, Learn) at "Level 2 of 9", a Thai-language business idea with three side-by-side panels for the idea, its biggest uncertainty and the next test to run, a bulleted list of ways the idea could fail, and a bottom tab bar for ideas, review, frameworks and forecast.',
   '/images/aisecretary.jpg':
-    'A floating dark quota panel titled "Aqua Quota" with tabs for six AI tools, a large countdown timer until the next reset, a blue progress bar at 28% of peak usage, a red cost bar reading $1,246 of a $25 cap and "100% over cap", and a bottom row of stats for requests, tokens, cache rate and dollar value.',
+    'A floating dark quota panel titled "Aqua Quota" with tabs for six AI tools, a large countdown timer until the next reset, a blue progress bar at 28% of peak usage, an amber cost bar reading $1,246 of a $25 cap and "100% over cap", and a bottom row of stats for requests, tokens, cache rate and dollar value.',
   '/images/klao-site.jpg':
     'A dark portfolio homepage hero with a circular profile photo, a bold headline reading "Business developer who builds his own tools", a location and skills subheading, a "Start a conversation" button next to an email address, and floating tag pills reading Business Development, Builds the systems too, and Bangkok.',
   '/images/tickerdesk.svg':

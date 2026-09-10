@@ -141,7 +141,7 @@
 }
 /* on-dark-mid composites to ~2.4:1 over this band's `deep` background — below
    WCAG 1.4.11's 3:1 for interactive controls — so these buttons use the
-   opaque peri-deep token (~5.7:1) instead. */
+   opaque peri-deep token (5.3:1 over deep) instead. */
 .tour-controls button {
   min-width: 36px;
   min-height: 36px;
