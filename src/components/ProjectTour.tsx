@@ -10,10 +10,10 @@ import { TOUR_MS, tourProjects, windowTitle } from '@/lib/project-tour';
 
 // The hero tour (spec 2026-09-10 §4): a vertical tablist of the projects that
 // have a real screenshot, and one stage that shows the active one inside a
-// window frame. Returns a Fragment of TWO siblings on purpose — Hero's grid
-// places `.tour-list-wrap` under the copy (area "list") and `.tour-stage` in
-// the right column (area "stage"); state has to live in one component, so
-// this one owns both halves.
+// window frame. Returns a Fragment of TWO siblings on purpose — TourBand's
+// `.tour-band` grid places `.tour-list-wrap` in area "list" and `.tour-stage`
+// in area "stage"; state has to live in one component, so this one owns both
+// halves.
 export default function ProjectTour({ projects, locale }: { projects: Project[]; locale: Locale }) {
   const t = dict[locale];
   const items = tourProjects(projects);

@@ -1,5 +1,5 @@
-/* ProjectTour (spec 2026-09-10 §4). Grid areas `list` and `stage` are assigned
-   by .hero-layout in globals.css; this file styles the two halves. */
+/* ProjectTour (spec 2026-09-10 §4). Grid areas `list` and `stage` are defined
+   by `.tour-band` below in this file; the two halves claim them further down. */
 
 /* The band's two-column grid. The area names are the ones ProjectTour's two
    halves already claim (`grid-area: list` / `grid-area: stage` below), so the
@@ -139,11 +139,14 @@
   font-size: 12px;
   color: var(--color-on-dark-soft);
 }
+/* on-dark-mid composites to ~2.4:1 over this band's `deep` background — below
+   WCAG 1.4.11's 3:1 for interactive controls — so these buttons use the
+   opaque peri-deep token (~5.7:1) instead. */
 .tour-controls button {
   min-width: 36px;
   min-height: 36px;
   padding: 0 10px;
-  border: 1px solid var(--color-on-dark-mid);
+  border: 1px solid var(--color-peri-deep);
   border-radius: 999px;
   background: transparent;
   color: var(--color-on-dark);
