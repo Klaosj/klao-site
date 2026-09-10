@@ -19,6 +19,23 @@ See [`docs/NOTION_SETUP.md`](docs/NOTION_SETUP.md) — one-time setup, about 15
 minutes. Until you do this, the site shows sample content instead of yours;
 nothing is broken in the meantime.
 
+## Screenshots (project images)
+
+Each project's image comes from the `Screenshot` files property on its row in the Notion
+**Projects** database. The site serves it through `/api/img/page/<row-id>/Screenshot`, so
+replacing the file in Notion changes the live site within the hour — no deploy.
+
+- **Size:** 16:9, ideally 1600×900 JPEG at quality ~80 (≤ 300 KB). The frame crops from the
+  bottom (`object-position: top`), so keep the app's header in shot.
+- **Home-page tour:** every featured project that has a screenshot appears in the `#tour`
+  band, ordered by `Order`. A project without one keeps its place in the deck with a
+  monogram cover and joins the tour the day a screenshot is uploaded — nothing else to change.
+- **Fallback copies:** `src/content/fixtures/projects.json` points at `public/images/*` for
+  local dev and every test run. When you change a screenshot in Notion, drop the same file in
+  `public/images/`, update that row's `imageSrc` if the filename changed, and describe what
+  the picture shows in `src/lib/image-alt.ts` — never the project name, which is already
+  visible text beside the image. `tests/image-alt.test.ts` fails if either half is missing.
+
 ## Checks
 
     npm run check   # tsc --noEmit && eslint . && vitest run
