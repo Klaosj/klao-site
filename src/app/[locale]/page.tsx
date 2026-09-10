@@ -7,6 +7,7 @@ import CvBand from '@/components/sections/CvBand';
 import Hero from '@/components/sections/Hero';
 import QuestionsBand from '@/components/sections/QuestionsBand';
 import SkillsBand from '@/components/sections/SkillsBand';
+import TourBand from '@/components/sections/TourBand';
 import WorkDeck from '@/components/sections/WorkDeck';
 import { getCareer, getFeaturedProjects, getProfile, getQuestions, getSkills } from '@/lib/content';
 import { assertLocale } from '@/lib/locale';
@@ -44,6 +45,12 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           rasterises `wordmark`, which only this route computes. */}
       <HeroMonument word={wordmark} heroSelector="#hero" />
       <Hero profile={profile} locale={locale} />
+      {/* Straight after the name: the visitor's first question is "what has he
+          actually built?", and the tour answers it with the real screens
+          before the About story explains them. Token rhythm stays legal —
+          Hero (page dark) -> Tour (deep) -> About (light) -> Craft (deep) —
+          no two adjacent bands share a token. */}
+      <TourBand projects={projects} locale={locale} />
       <AboutBand profile={profile} locale={locale} />
       <CraftBand locale={locale} />
       <WorkDeck projects={projects} locale={locale} />

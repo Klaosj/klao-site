@@ -100,7 +100,11 @@ export default function ProjectTour({ projects, locale }: { projects: Project[];
   return (
     <>
       <div className="tour-list-wrap" data-tour-playing={playing ? 'true' : 'false'}>
-        <p className="tour-label">{t.tourLabel}</p>
+        {/* The band's real heading. TourBand wraps this component in a
+            <section> with no heading of its own, so the label carries the
+            section break — styled like SectionLabel (peri rule + 12px) in
+            project-tour.css. */}
+        <h2 className="tour-label">{t.tourLabel}</h2>
         <ol className="tour-list" role="tablist" aria-label={t.tourListLabel} aria-orientation="vertical" onKeyDown={onKey}>
           {items.map((p, i) => {
             const active = i === safe;

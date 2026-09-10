@@ -1,5 +1,29 @@
 /* ProjectTour (spec 2026-09-10 §4). Grid areas `list` and `stage` are assigned
    by .hero-layout in globals.css; this file styles the two halves. */
+
+/* The band's two-column grid. The area names are the ones ProjectTour's two
+   halves already claim (`grid-area: list` / `grid-area: stage` below), so the
+   tab list sits left of the stage on a wide screen and under it on a narrow
+   one — the screenshot leads on a phone, where the list would otherwise push
+   it below the fold. */
+.tour-band {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.45fr);
+  grid-template-areas: 'list stage';
+  column-gap: 56px;
+  row-gap: 28px;
+  align-items: center;
+  max-width: 1150px;
+  margin: 0 auto;
+}
+@media (max-width: 900px) {
+  .tour-band {
+    grid-template-columns: 1fr;
+    grid-template-areas: 'stage' 'list';
+    column-gap: 0;
+  }
+}
+
 .tour-list-wrap { grid-area: list; }
 .tour-label {
   font-family: var(--font-display);
