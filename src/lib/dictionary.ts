@@ -187,6 +187,14 @@ const en = {
   // Task 5: SiteFooter's honest freshness line -- the newest date across
   // posts and questions, or nothing at all when neither has a date yet.
   contentUpdated: 'Content last updated',
+  // Project tour (spec 2026-09-10 §8): the hero's screenshot walkthrough.
+  tourLabel: 'Things I shipped, running',
+  tourListLabel: 'Project tour',
+  tourPrev: 'Previous project',
+  tourNext: 'Next project',
+  tourPause: 'Pause the tour',
+  tourPlay: 'Play the tour',
+  tourStill: 'Still view',
 };
 
 const th: typeof en = {
@@ -279,6 +287,13 @@ const th: typeof en = {
   statusBuilding: 'กำลังสร้าง',
   askedOn: 'ตั้งคำถามไว้เมื่อ',
   contentUpdated: 'เนื้อหาอัปเดตล่าสุด',
+  tourLabel: 'ของที่ผมสร้าง และยังรันอยู่',
+  tourListLabel: 'ทัวร์โปรเจกต์',
+  tourPrev: 'โปรเจกต์ก่อนหน้า',
+  tourNext: 'โปรเจกต์ถัดไป',
+  tourPause: 'หยุดทัวร์ชั่วคราว',
+  tourPlay: 'เล่นทัวร์',
+  tourStill: 'มุมมองภาพนิ่ง',
 };
 
 export type UiDict = typeof en;
