@@ -1,5 +1,7 @@
-// Alt text describing what each real screenshot actually SHOWS -- keyed by
-// the asset path, never built from project.name/description: that format
+// Alt text describing what each real screenshot actually SHOWS. Two maps look
+// the sentences up -- by asset path here, and by project name below, which is
+// the only key the live site can match (see that map's own comment) -- but
+// neither is BUILT from project.name/description: that format
 // duplicates the name and description already rendered as visible text
 // right beside the image, so a screen reader announces both facts twice
 // (QA 2026-08-15 finding 4 — the same duplication ProjectCard had already
