@@ -1,10 +1,10 @@
 /* ProjectFrame — a quiet window around a real screenshot (spec 2026-09-10 §5).
-   Colors are the light-redesign tokens from globals.css @theme. */
+   Colors are the site's dark tokens from globals.css @theme. */
 .pframe {
-  border: 1px solid var(--color-line);
+  border: 1px solid var(--color-on-dark-faint);
   border-radius: 12px;
   overflow: hidden;
-  background: var(--color-light);
+  background: var(--color-deep);
 }
 .pframe-chrome {
   display: flex;
@@ -12,14 +12,14 @@
   gap: 6px;
   height: 30px;
   padding: 0 12px;
-  background: var(--color-card);
-  border-bottom: 1px solid var(--color-line);
+  background: rgba(202, 208, 234, 0.06);
+  border-bottom: 1px solid var(--color-on-dark-faint);
 }
 .pframe-chrome > i {
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  background: #c9d8ce;
+  background: var(--color-on-dark-mid);
 }
 .pframe-title {
   margin-left: 8px;
@@ -27,14 +27,14 @@
   font-family: var(--font-display);
   font-size: 11px;
   letter-spacing: 0.04em;
-  color: var(--color-soft);
+  color: var(--color-on-dark-soft);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .pframe-screen {
   aspect-ratio: 16 / 9;
-  background: #e9efea;
+  background: #0c0c0f;
   display: grid;
 }
 .pframe-screen > img {
@@ -45,7 +45,7 @@
   /* Tall captures keep their header and crop at the bottom. */
   object-position: top;
 }
-/* Monogram cover: display face, green paper, faint ruled lines. */
+/* Monogram cover: display face, dark paper, faint ruled lines. */
 .pcover {
   position: relative;
   display: grid;
@@ -54,13 +54,13 @@
   font-size: clamp(56px, 8vw, 120px);
   font-weight: 600;
   letter-spacing: -0.06em;
-  color: var(--color-peri);
-  background: linear-gradient(135deg, #f0f5f2, #dfeae2);
+  color: var(--color-peri-deep);
+  background: linear-gradient(135deg, #14141a, #1c1c25);
 }
 .pcover::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: repeating-linear-gradient(0deg, transparent 0 23px, rgba(47, 105, 85, 0.08) 23px 24px);
+  background: repeating-linear-gradient(0deg, transparent 0 23px, rgba(168, 174, 203, 0.07) 23px 24px);
   pointer-events: none;
 }
