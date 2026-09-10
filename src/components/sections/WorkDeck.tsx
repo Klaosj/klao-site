@@ -3,8 +3,8 @@ import MaskedHeading from '@/components/motion/MaskedHeading';
 import Reveal from '@/components/motion/Reveal';
 import TiltCard from '@/components/motion/TiltCard';
 import SectionLabel from '@/components/SectionLabel';
+import ProjectFrame from '@/components/ProjectFrame';
 import { dict } from '@/lib/dictionary';
-import { imageAlt } from '@/lib/image-alt';
 import type { Locale, Project } from '@/lib/models';
 import { eyebrowFont } from '@/lib/typography';
 
@@ -189,28 +189,15 @@ export default function WorkDeck({ projects, locale }: { projects: Project[]; lo
                       </p>
                     )}
                   </div>
-                  {project.imageSrc && (
-                    <TiltCard>
-                      <div className="frame overflow-hidden rounded-[12px] border border-on-dark-faint bg-deep">
-                        {/* 800x450 (16:9) — the real intrinsic size of the fixture
-                            assets; see work-grid.test.tsx's layout-shift history.
-                            Alt describes what the screenshot SHOWS (shared
-                            IMAGE_ALT map) — the old `name — description`
-                            template made a screen reader announce both facts
-                            twice, since both are visible text right beside it
-                            (finding 4). */}
-                        <img
-                          src={project.imageSrc}
-                          alt={imageAlt(project.imageSrc)}
-                          width={800}
-                          height={450}
-                          loading="lazy"
-                          decoding="async"
-                          className="block w-full"
-                        />
-                      </div>
-                    </TiltCard>
-                  )}
+                  {/* Always framed: a project with no screenshot gets the
+                      monogram cover instead of an empty column, so the
+                      business chapter keeps the deck's rhythm. The 800x450
+                      img contract and the shared IMAGE_ALT descriptions now
+                      live inside ProjectFrame, one copy for deck, tour and
+                      /projects rows. TiltCard still owns the hover tilt. */}
+                  <TiltCard>
+                    <ProjectFrame project={project} />
+                  </TiltCard>
                 </div>
               );
 

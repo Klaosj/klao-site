@@ -94,6 +94,18 @@ describe('content API (fixture mode)', () => {
     const { getQuestions } = await import('@/lib/content');
     await expect(getQuestions()).resolves.toEqual([]);
   });
+
+  it('carries Aje and klao-site as featured builds, with Aje leading the Build chapter', async () => {
+    const featured = await getFeaturedProjects();
+    const builds = featured.filter((p) => p.type === 'build').map((p) => p.name);
+    expect(builds).toEqual(['Aje', 'GoNai', 'AISecretary', 'klao-site', 'DailyBrief', 'TickerDesk']);
+    const aje = featured.find((p) => p.name === 'Aje')!;
+    expect(aje.outcome?.en).toContain('Working prototype');
+    expect(aje.liveUrl).toBeNull();
+    const site = featured.find((p) => p.name === 'klao-site')!;
+    expect(site.liveUrl).toBe('https://klao-site.vercel.app');
+    expect(site.repoUrl).toBe('https://github.com/Klaosj/klao-site');
+  });
 });
 
 describe('formatDate', () => {

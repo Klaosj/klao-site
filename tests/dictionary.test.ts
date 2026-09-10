@@ -52,4 +52,17 @@ describe('dictionary', () => {
     expect(dict.th.workTypeBuild).toBeTruthy();
     expect(dict.th.deckSubtitle).toBeTruthy();
   });
+
+  it('carries the project-tour labels in both locales', () => {
+    expect(dict.en.tourLabel).toBe('Things I shipped, running');
+    expect(dict.en.tourListLabel).toBe('Project tour');
+    expect(dict.en.tourPrev).toBe('Previous project');
+    expect(dict.en.tourNext).toBe('Next project');
+    expect(dict.en.tourPause).toBe('Pause the tour');
+    expect(dict.en.tourPlay).toBe('Play the tour');
+    expect(dict.en.tourStill).toBe('Still view');
+    for (const k of ['tourLabel', 'tourListLabel', 'tourPrev', 'tourNext', 'tourPause', 'tourPlay', 'tourStill'] as const) {
+      expect(dict.th[k]).toBeTruthy();
+    }
+  });
 });

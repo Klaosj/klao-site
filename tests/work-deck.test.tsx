@@ -264,7 +264,7 @@ describe('WorkDeck', () => {
     // reader announce both facts twice, since both are visible text right
     // beside the image. The alt now comes from the shared map.
     const alt = img.getAttribute('alt') ?? '';
-    expect(alt).toBe(imageAlt(build.imageSrc as string));
+    expect(alt).toBe(imageAlt(build.imageSrc as string, build.name));
     expect(alt).not.toContain(build.name);
     expect(alt).not.toContain(build.description.en);
   });
@@ -275,10 +275,17 @@ describe('WorkDeck', () => {
     expect(container.querySelector('img')?.getAttribute('alt')).toBe(IMAGE_ALT['/images/gonai.jpg']);
   });
 
-  it('renders an imageless slide as text with no img element', () => {
+  it('renders an imageless slide with a monogram cover and no img element', () => {
     const { container } = render(<WorkDeck projects={[business]} locale="en" />);
     expect(container.querySelector('img')).toBeNull();
+    expect(container.querySelector('[data-project-frame] [data-cover]')?.textContent).toBe('S');
     expect(screen.getByText('SME Studio')).toBeTruthy();
+  });
+
+  it('never puts a window title on a deck slide — the h3 beside it is the name', () => {
+    const { container } = render(<WorkDeck projects={[build]} locale="en" />);
+    expect(container.querySelector('[data-project-frame]')).toBeTruthy();
+    expect(container.querySelector('.pframe-title')).toBeNull();
   });
 
   it('gives every slide the same reveal delay — deck slides never share a viewport', () => {

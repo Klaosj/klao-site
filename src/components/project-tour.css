@@ -1,0 +1,174 @@
+/* ProjectTour (spec 2026-09-10 §4). Grid areas `list` and `stage` are defined
+   by `.tour-band` below in this file; the two halves claim them further down. */
+
+/* The band's two-column grid. The area names are the ones ProjectTour's two
+   halves already claim (`grid-area: list` / `grid-area: stage` below), so the
+   tab list sits left of the stage on a wide screen and under it on a narrow
+   one — the screenshot leads on a phone, where the list would otherwise push
+   it below the fold. */
+.tour-band {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.45fr);
+  grid-template-areas: 'list stage';
+  column-gap: 56px;
+  row-gap: 28px;
+  align-items: center;
+  max-width: 1150px;
+  margin: 0 auto;
+}
+@media (max-width: 900px) {
+  .tour-band {
+    grid-template-columns: 1fr;
+    grid-template-areas: 'stage' 'list';
+    column-gap: 0;
+  }
+}
+
+.tour-list-wrap { grid-area: list; }
+.tour-label {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-peri);
+  margin-bottom: 10px;
+}
+:lang(th) .tour-label { font-family: var(--font-thai); letter-spacing: 0; text-transform: none; font-size: 12px; }
+.tour-label::before {
+  content: '';
+  display: inline-block;
+  width: 28px;
+  height: 1px;
+  margin-right: 12px;
+  vertical-align: middle;
+  background: var(--color-peri);
+}
+.tour-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--color-on-dark-faint);
+}
+.tour-list > li > button {
+  position: relative;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  column-gap: 12px;
+  align-items: baseline;
+  padding: 11px 8px;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--color-on-dark-faint);
+  border-radius: 0;
+  text-align: left;
+  font: inherit;
+  color: var(--color-on-dark-soft);
+  cursor: pointer;
+}
+.tour-list > li > button:hover { color: var(--color-on-dark); }
+.tour-list small {
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--color-peri-deep);
+}
+.tour-list span { font-weight: 600; color: var(--color-on-dark); }
+.tour-list em {
+  grid-column: 2;
+  margin-top: 3px;
+  font-style: normal;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-on-dark-soft);
+}
+.tour-list [aria-selected='true'] { color: var(--color-on-dark); }
+.tour-bar {
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  height: 2px;
+  width: 100%;
+  background: var(--color-peri);
+  transform-origin: left;
+  transform: scaleX(0);
+  animation: tour-fill var(--tour-ms, 7000ms) linear forwards;
+}
+[data-tour-playing='false'] .tour-bar { animation-play-state: paused; }
+@keyframes tour-fill { to { transform: scaleX(1); } }
+
+.tour-stage {
+  grid-area: stage;
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+.tour-stage .pframe { box-shadow: 0 30px 80px -30px rgba(0, 0, 0, 0.65); }
+/* 450ms fade/rise on slide change (house curve). globals.css's own
+   reduced-motion block enumerates specific selectors and has no catch-all,
+   so it never reaches a class added after it was written -- THIS file zeroes
+   the animation for `.tour-enter` below, not that one. */
+.tour-enter { animation: tour-in 0.45s cubic-bezier(0.16, 1, 0.3, 1); }
+@keyframes tour-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tour-enter { animation: none; }
+}
+.tour-caption {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 14px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--color-on-dark-soft);
+}
+.tour-kicker {
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-peri);
+}
+:lang(th) .tour-kicker { font-family: var(--font-thai); letter-spacing: 0; text-transform: none; font-size: 12px; }
+.tour-line { flex: 1 1 24ch; min-width: 0; }
+.tour-caption a { color: var(--color-peri); font-weight: 600; text-decoration: none; white-space: nowrap; }
+.tour-caption a:hover { text-decoration: underline; text-underline-offset: 4px; }
+.tour-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--color-on-dark-soft);
+}
+/* on-dark-mid composites to ~2.4:1 over this band's `deep` background — below
+   WCAG 1.4.11's 3:1 for interactive controls — so these buttons use the
+   opaque peri-deep token (5.3:1 over deep) instead. */
+.tour-controls button {
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--color-peri-deep);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-on-dark);
+  font: inherit;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+.tour-controls button:hover { border-color: var(--color-peri); color: var(--color-peri); }
+.tour-controls .tour-toggle { font-size: 12px; }
+.tour-controls .tour-toggle[aria-pressed='true'] { border-color: var(--color-peri); color: var(--color-peri); }
+.tour-count {
+  min-width: 44px;
+  text-align: center;
+  font-family: var(--font-display);
+  letter-spacing: 0.06em;
+}
+.tour-still { margin-left: 4px; }

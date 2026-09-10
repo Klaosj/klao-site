@@ -1,14 +1,14 @@
 import Link from 'next/link';
+import ProjectFrame from '@/components/ProjectFrame';
 import { dict } from '@/lib/dictionary';
-import { imageAlt } from '@/lib/image-alt';
 import type { Locale, Project } from '@/lib/models';
 
-// Alt text now comes from the shared @/lib/image-alt map (QA finding 4/27):
-// this component and WorkDeck render the SAME two screenshots, and keeping
-// two copies of the descriptions here let WorkDeck keep its name-duplicating
-// `${name} — ${description}` format long after this file had already fixed
-// it. Real intrinsic size for both assets is 800x450 (verified with
-// `sips -g pixelWidth -g pixelHeight`).
+// The img contract (800x450, lazy, async) and the IMAGE_ALT/IMAGE_ALT_BY_PROJECT
+// lookup no longer live in this file at all -- both moved into ProjectFrame, one
+// copy shared by the deck, the hero tour and this row (QA finding 4/27 fixed
+// there). This component just wraps that shared frame at the row's own width;
+// a project with no screenshot gets the same monogram cover WorkDeck's slides
+// get, instead of the empty grey rectangle this file used to paint.
 
 // Blog-row layout (owner request 2026-08-15): /projects reads as a story
 // index, not a card grid -- thumbnail beside a question-led text block,
@@ -28,19 +28,9 @@ export default function ProjectCard({ project, locale }: { project: Project; loc
           LOOK misaligned because the text column starts with the question's
           cap-height, not its line-box top. Only from sm up, where the two
           columns actually sit side by side. */}
-      {project.imageSrc ? (
-        <img
-          src={project.imageSrc}
-          alt={imageAlt(project.imageSrc)}
-          width={800}
-          height={450}
-          loading="lazy"
-          decoding="async"
-          className="aspect-video w-full rounded object-cover sm:mt-[3px] sm:w-64 sm:shrink-0"
-        />
-      ) : (
-        <div className="aspect-video w-full rounded bg-line sm:mt-[3px] sm:w-64 sm:shrink-0" />
-      )}
+      <div className="w-full sm:mt-[3px] sm:w-64 sm:shrink-0">
+        <ProjectFrame project={project} />
+      </div>
       <div className="min-w-0">
         {/* Question leads when present -- same question-forward principle as
             the home deck's slides; absent question, the row starts at the
