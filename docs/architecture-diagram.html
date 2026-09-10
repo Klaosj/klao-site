@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>klao-site — Architecture</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Anuphan:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#17171a; --paper-2:#101013;
+    --ink:#f4f5fa; --muted:rgba(228,232,246,.62); --soft:#7d86ad;
+    --rule:rgba(202,208,234,.15); --rule-solid:rgba(202,208,234,.34);
+    --accent:#a8aecb; --accent-tint:rgba(168,174,203,.10); --link:#6f83d6;
+    --sans:'Space Grotesk','Avenir Next',Futura,'Helvetica Neue',-apple-system,sans-serif;
+    --mono:'Space Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+    --thai:'Anuphan',-apple-system,'Sukhumvit Set','Noto Sans Thai',sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+       -webkit-font-smoothing:antialiased;padding:3.5rem 2rem 2.5rem}
+  .wrap{max-width:1100px;margin:0 auto}
+  .eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;
+           color:var(--soft);margin:0 0 .75rem}
+  h1{font-family:var(--sans);font-weight:500;font-size:2rem;line-height:1.15;margin:0 0 .5rem;
+     letter-spacing:-.02em}
+  .sub{color:var(--muted);font-size:14px;line-height:1.6;margin:0 0 2.5rem;max-width:60ch}
+  .sub code{font-family:var(--mono);font-size:12px;color:var(--accent)}
+  figure{margin:0;overflow-x:auto}
+  svg{display:block;min-width:840px;width:100%;height:auto}
+  .cards{display:grid;grid-template-columns:1.15fr 1fr .95fr;gap:1rem;margin-top:2.5rem}
+  @media(max-width:820px){.cards{grid-template-columns:1fr}}
+  .card{background:var(--paper-2);border:1px solid var(--rule);border-radius:6px;padding:1.25rem}
+  .card .eyebrow{margin-bottom:.6rem}
+  .card-header{display:flex;align-items:center;gap:.5rem;margin-bottom:.65rem}
+  .card-dot{width:7px;height:7px;border-radius:50%;flex:none}
+  .dot-accent{background:var(--accent)} .dot-link{background:var(--link)} .dot-soft{background:var(--soft)}
+  .card h3{margin:0;font-size:14px;font-weight:600;letter-spacing:-.01em}
+  .card ul{margin:0;padding-left:1.05rem;color:var(--muted);font-size:12.5px;line-height:1.75}
+  .card li::marker{color:var(--soft)}
+  .card code{font-family:var(--mono);font-size:11px;color:var(--accent)}
+  .th{font-family:var(--thai)}
+  footer{margin-top:2.5rem;padding-top:1rem;border-top:1px solid var(--rule);
+         font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--soft);
+         display:flex;justify-content:space-between;flex-wrap:wrap;gap:.5rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">klao-site · system overview</p>
+  <h1>Notion is the source of truth. The site never waits on it.</h1>
+  <p class="sub">Next.js 15 App Router, React 19 Server Components. Every content read passes through
+  <code>lib/content.ts</code>, which decides between live Notion, the last good ISR build, and committed
+  fixtures — so an outage upstream degrades quietly instead of taking the site down.</p>
+
+  <figure>
+  <svg viewBox="0 40 1040 760" role="img" aria-labelledby="klao-site-architecture-title klao-site-architecture-desc">
+    <title id="klao-site-architecture-title">klao-site architecture</title>
+    <desc id="klao-site-architecture-desc">A visitor request passes through locale middleware into the localised App Router routes, which read content through a resilience layer that falls back to committed JSON fixtures and is cached by Vercel ISR; the layer calls a Notion client that queries six Notion databases, and a separate image route proxies Notion's expiring signed URLs.</desc>
+
+    <defs>
+      <marker id="ka-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="rgba(228,232,246,.62)"/>
+      </marker>
+      <marker id="ka-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#6f83d6"/>
+      </marker>
+      <marker id="ka-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#a8aecb"/>
+      </marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#17171a"/>
+
+    <!-- ============ ZONE (drawn first) ============ -->
+    <rect x="400" y="488" width="240" height="216" rx="8"
+          fill="rgba(244,245,250,.02)" stroke="rgba(202,208,234,.15)" stroke-width=".8"/>
+    <rect x="416" y="492" width="76" height="12" rx="2" fill="#17171a"/>
+    <text x="454" y="501" fill="rgba(202,208,234,.40)" font-size="7" font-family="'Space Mono',monospace"
+          text-anchor="middle" letter-spacing=".14em">EXTERNAL</text>
+
+    <!-- ============ ARROWS (before boxes) ============ -->
+    <!-- A1 visitor -> middleware -->
+    <line x1="520" y1="120" x2="520" y2="168" stroke="rgba(228,232,246,.62)" stroke-width="1.2" marker-end="url(#ka-arrow)"/>
+    <rect x="528" y="136" width="44" height="12" rx="2" fill="#17171a"/>
+    <text x="550" y="145" fill="#7d86ad" font-size="8" font-family="'Space Mono',monospace" text-anchor="middle" letter-spacing=".06em">GET /</text>
+
+    <!-- A2 middleware -> routes -->
+    <line x1="520" y1="224" x2="520" y2="272" stroke="rgba(228,232,246,.62)" stroke-width="1.2" marker-end="url(#ka-arrow)"/>
+    <rect x="528" y="240" width="52" height="12" rx="2" fill="#17171a"/>
+    <text x="554" y="249" fill="#7d86ad" font-size="8" font-family="'Space Mono',monospace" text-anchor="middle" letter-spacing=".06em">302 /en</text>
+
+    <!-- A3 routes -> content.ts -->
+    <line x1="520" y1="336" x2="520" y2="392" stroke="rgba(228,232,246,.62)" stroke-width="1.2" marker-end="url(#ka-arrow)"/>
+    <rect x="528" y="356" width="36" height="12" rx="2" fill="#17171a"/>
+    <text x="546" y="365" fill="#7d86ad" font-size="8" font-family="'Space Mono',monospace" text-anchor="middle" letter-spacing=".06em">RSC</text>
+
+    <!-- A4 content.ts -> notion.ts -->
+    <line x1="520" y1="464" x2="520" y2="520" stroke="rgba(228,232,246,.62)" stroke-width="1.2" marker-end="url(#ka-arrow)"/>
+    <rect x="528" y="484" width="76" height="12" rx="2" fill="#17171a"/>
+    <text x="566" y="493" fill="#7d86ad" font-size="8" font-family="'Space Mono',monospace" text-anchor="middle" letter-spacing=".06em">TOKEN SET</text>
+
+    <!-- A5 notion.ts -> Notion CMS -->
+    <line x1="520" y1="576" x2="520" y2="624" stroke="#6f83d6" stroke-width="1.2" marker-end="url(#ka-arrow-link)"/>
+    <rect x="528" y="592" width="44" height="12" rx="2" fill="#17171a"/>
+    <text x="550" y="601" fill="#6f83d6" font-size="8" font-family="'Space Mono',monospace" text-anchor="middle" letter-spacing=".06em">QUERY</text>
+
+    <!-- A6 content.ts -> fixtures (dashed fallback) -->
+    <line x1="432" y1="420" x2="320" y2="420" stroke="rgba(228,232,246,.62)" stroke-width="1"
+          stroke-dasharray="4,3" marker-end="url(#ka-arrow)"/>
+    <rect x="352" y="400" width="52" height="12" rx="2" fill="#17171a"/>
+    <text x="378" y="409" fill="#7d86ad" font-size="8" font-family="'Space Mono',monospace" text-anchor="middle" letter-spacing=".06em">FALLBACK</text>
+
+    <!-- A7 content.ts -> ISR -->
+    <line x1="608" y1="420" x2="720" y2="420" stroke="rgba(228,232,246,.62)" stroke-width="1.2" marker-end="url(#ka-arrow)"/>
+    <rect x="640" y="400" width="44" height="12" rx="2" fill="#17171a"/>
+    <text x="662" y="409" fill="#7d86ad" font-size="8" font-family="'Space Mono',monospace" text-anchor="middle" letter-spacing=".06em">CACHE</text>
+
+    <!-- A8 routes -> api/img -->
+    <line x1="608" y1="304" x2="720" y2="304" stroke="rgba(228,232,246,.62)" stroke-width="1.2" marker-end="url(#ka-arrow)"/>
+    <rect x="640" y="284" width="52" height="12" rx="2" fill="#17171a"/>
+    <text x="666" y="293" fill="#7d86ad" font-size="8" font-family="'Space Mono',monospace" text-anchor="middle" letter-spacing=".06em">IMG REF</text>
+
+    <!-- A9 api/img -> Notion CMS (dashed proxy, two-bend elbow r=8) -->
+    <path d="M 896,304 H 936 Q 944,304 944,312 V 648 Q 944,656 936,656 H 608"
+          fill="none" stroke="#6f83d6" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#ka-arrow-link)"/>
+    <rect x="952" y="460" width="48" height="12" rx="2" fill="#17171a"/>
+    <text x="976" y="469" fill="#6f83d6" font-size="8" font-family="'Space Mono',monospace" text-anchor="middle" letter-spacing=".06em">PROXY</text>
+
+    <!-- ============ NODES ============ -->
+    <!-- 1 Visitor (input) -->
+    <rect x="432" y="64" width="176" height="56" rx="6" fill="#17171a"/>
+    <rect x="432" y="64" width="176" height="56" rx="6" fill="rgba(228,232,246,.10)" stroke="#7d86ad" stroke-width="1"/>
+    <rect x="440" y="70" width="36" height="12" rx="2" fill="transparent" stroke="rgba(125,134,173,.40)" stroke-width=".8"/>
+    <text x="458" y="79" fill="rgba(125,134,173,.90)" font-size="7" font-family="'Space Mono',monospace" text-anchor="middle" letter-spacing=".08em">USER</text>
+    <text x="520" y="104" fill="#f4f5fa" font-size="12" font-weight="600" font-family="'Space Grotesk',sans-serif" text-anchor="middle">Visitor</text>
+
+    <!-- 2 middleware -->
+    <rect x="432" y="168" width="176" height="56" rx="6" fill="#17171a"/>
+    <rect x="432" y="168" width="176" height="56" rx="6" fill="#101013" stroke="rgba(202,208,234,.34)" stroke-width="1"/>
+    <rect x="440" y="174" width="40" height="12" rx="2" fill="transparent" stroke="rgba(202,208,234,.30)" stroke-width=".8"/>
+    <text x="460" y="183" fill="rgba(202,208,234,.75)" font-size="7" font-family="'Space Mono',monospace" text-anchor="middle" letter-spacing=".08em">EDGE</text>
+    <text x="520" y="200" fill="#f4f5fa" font-size="12" font-weight="600" font-family="'Space Grotesk',sans-serif" text-anchor="middle">Locale gate</text>
+    <text x="520" y="215" fill="#7d86ad" font-size="9" font-family="'Space Mono',monospace" text-anchor="middle">middleware.ts</text>
+
+    <!-- 3 routes -->
+    <rect x="432" y="272" width="176" height="64" rx="6" fill="#17171a"/>
+    <rect x="432" y="272" width="176" height="64" rx="6" fill="#101013" stroke="rgba(202,208,234,.34)" stroke-width="1"/>
+    <rect x="440" y="278" width="32" height="12" rx="2" fill="transparent" stroke="rgba(202,208,234,.30)" stroke-width=".8"/>
+    <text x="456" y="287" fill="rgba(202,208,234,.75)" font-size="7" font-family="'Space Mono',monospace" text-anchor="middle" letter-spacing=".08em">RSC</text>
+    <text x="520" y="308" fill="#f4f5fa" font-size="12" font-weight="600" font-family="'Space Grotesk',sans-serif" text-anchor="middle">App Router routes</text>
+    <text x="520" y="325" fill="#7d86ad" font-size="9" font-family="'Space Mono',monospace" text-anchor="middle">app/[locale]/*</text>
+
+    <!-- 4 content.ts — FOCAL -->
+    <rect x="432" y="392" width="176" height="72" rx="6" fill="#17171a"/>
+    <rect x="432" y="392" width="176" height="72" rx="6" fill="rgba(168,174,203,.10)" stroke="#a8aecb" stroke-width="1"/>
+    <rect x="440" y="398" width="60" height="12" rx="2" fill="transparent" stroke="rgba(168,174,203,.45)" stroke-width=".8"/>
+    <text x="470" y="407" fill="#a8aecb" font-size="7" font-family="'Space Mono',monospace" text-anchor="middle" letter-spacing=".08em">RESILIENCE</text>
+    <text x="520" y="430" fill="#f4f5fa" font-size="12" font-weight="600" font-family="'Space Grotesk',sans-serif" text-anchor="middle">Content layer</text>
+    <text x="520" y="446" fill="#a8aecb" font-size="9" font-family="'Space Mono',monospace" text-anchor="middle">lib/content.ts</text>
+    <text x="520" y="458" fill="#7d86ad" font-size="8" font-family="'Space Mono',monospace" text-anchor="middle">react cache() dedupe</text>
+
+    <!-- 5 notion.ts -->
+    <rect x="432" y="520" width="176" height="56" rx="6" fill="#17171a"/>
+    <rect x="432" y="520" width="176" height="56" rx="6" fill="#101013" stroke="rgba(202,208,234,.34)" stroke-width="1"/>
+    <rect x="440" y="526" width="52" height="12" rx="2" fill="transparent" stroke="rgba(202,208,234,.30)" stroke-width=".8"/>
+    <text x="466" y="535" fill="rgba(202,208,234,.75)" font-size="7" font-family="'Space Mono',monospace" text-anchor="middle" letter-spacing=".08em">CLIENT</text>
+    <text x="520" y="552" fill="#f4f5fa" font-size="12" font-weight="600" font-family="'Space Grotesk',sans-serif" text-anchor="middle">Notion client + mappers</text>
+    <text x="520" y="567" fill="#7d86ad" font-size="9" font-family="'Space Mono',monospace" text-anchor="middle">lib/notion.ts</text>
+
+    <!-- 6 Notion CMS — FOCAL -->
+    <rect x="432" y="624" width="176" height="64" rx="6" fill="#17171a"/>
+    <rect x="432" y="624" width="176" height="64" rx="6" fill="rgba(168,174,203,.10)" stroke="#a8aecb" stroke-width="1"/>
+    <rect x="440" y="630" width="32" height="12" rx="2" fill="transparent" stroke="rgba(168,174,203,.45)" stroke-width=".8"/>
+    <text x="456" y="639" fill="#a8aecb" font-size="7" font-family="'Space Mono',monospace" text-anchor="middle" letter-spacing=".08em">SOT</text>
+    <text x="520" y="660" fill="#f4f5fa" font-size="12" font-weight="600" font-family="'Space Grotesk',sans-serif" text-anchor="middle">Notion CMS</text>
+    <text x="520" y="677" fill="#a8aecb" font-size="9" font-family="'Space Mono',monospace" text-anchor="middle">6 databases</text>
+
+    <!-- 7 fixtures (store) -->
+    <rect x="144" y="392" width="176" height="56" rx="6" fill="#17171a"/>
+    <rect x="144" y="392" width="176" height="56" rx="6" fill="rgba(244,245,250,.05)" stroke="rgba(228,232,246,.62)" stroke-width="1"/>
+    <rect x="152" y="398" width="44" height="12" rx="2" fill="transparent" stroke="rgba(228,232,246,.30)" stroke-width=".8"/>
+    <text x="174" y="407" fill="rgba(228,232,246,.75)" font-size="7" font-family="'Space Mono',monospace" text-anchor="middle" letter-spacing=".08em">STORE</text>
+    <text x="232" y="424" fill="#f4f5fa" font-size="12" font-weight="600" font-family="'Space Grotesk',sans-serif" text-anchor="middle">Committed fixtures</text>
+    <text x="232" y="439" fill="#7d86ad" font-size="9" font-family="'Space Mono',monospace" text-anchor="middle">content/fixtures/*.json</text>
+
+    <!-- 8 ISR (store) -->
+    <rect x="720" y="392" width="176" height="56" rx="6" fill="#17171a"/>
+    <rect x="720" y="392" width="176" height="56" rx="6" fill="rgba(244,245,250,.05)" stroke="rgba(228,232,246,.62)" stroke-width="1"/>
+    <rect x="728" y="398" width="40" height="12" rx="2" fill="transparent" stroke="rgba(228,232,246,.30)" stroke-width=".8"/>
+    <text x="748" y="407" fill="rgba(228,232,246,.75)" font-size="7" font-family="'Space Mono',monospace" text-anchor="middle" letter-spacing=".08em">CACHE</text>
+    <text x="808" y="424" fill="#f4f5fa" font-size="12" font-weight="600" font-family="'Space Grotesk',sans-serif" text-anchor="middle">Vercel ISR</text>
+    <text x="808" y="439" fill="#7d86ad" font-size="9" font-family="'Space Mono',monospace" text-anchor="middle">revalidate 3600</text>
+
+    <!-- 9 api/img -->
+    <rect x="720" y="276" width="176" height="56" rx="6" fill="#17171a"/>
+    <rect x="720" y="276" width="176" height="56" rx="6" fill="#101013" stroke="rgba(202,208,234,.34)" stroke-width="1"/>
+    <rect x="728" y="282" width="32" height="12" rx="2" fill="transparent" stroke="rgba(202,208,234,.30)" stroke-width=".8"/>
+    <text x="744" y="291" fill="rgba(202,208,234,.75)" font-size="7" font-family="'Space Mono',monospace" text-anchor="middle" letter-spacing=".08em">API</text>
+    <text x="808" y="308" fill="#f4f5fa" font-size="12" font-weight="600" font-family="'Space Grotesk',sans-serif" text-anchor="middle">Image proxy</text>
+    <text x="808" y="323" fill="#7d86ad" font-size="9" font-family="'Space Mono',monospace" text-anchor="middle">api/img/[...ref]</text>
+
+    <!-- ============ LEGEND ============ -->
+    <line x1="32" y1="736" x2="1008" y2="736" stroke="rgba(202,208,234,.15)" stroke-width=".8"/>
+    <text x="32" y="756" fill="#7d86ad" font-size="8" font-family="'Space Mono',monospace" letter-spacing=".14em">LEGEND</text>
+
+    <rect x="112" y="748" width="16" height="10" rx="2" fill="rgba(168,174,203,.10)" stroke="#a8aecb" stroke-width="1"/>
+    <text x="136" y="757" fill="rgba(228,232,246,.62)" font-size="8" font-family="'Space Mono',monospace">FOCAL</text>
+
+    <rect x="204" y="748" width="16" height="10" rx="2" fill="#101013" stroke="rgba(202,208,234,.34)" stroke-width="1"/>
+    <text x="228" y="757" fill="rgba(228,232,246,.62)" font-size="8" font-family="'Space Mono',monospace">CODE PATH</text>
+
+    <rect x="328" y="748" width="16" height="10" rx="2" fill="rgba(244,245,250,.05)" stroke="rgba(228,232,246,.62)" stroke-width="1"/>
+    <text x="352" y="757" fill="rgba(228,232,246,.62)" font-size="8" font-family="'Space Mono',monospace">CACHE / STORE</text>
+
+    <line x1="484" y1="753" x2="516" y2="753" stroke="#6f83d6" stroke-width="1.2"/>
+    <text x="524" y="757" fill="rgba(228,232,246,.62)" font-size="8" font-family="'Space Mono',monospace">EXTERNAL CALL</text>
+
+    <line x1="652" y1="753" x2="684" y2="753" stroke="rgba(228,232,246,.62)" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="692" y="757" fill="rgba(228,232,246,.62)" font-size="8" font-family="'Space Mono',monospace">FALLBACK / PROXY</text>
+
+    <rect x="848" y="744" width="16" height="16" rx="4" fill="rgba(244,245,250,.02)" stroke="rgba(202,208,234,.15)" stroke-width=".8"/>
+    <text x="872" y="757" fill="rgba(228,232,246,.62)" font-size="8" font-family="'Space Mono',monospace">TRUST BOUNDARY</text>
+  </svg>
+  </figure>
+
+  <div class="cards">
+    <div class="card">
+      <p class="eyebrow">The decision node</p>
+      <div class="card-header"><span class="card-dot dot-accent"></span><h3>Three ways out of a Notion failure</h3></div>
+      <ul>
+        <li>No <code>NOTION_TOKEN</code> → fixtures, no network call at all</li>
+        <li>Fails during ISR revalidate → <strong>rethrow</strong>, so the last good build keeps serving</li>
+        <li>Fails during the production build → fixtures, because there is no cache to fall back to</li>
+      </ul>
+    </div>
+    <div class="card">
+      <p class="eyebrow">Source of truth</p>
+      <div class="card-header"><span class="card-dot dot-link"></span><h3>Six Notion databases</h3></div>
+      <ul>
+        <li><code>PROJECTS</code> · <code>POSTS</code> · <code>CAREER</code></li>
+        <li><code>PROFILE</code> · <code>SKILLS</code> · <code>QUESTIONS</code></li>
+        <li>Rows map to typed models in <code>lib/models.ts</code></li>
+        <li>Signed image URLs expire, so they go through the proxy route</li>
+      </ul>
+    </div>
+    <div class="card">
+      <p class="eyebrow">Edges</p>
+      <div class="card-header"><span class="card-dot dot-soft"></span><h3>Bilingual by redirect</h3></div>
+      <ul>
+        <li>Middleware prefixes any unprefixed path with <code>/en</code></li>
+        <li>Skips <code>api/</code>, <code>_next/</code>, and anything with a file extension</li>
+        <li><code>robots.ts</code> and <code>sitemap.ts</code> share the 3600s window</li>
+      </ul>
+    </div>
+  </div>
+
+  <footer>
+    <span>KLAO-SITE · NEXT 15.5 · REACT 19 · @NOTIONHQ/CLIENT 2.3</span>
+    <span>SKIN: KLAO-SITE PROFILE · SPACE GROTESK / SPACE MONO</span>
+  </footer>
+</div>
+</body>
+</html>

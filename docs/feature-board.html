@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>klao-site — Feature Board</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Anuphan:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#17171a; --paper-2:#101013;
+    --ink:#f4f5fa; --muted:rgba(228,232,246,.62); --soft:#7d86ad;
+    --rule:rgba(202,208,234,.15); --rule-solid:rgba(202,208,234,.34);
+    --accent:#a8aecb; --accent-tint:rgba(168,174,203,.10);
+    --sans:'Space Grotesk','Avenir Next',Futura,'Helvetica Neue',-apple-system,sans-serif;
+    --mono:'Space Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+    --thai:'Anuphan',-apple-system,'Sukhumvit Set','Noto Sans Thai',sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+       -webkit-font-smoothing:antialiased;padding:3.5rem 2rem 2.5rem}
+  .wrap{max-width:1100px;margin:0 auto}
+  .eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;
+           color:var(--soft);margin:0 0 .75rem}
+  h1{font-family:var(--sans);font-weight:500;font-size:2rem;line-height:1.15;margin:0 0 .5rem;
+     letter-spacing:-.02em}
+  .sub{color:var(--muted);font-size:14px;line-height:1.6;margin:0 0 2rem;max-width:64ch}
+  .sub code{font-family:var(--mono);font-size:12px;color:var(--accent)}
+  figure{margin:0;overflow-x:auto}
+  svg{display:block;min-width:760px;width:100%;height:auto}
+  .cards{display:grid;grid-template-columns:1.2fr 1fr .9fr;gap:1rem;margin-top:2.25rem}
+  @media(max-width:820px){.cards{grid-template-columns:1fr}}
+  .card{background:var(--paper-2);border:1px solid var(--rule);border-radius:6px;padding:1.25rem}
+  .card .eyebrow{margin-bottom:.6rem}
+  .card-header{display:flex;align-items:center;gap:.5rem;margin-bottom:.65rem}
+  .card-dot{width:7px;height:7px;border-radius:50%;flex:none}
+  .dot-accent{background:var(--accent)} .dot-muted{background:var(--muted)} .dot-soft{background:var(--soft)}
+  .card h3{margin:0;font-size:14px;font-weight:600;letter-spacing:-.01em}
+  .card ul{margin:0;padding-left:1.05rem;color:var(--muted);font-size:12.5px;line-height:1.75}
+  .card li::marker{color:var(--soft)}
+  .card code{font-family:var(--mono);font-size:11px;color:var(--accent)}
+  footer{margin-top:2.25rem;padding-top:1rem;border-top:1px solid var(--rule);
+         font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--soft);
+         display:flex;justify-content:space-between;flex-wrap:wrap;gap:.5rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">klao-site · feature census · 2026-08-29</p>
+  <h1>Nothing is blocked on code.</h1>
+  <p class="sub">Ten features, read off the live site and the repo. Everything in the middle column
+  is already written, wired, tested — and dark, because the Notion rows behind it are empty.
+  The three on the left are the only ones that still need a commit.</p>
+
+  <figure>
+  <svg viewBox="0 24 880 456" role="img" aria-labelledby="klao-site-board-title klao-site-board-desc">
+    <title id="klao-site-board-title">klao-site feature board</title>
+    <desc id="klao-site-board-desc">A three-column state census of the site's features: three not built (analytics, career page in the sitemap, a writing feed), three built but starved of content (project story pages, writing posts, the open-questions band), and four live and populated (the bilingual shell, the credibility bands, the work deck with six projects, and contact with the résumé). Project story pages are flagged blocked, and the waiting column is over its work-in-progress limit.</desc>
+
+    <rect width="100%" height="100%" fill="#17171a"/>
+
+    <!-- ================= COLUMN FILLS ================= -->
+    <rect x="48"  y="40" width="240" height="340" rx="6" fill="rgba(244,245,250,.02)"/>
+    <rect x="320" y="40" width="240" height="340" rx="6" fill="rgba(244,245,250,.02)"/>
+    <rect x="592" y="40" width="240" height="340" rx="6" fill="rgba(244,245,250,.02)"/>
+
+    <!-- ================= HEADERS ================= -->
+    <!-- col 1 -->
+    <text x="64" y="64" fill="#f4f5fa" font-size="12" font-weight="600" font-family="'Space Grotesk',sans-serif">Not built</text>
+    <rect x="240" y="52" width="32" height="16" rx="2" fill="transparent" stroke="rgba(202,208,234,.34)" stroke-width=".8"/>
+    <text x="256" y="64" fill="rgba(202,208,234,.75)" font-size="8" font-family="'Space Mono',monospace" text-anchor="middle">3</text>
+    <line x1="64" y1="80" x2="272" y2="80" stroke="rgba(202,208,234,.15)" stroke-width=".8"/>
+    <!-- col 2 — over WIP limit (accent 1 of 2) -->
+    <text x="336" y="64" fill="#f4f5fa" font-size="12" font-weight="600" font-family="'Space Grotesk',sans-serif">Waiting on content</text>
+    <rect x="512" y="52" width="32" height="16" rx="2" fill="transparent" stroke="#a8aecb" stroke-width="1"/>
+    <text x="528" y="64" fill="#a8aecb" font-size="8" font-family="'Space Mono',monospace" text-anchor="middle">3/1</text>
+    <line x1="336" y1="80" x2="544" y2="80" stroke="rgba(202,208,234,.15)" stroke-width=".8"/>
+    <!-- col 3 -->
+    <text x="608" y="64" fill="#f4f5fa" font-size="12" font-weight="600" font-family="'Space Grotesk',sans-serif">Live</text>
+    <rect x="784" y="52" width="32" height="16" rx="2" fill="transparent" stroke="rgba(202,208,234,.34)" stroke-width=".8"/>
+    <text x="800" y="64" fill="rgba(202,208,234,.75)" font-size="8" font-family="'Space Mono',monospace" text-anchor="middle">4</text>
+    <line x1="608" y1="80" x2="816" y2="80" stroke="rgba(202,208,234,.15)" stroke-width=".8"/>
+
+    <!-- ================= COL 1 · NOT BUILT (default state) ================= -->
+    <rect x="64" y="96" width="208" height="56" rx="6" fill="#101013" stroke="rgba(202,208,234,.34)" stroke-width="1"/>
+    <text x="80" y="122" fill="#f4f5fa" font-size="12" font-weight="600" font-family="'Space Grotesk',sans-serif">Know if anyone reads it</text>
+    <text x="80" y="140" fill="#7d86ad" font-size="9" font-family="'Space Mono',monospace">NO ANALYTICS · 0 PACKAGES</text>
+
+    <rect x="64" y="164" width="208" height="56" rx="6" fill="#101013" stroke="rgba(202,208,234,.34)" stroke-width="1"/>
+    <text x="80" y="190" fill="#f4f5fa" font-size="12" font-weight="600" font-family="'Space Grotesk',sans-serif">Career page findable</text>
+    <text x="80" y="208" fill="#7d86ad" font-size="9" font-family="'Space Mono',monospace">SITEMAP.TS · 1-LINE FIX</text>
+
+    <rect x="64" y="232" width="208" height="56" rx="6" fill="#101013" stroke="rgba(202,208,234,.34)" stroke-width="1"/>
+    <text x="80" y="258" fill="#f4f5fa" font-size="12" font-weight="600" font-family="'Space Grotesk',sans-serif">Writing subscribable</text>
+    <text x="80" y="276" fill="#7d86ad" font-size="9" font-family="'Space Mono',monospace">NO RSS / ATOM ROUTE</text>
+
+    <!-- ================= COL 2 · WAITING (blocked + external) ================= -->
+    <!-- blocked card (accent 2 of 2) -->
+    <rect x="336" y="96" width="208" height="56" rx="6" fill="rgba(168,174,203,.05)" stroke="#a8aecb" stroke-width="1" stroke-dasharray="4,4"/>
+    <rect x="336" y="96" width="4" height="56" fill="#a8aecb"/>
+    <rect x="464" y="102" width="36" height="12" rx="2" fill="transparent" stroke="rgba(168,174,203,.45)" stroke-width=".8"/>
+    <text x="482" y="111" fill="#a8aecb" font-size="7" font-family="'Space Mono',monospace" text-anchor="middle" letter-spacing=".08em">RISK</text>
+    <text x="352" y="130" fill="#f4f5fa" font-size="12" font-weight="600" font-family="'Space Grotesk',sans-serif">Project story pages</text>
+    <text x="352" y="144" fill="#a8aecb" font-size="9" font-family="'Space Mono',monospace">0 OF 6 HAVE A SLUG</text>
+
+    <rect x="336" y="164" width="208" height="56" rx="6" fill="rgba(244,245,250,.02)" stroke="rgba(244,245,250,.20)" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="352" y="190" fill="#f4f5fa" font-size="12" font-weight="600" font-family="'Space Grotesk',sans-serif">Writing posts</text>
+    <text x="352" y="208" fill="#7d86ad" font-size="9" font-family="'Space Mono',monospace">/WRITING · 0 PUBLISHED</text>
+
+    <rect x="336" y="232" width="208" height="56" rx="6" fill="rgba(244,245,250,.02)" stroke="rgba(244,245,250,.20)" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="352" y="258" fill="#f4f5fa" font-size="12" font-weight="600" font-family="'Space Grotesk',sans-serif">Open questions band</text>
+    <text x="352" y="276" fill="#7d86ad" font-size="9" font-family="'Space Mono',monospace">RENDERS NULL · 0 ROWS</text>
+
+    <!-- ================= COL 3 · LIVE (done state) ================= -->
+    <rect x="608" y="96" width="208" height="56" rx="6" fill="rgba(244,245,250,.05)" stroke="rgba(228,232,246,.62)" stroke-width="1"/>
+    <text x="624" y="122" fill="#f4f5fa" font-size="12" font-weight="600" font-family="'Space Grotesk',sans-serif">Bilingual shell</text>
+    <text x="624" y="140" fill="#7d86ad" font-size="9" font-family="'Space Mono',monospace">EN/TH · MIDDLEWARE · 5 NAV</text>
+
+    <rect x="608" y="164" width="208" height="56" rx="6" fill="rgba(244,245,250,.05)" stroke="rgba(228,232,246,.62)" stroke-width="1"/>
+    <text x="624" y="190" fill="#f4f5fa" font-size="12" font-weight="600" font-family="'Space Grotesk',sans-serif">Credibility bands</text>
+    <text x="624" y="208" fill="#7d86ad" font-size="9" font-family="'Space Mono',monospace">ABOUT·CRAFT·CLIENTS·CV</text>
+
+    <rect x="608" y="232" width="208" height="56" rx="6" fill="rgba(244,245,250,.05)" stroke="rgba(228,232,246,.62)" stroke-width="1"/>
+    <text x="624" y="258" fill="#f4f5fa" font-size="12" font-weight="600" font-family="'Space Grotesk',sans-serif">Work deck + /projects</text>
+    <text x="624" y="276" fill="#7d86ad" font-size="9" font-family="'Space Mono',monospace">6 PROJECTS · BUSINESS/BUILD</text>
+
+    <rect x="608" y="300" width="208" height="56" rx="6" fill="rgba(244,245,250,.05)" stroke="rgba(228,232,246,.62)" stroke-width="1"/>
+    <text x="624" y="326" fill="#f4f5fa" font-size="12" font-weight="600" font-family="'Space Grotesk',sans-serif">Contact + résumé</text>
+    <text x="624" y="344" fill="#7d86ad" font-size="9" font-family="'Space Mono',monospace">MAIL·LINKEDIN·GITHUB·PDF</text>
+
+    <!-- ================= LEGEND ================= -->
+    <line x1="48" y1="416" x2="832" y2="416" stroke="rgba(202,208,234,.15)" stroke-width=".8"/>
+    <text x="48" y="437" fill="#7d86ad" font-size="8" font-family="'Space Mono',monospace" letter-spacing=".14em">LEGEND</text>
+
+    <rect x="120" y="428" width="16" height="10" rx="2" fill="#101013" stroke="rgba(202,208,234,.34)" stroke-width="1"/>
+    <text x="144" y="437" fill="rgba(228,232,246,.62)" font-size="8" font-family="'Space Mono',monospace">NEEDS A COMMIT</text>
+
+    <rect x="288" y="428" width="16" height="10" rx="2" fill="rgba(244,245,250,.02)" stroke="rgba(244,245,250,.20)" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="312" y="437" fill="rgba(228,232,246,.62)" font-size="8" font-family="'Space Mono',monospace">NEEDS NOTION ROWS</text>
+
+    <rect x="480" y="428" width="16" height="10" rx="2" fill="rgba(168,174,203,.05)" stroke="#a8aecb" stroke-width="1" stroke-dasharray="4,4"/>
+    <text x="504" y="437" fill="rgba(228,232,246,.62)" font-size="8" font-family="'Space Mono',monospace">BLOCKED</text>
+
+    <rect x="592" y="428" width="16" height="10" rx="2" fill="rgba(244,245,250,.05)" stroke="rgba(228,232,246,.62)" stroke-width="1"/>
+    <text x="616" y="437" fill="rgba(228,232,246,.62)" font-size="8" font-family="'Space Mono',monospace">LIVE</text>
+
+    <rect x="680" y="428" width="16" height="10" rx="2" fill="transparent" stroke="#a8aecb" stroke-width="1"/>
+    <text x="704" y="437" fill="rgba(228,232,246,.62)" font-size="8" font-family="'Space Mono',monospace">OVER WIP LIMIT</text>
+  </svg>
+  </figure>
+
+  <div class="cards">
+    <div class="card">
+      <p class="eyebrow">The blocked one</p>
+      <div class="card-header"><span class="card-dot dot-accent"></span><h3>Story pages are built and unreachable</h3></div>
+      <ul>
+        <li><code>/work/[slug]</code>, <code>generateStaticParams</code>, <code>dynamicParams</code> and the 404 path all exist</li>
+        <li>Not one of the six projects has a <code>Slug</code>, so the sitemap lists zero story URLs and no card on the site links to one</li>
+        <li>Its own source comment names the cost: with <code>dynamicParams: true</code>, every unknown slug — crawlers included — is an uncached live Notion lookup, forever</li>
+      </ul>
+    </div>
+    <div class="card">
+      <p class="eyebrow">The pattern</p>
+      <div class="card-header"><span class="card-dot dot-muted"></span><h3>Three things, one bottleneck</h3></div>
+      <ul>
+        <li>Stories, posts, and questions are all waiting on the same person typing into Notion</li>
+        <li>None of them is waiting on a deploy, a fix, or a decision</li>
+        <li>The <code>3/1</code> chip is my read, not a limit you set — three half-lit features is worse than one finished one</li>
+      </ul>
+    </div>
+    <div class="card">
+      <p class="eyebrow">Cheap</p>
+      <div class="card-header"><span class="card-dot dot-soft"></span><h3>Two small commits</h3></div>
+      <ul>
+        <li><code>/career</code> is live and good, and missing from <code>staticPaths</code> in <code>sitemap.ts</code> — search engines never see it</li>
+        <li>No analytics of any kind, so nothing tells you which of the six projects people actually open</li>
+      </ul>
+    </div>
+  </div>
+
+  <footer>
+    <span>READ FROM KLAO-SITE.VERCEL.APP + REPO · 2026-08-29</span>
+    <span>SKIN: KLAO-SITE PROFILE · SPACE GROTESK / SPACE MONO</span>
+  </footer>
+</div>
+</body>
+</html>
