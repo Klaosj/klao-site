@@ -62,7 +62,7 @@
     "repoUrl": null,
     "imageSrc": "/images/dailybrief.jpg",
     "featured": true,
-    "order": 5,
+    "order": 7,
     "type": "build",
     "outcome": null,
     "question": {
@@ -86,7 +86,7 @@
     "repoUrl": null,
     "imageSrc": "/images/tickerdesk.svg",
     "featured": true,
-    "order": 6,
+    "order": 8,
     "type": "build",
     "outcome": null,
     "question": {
@@ -110,7 +110,7 @@
     "repoUrl": null,
     "imageSrc": "/images/gonai.jpg",
     "featured": true,
-    "order": 3,
+    "order": 4,
     "type": "build",
     "outcome": null,
     "question": {
@@ -132,14 +132,62 @@
     ],
     "liveUrl": null,
     "repoUrl": null,
-    "imageSrc": "/images/aisecretary.svg",
+    "imageSrc": "/images/aisecretary.jpg",
     "featured": true,
-    "order": 4,
+    "order": 5,
     "type": "build",
     "outcome": null,
     "question": {
       "en": "How much AI am I actually using?",
       "th": "เดือนนี้ใช้ AI ไปเท่าไหร่กันแน่?"
+    },
+    "slug": null
+  },
+  {
+    "id": "fx-aje",
+    "name": "Aje",
+    "description": {
+      "en": "Idea-grading workspace for startup ideas: write one paragraph, get it graded against proven frameworks, and leave with one small test to run next.",
+      "th": "เวิร์กสเปซตัดเกรดไอเดียสตาร์ทอัพ: เขียนหนึ่งย่อหน้า ระบบให้เกรดตาม framework ที่พิสูจน์แล้ว แล้วได้การทดสอบเล็ก ๆ หนึ่งอย่างไปทำต่อ"
+    },
+    "stack": ["Next.js", "Claude API", "Ollama"],
+    "liveUrl": null,
+    "repoUrl": null,
+    "imageSrc": "/images/aje.jpg",
+    "featured": true,
+    "order": 3,
+    "type": "build",
+    "outcome": {
+      "en": "Working prototype · 8-dimension report card with letter grades · 16 hand-drawn framework diagrams · advisor runs on Claude or a local model",
+      "th": "prototype ใช้งานได้จริง · report card 8 มิติพร้อมเกรด · framework diagram 16 ใบวาดเอง · advisor รันบน Claude หรือโมเดล local"
+    },
+    "question": {
+      "en": "Is this idea worth a weekend, or a year?",
+      "th": "ไอเดียนี้คุ้มกับหนึ่งสุดสัปดาห์ หรือทั้งปี?"
+    },
+    "slug": null
+  },
+  {
+    "id": "fx-klao-site",
+    "name": "klao-site",
+    "description": {
+      "en": "This site. A bilingual personal hub where every project, career entry and line of copy is edited in Notion and goes live within the hour, with no deploy.",
+      "th": "เว็บนี้เอง: hub ส่วนตัวสองภาษาที่ทุกโปรเจกต์ ประวัติงาน และข้อความ แก้ใน Notion แล้วขึ้นเว็บภายในหนึ่งชั่วโมง ไม่ต้อง deploy"
+    },
+    "stack": ["Next.js", "Notion API", "Vercel"],
+    "liveUrl": "https://klao-site.vercel.app",
+    "repoUrl": "https://github.com/Klaosj/klao-site",
+    "imageSrc": "/images/klao-site.jpg",
+    "featured": true,
+    "order": 6,
+    "type": "build",
+    "outcome": {
+      "en": "Live since Aug 2026 · Notion as the only CMS · EN/TH · 400+ automated tests",
+      "th": "ออนไลน์ตั้งแต่ ส.ค. 2026 · Notion เป็น CMS เดียว · EN/TH · เทสต์อัตโนมัติ 400+ ข้อ"
+    },
+    "question": {
+      "en": "Can a personal site update itself from Notion, in two languages?",
+      "th": "เว็บส่วนตัวอัปเดตตัวเองจาก Notion สองภาษาได้ไหม?"
     },
     "slug": null
   }
