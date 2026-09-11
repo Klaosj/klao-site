@@ -11,7 +11,7 @@
 const GONAI =
   'A white landing-page hero with an airplane-and-Thai-flag logomark, a bold headline about planning a full day out and knowing every baht before leaving, a budget search field, a black "start planning" button, and small floating cards noting a confirmed fare and a BTS fare between two stations.';
 const DAILYBRIEF =
-  'A Notion page showing a Thai-translated daily news digest split into category cards for economy, AI, tech and US stories.';
+  'A workspace database of dated market briefs under tabs for all briefs, retail media and economic markets, each row pairing a title and date with a Thai-language top-story line and a business-signal checkbox.';
 const AJE =
   'A dark blue idea-review screen with a four-step tracker (Describe, Review, Test, Learn) at "Level 2 of 9", a Thai-language business idea with three side-by-side panels for the idea, its biggest uncertainty and the next test to run, a bulleted list of ways the idea could fail, and a bottom tab bar for ideas, review, frameworks and forecast.';
 const AISECRETARY =
