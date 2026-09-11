@@ -16,11 +16,15 @@ type Props = {
 // components and render this directly; ProjectTour renders it from a client
 // component, which is also fine.
 export default function ProjectFrame({ project, title, priority = false, className = '' }: Props) {
+  // A frame is a window onto a real screen. A project with no screenshot shows
+  // no image block at all (owner's call 2026-09-11) rather than a stand-in --
+  // the receipts rule applied to pictures. Callers already check this so they
+  // don't ship an empty wrapper; this guard is what makes it impossible.
+  if (!project.imageSrc) return null;
   return (
     <div className={`pframe ${className}`.trim()} data-project-frame>
-      {/* Decorative window chrome: a screen reader gets the image (or nothing,
-          for the cover) and the visible text beside the frame, never "dot dot
-          dot host". */}
+      {/* Decorative window chrome: a screen reader gets the image and the
+          visible text beside the frame, never "dot dot dot host". */}
       <div className="pframe-chrome" aria-hidden="true">
         <i />
         <i />
@@ -28,24 +32,14 @@ export default function ProjectFrame({ project, title, priority = false, classNa
         {title && <span className="pframe-title">{title}</span>}
       </div>
       <div className="pframe-screen">
-        {project.imageSrc ? (
-          <img
-            src={project.imageSrc}
-            alt={imageAlt(project.imageSrc, project.name)}
-            width={800}
-            height={450}
-            loading={priority ? 'eager' : 'lazy'}
-            decoding="async"
-          />
-        ) : (
-          // Monogram cover for a project with no screenshot yet (spec §5).
-          // aria-hidden: it carries nothing a screen reader hasn't already
-          // heard from the visible name next to the frame — and it is never
-          // a fake UI (receipts rule).
-          <div className="pcover" data-cover aria-hidden="true">
-            {project.name.charAt(0).toUpperCase()}
-          </div>
-        )}
+        <img
+          src={project.imageSrc}
+          alt={imageAlt(project.imageSrc, project.name)}
+          width={800}
+          height={450}
+          loading={priority ? 'eager' : 'lazy'}
+          decoding="async"
+        />
       </div>
     </div>
   );

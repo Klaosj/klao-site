@@ -94,9 +94,9 @@ describe('ProjectCard', () => {
     expect(paragraphs.some((p) => p.textContent === '')).toBe(false);
   });
 
-  it('renders the thumbnail inside the shared window frame, cover when no screenshot', () => {
+  it('renders the thumbnail inside the shared window frame, and nothing when there is no screenshot', () => {
     const { container } = render(<ProjectCard project={base} locale="en" />);
-    expect(container.querySelector('[data-project-frame] [data-cover]')?.textContent).toBe('G');
+    expect(container.querySelector('[data-project-frame]')).toBeNull();
     cleanup();
     const shot = render(<ProjectCard project={{ ...base, imageSrc: '/images/gonai.jpg' }} locale="en" />);
     const img = shot.container.querySelector('[data-project-frame] img') as HTMLImageElement;
