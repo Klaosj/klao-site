@@ -59,7 +59,6 @@
   column-gap: 12px;
   align-items: baseline;
   padding: 11px 8px;
-  padding-left: 8px;
   background: none;
   border: 0;
   border-bottom: 1px solid var(--color-on-dark-faint);
@@ -78,7 +77,10 @@
   color: var(--color-peri-deep);
 }
 .tour-list span { font-weight: 600; color: var(--color-on-dark); }
-.tour-go { font-style: normal; color: var(--color-peri); opacity: 0; transition: opacity 0.35s; }
+/* Scoped through .tour-list so it outranks `.tour-list span` above, which
+   styles the project name and would otherwise paint this arrow white and
+   bold — the arrow is a quiet peri cue, not a second name. */
+.tour-list .tour-go { font-style: normal; font-weight: 400; color: var(--color-peri); opacity: 0; transition: opacity 0.35s; }
 .tour-list em {
   grid-column: 2 / -1;
   margin-top: 3px;
@@ -205,5 +207,8 @@
   .tour-count b { animation: none; }
   .tour-marker,
   .tour-list > li > button,
-  .tour-go { transition: none; }
+  /* Matches the arrow's own scoped selector above: a media query adds no
+     specificity, so `.tour-go` alone would lose to `.tour-list .tour-go`
+     and the fade would survive for a visitor who asked for less motion. */
+  .tour-list .tour-go { transition: none; }
 }
