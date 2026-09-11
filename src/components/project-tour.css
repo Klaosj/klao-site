@@ -45,6 +45,7 @@
   background: var(--color-peri);
 }
 .tour-list {
+  position: relative;
   list-style: none;
   margin: 0;
   padding: 0;
@@ -54,7 +55,7 @@
   position: relative;
   width: 100%;
   display: grid;
-  grid-template-columns: 34px minmax(0, 1fr);
+  grid-template-columns: 34px minmax(0, 1fr) auto;
   column-gap: 12px;
   align-items: baseline;
   padding: 11px 8px;
@@ -66,6 +67,7 @@
   font: inherit;
   color: var(--color-on-dark-soft);
   cursor: pointer;
+  transition: color 0.3s, padding-left 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .tour-list > li > button:hover { color: var(--color-on-dark); }
 .tour-list small {
@@ -75,15 +77,36 @@
   color: var(--color-peri-deep);
 }
 .tour-list span { font-weight: 600; color: var(--color-on-dark); }
+/* Scoped through .tour-list so it outranks `.tour-list span` above, which
+   styles the project name and would otherwise paint this arrow white and
+   bold — the arrow is a quiet peri cue, not a second name. */
+.tour-list .tour-go { font-style: normal; font-weight: 400; color: var(--color-peri); opacity: 0; transition: opacity 0.35s; }
 .tour-list em {
-  grid-column: 2;
+  grid-column: 2 / -1;
   margin-top: 3px;
   font-style: normal;
   font-size: 13px;
   line-height: 1.5;
   color: var(--color-on-dark-soft);
 }
-.tour-list [aria-selected='true'] { color: var(--color-on-dark); }
+.tour-list [aria-selected='true'] { color: var(--color-on-dark); padding-left: 18px; }
+.tour-list [aria-selected='true'] .tour-go { opacity: 1; }
+/* The marker travels; it does not blink from row to row. Height moves with it
+   because the active row is taller (it shows its question), and `data-ready`
+   holds it hidden until the first measurement so it never flashes at the top. */
+.tour-marker {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 2px;
+  height: var(--tm-h, 0);
+  background: var(--color-peri);
+  border-radius: 2px;
+  transform: translateY(var(--tm-y, 0));
+  opacity: 0;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), height 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s;
+}
+.tour-marker[data-ready] { opacity: 1; }
 .tour-bar {
   position: absolute;
   left: 0;
@@ -113,11 +136,8 @@
    the animation for `.tour-enter` below, not that one. */
 .tour-enter { animation: tour-in 0.45s cubic-bezier(0.16, 1, 0.3, 1); }
 @keyframes tour-in {
-  from { opacity: 0; transform: translateY(6px); }
+  from { opacity: 0; transform: translateY(14px); }
   to { opacity: 1; transform: none; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .tour-enter { animation: none; }
 }
 .tour-caption {
   display: flex;
@@ -127,6 +147,8 @@
   font-size: 13px;
   line-height: 1.6;
   color: var(--color-on-dark-soft);
+  animation: tour-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: 0.08s;
 }
 .tour-kicker {
   font-family: var(--font-display);
@@ -171,4 +193,22 @@
   font-family: var(--font-display);
   letter-spacing: 0.06em;
 }
+.tour-count b { display: inline-block; font-weight: inherit; animation: tour-flip 0.45s cubic-bezier(0.16, 1, 0.3, 1); }
+@keyframes tour-flip {
+  0% { transform: translateY(0); }
+  30% { transform: translateY(-4px) scale(1.12); }
+  100% { transform: translateY(0); }
+}
 .tour-still { margin-left: 4px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tour-enter,
+  .tour-caption,
+  .tour-count b { animation: none; }
+  .tour-marker,
+  .tour-list > li > button,
+  /* Matches the arrow's own scoped selector above: a media query adds no
+     specificity, so `.tour-go` alone would lose to `.tour-list .tour-go`
+     and the fade would survive for a visitor who asked for less motion. */
+  .tour-list .tour-go { transition: none; }
+}
