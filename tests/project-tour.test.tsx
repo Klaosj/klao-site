@@ -60,6 +60,20 @@ describe('ProjectTour', () => {
     expect(items[1].querySelector('.tour-bar')).toBeNull();
   });
 
+  it('marks the active row with a marker, an arrow on every row, and a flipping counter', () => {
+    const { container } = render(<ProjectTour projects={three} locale="en" />);
+    const marker = container.querySelector('.tour-marker') as HTMLElement;
+    expect(marker.getAttribute('aria-hidden')).toBe('true');
+    expect(marker.style.getPropertyValue('--tm-y')).toBe('0px');
+    expect(container.querySelectorAll('.tour-go')).toHaveLength(3);
+    for (const go of container.querySelectorAll('.tour-go')) {
+      expect(go.getAttribute('aria-hidden')).toBe('true');
+    }
+    expect(container.querySelector('.tour-count b')?.textContent).toBe('1');
+    fireEvent.click(screen.getAllByRole('tab')[2]);
+    expect(container.querySelector('.tour-count b')?.textContent).toBe('3');
+  });
+
   it('loads every slide lazily -- the band sits below a 130vh hero, off-screen on load', () => {
     // No `priority` prop reaches ProjectFrame from here any more: that was an
     // LCP argument from when the tour lived inside the hero, and it now only

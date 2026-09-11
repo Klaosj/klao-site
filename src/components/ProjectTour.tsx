@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react';
 import './project-tour.css';
 import ProjectFrame from '@/components/ProjectFrame';
 import { dict } from '@/lib/dictionary';
@@ -20,13 +20,16 @@ export default function ProjectTour({ projects, locale }: { projects: Project[];
   const count = items.length;
 
   const [index, setIndex] = useState(0);
+  const safe = Math.min(index, count - 1);
   const [paused, setPaused] = useState(false); // the visitor pressed pause
   const [hovering, setHovering] = useState(false); // pointer or focus inside the band (tab list or stage), not just the stage
   const [reduced, setReduced] = useState(false);
   const [inView, setInView] = useState(true);
   const [pageVisible, setPageVisible] = useState(true);
   const [announce, setAnnounce] = useState('');
+  const [marker, setMarker] = useState<{ y: number; h: number } | null>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLOListElement>(null);
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const uid = useId();
 
@@ -55,6 +58,24 @@ export default function ProjectTour({ projects, locale }: { projects: Project[];
     return () => document.removeEventListener('visibilitychange', onChange);
   }, []);
 
+  // The sliding marker (Aje's dock pill, in list form). Rows differ in height —
+  // only the active one carries its question — so the bar's travel cannot be a
+  // CSS-only multiple of a row height; it is measured from the live layout and
+  // handed to CSS as two custom properties. useLayoutEffect so the first paint
+  // already has it in place, and a ResizeObserver on the list catches the
+  // reflow when a row grows its question or the band stacks on a phone.
+  useLayoutEffect(() => {
+    const list = listRef.current;
+    const tab = tabRefs.current[safe];
+    if (!list || !tab) return;
+    const measure = () => setMarker({ y: tab.offsetTop, h: tab.offsetHeight });
+    measure();
+    if (typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(measure);
+    ro.observe(list);
+    return () => ro.disconnect();
+  }, [safe, locale, count]);
+
   const playing = count > 1 && !reduced && !paused && !hovering && inView && pageVisible;
 
   // Shared across .tour-list-wrap and .tour-stage so pointer/focus inside
@@ -77,7 +98,6 @@ export default function ProjectTour({ projects, locale }: { projects: Project[];
 
   if (count === 0) return null;
 
-  const safe = Math.min(index, count - 1);
   const current = items[safe];
 
   const select = (i: number, moveFocus = false) => {
@@ -115,7 +135,20 @@ export default function ProjectTour({ projects, locale }: { projects: Project[];
             section break — styled like SectionLabel (peri rule + 12px) in
             project-tour.css. */}
         <h2 className="tour-label">{t.tourLabel}</h2>
-        <ol className="tour-list" role="tablist" aria-label={t.tourListLabel} aria-orientation="vertical" onKeyDown={onKey}>
+        <ol
+          className="tour-list"
+          role="tablist"
+          aria-label={t.tourListLabel}
+          aria-orientation="vertical"
+          onKeyDown={onKey}
+          ref={listRef}
+        >
+          <i
+            className="tour-marker"
+            aria-hidden="true"
+            data-ready={marker ? 'true' : undefined}
+            style={{ ['--tm-y' as string]: `${marker?.y ?? 0}px`, ['--tm-h' as string]: `${marker?.h ?? 0}px` }}
+          />
           {items.map((p, i) => {
             const active = i === safe;
             return (
@@ -134,6 +167,7 @@ export default function ProjectTour({ projects, locale }: { projects: Project[];
                 >
                   <small>{String(i + 1).padStart(2, '0')}</small>
                   <span>{p.name}</span>
+                  <span className="tour-go" aria-hidden="true">↗</span>
                   {active && p.question && <em>{p.question[locale]}</em>}
                   {active && (
                     <i
@@ -171,7 +205,12 @@ export default function ProjectTour({ projects, locale }: { projects: Project[];
         <div key={current.id} className="tour-enter">
           <ProjectFrame project={current} title={windowTitle(current)} />
         </div>
-        <div className="tour-caption">
+        {/* Keyed on the project id (prefixed so it never collides with the
+            `.tour-enter` div above, which is keyed on the same id) so React
+            remounts this div on a slide change -- otherwise it is the same
+            DOM node across renders and the tour-in animation (delayed here,
+            see project-tour.css) never replays. */}
+        <div key={`caption-${current.id}`} className="tour-caption">
           <span className="tour-kicker">{kicker}</span>
           <span className="tour-line">{line}</span>
           {storyHref ? (
@@ -193,7 +232,7 @@ export default function ProjectTour({ projects, locale }: { projects: Project[];
             ‹
           </button>
           <span className="tour-count" aria-hidden="true">
-            {safe + 1} / {count}
+            <b key={safe}>{safe + 1}</b> / {count}
           </span>
           <button type="button" aria-label={t.tourNext} onClick={() => select(safe + 1)}>
             ›
