@@ -275,10 +275,10 @@ describe('WorkDeck', () => {
     expect(container.querySelector('img')?.getAttribute('alt')).toBe(IMAGE_ALT['/images/gonai.jpg']);
   });
 
-  it('renders an imageless slide with a monogram cover and no img element', () => {
+  it('renders an imageless slide as text — no img and no frame', () => {
     const { container } = render(<WorkDeck projects={[business]} locale="en" />);
     expect(container.querySelector('img')).toBeNull();
-    expect(container.querySelector('[data-project-frame] [data-cover]')?.textContent).toBe('S');
+    expect(container.querySelector('[data-project-frame]')).toBeNull();
     expect(screen.getByText('SME Studio')).toBeTruthy();
   });
 

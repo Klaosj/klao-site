@@ -72,30 +72,6 @@
     "slug": null
   },
   {
-    "id": "fx-tickerdesk",
-    "name": "TickerDesk",
-    "description": {
-      "en": "US options decision-support briefs with sector-based screening.",
-      "th": "รายงานช่วยตัดสินใจออปชันหุ้นสหรัฐฯ พร้อมการคัดกรองตามกลุ่มอุตสาหกรรม"
-    },
-    "stack": [
-      "Python",
-      "Notion API"
-    ],
-    "liveUrl": null,
-    "repoUrl": null,
-    "imageSrc": null,
-    "featured": true,
-    "order": 8,
-    "type": "build",
-    "outcome": null,
-    "question": {
-      "en": "Which option do I open before the bell?",
-      "th": "ก่อนตลาดเปิด ควรเปิดสัญญาตัวไหน?"
-    },
-    "slug": null
-  },
-  {
     "id": "fx-gonai",
     "name": "GoNai",
     "description": {

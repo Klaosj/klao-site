@@ -5,9 +5,10 @@ import type { Project } from './models';
 export const TOUR_MS = 7000;
 
 /** Membership rule (spec 2026-09-10 §4): the tour shows things you can SEE
- *  running — only projects with a real screenshot. Business ideas without a
- *  screen stay in the deck with a monogram cover and join the tour the day a
- *  screenshot is uploaded to Notion. Never mutates the caller's array. */
+ *  running — only projects with a real screenshot. A project without one keeps
+ *  its deck slide, which carries its receipts in words and shows no picture at
+ *  all, and joins the tour the day a screenshot is uploaded to Notion. Never
+ *  mutates the caller's array. */
 export function tourProjects(projects: Project[]): Project[] {
   return projects
     .filter((p) => typeof p.imageSrc === 'string' && p.imageSrc.length > 0)

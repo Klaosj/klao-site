@@ -189,15 +189,18 @@ export default function WorkDeck({ projects, locale }: { projects: Project[]; lo
                       </p>
                     )}
                   </div>
-                  {/* Always framed: a project with no screenshot gets the
-                      monogram cover instead of an empty column, so the
-                      business chapter keeps the deck's rhythm. The 800x450
-                      img contract and the shared IMAGE_ALT descriptions now
-                      live inside ProjectFrame, one copy for deck, tour and
-                      /projects rows. TiltCard still owns the hover tilt. */}
-                  <TiltCard>
-                    <ProjectFrame project={project} />
-                  </TiltCard>
+                  {/* A slide is framed only when there is a real screenshot to
+                      frame (owner's call 2026-09-11): the business chapter's
+                      slides carry their receipts in words, not in a stand-in
+                      picture. The 800x450 img contract and the shared alt
+                      lookup live inside ProjectFrame, one copy for the deck,
+                      the tour and the /projects rows. TiltCard still owns the
+                      hover tilt. */}
+                  {project.imageSrc && (
+                    <TiltCard>
+                      <ProjectFrame project={project} />
+                    </TiltCard>
+                  )}
                 </div>
               );
 

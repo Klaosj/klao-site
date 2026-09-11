@@ -45,22 +45,3 @@
   /* Tall captures keep their header and crop at the bottom. */
   object-position: top;
 }
-/* Monogram cover: display face, dark paper, faint ruled lines. */
-.pcover {
-  position: relative;
-  display: grid;
-  place-items: center;
-  font-family: var(--font-display);
-  font-size: clamp(56px, 8vw, 120px);
-  font-weight: 600;
-  letter-spacing: -0.06em;
-  color: var(--color-peri-deep);
-  background: linear-gradient(135deg, #14141a, #1c1c25);
-}
-.pcover::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(0deg, transparent 0 23px, rgba(168, 174, 203, 0.07) 23px 24px);
-  pointer-events: none;
-}

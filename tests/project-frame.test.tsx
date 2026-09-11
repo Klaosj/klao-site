@@ -46,12 +46,9 @@ describe('ProjectFrame', () => {
     expect(container.querySelector('img')?.getAttribute('alt')).toBe(IMAGE_ALT['/images/gonai.jpg']);
   });
 
-  it('shows a decorative monogram cover, and no img, when there is no screenshot', () => {
+  it('renders nothing at all when the project has no screenshot', () => {
     const { container } = render(<ProjectFrame project={{ ...base, name: 'Talatify', imageSrc: null }} />);
-    expect(container.querySelector('img')).toBeNull();
-    const cover = container.querySelector('[data-cover]') as HTMLElement;
-    expect(cover.getAttribute('aria-hidden')).toBe('true');
-    expect(cover.textContent).toBe('T');
+    expect(container.innerHTML).toBe('');
   });
 
   it('shows the window title only when one is given, and hides the chrome from assistive tech', () => {
