@@ -112,11 +112,13 @@ function displayRuns(text: string): Run[] {
     if (piece === '') continue;
     if (/^ +$/.test(piece)) {
       pushRun(runs, piece, false);
-    } else if (THAI_RE.test(piece)) {
-      for (const part of piece.split('|')) pushRun(runs, part, true);
-    } else {
-      pushRun(runs, piece.replace(/\|/g, ''), false);
+      continue;
     }
+    // Fix round 1, finding 2: each `|`-split fragment is Thai-tested on its
+    // own -- mirrors defaultRuns' per-fragment test above -- so a non-Thai
+    // tail like "CRM" in "เครื่องมือ|CRM" is never marked keep just because
+    // the token it came from contained Thai somewhere else.
+    for (const part of piece.split('|')) pushRun(runs, part, THAI_RE.test(part));
   }
   return runs;
 }

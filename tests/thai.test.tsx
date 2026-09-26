@@ -160,6 +160,24 @@ describe('keepRuns display option (master R25)', () => {
     expect(keepRuns(s, { display: false })).toEqual(keepRuns(s));
     expect(keepRuns(s)).not.toEqual(keepRuns(s, { display: true }));
   });
+
+  // Fix round 1, finding 2: displayRuns Thai-tested the whole token, then
+  // marked every `|`-split fragment keep -- so a non-Thai tail riding along
+  // on a Thai token's pipe (e.g. a keep list word|brand-name pair) was
+  // wrongly kept. Each fragment must be Thai-tested on its own.
+  it('Thai-tests each `|`-split fragment on its own, so a non-Thai tail is not marked keep', () => {
+    const runs = keepRuns('เครื่องมือ|CRM', { display: true });
+    expect(runs).toEqual([
+      { text: 'เครื่องมือ', keep: true },
+      { text: 'CRM', keep: false },
+    ]);
+    expect(joined(runs)).toBe('เครื่องมือCRM');
+    // And the reverse order, so the fix isn't order-dependent.
+    expect(keepRuns('CRM|เครื่องมือ', { display: true })).toEqual([
+      { text: 'CRM', keep: false },
+      { text: 'เครื่องมือ', keep: true },
+    ]);
+  });
 });
 
 describe('<ThaiText>', () => {
@@ -185,13 +203,13 @@ describe('<ThaiText>', () => {
     expect(renderToStaticMarkup(<ThaiText text="" />)).toBe('');
   });
 
-  it('display: wraps every space-delimited Thai token, not just keep-list words', () => {
+  it('display: wraps every space-delimited Thai token in .kt (wrappable), not .nw', () => {
     const html = renderToStaticMarkup(<ThaiText text="ผมสร้าง เครื่องมือ" display />);
-    expect(html).toBe('<span class="nw">ผมสร้าง</span> <span class="nw">เครื่องมือ</span>');
+    expect(html).toBe('<span class="kt">ผมสร้าง</span> <span class="kt">เครื่องมือ</span>');
   });
 
-  it('display: still puts a <wbr> between two `|`-split keep runs', () => {
+  it('display: still puts a <wbr> between two `|`-split keep runs, using .kt', () => {
     const html = renderToStaticMarkup(<ThaiText text="ที่สร้างเครื่องมือ|ใช้เอง" display />);
-    expect(html).toBe('<span class="nw">ที่สร้างเครื่องมือ</span><wbr/><span class="nw">ใช้เอง</span>');
+    expect(html).toBe('<span class="kt">ที่สร้างเครื่องมือ</span><wbr/><span class="kt">ใช้เอง</span>');
   });
 });

@@ -177,7 +177,7 @@ describe('shared classes (C9)', () => {
     '.t-hero', '.t-h2', '.t-title', '.t-panel', '.t-faq', '.t-eyebrow', '.t-lead',
     '.t-body', '.t-cap', '.t-legal', '.t-stat',
     '.wrap', '.wrap-wide', '.section', '.band',
-    '.btn', '.btn-fill', '.btn-out', '.pill', '.glass', '.tile', '.win', '.nw',
+    '.btn', '.btn-fill', '.btn-out', '.pill', '.glass', '.tile', '.win', '.nw', '.kt',
   ])('defines %s', (selector) => {
     expect(rulesFor(selector).length, `${selector} has no rule`).toBeGreaterThan(0);
   });
@@ -214,6 +214,15 @@ describe('shared classes (C9)', () => {
     const nw = rulesFor('.nw')[0];
     expect(nw).toContain('display: inline-block;');
     expect(nw).toContain('white-space: nowrap;');
+  });
+
+  // Fix round 1, finding 1: display mode's whole-token keep-span must wrap
+  // (unlike .nw's hard nowrap), matching the prototype's own .kt rule.
+  it('makes .kt a wrappable inline-block, not nowrap (R25 display keep-span)', () => {
+    const kt = rulesFor('.kt')[0];
+    expect(kt).toContain('display: inline-block;');
+    expect(kt).toContain('max-width: 100%;');
+    expect(kt).not.toContain('white-space: nowrap;');
   });
 
   // D1 (preflight): block-scoped, so a rule cannot satisfy this by sitting
