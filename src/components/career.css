@@ -1,0 +1,111 @@
+/* Career band (spec §6 "Career", §10 toolbox cut). Ported from the approved
+   prototype's .car-h / .rail / .cgrid / .pb / .detent / .panel / .tools with
+   P3 names (car-*). Headline, panel title and figure sizes come from the
+   shared C9 classes (.t-h2 / .t-panel / .t-stat); this file sets only what
+   is specific to the band.
+   Global constraint: only transform and opacity animate. The prototype also
+   faded the pill text colour; here the colour changes without a transition
+   while the detent slides under it. The detent is kram (spec §5.1). */
+
+.car-h { display: flex; justify-content: space-between; align-items: end; gap: 24px; }
+.car-h .t-h2 { max-width: 13em; }
+.car-res { flex: none; text-align: right; }
+.car-res a { display: inline-flex; align-items: center; min-height: 44px; font-size: 17px; color: var(--link); text-decoration: none; }
+.car-res a:hover { text-decoration: underline; }
+.car-res small { display: block; font-size: 14px; line-height: 20px; color: var(--ink-2); }
+
+/* Time rail. overflow: hidden clips the full-width marker box, whose
+   translateX(%) is what lets the marker move with transform only. */
+.car-rail { position: relative; height: 64px; margin-top: 36px; overflow: hidden; }
+.car-rtrack { position: absolute; left: 0; right: 0; top: 30px; height: 4px; border-radius: 2px; background: var(--line); }
+.car-rseg { position: absolute; top: 30px; height: 4px; border-radius: 2px; background: color-mix(in srgb, var(--ink-1) 30%, transparent); }
+.car-rseg[data-on="true"] { background: var(--ink-1); }
+.car-rmark { position: absolute; inset: 0; pointer-events: none; transform: translateX(var(--mx, 0%)); transition: transform var(--dur-ui) var(--ease-settle); }
+.car-rmark i { position: absolute; top: 28px; left: -4px; width: 8px; height: 8px; border-radius: 50%; background: var(--ink-1); box-shadow: 0 0 0 2px var(--mist); }
+.car-rlab { position: absolute; top: 2px; left: 0; white-space: nowrap; font-size: 12px; line-height: 16px; font-weight: 600; transform: translateX(-50%); }
+.car-rlab[data-align="start"] { transform: translateX(-8px); }
+.car-rlab[data-align="end"] { transform: translateX(calc(-100% + 8px)); }
+.car-ryears { position: absolute; left: 0; right: 0; top: 44px; height: 16px; font-size: 12px; line-height: 16px; color: var(--ink-2); }
+.car-ryears span { position: absolute; transform: translateX(-50%); }
+.car-ryears span[data-first="true"] { transform: none; }
+.car-ryears span[data-now="true"] { transform: translateX(-100%); }
+
+/* Pills + detent + panel */
+.car-grid { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 40px; margin-top: 28px; align-items: start; }
+.car-pills { position: relative; display: flex; flex-direction: column; gap: 8px; }
+.car-pill { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 56px; padding: 0 22px; border: 0; border-radius: 28px; background: transparent; box-shadow: inset 0 0 0 1px var(--line); color: var(--ink-1); font: inherit; text-align: left; cursor: pointer; transition: transform 220ms var(--ease-settle); }
+.car-pill:active { transform: scale(.98); }
+.car-pill:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.car-pill b { font-size: 17px; font-weight: 600; }
+.car-pill span { font-size: 14px; color: var(--ink-2); white-space: nowrap; }
+.car-pill[aria-selected="true"] { color: var(--on-kram); }
+.car-pill[aria-selected="true"] span { color: color-mix(in srgb, var(--on-kram) 75%, transparent); }
+.car-detent { position: absolute; left: 0; top: 0; width: 100%; height: 56px; border-radius: 28px; background: var(--kram); pointer-events: none; transform: translateY(var(--dy, 0px)); transition: transform var(--dur-ui) var(--ease-settle); }
+
+.car-panel { min-height: 400px; padding: 36px 40px; border-radius: 28px; background: var(--card); }
+.car-panel:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.car-panel[data-swap="true"] { animation: car-pin var(--dur-ui) var(--ease-settle) both; }
+@keyframes car-pin { from { opacity: 0; transform: translateY(8px); } }
+.car-ph { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: start; gap: 16px; }
+.car-ph h3 { margin: 0; }
+.car-role { margin: 4px 0 0; font-size: 19px; line-height: 25px; color: var(--ink-2); }
+.car-role:not(:lang(th)) { letter-spacing: .012em; }
+.car-dates { margin: 0; font-size: 14px; line-height: 20px; color: var(--ink-2); text-align: right; font-variant-numeric: tabular-nums; }
+.car-fig { margin: 28px 0 0; }
+.car-fig .u { font-size: .45em; color: var(--ink-2); letter-spacing: 0; }
+.car-note { margin: 8px 0 0; font-size: 12px; line-height: 16px; color: var(--ink-2); }
+.car-cap { margin: 10px 0 0; font-size: 17px; line-height: 25px; }
+.car-wins { display: grid; gap: 14px; margin: 24px 0 0; padding: 0; list-style: none; }
+.car-wins li { position: relative; padding-left: 20px; font-size: 17px; line-height: 26px; }
+.car-wins li::before { content: ""; position: absolute; left: 2px; top: 11px; width: 5px; height: 5px; border-radius: 50%; background: var(--ink-3); }
+.car-wins li:lang(th), .car-cap:lang(th) { line-height: 28px; }
+.car-pf { display: flex; flex-wrap: wrap; gap: 20px; margin-top: 28px; }
+.car-pf a, .car-pf button { display: inline-flex; align-items: center; min-height: 44px; padding: 0; border: 0; background: none; font: inherit; font-size: 17px; color: var(--link); text-decoration: none; cursor: pointer; }
+.car-pf a:hover, .car-pf button:hover { text-decoration: underline; }
+
+/* Toolbox: one row, heading + three columns (spec §10: stack · methods ·
+   languages). Ruling C-6 (P3 preflight): no scroll-margin-top here -- the
+   global `html { scroll-padding-top: 76px }` (P0) already clears the
+   capsule nav for a direct #toolbox link, same as the prototype. */
+.car-tools { display: grid; grid-template-columns: 245px minmax(0, 1fr); gap: 24px; margin-top: 44px; padding-top: 32px; border-top: 1px solid var(--line); }
+.car-tools h3 { margin: 0; font-size: 24px; line-height: 28px; font-weight: 600; }
+.car-tools h3:not(:lang(th)) { letter-spacing: .009em; }
+.car-tools h3:lang(th) { line-height: 34px; }
+.car-tgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px 32px; }
+.car-tcell h4 { margin: 0 0 4px; font-size: 14px; line-height: 18px; font-weight: 600; color: var(--ink-2); }
+.car-tcell p { margin: 0; font-size: 17px; line-height: 25px; }
+
+@media (max-width: 1067px) {
+  .car-tools { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 734px) {
+  .car-h { flex-direction: column; align-items: start; }
+  .car-res { text-align: left; }
+  .car-rail { height: 72px; }
+  .car-rtrack, .car-rseg { top: 34px; }
+  .car-rmark i { top: 32px; }
+  .car-rlab { font-size: 14px; line-height: 20px; }
+  .car-ryears { top: 48px; height: 20px; font-size: 14px; line-height: 20px; }
+  .car-ryears span[data-alt="true"] { display: none; }
+  .car-grid { grid-template-columns: 1fr; gap: 20px; }
+  .car-pills { flex-direction: row; flex-wrap: wrap; }
+  .car-detent { display: none; }
+  .car-pill { min-height: 44px; padding: 0 16px; }
+  .car-pill b { font-size: 16px; }
+  .car-pill span { display: none; }
+  .car-pill[aria-selected="true"] { background: var(--kram); }
+  .car-panel { min-height: 0; padding: 28px 22px; border-radius: 24px; }
+  .car-dates { text-align: left; }
+  .car-fig.t-stat { font-size: 40px; line-height: 44px; }
+  .car-note { font-size: 14px; line-height: 20px; }
+  .car-wins li { font-size: 16px; line-height: 25px; }
+  .car-wins li:lang(th) { line-height: 27px; }
+  .car-tools { margin-top: 40px; }
+  .car-tgrid { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .car-rmark, .car-detent, .car-pill { transition: none; }
+  .car-panel[data-swap="true"] { animation: none; }
+}
