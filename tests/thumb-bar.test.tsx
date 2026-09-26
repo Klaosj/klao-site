@@ -31,6 +31,9 @@ describe('ThumbBar', () => {
     expect(links[0].getAttribute('href')).toBe('mailto:klao@example.com?subject=Hello%20from%20klao-site');
     expect(links[1].getAttribute('href')).toBe('/resume.pdf');
     expect(links[1].getAttribute('target')).toBe('_blank');
+    // Wave-1 integration review: the repo's convention for target="_blank"
+    // is rel="noreferrer" (NavMenu's LinkedIn/GitHub links already use it).
+    expect(links[1].getAttribute('rel')).toBe('noreferrer');
     expect(bar().classList.contains('glass')).toBe(true);
   });
 

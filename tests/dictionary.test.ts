@@ -31,7 +31,8 @@ describe('dictionary', () => {
   it('has no untranslated (en === th) string values, aside from explicitly shared keys', () => {
     // navFaq: "FAQ" is the Thai UI's word too (prototype UI.th.nav).
     // backToTour is three project names and an arrow -- identical by design.
-    const sharedKeys = new Set<string>(['navFaq', 'backToTour']);
+    // tourEndKicker (Task 10): a year range and an arrow, same reasoning.
+    const sharedKeys = new Set<string>(['navFaq', 'backToTour', 'tourEndKicker']);
     for (const [k, enVal] of Object.entries(dict.en)) {
       if (sharedKeys.has(k)) continue;
       const thVal = (dict.th as Record<string, unknown>)[k];

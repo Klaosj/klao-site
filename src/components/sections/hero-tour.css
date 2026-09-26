@@ -1,0 +1,44 @@
+/* HeroTour — the #top section's copy (spec §4 row 1, §5.2; prototype
+   .hero/.byline/.hsub/.ctas). The headline's size and tracking come from C9's
+   .t-hero; this file only places things. The capsule nav is fixed
+   (site-nav.css), so the hero carries its height in its own top padding:
+   10 + 52 px of nav plus the prototype's 28 px. */
+@layer components {
+  .ht-hero { padding-top: 90px; text-align: center; }
+  .ht-hi { display: inline-flex; align-items: center; gap: 12px; margin: 0 0 22px; font-size: 19px; font-weight: 600; }
+  .ht-hi img { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; object-position: 50% 38%; }
+  .ht-h1 { max-width: 12.5em; margin: 0 auto; text-wrap: balance; }
+  .ht-sub {
+    max-width: 40em; margin: 12px auto 0;
+    font-size: 21px; line-height: 29px; letter-spacing: .011em;
+    color: var(--ink-2); text-wrap: pretty;
+  }
+  :lang(th) .ht-sub { line-height: 32px; letter-spacing: 0; }
+  .ht-ctas { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 22px; margin-top: 24px; }
+  .ht-lnk { display: inline-flex; align-items: center; min-height: 44px; font-size: 17px; color: var(--link); text-decoration: none; }
+  .ht-lnk:hover { text-decoration: underline; text-underline-offset: .12em; }
+
+  /* Load choreography (prototype H1). The h1 is the LCP element, so it only
+     moves (transform) and is never hidden; the rest fade and rise. Only after
+     JS has marked <html>, and only when motion is welcome. */
+  @media (prefers-reduced-motion: no-preference) {
+    html.js .ht-in-a, html.js .ht-in-c, html.js .ht-in-d { animation: ht-rise 600ms var(--ease-settle) both; }
+    html.js .ht-in-b { animation: ht-rise-t 600ms var(--ease-settle) 80ms both; }
+    html.js .ht-in-c { animation-delay: 160ms; }
+    html.js .ht-in-d { animation-delay: 240ms; }
+  }
+
+  @media (max-width: 734px) {
+    .ht-hero { padding-top: calc(88px + env(safe-area-inset-top)); }
+    .wrap.ht-copy { width: calc(100% - 32px); }
+    .ht-hi { margin-bottom: 16px; font-size: 17px; }
+    .ht-hi img { width: 44px; height: 44px; }
+    .ht-sub { max-width: 22em; font-size: 17px; line-height: 24px; }
+    :lang(th) .ht-sub { line-height: 27px; }
+    .ht-ctas { gap: 12px 18px; margin-top: 20px; }
+    .ht-ctas .btn { width: min(100%, 350px); }
+  }
+
+  @keyframes ht-rise { from { opacity: 0; transform: translateY(12px); } }
+  @keyframes ht-rise-t { from { transform: translateY(20px); } }
+}
