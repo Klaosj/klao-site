@@ -1,0 +1,32 @@
+/* ThumbBar — phone only (spec §5.3: 56 px bar, 44 px buttons, safe area;
+   prototype .tbar). Hidden with visibility as well as opacity, so an invisible
+   bar is also out of the tab order and the accessibility tree. `.glass` comes
+   from C9; the two-class selectors win over anything `.glass` itself sets.
+   Only transform and opacity animate (visibility flips at the end). */
+@layer components {
+  .sn-tbar { display: none; }
+  @media (max-width: 734px) {
+    .sn-tbar.glass {
+      position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 40;
+      display: flex; gap: 8px;
+      height: 56px; padding: 6px; border-radius: 28px;
+      opacity: 0; transform: translateY(140%); visibility: hidden;
+      transition: opacity 200ms var(--ease-exit), transform 200ms var(--ease-exit), visibility 0s 200ms;
+    }
+    .sn-tbar.glass[data-show] {
+      opacity: 1; transform: none; visibility: visible;
+      transition: opacity var(--dur-ui) var(--ease-settle), transform var(--dur-ui) var(--ease-settle), visibility 0s;
+    }
+    .sn-tbar .btn { flex: 1; min-height: 44px; padding: 0 12px; font-size: 16px; }
+    .sn-tbar .btn-out { flex: 0 0 auto; }
+    /* Room at the page's end, so the bar never covers the last line. Only the
+       home page (the one with #hero-cta) ever shows the bar. */
+    html:has(#hero-cta) body { padding-bottom: 88px; }
+  }
+  @media (max-width: 360px) {
+    .sn-tbar .btn { font-size: 15px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .sn-tbar.glass, .sn-tbar.glass[data-show] { transform: none; }
+  }
+}

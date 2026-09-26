@@ -216,6 +216,7 @@ const en = {
   navSearchPrompt: 'Search or jump to…',
   copyEmail: 'Copy email',
   resumeShort: 'Résumé',
+  navQuickActions: 'Quick actions',
 };
 
 const th: typeof en = {
@@ -329,6 +330,7 @@ const th: typeof en = {
   navSearchPrompt: 'ค้นหา หรือไปที่…',
   copyEmail: 'คัดลอกอีเมล',
   resumeShort: 'เรซูเม่',
+  navQuickActions: 'ทางลัด',
 };
 
 export type UiDict = typeof en;
