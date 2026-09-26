@@ -44,3 +44,11 @@ export const MAIL_SUBJECT = 'Hello from klao-site';
 export function mailtoHref(email: string): string {
   return `mailto:${email}?subject=${encodeURIComponent(MAIL_SUBJECT)}`;
 }
+
+// Fills `{name}` slots in a dictionary template ('{n} results',
+// 'Ask Klao: “{q}”'). Word order differs between Thai and English, so the
+// dictionary owns the whole sentence and code only supplies the values. An
+// unknown slot stays as written: a typo shows on screen instead of vanishing.
+export function fill(template: string, vars: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (slot, name: string) => (name in vars ? String(vars[name]) : slot));
+}

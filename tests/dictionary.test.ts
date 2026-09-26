@@ -65,4 +65,29 @@ describe('dictionary', () => {
       expect(dict.th[k]).toBeTruthy();
     }
   });
+
+  it('carries the P4 copy from the approved prototype', () => {
+    expect(dict.en.faqTitle).toBe('What people usually ask.');
+    expect(dict.th.faqTitle).toBe('คำถามที่เจอบ่อย');
+    expect(dict.en.askBadge).toBe('Preview');
+    expect(dict.th.askBadge).toBe('ตัวอย่าง');
+    expect(dict.en.footerNote).toBe('Built at night, powered by good coffee.');
+    expect(dict.th.footerNote).toBe('สร้างตอนกลางคืน ด้วยกาแฟดีๆ');
+    expect(dict.th.contentUpdated).toBe('อัปเดตเนื้อหาล่าสุด');
+  });
+
+  it('keeps every template slot in both locales', () => {
+    for (const l of ['en', 'th'] as const) {
+      expect(dict[l].palNone, l).toContain('{q}');
+      expect(dict[l].palAsk, l).toContain('{q}');
+      expect(dict[l].palCount, l).toContain('{n}');
+      expect(dict[l].askSourceN, l).toContain('{n}');
+      expect(dict[l].askReady, l).toContain('{n}');
+      expect(dict[l].askDeclined, l).toContain('{email}');
+    }
+  });
+
+  it('never promises instant updates (the site refreshes through ISR, about an hour)', () => {
+    expect(JSON.stringify(dict)).not.toMatch(/instant|immediately|ทันที/i);
+  });
 });
