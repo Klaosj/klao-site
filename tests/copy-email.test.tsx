@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { readFileSync } from 'node:fs';
+import { StrictMode } from 'react';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import CopyEmail from '@/components/CopyEmail';
@@ -173,6 +174,30 @@ describe('CopyEmail', () => {
 
     warn.mockRestore();
     error.mockRestore();
+  });
+
+  // Fix round 2: the mounted ref from round 1 was only initialised by
+  // useRef(true), never reset in the effect BODY -- so Next's App Router
+  // default of React.StrictMode (whose dev-only double invoke runs
+  // mount -> cleanup -> mount) left it stuck at `false` after the first
+  // mount/cleanup pass, and every real click afterwards silently did
+  // nothing. Wrapping in StrictMode here is what actually exercises that
+  // double invoke; a plain render() never would.
+  it('still confirms a copy (and resets) when rendered inside React.StrictMode', async () => {
+    vi.useFakeTimers();
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal('navigator', { clipboard: { writeText } });
+    const { container } = render(
+      <StrictMode>
+        <CopyEmail email="a@b.co" locale="en" />
+      </StrictMode>,
+    );
+    await clickCopy();
+    expect(live(container)).toBe(dict.en.copied);
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
+    expect(live(container)).toBe('');
   });
 });
 

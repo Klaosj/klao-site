@@ -37,13 +37,20 @@ export default function CopyEmail({ email, locale }: { email: string; locale: Lo
   // cleanup below already ran and can no longer cancel.
   const mounted = useRef(true);
 
-  useEffect(
-    () => () => {
+  // Fix round 2: the effect body must set this back to true. Next's App
+  // Router runs in StrictMode by default, and StrictMode's dev-only double
+  // invoke (mount -> cleanup -> mount) ran the cleanup below once with no
+  // matching "re-mounted" signal -- leaving mounted.current stuck at false
+  // for the component's entire real lifetime, so copy() silently did
+  // nothing after every click's await. useRef(true)'s initial value only
+  // covers the very first mount, not a StrictMode remount.
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
       mounted.current = false;
       if (timer.current) clearTimeout(timer.current);
-    },
-    [],
-  );
+    };
+  }, []);
 
   function settle(next: State, ms: number) {
     setState(next);
