@@ -83,28 +83,76 @@ const intersect = (o: Observed, root: Element) =>
   act(() => o.cb([{ isIntersecting: true, target: root } as unknown as IntersectionObserverEntry], {} as IntersectionObserver));
 
 // jsdom has no ResizeObserver at all (unlike IntersectionObserver, stubbed above), so this
-// scene's card/body watch (fix round 1, item 3) never ran in this suite until now.
-type ObservedRO = { cb: ResizeObserverCallback; targets: Element[] };
+// scene's card/body watch (fix round 1, item 3; fix round 2, item 3) never ran in this suite
+// until now. This fake mirrors the parts of the spec the round-2 bug turned on:
+//  - observe(el) -- even re-observing an already-observed el -- always queues a fresh
+//    notification, whether or not anything changed (WICG/resize-observer#38). That is the
+//    guarantee a component re-arming on every layout() feeds back into itself, forever.
+//  - disconnect() really stops delivery: it clears both the observed set and the queue.
+//  - Notifications are queued, not delivered synchronously from observe()/setSize() -- the test
+//    calls flush() to deliver them, "the next rAF/microtask you control".
 const stubResizeObserver = () => {
-  const ros: ObservedRO[] = [];
+  const observeCounts = new Map<Element, number>();
+  const sizes = new Map<Element, { width: number; height: number }>();
+  let observed = new Set<Element>();
+  let queue = new Set<Element>();
+  let cb: ResizeObserverCallback | null = null;
+  // The shared rAF stub above returns a truthy id even though it already ran the callback
+  // synchronously; that id then overwrites the `roRaf = 0` the callback just set, so a second
+  // flush() in the same test finds `roRaf` still truthy and silently drops (the same
+  // synchronous-rAF reentrancy the round-1 resize tests dodged by mounting fresh each time --
+  // discovered here because these round-2 tests need two flushes: a settle, then a real change).
+  // Returning 0 instead matches what the callback already set, so it never clobbers.
+  vi.stubGlobal('requestAnimationFrame', (frameCb: FrameRequestCallback) => {
+    frameCb(0);
+    return 0;
+  });
   vi.stubGlobal(
     'ResizeObserver',
     class {
-      entry: ObservedRO;
-      constructor(cb: ResizeObserverCallback) {
-        this.entry = { cb, targets: [] };
-        ros.push(this.entry);
+      constructor(callback: ResizeObserverCallback) {
+        cb = callback;
       }
       observe(el: Element) {
-        this.entry.targets.push(el);
+        observeCounts.set(el, (observeCounts.get(el) ?? 0) + 1);
+        observed.add(el);
+        queue.add(el);
       }
-      unobserve() {}
-      disconnect() {}
+      unobserve(el: Element) {
+        observed.delete(el);
+        queue.delete(el);
+      }
+      disconnect() {
+        observed = new Set();
+        queue = new Set();
+      }
     },
   );
-  return ros;
+  return {
+    isObserving: (el: Element) => observed.has(el),
+    // How many times observe() has ever been called for this target -- the direct check for
+    // "layout() itself must never disconnect or re-observe" (fix round 2, item 1): it must stay
+    // 1 for the whole pin session, no matter how many relayouts happen afterwards.
+    observeCallCount: (el: Element) => observeCounts.get(el) ?? 0,
+    // Simulates the browser detecting a real size change on an observed target -- only queues a
+    // notification if still observed, mirroring the real API (fix round 2, item 5).
+    setSize: (el: Element, height: number, width = 0) => {
+      if (!observed.has(el)) return;
+      sizes.set(el, { width, height });
+      queue.add(el);
+    },
+    // Delivers every currently-queued notification in one batch.
+    flush: () => {
+      if (!cb || queue.size === 0) return;
+      const entries = Array.from(queue).map((target) => ({
+        target,
+        contentRect: { ...(sizes.get(target) ?? { width: 0, height: 0 }) },
+      })) as unknown as ResizeObserverEntry[];
+      queue = new Set();
+      act(() => cb!(entries, {} as ResizeObserver));
+    },
+  };
 };
-const resize = (o: ObservedRO, target: Element) => act(() => o.cb([{ target } as unknown as ResizeObserverEntry], {} as ResizeObserver));
 
 describe('SignatureScene: server HTML (Review Focus #4)', () => {
   it('is the static stack: every caption present, nothing hidden inline, not pinned', () => {
@@ -242,37 +290,73 @@ describe('SignatureScene: motion modes', () => {
     expect(add.mock.calls.filter(([type]) => type === 'scroll')).toHaveLength(0);
   });
 
-  it('watches both the pinned card and body (fix round 1, item 3)', () => {
-    const ros = stubResizeObserver();
+  it('watches both the pinned card and body, once, on the unpinned -> pinned transition (fix round 1, item 3)', () => {
+    const ro = stubResizeObserver();
     const { container } = render(<SignatureScene copy={COPY} />);
     const root = sectionOf(container);
     expect(root.classList.contains('pin')).toBe(true);
     const card = root.querySelector('.sig-card') as HTMLElement;
-    expect(ros[0].targets).toContain(card);
-    expect(ros[0].targets).toContain(document.body);
+    expect(ro.isObserving(card)).toBe(true);
+    expect(ro.isObserving(document.body)).toBe(true);
+    expect(ro.observeCallCount(card)).toBe(1);
+    expect(ro.observeCallCount(document.body)).toBe(1);
   });
 
   it('a body-only resize re-measures without relayouting (fix round 1, item 3)', () => {
-    // A fresh mount per resize-observer test, not two `resize()` calls in one: the rAF stub
-    // above calls back synchronously, so `roRaf = requestAnimationFrame(flush)`'s assignment
-    // completes *after* flush already reset `roRaf` to 0 inside itself, clobbering it back to a
-    // truthy id -- the same one-dispatch-per-test constraint already noted for `onScroll`/`raf`.
-    const ros = stubResizeObserver();
+    const ro = stubResizeObserver();
     const { container } = render(<SignatureScene copy={COPY} />);
     const root = sectionOf(container);
+    ro.flush(); // the guaranteed first notification for card + body just settles the baseline
     const toggle = vi.spyOn(root.classList, 'toggle');
-    resize(ros[0], document.body); // content above reflowing: re-measure the scroll track only
+    ro.setSize(document.body, 900); // content above reflowing
+    ro.flush();
     expect(toggle).not.toHaveBeenCalled();
   });
 
-  it('the card itself resizing relayouts, since its size feeds sigGeometry (fix round 1, item 3)', () => {
-    const ros = stubResizeObserver();
+  it('the card itself resizing relayouts through a real observe(card), not a synthetic entry (fix round 2, item 5)', () => {
+    const ro = stubResizeObserver();
     const { container } = render(<SignatureScene copy={COPY} />);
     const root = sectionOf(container);
     const card = root.querySelector('.sig-card') as HTMLElement;
+    expect(ro.isObserving(card)).toBe(true); // the notification below only works because of this
+    ro.flush(); // the guaranteed first notification just settles the baseline (item 2)
     const toggle = vi.spyOn(root.classList, 'toggle');
-    resize(ros[0], card); // e.g. a Thai font swap re-wrapping the card question
+    ro.setSize(card, 200); // e.g. a Thai font swap re-wrapping the card question
+    ro.flush();
     expect(toggle).toHaveBeenCalled();
+  });
+
+  it('never re-arms the watch from inside layout(), even after a real relayout (fix round 2, Critical, item 1)', () => {
+    const ro = stubResizeObserver();
+    const { container } = render(<SignatureScene copy={COPY} />);
+    const root = sectionOf(container);
+    const card = root.querySelector('.sig-card') as HTMLElement;
+    expect(ro.observeCallCount(card)).toBe(1);
+    expect(ro.observeCallCount(document.body)).toBe(1);
+
+    ro.flush(); // settle the baseline
+    ro.setSize(card, 200);
+    ro.flush(); // a genuine card resize: relayouts once (proven by the previous test)
+
+    // A relayout must never itself re-arm the observer -- re-observing an already-observed
+    // target always schedules a fresh notification regardless of whether anything changed
+    // (WICG/resize-observer#38), and that notification would rAF-schedule another layout(),
+    // forever. This is the exact shape of fix round 1's Critical bug.
+    expect(ro.observeCallCount(card)).toBe(1);
+    expect(ro.observeCallCount(document.body)).toBe(1);
+  });
+
+  it('settles instead of looping: flushing repeatedly with nothing new queued causes no further relayouts (fix round 2, Critical, no-loop)', () => {
+    const ro = stubResizeObserver();
+    const { container } = render(<SignatureScene copy={COPY} />);
+    const root = sectionOf(container);
+    ro.flush(); // the initial settle
+    ro.setSize(root.querySelector('.sig-card') as HTMLElement, 200);
+    ro.flush(); // one genuine relayout
+    const toggle = vi.spyOn(root.classList, 'toggle');
+    // 5 more frames, nothing new set: an endless loop would keep re-queuing and relayouting here.
+    for (let frame = 0; frame < 5; frame++) ro.flush();
+    expect(toggle).not.toHaveBeenCalled();
   });
 
   it('removes its listeners, observer, class and inline styles on unmount', () => {

@@ -90,6 +90,14 @@ export default function SignatureScene({ copy }: { copy: SignatureCopy }) {
     let lastHeight = 0;
     let roRaf = 0;
     let cardResized = false;
+    // The card's last-seen content height, from the ResizeObserver itself (fix round 2, item 2):
+    // null means "no notification since the observer was last (re)armed", so the guaranteed
+    // first notification after `observe()` only establishes this baseline instead of relayouting.
+    let lastCardHeight: number | null = null;
+    // Whether body/card are currently ResizeObserver-watched -- mirrors `listening` below, and
+    // exists so the watch is armed/disarmed once per pin transition, not on every layout() call
+    // (fix round 2, Critical; see `syncResizeWatch`).
+    let watching = false;
     let io: IntersectionObserver | null = null;
     let ro: ResizeObserver | null = null;
 
@@ -172,6 +180,26 @@ export default function SignatureScene({ copy }: { copy: SignatureCopy }) {
         window.removeEventListener('scroll', onScroll);
       }
     };
+    // Arms/disarms the card+body watch once per pin transition -- never inside every layout()
+    // call (fix round 2, Critical). Per spec, re-observing an already-observed target always
+    // schedules a fresh notification regardless of whether anything changed
+    // (WICG/resize-observer#38); layout() calling `ro.disconnect()`/`ro.observe()` on every run
+    // (fix round 1) fed that guaranteed notification straight back into another layout() call,
+    // forever -- an endless relayout loop on the JS path (any browser without
+    // `animation-timeline`, e.g. Firefox).
+    const syncResizeWatch = (pin: boolean) => {
+      if (pin === watching) return;
+      watching = pin;
+      if (pin) {
+        // This pin's own first notification (guaranteed, per spec) establishes the baseline
+        // instead of counting as a change (item 2) -- see the callback below.
+        lastCardHeight = null;
+        ro?.observe(document.body);
+        ro?.observe(card);
+      } else {
+        ro?.disconnect();
+      }
+    };
     const layout = () => {
       // `document.documentElement.clientHeight`, not `window.innerHeight` (fix round 1,
       // Important): mobile Safari/Chrome resize the window whenever their toolbar collapses or
@@ -186,18 +214,14 @@ export default function SignatureScene({ copy }: { copy: SignatureCopy }) {
       clear();
       geo = null;
       last = -1;
-      // The card-resize watch (below) only matters while pinned: drop it on unpin, re-attach on
-      // re-pin (`observe` on an already-observed target is a no-op, so this is safe every call).
-      ro?.disconnect();
       if (pin) {
         // Read after `.pin` applies: the card's pinned width is what the tiles orbit.
         geo = sigGeometry({ width: stage.clientWidth, height: stage.clientHeight, cardWidth: card.offsetWidth, cardHeight: card.offsetHeight });
         place(geo);
         measure();
         paint(true);
-        ro?.observe(document.body);
-        ro?.observe(card);
       }
+      syncResizeWatch(pin);
       syncListening();
     };
     const onResize = () => {
@@ -226,12 +250,24 @@ export default function SignatureScene({ copy }: { copy: SignatureCopy }) {
       // Content above can change height after load (images, fonts), and the pinned card can
       // reflow on its own (e.g. a Thai font swap re-wrapping the card question) -- either goes
       // stale without this (fix round 1, item 3). rAF-throttled so a burst of callbacks in one
-      // frame does one flush; `layout()` (not just `measure()`) is what a card resize needs,
-      // since the card's own size feeds `sigGeometry`. `layout()` attaches and detaches this
-      // observer itself (observed only while pinned), so it also disconnects on unpin.
+      // frame does one flush. `syncResizeWatch` (above) owns arming/disarming this observer once
+      // per pin transition; this callback only decides, per notification, whether that warrants
+      // `layout()` (the card actually changed size) or just `measure()` (everything else).
       if (typeof ResizeObserver !== 'undefined') {
         ro = new ResizeObserver((entries) => {
-          for (const e of entries) if (e.target === card) cardResized = true;
+          for (const e of entries) {
+            if (e.target !== card) continue;
+            const h = e.contentRect.height;
+            // The first notification after (re-)observing only sets the baseline (item 2): the
+            // browser guarantees one regardless of whether anything actually changed, so without
+            // this it would relayout, which would (with the old, since-removed re-observe-every-
+            // layout()) manufacture another guaranteed notification forever (fix round 2, Critical).
+            if (lastCardHeight === null) lastCardHeight = h;
+            else if (h !== lastCardHeight) {
+              lastCardHeight = h;
+              cardResized = true;
+            }
+          }
           if (roRaf) return;
           roRaf = requestAnimationFrame(() => {
             roRaf = 0;
