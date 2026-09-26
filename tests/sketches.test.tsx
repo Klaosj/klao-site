@@ -51,6 +51,11 @@ describe('Sketch', () => {
     // GoNai's own mark, per --gonai (master green rule, preflight A6): styled through the
     // CSS var rather than a hard-coded hex, so dark mode swaps to the dark-mode green too.
     expect(container.querySelector('rect[style*="--gonai"]')).toBeTruthy();
+    // Fix wave finding 10: the pin icon inside that tile used to be a
+    // literal #FFFFFF, which stayed white-on-white in dark mode where
+    // --canvas (what "on the tile" means everywhere else) is near-black.
+    expect(container.querySelector('g[style*="--canvas"]')).toBeTruthy();
+    expect(container.querySelector('g[stroke="#FFFFFF"], g[stroke="#fff"]')).toBeNull();
     expect(container.querySelectorAll('svg > g > g').length).toBe(6);
     cleanup();
     const thumb = render(<Sketch name="five" small />);

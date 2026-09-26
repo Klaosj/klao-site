@@ -239,7 +239,12 @@ export function Sketch({ name, small = false, label, caption, className }: Sketc
         <g transform={`translate(322 ${small ? 50 : 66})`}>
           <rect width="48" height="48" rx="12" style={{ fill: 'var(--gonai)' }} />
           {!small && (
-            <g transform="translate(12 12)" {...LINE} stroke="#FFFFFF">
+            // Fix wave finding 10: the pin was white-on-green as a literal
+            // #FFFFFF, which stays white even where --canvas (what "on the
+            // tile" means everywhere else on this site) is dark-mode's
+            // near-black -- var(--canvas) through `style`, same as the
+            // rect's own --gonai fill just above.
+            <g transform="translate(12 12)" {...LINE} style={{ stroke: 'var(--canvas)' }}>
               {TILE_PATHS.pin}
             </g>
           )}
