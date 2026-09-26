@@ -67,6 +67,15 @@ describe('CareerBand', () => {
     expect([...container.querySelectorAll('#toolbox h4')].map((h) => h.textContent)).toEqual(['ใช้ทำงาน', 'ถนัด', 'ภาษา']);
   });
 
+  it('opens the résumé in a new tab without handing it the opener or a referrer (repo convention for target=_blank)', () => {
+    const { container } = render(
+      <CareerBand entries={entries} skills={skills} locale="en" resumeUrl="/r.pdf" now="2026-09" />,
+    );
+    const link = container.querySelector('.car-res a') as HTMLAnchorElement;
+    expect(link.getAttribute('target')).toBe('_blank');
+    expect(link.getAttribute('rel')).toBe('noopener noreferrer');
+  });
+
   it('omits the résumé block when there is no résumé URL', () => {
     const { container } = render(
       <CareerBand entries={entries} skills={skills} locale="en" resumeUrl={null} now="2026-09" />,

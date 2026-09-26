@@ -40,7 +40,7 @@ export default function CareerBand({ entries, skills, locale, resumeUrl, now = c
           </h2>
           {resumeUrl && (
             <div className="car-res">
-              <a href={resumeUrl} target="_blank" rel="noopener">
+              <a href={resumeUrl} target="_blank" rel="noopener noreferrer">
                 {t.resumeLink}
               </a>
               <small>
