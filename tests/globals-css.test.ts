@@ -118,3 +118,127 @@ describe('no dark-era surface survives', () => {
     expect(CODE).not.toMatch(/(^|[\s,}])\.pill-\d/m);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Shared classes (C9). P1-P4 are written against these names in parallel;
+// renaming one here breaks every section that uses it, so each name is pinned.
+// ---------------------------------------------------------------------------
+/** Splits a selector list on top-level commas (not the ones inside :not()). */
+function splitSelectors(list: string): string[] {
+  const out: string[] = [];
+  let depth = 0;
+  let cur = '';
+  for (const ch of list) {
+    if (ch === '(') depth++;
+    if (ch === ')') depth--;
+    if (ch === ',' && depth === 0) {
+      out.push(cur.trim());
+      cur = '';
+    } else cur += ch;
+  }
+  out.push(cur.trim());
+  return out;
+}
+
+/** Every declaration block whose selector list contains `selector` exactly. */
+function rulesFor(selector: string): string[] {
+  const out: string[] = [];
+  for (const m of CODE.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+    if (splitSelectors(m[1]).includes(selector)) out.push(m[2]);
+  }
+  return out;
+}
+
+/** The balanced `{ ... }` block that opens at the first `{` after `from`. */
+function blockFrom(css: string, from: number): string {
+  const open = css.indexOf('{', from);
+  let depth = 0;
+  for (let i = open; i < css.length; i++) {
+    if (css[i] === '{') depth++;
+    if (css[i] === '}' && --depth === 0) return css.slice(from, i + 1);
+  }
+  throw new Error('unbalanced braces in globals.css');
+}
+
+describe('shared classes (C9)', () => {
+  it.each([
+    '.t-hero', '.t-h2', '.t-title', '.t-panel', '.t-faq', '.t-eyebrow', '.t-lead',
+    '.t-body', '.t-cap', '.t-legal', '.t-stat',
+    '.wrap', '.wrap-wide', '.section', '.band',
+    '.btn', '.btn-fill', '.btn-out', '.pill', '.glass', '.tile', '.win', '.nw',
+  ])('defines %s', (selector) => {
+    expect(rulesFor(selector).length, `${selector} has no rule`).toBeGreaterThan(0);
+  });
+
+  it('gives every display class a Thai variant with zero letter-spacing', () => {
+    for (const cls of ['.t-hero', '.t-h2', '.t-title', '.t-panel', '.t-faq', '.t-eyebrow', '.t-lead', '.t-body', '.t-cap', '.t-legal']) {
+      const thai = rulesFor(`${cls}:lang(th)`).join(' ');
+      expect(thai, `${cls}:lang(th)`).toMatch(/letter-spacing: 0;/);
+    }
+  });
+
+  it('sets Thai one size step below English for the headline classes', () => {
+    const px = (decls: string) => Number(/font-size: (\d+)px/.exec(decls)?.[1]);
+    expect(px(rulesFor('.t-h2:lang(th)')[0])).toBeLessThan(px(rulesFor('.t-h2')[0]));
+    expect(px(rulesFor('.t-title:lang(th)')[0])).toBeLessThan(px(rulesFor('.t-title')[0]));
+    expect(px(rulesFor('.t-faq:lang(th)')[0])).toBeLessThan(px(rulesFor('.t-faq')[0]));
+    expect(rulesFor('.t-hero:lang(th)')[0]).toContain('clamp(34px, 3.9vw, 56px)');
+  });
+
+  it('uses the Apple CTA: 44 px pill at weight 400', () => {
+    const btn = rulesFor('.btn')[0];
+    expect(btn).toContain('min-height: 44px;');
+    expect(btn).toContain('font-weight: 400;');
+    expect(btn).toContain('border-radius: 999px;');
+    expect(rulesFor('.btn-fill')[0]).toContain('background: var(--kram);');
+  });
+
+  it('keeps tiles flat (r28, mist, no shadow) and gives screenshot windows the e2 shadow', () => {
+    expect(rulesFor('.tile')[0]).toMatch(/border-radius: 28px;[\s\S]*box-shadow: none;/);
+    expect(rulesFor('.win')[0]).toContain('box-shadow: var(--e2);');
+  });
+
+  it('makes .nw an unbreakable inline-block (C3 keep-span)', () => {
+    const nw = rulesFor('.nw')[0];
+    expect(nw).toContain('display: inline-block;');
+    expect(nw).toContain('white-space: nowrap;');
+  });
+
+  // D1 (preflight): block-scoped, so a rule cannot satisfy this by sitting
+  // anywhere later in the file -- it must be the .glass rule inside the
+  // named at-rule's own balanced block.
+  it('turns glass solid for reduced transparency, higher contrast and no backdrop-filter support', () => {
+    for (const opener of [
+      '@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)))',
+      '@media (prefers-reduced-transparency: reduce)',
+    ]) {
+      const at = CODE.indexOf(opener);
+      expect(at, opener).toBeGreaterThan(-1);
+      expect(blockFrom(CODE, at)).toMatch(/\.glass[^{]*\{[^}]*background: var\(--canvas\)/);
+    }
+    const contrast = [...CODE.matchAll(/@media \(prefers-contrast: more\)/g)]
+      .map((m) => blockFrom(CODE, m.index!))
+      .find((b) => b.includes('.glass'));
+    expect(contrast).toMatch(/background: var\(--canvas\)/);
+  });
+
+  // Review Focus #4: before hydration, or with scripts off, nothing may be
+  // hidden. The only rule that dims .rv must sit behind BOTH gates.
+  it('dims .rv only under html.js and prefers-reduced-motion: no-preference, and never below .55', () => {
+    const at = CODE.indexOf('@media (prefers-reduced-motion: no-preference)');
+    expect(at, 'no-preference media block').toBeGreaterThan(-1);
+    const gated = blockFrom(CODE, at);
+    expect(gated).toMatch(/html\.js \.rv \{[^}]*opacity: \.55;/);
+    expect(gated).toMatch(/html\.js \.rv\.in \{ opacity: 1; transform: none; \}/);
+    // Outside that block no rule may touch a .rv element's opacity.
+    const rest = CODE.replace(gated, '');
+    for (const m of rest.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+      if (/\.rv\b(?!-)/.test(m[1])) expect(m[2], m[1].trim()).not.toContain('opacity');
+    }
+  });
+
+  it('keeps the phone breakpoint at 734 px and phone legal text at 14 px', () => {
+    expect(CODE).toMatch(/@media \(max-width: 734px\)[\s\S]*?\.t-hero \{ font-size: 40px; line-height: 44px; \}/);
+    expect(CODE).toMatch(/\.t-legal:lang\(th\) \{ font-size: 14px; line-height: 21px; \}/);
+  });
+});

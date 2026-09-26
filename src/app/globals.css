@@ -387,3 +387,314 @@
   .halo { animation: none !important; }
   .u-draw::after { transition: none !important; }
 }
+
+/* =====================================================================
+   Shared White Edition classes (master plan C9). P1-P4 build every
+   section from these; tests/globals-css.test.ts pins their names.
+   Values: spec §5.2-§5.5 and the prototype's Apple-calibrated CSS.
+   Breakpoints are apple.com's: phone <= 734 px, tablet <= 1068 px.
+   Thai is one size step smaller than English and never tracked.
+   All of it sits in @layer components, so a Tailwind utility on the same
+   element (mt-8, text-center, ...) still wins.
+   ===================================================================== */
+@layer components {
+  /* ---- type scale ---------------------------------------------------- */
+  .t-hero {
+    margin: 0;
+    font-size: clamp(40px, 4.45vw, 64px);
+    line-height: 1.0625;
+    font-weight: 600;
+    letter-spacing: -.009em;
+    text-wrap: balance;
+  }
+  .t-hero:lang(th) {
+    font-size: clamp(34px, 3.9vw, 56px);
+    line-height: 1.3;
+    letter-spacing: 0;
+  }
+  .t-h2 {
+    margin: 0;
+    font-size: 48px;
+    line-height: 52px;
+    font-weight: 600;
+    letter-spacing: -.003em;
+    text-wrap: balance;
+  }
+  .t-h2:lang(th) { font-size: 44px; line-height: 57px; letter-spacing: 0; }
+  .t-title {
+    margin: 0;
+    font-size: 28px;
+    line-height: 32px;
+    font-weight: 600;
+    letter-spacing: .007em;
+    text-wrap: balance;
+  }
+  .t-title:lang(th) { font-size: 26px; line-height: 36px; letter-spacing: 0; }
+  .t-panel {
+    margin: 0;
+    font-size: 32px;
+    line-height: 36px;
+    font-weight: 600;
+    letter-spacing: .004em;
+  }
+  .t-panel:lang(th) { font-size: 28px; line-height: 38px; letter-spacing: 0; }
+  .t-faq {
+    margin: 0;
+    font-size: 28px;
+    line-height: 32px;
+    font-weight: 600;
+    letter-spacing: .007em;
+  }
+  .t-faq:lang(th) { font-size: 26px; line-height: 36px; letter-spacing: 0; }
+  .t-eyebrow {
+    margin: 0 0 10px;
+    font-size: 21px;
+    line-height: 25px;
+    font-weight: 600;
+    color: var(--ink-2);
+    letter-spacing: .011em;
+  }
+  .t-eyebrow:lang(th) { line-height: 28px; letter-spacing: 0; }
+  .t-lead {
+    margin: 14px 0 0;
+    font-size: 21px;
+    line-height: 29px;
+    color: var(--ink-2);
+    letter-spacing: .011em;
+    text-wrap: pretty;
+  }
+  .t-lead:lang(th) { line-height: 32px; letter-spacing: 0; }
+  .t-body {
+    font-size: 17px;
+    line-height: 25px;
+    letter-spacing: -.022em;
+  }
+  .t-body:lang(th) { line-height: 1.65; letter-spacing: 0; }
+  .t-cap {
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--ink-2);
+    letter-spacing: -.016em;
+  }
+  .t-cap:lang(th) { line-height: 22px; letter-spacing: 0; }
+  .t-legal {
+    font-size: 12px;
+    line-height: 18px;
+    color: var(--ink-2);
+    letter-spacing: -.016em;
+  }
+  .t-legal:lang(th) { font-size: 13px; line-height: 20px; letter-spacing: 0; }
+  /* Big numerals: only 30 / 500 (Signature) and the Career panel figures. */
+  .t-stat {
+    font-size: 48px;
+    line-height: 48px;
+    font-weight: 600;
+    letter-spacing: -.003em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  @media (max-width: 1068px) {
+    .t-h2 { font-size: 40px; line-height: 44px; letter-spacing: 0; }
+    .t-h2:lang(th) { font-size: 36px; line-height: 47px; }
+  }
+  @media (max-width: 734px) {
+    .t-hero { font-size: 40px; line-height: 44px; }
+    .t-hero:lang(th) { font-size: 36px; line-height: 47px; }
+    .t-h2 { font-size: 32px; line-height: 36px; letter-spacing: .004em; }
+    .t-h2:lang(th) { font-size: 28px; line-height: 38px; letter-spacing: 0; }
+    .t-title { font-size: 22px; line-height: 28px; letter-spacing: .01em; }
+    .t-title:lang(th) { font-size: 22px; line-height: 32px; letter-spacing: 0; }
+    .t-panel { font-size: 28px; line-height: 32px; }
+    .t-panel:lang(th) { font-size: 24px; line-height: 34px; }
+    .t-faq { font-size: 21px; line-height: 25px; letter-spacing: .011em; }
+    .t-faq:lang(th) { font-size: 19px; line-height: 28px; letter-spacing: 0; }
+    /* Phone eyebrow 17/21 (TH 23): the reviewed prototype, adopted in spec §5.2 (amended 26 Sep, master R21). */
+    .t-eyebrow { font-size: 17px; line-height: 21px; }
+    .t-eyebrow:lang(th) { line-height: 23px; }
+    .t-lead { font-size: 19px; line-height: 27px; }
+    .t-lead:lang(th) { line-height: 29px; }
+    /* Phone text never drops below 14 px (QA matrix criterion). */
+    .t-legal,
+    .t-legal:lang(th) { font-size: 14px; line-height: 21px; }
+  }
+  @media (max-width: 360px) {
+    .t-hero { font-size: 36px; line-height: 40px; }
+    .t-hero:lang(th) { font-size: 31px; line-height: 40px; }
+  }
+
+  /* ---- layout -------------------------------------------------------- */
+  .wrap { width: min(980px, 100% - 40px); margin-inline: auto; }
+  .wrap-wide { width: min(1040px, 100% - 40px); margin-inline: auto; }
+  @media (max-width: 360px) {
+    .wrap,
+    .wrap-wide { width: calc(100% - 32px); }
+  }
+  .section { padding-top: 144px; }
+  .band {
+    background: var(--mist);
+    margin-top: 144px;
+    padding: 128px 0;
+  }
+  @media (max-width: 734px) {
+    .section { padding-top: 96px; }
+    .band { margin-top: 96px; padding: 96px 0; }
+  }
+
+  /* ---- controls ------------------------------------------------------ */
+  /* Apple CTA: pill, 44 px, 17 px, weight 400 -- never bold. Only transform
+     and opacity animate (master Global Constraints, spec §5.5); the hover
+     fill below changes instantly, no colour transition. */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 0 22px;
+    border: 0;
+    border-radius: 999px;
+    font-size: 17px;
+    font-weight: 400;
+    line-height: 1.2;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: transform 220ms var(--ease-settle);
+  }
+  .btn:active { transform: scale(.97); transition-duration: var(--dur-tap); }
+  .btn-fill { background: var(--kram); color: var(--on-kram); }
+  .btn-out { background: transparent; color: var(--ink-1); box-shadow: inset 0 0 0 1px var(--ink-3); }
+  @media (hover: hover) and (pointer: fine) {
+    .btn-fill:hover { background: var(--kram-hover); }
+    .btn-out:hover { background: var(--out-hover); }
+  }
+  /* 28 px chip (stack tags, status words). */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 0 12px;
+    border-radius: 999px;
+    background: var(--mist);
+    color: var(--ink-1);
+    font-size: 14px;
+    line-height: 20px;
+    white-space: nowrap;
+  }
+
+  /* ---- glass (spec §5.4) --------------------------------------------- */
+  /* Consumers position the element themselves (sticky/fixed/relative);
+     the sheen layer needs that positioned box. */
+  .glass {
+    isolation: isolate;
+    background: var(--glass-nav);
+    -webkit-backdrop-filter: blur(20px) saturate(var(--sat));
+    backdrop-filter: blur(20px) saturate(var(--sat));
+    box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 -1px 0 var(--glass-edge), 0 0 0 1px var(--glass-rim), var(--e3);
+  }
+  .glass::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(180deg, var(--sheen), transparent 45%);
+    pointer-events: none;
+    z-index: -1;
+  }
+  /* The tour pill (prototype `.glass.pill`, renamed: .pill is the chip). */
+  .glass.glass-pill {
+    background: var(--glass-pill);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    backdrop-filter: blur(16px) saturate(160%);
+  }
+  /* Small glass controls (tour paddles, sheet close). */
+  .ctl {
+    background: var(--ctl);
+    -webkit-backdrop-filter: blur(12px) saturate(160%);
+    backdrop-filter: blur(12px) saturate(160%);
+    border: 0;
+    color: var(--ink-1);
+    cursor: pointer;
+  }
+  /* Glass turns solid wherever blur is missing or unwanted. Safari ignores
+     prefers-reduced-transparency, so contrast-more and no-backdrop support
+     get the same solid fill. */
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .glass,
+    .glass.glass-pill { background: var(--canvas); }
+    .ctl { background: var(--mist); }
+  }
+  @media (prefers-reduced-transparency: reduce) {
+    .glass,
+    .glass.glass-pill { background: var(--canvas); -webkit-backdrop-filter: none; backdrop-filter: none; }
+    .ctl { background: var(--mist); -webkit-backdrop-filter: none; backdrop-filter: none; }
+  }
+  @media (prefers-contrast: more) {
+    .glass,
+    .glass.glass-pill { background: var(--canvas); box-shadow: 0 0 0 2px var(--ink-1); }
+  }
+  @media (forced-colors: active) {
+    .glass,
+    .glass.glass-pill { border: 1px solid CanvasText; }
+  }
+
+  /* ---- surfaces ------------------------------------------------------ */
+  /* Apple tile: r28, mist, no shadow. */
+  .tile { border-radius: 28px; background: var(--mist); box-shadow: none; }
+  /* Screenshot window: hairline + soft shadow, so white UI shots do not
+     vanish on white. Dark mode swaps the shadow for inset rims (--e2) and
+     dims the shot a touch (--shot-dim). */
+  .win {
+    position: relative;
+    overflow: hidden;
+    border-radius: 14px;
+    background: var(--canvas);
+    box-shadow: var(--e2);
+  }
+  .win::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: inset 0 0 0 .5px rgb(0 0 0 / .14);
+    pointer-events: none;
+  }
+  .win img { filter: var(--shot-dim); }
+
+  /* ---- Thai keep-span (C3) ------------------------------------------- */
+  .nw { display: inline-block; white-space: nowrap; }
+}
+
+/* ---- reveal (C9) -----------------------------------------------------
+   Fade-rise once when the element crosses the 85 % line
+   (src/components/motion/Reveal.tsx adds `.in`). Gated twice: `html.js`
+   (set by the pre-paint script, so no-JS visitors never lose content) and
+   no-preference motion. It starts from .55, never 0 -- content is dimmed
+   for a moment, never hidden. `--i` keeps the old sections' stagger. */
+@layer components {
+  @media (prefers-reduced-motion: no-preference) {
+    html.js .rv {
+      opacity: .55;
+      transform: translateY(16px);
+      transition:
+        opacity var(--dur-fade) var(--ease-drift),
+        transform var(--dur-rise) var(--ease-drift);
+      transition-delay: calc(var(--i, 0) * 75ms);
+    }
+    html.js .rv.big { transform: translateY(24px); }
+    html.js .rv.in { opacity: 1; transform: none; }
+  }
+}
+
+/* Theme switches cross-fade through the View Transitions API when the
+   browser has it (ThemeToggle); under reduced motion there is no fade. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 240ms;
+  animation-timing-function: var(--ease-glide);
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) { animation: none !important; }
+}
