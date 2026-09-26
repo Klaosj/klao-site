@@ -1,0 +1,120 @@
+'use client';
+
+import { useEffect, useId, useRef, type ReactNode } from 'react';
+import { Icon } from '@/components/icons';
+import type { AskAnswer, AskSource } from '@/lib/ask';
+import { dict } from '@/lib/dictionary';
+import { fill } from '@/lib/format';
+import { mailto } from '@/lib/link-target';
+import type { Locale } from '@/lib/models';
+
+// Subject line on the "Something wrong?" mail (prototype). This string
+// exists only here (preflight C14) -- ask.ts's own canned answers and
+// CloseBand's mail both use a different, shared subject (CONTACT_SUBJECT).
+const ASK_SUBJECT = 'Ask Klao preview';
+
+// The Ask Klao answer card, labelled Preview (spec §6): the question, the
+// pre-written answer with [n] source markers, the numbered sources, or a
+// decline that points to email. Chrome is in the page's language; the
+// answer is in the language the question was asked in (prototype).
+export default function AskCard({
+  answer,
+  email,
+  locale,
+  onBack,
+  onGo,
+  onCopyEmail,
+}: {
+  answer: AskAnswer;
+  email: string;
+  locale: Locale;
+  onBack: () => void;
+  onGo: (target: string) => void;
+  onCopyEmail: () => void;
+}) {
+  const t = dict[locale];
+  const a = dict[answer.lang];
+  const titleId = useId();
+  const titleRef = useRef<HTMLHeadingElement>(null);
+
+  // A screen reader lands on the card's title, not on a stale search field.
+  useEffect(() => {
+    titleRef.current?.focus();
+  }, []);
+
+  return (
+    <section className="ask" aria-labelledby={titleId}>
+      <div className="ask-h">
+        <Icon name="chat-circle-dots-duotone" className="ck-ic" />
+        <h2 id={titleId} ref={titleRef} tabIndex={-1}>
+          {t.askTitle}
+        </h2>
+        <span className="ask-badge">{t.askBadge}</span>
+        <button type="button" className="ask-cancel" onClick={onBack}>
+          {t.palCancel}
+        </button>
+      </div>
+      <p className="ask-trust">{t.askTrust}</p>
+      <p className="ask-q">{answer.query}</p>
+      {answer.kind === 'decline' ? (
+        <div className="ask-decl">
+          <p lang={answer.lang}>{fill(a.askDeclined, { email })}</p>
+          <p className="ask-decl-act">
+            <button type="button" className="btn btn-out" onClick={onCopyEmail}>
+              {/* C1: reuses the existing copyEmail key instead of a duplicate palCopyEmail. */}
+              {t.copyEmail}
+            </button>
+          </p>
+        </div>
+      ) : (
+        <>
+          <p className="ask-a" lang={answer.lang}>
+            {withMarkers(answer.text, answer.sources, a.askSourceN, onGo)}
+          </p>
+          <div className="ask-srcs">
+            <h3>{t.askSources}</h3>
+            <ol>
+              {answer.sources.map((s, i) => (
+                <li key={`${s.target}-${i}`}>
+                  <button type="button" onClick={() => onGo(s.target)}>
+                    <b aria-hidden="true">{i + 1}</b>
+                    <span>
+                      <span>{s.label}</span>
+                      {s.quote && <em lang={answer.lang}>“{s.quote}”</em>}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </>
+      )}
+      <div className="ask-f">
+        <a href={mailto(email, ASK_SUBJECT)}>{t.askWrong}</a>
+      </div>
+    </section>
+  );
+}
+
+// "…GoNai is live[2] and…" → each [n] becomes a small button that jumps to
+// source n. split() with a capture group puts the numbers at odd indexes.
+function withMarkers(
+  text: string,
+  sources: AskSource[],
+  labelTemplate: string,
+  onGo: (target: string) => void,
+): ReactNode[] {
+  return text.split(/\[(\d+)\]/).map((part, i) => {
+    if (i % 2 === 0) return part;
+    const n = Number(part);
+    const src = sources[n - 1];
+    if (!src) return null;
+    return (
+      <sup key={i}>
+        <button type="button" aria-label={fill(labelTemplate, { n })} onClick={() => onGo(src.target)}>
+          {n}
+        </button>
+      </sup>
+    );
+  });
+}

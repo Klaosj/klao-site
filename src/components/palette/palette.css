@@ -1,0 +1,293 @@
+/* ⌘K palette + Ask Preview. Imported by CommandPalette, so it ships in the
+   palette's lazy chunk, never the first load. Values: the prototype's
+   .cmdk / .ckrow / .cko / .ask block; --card stands in for the
+   prototype's --raised (not a C1 token). */
+.ck {
+  width: min(640px, 100% - 32px);
+  max-width: none;
+  max-height: none;
+  margin: 14vh auto auto;
+  padding: 0;
+  border: 0;
+  border-radius: 22px;
+  background: var(--card);
+  color: var(--ink-1);
+  box-shadow: 0 24px 64px -16px rgb(0 0 0 / 0.28), 0 0 0 1px var(--line);
+  overflow: hidden;
+}
+.ck::backdrop {
+  background: rgb(0 0 0 / 0.2);
+}
+.ck-ic {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  color: var(--ink-2);
+}
+.ck-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 56px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--line);
+}
+.ck-input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 17px;
+  color: var(--ink-1);
+  outline: none;
+}
+.ck-input::placeholder {
+  color: var(--ink-2);
+}
+.ck-cancel {
+  display: none;
+  min-height: 44px;
+  border: 0;
+  background: none;
+  color: var(--link);
+  font-size: 16px;
+  cursor: pointer;
+}
+.ck-empty {
+  margin: 0;
+  padding: 14px 16px 4px;
+  font-size: 14px;
+  color: var(--ink-2);
+}
+.ck-list {
+  max-height: min(56vh, 480px);
+  padding: 6px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.ck-g {
+  padding: 10px 10px 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+.ck-o {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 0 10px;
+  border-radius: 10px;
+  font-size: 15px;
+  cursor: pointer;
+}
+.ck-o[aria-selected='true'] {
+  background: color-mix(in srgb, var(--ink-1) 7%, transparent);
+}
+.ck-o mark {
+  background: none;
+  color: inherit;
+  font-weight: 700;
+}
+.ck-hint {
+  max-width: 45%;
+  margin-left: auto;
+  overflow: hidden;
+  font-size: 12px;
+  color: var(--ink-2);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ck-foot {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: 36px;
+  padding: 0 16px;
+  border-top: 1px solid var(--line);
+  font-size: 12px;
+  color: var(--ink-2);
+}
+.ck-foot span:last-child {
+  margin-left: auto;
+}
+
+/* Ask Klao · Preview card */
+.ask {
+  max-height: min(76vh, 640px);
+  padding: 28px;
+  overflow: auto;
+}
+.ask-h {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ask-h h2 {
+  margin: 0;
+  font-size: 21px;
+  line-height: 25px;
+  font-weight: 600;
+}
+.ask-h h2:not(:lang(th)) {
+  letter-spacing: 0.011em;
+}
+.ask-badge {
+  padding: 3px 10px;
+  border-radius: 12px;
+  box-shadow: inset 0 0 0 1px var(--ink-3);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-1);
+}
+.ask-cancel {
+  min-height: 44px;
+  margin-left: auto;
+  border: 0;
+  background: none;
+  color: var(--link);
+  font-size: 16px;
+  cursor: pointer;
+}
+.ask-trust {
+  margin: 12px 0 0;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--ink-2);
+}
+.ask-q {
+  margin: 22px 0 0;
+  font-size: 19px;
+  line-height: 26px;
+  font-weight: 600;
+}
+.ask-a {
+  max-width: 60ch;
+  margin: 10px 0 0;
+  font-size: 17px;
+  line-height: 26px;
+}
+.ask-a:lang(th) {
+  line-height: 28px;
+}
+.ask-a sup button {
+  min-width: 24px;
+  min-height: 24px;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--mist);
+  color: var(--ink-1);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.ask-srcs {
+  margin: 18px 0 0;
+  border-top: 1px solid var(--line);
+}
+.ask-srcs h3 {
+  margin: 14px 0 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+.ask-srcs ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ask-srcs button {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 0;
+  border: 0;
+  background: none;
+  color: var(--ink-1);
+  font-size: 15px;
+  line-height: 21px;
+  text-align: left;
+  cursor: pointer;
+}
+.ask-srcs button b {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: var(--mist);
+  font-size: 12px;
+}
+.ask-srcs em {
+  display: block;
+  font-style: normal;
+  color: var(--ink-2);
+}
+.ask-srcs button:hover span > span:first-child {
+  text-decoration: underline;
+}
+.ask-decl {
+  margin-top: 22px;
+  padding: 18px;
+  border-radius: 16px;
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.ask-decl p {
+  margin: 0;
+  font-size: 17px;
+  line-height: 26px;
+}
+.ask-decl .ask-decl-act {
+  margin-top: 12px;
+}
+.ask-f {
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  font-size: 14px;
+}
+.ask-f a {
+  color: var(--link);
+}
+@media (max-width: 734px) {
+  .ck {
+    width: 100%;
+    height: 100dvh;
+    margin: 0;
+    border-radius: 0;
+  }
+  .ck-cancel {
+    display: block;
+  }
+  .ck-list {
+    max-height: calc(100dvh - 56px);
+  }
+  .ck-g,
+  .ck-empty {
+    font-size: 14px;
+  }
+  .ck-o {
+    min-height: 48px;
+    font-size: 16px;
+  }
+  .ck-hint {
+    font-size: 14px;
+  }
+  .ck-foot {
+    display: none;
+  }
+  .ask {
+    max-height: calc(100dvh - 24px);
+    padding: 22px 20px 28px;
+  }
+  .ask-badge,
+  .ask-a sup button,
+  .ask-srcs button b {
+    font-size: 14px;
+  }
+}
