@@ -301,8 +301,16 @@ describe('segmented control (.seg) with a sliding thumb (A01)', () => {
   // reserves its bold width, so the visible label's own weight can change
   // (on select) without resizing the button, the thumb's %, or the
   // control's centring.
+  // Wave-1 reconciliation (k): one rule for every `.seg-label`, so the nav
+  // capsule's links (not a .seg) reuse it instead of a second copy.
   it('reserves the checked label\u2019s bold width with a hidden ::after duplicate', () => {
-    const after = rulesFor('.seg > :is(button, a) .seg-label::after')[0];
+    expect(rulesFor('.seg-label')[0]).toContain('display: inline-block;');
+    // An inline-block's baseline is its LAST line box -- here the hidden
+    // duplicate's, one line down -- so in an inline context (the nav's links)
+    // the label rose and the link grew 28 -> 37 px. Top-aligned, it keeps the
+    // line box it had as bare text.
+    expect(rulesFor('.seg-label')[0]).toContain('vertical-align: top;');
+    const after = rulesFor('.seg-label::after')[0];
     expect(after).toContain('content: attr(data-label);');
     expect(after).toContain('font-weight: 600;');
     expect(after).toContain('visibility: hidden;');

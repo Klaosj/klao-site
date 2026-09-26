@@ -112,7 +112,13 @@ export default function SiteNav({ locale, profile }: { locale: Locale; profile: 
             <span className="sn-act" ref={pillRef} aria-hidden="true" />
             {NAV_SECTIONS.map((sec) => (
               <Link key={sec} href={href(`#${sec}`)} data-sec={sec} aria-current={active === sec ? 'location' : undefined}>
-                {t[NAV_LABEL_KEY[sec]]}
+                {/* The current link is bold; `data-label` feeds the hidden
+                    bold duplicate (globals.css `.seg-label::after`) that
+                    reserves that width, so the row never shifts when the
+                    current section changes. */}
+                <span className="seg-label" data-label={t[NAV_LABEL_KEY[sec]]}>
+                  {t[NAV_LABEL_KEY[sec]]}
+                </span>
               </Link>
             ))}
           </div>

@@ -91,6 +91,22 @@ describe('SiteNav', () => {
     expect(within(nav()).getByRole('link', { name: dict.en.navContact }).getAttribute('href')).toBe('#contact');
   });
 
+  // Wave-1 reconciliation (k): the current link turns bold (600), which is
+  // wider than 400, so it widened ~3 px and shifted the right-anchored row on
+  // every section change. Each label now carries the same hidden bold
+  // duplicate as the segmented controls (globals.css `.seg-label::after`).
+  it('wraps each section label with a data-label copy of itself, reserving its bold width', () => {
+    for (const locale of ['en', 'th'] as const) {
+      const { unmount } = render(<SiteNav locale={locale} profile={profile} />);
+      for (const a of sectionLinks(locale)) {
+        const label = a.querySelector('.seg-label');
+        expect(label, a.textContent ?? '').not.toBeNull();
+        expect(label!.getAttribute('data-label')).toBe(a.textContent);
+      }
+      unmount();
+    }
+  });
+
   it('points every home anchor at /{locale}#id from another route, never a dead hash', () => {
     vi.mocked(usePathname).mockReturnValue('/th/projects');
     render(<SiteNav locale="th" profile={profile} />);

@@ -754,12 +754,17 @@
      still sets the label's own shrink-to-fit width (inline-block sizes to
      the widest of its stacked block children), so the visible text's own
      weight can change without the label -- or the button around it --
-     resizing. */
-  .seg > :is(button, a) .seg-label {
+     resizing. Unscoped on purpose: the nav capsule's section links bold
+     their current link the same way and reuse this rule (site-nav.css).
+     `vertical-align: top`: an inline-block's baseline is its last line box,
+     which is the hidden duplicate's, one line down; top-aligned, the label
+     keeps the line box it had as bare text (in a flex .seg it is ignored). */
+  .seg-label {
     position: relative;
     display: inline-block;
+    vertical-align: top;
   }
-  .seg > :is(button, a) .seg-label::after {
+  .seg-label::after {
     content: attr(data-label);
     display: block;
     height: 0;
