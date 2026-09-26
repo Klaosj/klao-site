@@ -26,10 +26,9 @@ export default function Hero({
   const now = profile.now[locale];
 
   return (
-    // 130vh, not the particle era's 180vh: the monument's stroke-draw
-    // completes by DRAW_END (see HeroMonument.tsx's choreography constants),
-    // so the pin no longer needs the extra viewport of travel the particle
-    // assembly's long hold at full morph used to want.
+    // 130vh with a sticky stage: the scroll the removed HeroMonument drew its
+    // wordmark over. White Edition P1 replaces this section with HeroTour;
+    // until then the stage simply stays pinned for an extra 30vh.
     <section id="hero" className="relative z-[2] h-[130vh]">
       <div
         data-hero-stage
