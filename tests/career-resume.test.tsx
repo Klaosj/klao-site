@@ -21,6 +21,8 @@ const nonNullProfile: Profile = {
   resumeUrl: 'https://files.example.com/klao-resume.pdf',
   clients: [],
   nameNative: null,
+  prologue: null,
+  closingLine: null,
 };
 const nullProfile: Profile = { ...nonNullProfile, resumeUrl: null };
 

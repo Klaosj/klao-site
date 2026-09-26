@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import careerFixture from '@/content/fixtures/career.json';
-import { getCareer } from '@/lib/content';
+import profileFixture from '@/content/fixtures/profile.json';
+import { getCareer, getProfile } from '@/lib/content';
 import { slugKey } from '@/lib/format';
 import type { CareerEntry } from '@/lib/models';
 
@@ -48,5 +49,23 @@ describe('career fixture (P3 fields, prototype copy)', () => {
 
   it('spells Actmedia the approved way', () => {
     expect(JSON.stringify(careerFixture)).not.toContain('ActMedia');
+  });
+});
+
+describe('profile fixture (P3 fields)', () => {
+  it('carries the prologue with one bold clause per language and the prototype closing line', async () => {
+    const p = await getProfile();
+    expect(p.prologue?.en).toContain(
+      '**Now I do business development at Actmedia by day, and build my own tools at night.**',
+    );
+    expect(p.prologue?.th.match(/\*\*/g)).toHaveLength(2);
+    expect(p.closingLine).toEqual({
+      en: 'Business developer who builds his own tools.',
+      th: 'นัก Business Development ที่สร้างเครื่องมือ|ใช้เอง',
+    });
+  });
+
+  it('spells Actmedia the approved way everywhere in the profile', () => {
+    expect(JSON.stringify(profileFixture)).not.toContain('ActMedia');
   });
 });

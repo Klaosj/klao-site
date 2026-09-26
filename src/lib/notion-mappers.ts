@@ -126,6 +126,15 @@ export function mapProfile(page: NotionPage): Profile | null {
     // `NameNative` property maps to null, and the /th particle wordmark
     // falls back to the Latin word (see src/app/[locale]/page.tsx).
     nameNative: text(page.properties.NameNative) || null,
+    // White Edition P3: optional rich text, same additive treatment as
+    // NameNative -- a Profile database without these properties maps to
+    // null rather than failing.
+    prologue: text(page.properties.PrologueEN)
+      ? localized(text(page.properties.PrologueEN), text(page.properties.PrologueTH))
+      : null,
+    closingLine: text(page.properties.ClosingLineEN)
+      ? localized(text(page.properties.ClosingLineEN), text(page.properties.ClosingLineTH))
+      : null,
   };
 }
 

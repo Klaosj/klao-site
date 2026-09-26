@@ -144,6 +144,12 @@ export interface Profile {
   // ParticleField's canvas renderer, not plain DOM text. null falls back to
   // the Latin wordmark (profile.name's first word) on both locales.
   nameNative: string | null;
+  // White Edition P3 (C5): By day's owner-side story (one **bold** clause,
+  // rendered by BoldText) and the section's closing line (Thai may carry a
+  // '|' break marker, C3). Both null on a Profile row from before the
+  // migration: ByDay then drops the paragraph and closes on the headline.
+  prologue: Localized | null;
+  closingLine: Localized | null;
 }
 
 // "How real is it" -- a Skill's visual prominence on SkillsBand (the

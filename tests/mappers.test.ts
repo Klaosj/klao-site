@@ -303,6 +303,8 @@ describe('mapProfile', () => {
       // above: this fixture page has no `NameNative` property, so an
       // existing Profile database maps to null rather than failing.
       nameNative: null,
+      prologue: null,
+      closingLine: null,
     });
   });
 
@@ -314,6 +316,28 @@ describe('mapProfile', () => {
       properties: { ...profilePage.properties, NameNative: rich('สุวิจักขณ์') },
     };
     expect(mapProfile(page)!.nameNative).toBe('สุวิจักขณ์');
+  });
+
+  it('maps PrologueEN/TH and ClosingLineEN/TH, TH falling back to EN', () => {
+    const page = {
+      ...profilePage,
+      properties: {
+        ...profilePage.properties,
+        PrologueEN: rich('I started on the owner side. **Now I build my own tools.**'),
+        PrologueTH: rich(''),
+        ClosingLineEN: rich('Business developer who builds his own tools.'),
+        ClosingLineTH: rich('นัก Business Development ที่สร้างเครื่องมือ|ใช้เอง'),
+      },
+    };
+    const p = mapProfile(page)!;
+    expect(p.prologue).toEqual({
+      en: 'I started on the owner side. **Now I build my own tools.**',
+      th: 'I started on the owner side. **Now I build my own tools.**',
+    });
+    expect(p.closingLine).toEqual({
+      en: 'Business developer who builds his own tools.',
+      th: 'นัก Business Development ที่สร้างเครื่องมือ|ใช้เอง',
+    });
   });
 
   it('returns null and warns on missing Name', () => {
