@@ -221,4 +221,48 @@ describe('helpers', () => {
     expect(highlight('GoNai', 'x')).toBeNull();
     expect(highlight('GoNai', '')).toBeNull();
   });
+
+  // Fix round 1, Important: highlight() used to slice by code-unit length,
+  // ignoring Thai grapheme-cluster boundaries. A base consonant plus its
+  // tone mark ('อ่') is two code units but one glyph a reader never sees
+  // split, so the naive slice returned a fragment starting with a bare
+  // combining mark -- a broken glyph once T13 renders it inside <mark>.
+  describe('highlight (Thai grapheme clusters, fix round 1)', () => {
+    it('never returns an "after" fragment that starts with a combining mark', () => {
+      const parts = highlight('อ่อนนุช', 'อ')!;
+      expect(parts).toEqual(['', 'อ่', 'อนนุช']);
+      expect(parts[2][0]).not.toMatch(/[ัิ-ฺ็-๎]/);
+    });
+
+    it('extends the match forward when a tone mark sits exactly at the match end', () => {
+      // 'มานี่'.indexOf('มานี') = 0; the naive end (index 4) lands right on
+      // the tone mark that closes the last cluster ('นี่'), so it must be
+      // pulled into the match rather than left to open the "after" side.
+      expect(highlight('มานี่', 'มานี')).toEqual(['', 'มานี่', '']);
+    });
+
+    it('snaps both edges around a match in the middle of a Thai word', () => {
+      // 'นเที' sits mid-word in 'ก่อนเที่ยง': the naive end (index 7) lands on
+      // the tone mark that closes 'ที่', so the match grows to include it.
+      expect(highlight('ก่อนเที่ยง', 'นเที')).toEqual(['ก่อ', 'นเที่', 'ยง']);
+      // A query that itself starts on a tone mark ('่อน') snaps its start
+      // back to the base consonant that mark belongs to ('ก'), growing the
+      // match backward instead of splitting 'ก' from its own tone mark.
+      expect(highlight('ก่อนเที่ยง', '่อน')).toEqual(['', 'ก่อน', 'เที่ยง']);
+    });
+
+    it('falls back to the Thai combining-mark ranges when Intl.Segmenter is unavailable', () => {
+      const IntlUnknown = Intl as Record<string, unknown>;
+      const original = IntlUnknown.Segmenter;
+      IntlUnknown.Segmenter = undefined;
+      try {
+        expect(highlight('อ่อนนุช', 'อ')).toEqual(['', 'อ่', 'อนนุช']);
+        expect(highlight('มานี่', 'มานี')).toEqual(['', 'มานี่', '']);
+        // English is unaffected by either path.
+        expect(highlight('Open résumé', 'resume')).toEqual(['Open ', 'résumé', '']);
+      } finally {
+        IntlUnknown.Segmenter = original;
+      }
+    });
+  });
 });

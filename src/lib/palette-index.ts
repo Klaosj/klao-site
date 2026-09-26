@@ -133,6 +133,8 @@ export function buildPaletteIndex(input: PaletteInput, locale: Locale): PaletteE
     entries.push({
       id: `project:${key}`,
       group: 'projects',
+      // p.name is the project's title, not Localized body copy, so it never
+      // carries the '|' break mark and skips unbreak() (fix round 1, minor).
       label: p.name,
       alt: '',
       // kicker/description are Notion copy and may carry the '|' break mark;
@@ -157,6 +159,9 @@ export function buildPaletteIndex(input: PaletteInput, locale: Locale): PaletteE
     entries.push({
       id: `career:${c.key}`,
       group: 'career',
+      // c.company (a proper noun) and c.period (a date range) are plain
+      // strings, not Localized body copy, so neither carries the '|' break
+      // mark and both skip unbreak() (fix round 1, minor).
       label: c.company,
       alt: '',
       hint: c.period,
@@ -302,11 +307,54 @@ export function searchPalette(entries: PaletteEntry[], query: string): PaletteEn
   return PALETTE_GROUPS.flatMap((g) => scored.filter((x) => x.entry.group === g).map((x) => x.entry));
 }
 
+// Thai vowel signs and tone marks that only ever attach to the character
+// before them (Unicode's Extend/SpacingMark grapheme categories for Thai) --
+// the fallback matchBounds() below uses this fixed set when Intl.Segmenter
+// isn't available.
+const THAI_MARK = /[ัิ-ฺ็-๎]/;
+
+// Widens [start, end) to the nearest grapheme-cluster boundaries. score()
+// and fold() work in UTF-16 code units, which cut a Thai cluster mid-glyph
+// -- 'อ่' (a base consonant plus a tone mark) is two code units but one
+// glyph a reader never sees split, so a naive slice can return a fragment
+// that starts with a bare combining mark (fix round 1: T13's <mark> then
+// renders a broken glyph). Intl.Segmenter is built in (no new dependency)
+// and used when present; the regex fallback below only needs to know which
+// Thai code points are combining marks, since English text has none and is
+// unaffected either way (every Latin/accented character is its own cluster).
+function matchBounds(text: string, start: number, end: number): [number, number] {
+  if (typeof Intl !== 'undefined' && typeof Intl.Segmenter === 'function') {
+    const bounds = [0];
+    for (const { segment } of new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(text)) {
+      bounds.push(bounds[bounds.length - 1] + segment.length);
+    }
+    let s = 0;
+    for (const b of bounds) {
+      if (b <= start) s = b;
+      else break;
+    }
+    let e = bounds[bounds.length - 1];
+    for (const b of bounds) {
+      if (b >= end) {
+        e = b;
+        break;
+      }
+    }
+    return [s, e];
+  }
+  let s = start;
+  while (s > 0 && THAI_MARK.test(text[s])) s--;
+  let e = end;
+  while (e < text.length && THAI_MARK.test(text[e])) e++;
+  return [s, e];
+}
+
 // [before, match, after] around the first case/accent-insensitive match.
 export function highlight(text: string, query: string): [string, string, string] | null {
   const q = fold(query.trim());
   if (!q) return null;
-  const i = fold(text).indexOf(q);
-  if (i < 0) return null;
-  return [text.slice(0, i), text.slice(i, i + q.length), text.slice(i + q.length)];
+  const i0 = fold(text).indexOf(q);
+  if (i0 < 0) return null;
+  const [i, e] = matchBounds(text, i0, i0 + q.length);
+  return [text.slice(0, i), text.slice(i, e), text.slice(e)];
 }
