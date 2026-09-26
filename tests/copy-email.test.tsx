@@ -104,6 +104,76 @@ describe('CopyEmail', () => {
     expect(live(container)).toBe('กด Ctrl+C เพื่อคัดลอก');
     expect(container.textContent).not.toContain(dict.th.copied);
   });
+
+  // --- Fix round 1 regressions -------------------------------------------
+
+  it('does not stack timers on a double click inside the 2 s window: one pending timer, resetting 2 s after the LAST copy', async () => {
+    vi.useFakeTimers();
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal('navigator', { clipboard: { writeText } });
+    const { container } = render(<CopyEmail email="a@b.co" locale="en" />);
+
+    await clickCopy();
+    expect(vi.getTimerCount()).toBe(1);
+
+    // A second copy 1 s into the first window, before its timer fires.
+    // settle() must clearTimeout() the first one, leaving exactly one timer
+    // -- not two racing to reset the label at different times.
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    await clickCopy();
+    expect(vi.getTimerCount()).toBe(1);
+
+    // t=1999ms since the SECOND click (t=2999ms since the first): if the
+    // first click's timer had survived, it would have reset the label a
+    // full second ago (at t=2000ms since the first click).
+    act(() => {
+      vi.advanceTimersByTime(1999);
+    });
+    expect(live(container)).toBe(dict.en.copied);
+
+    // The one remaining timer fires exactly 2 s after the LAST copy.
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+    expect(live(container)).toBe('');
+  });
+
+  it('unmounting while the clipboard promise is still pending throws nothing, warns nothing, and leaves no pending timer', async () => {
+    vi.useFakeTimers();
+    // A promise this test controls, so it can unmount BEFORE the clipboard
+    // write settles -- copyText()'s await is still pending at that point.
+    let resolveWrite: () => void = () => {};
+    const writeText = vi.fn(() => new Promise<void>((resolve) => { resolveWrite = resolve; }));
+    vi.stubGlobal('navigator', { clipboard: { writeText } });
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const { unmount } = render(<CopyEmail email="a@b.co" locale="en" />);
+    fireEvent.click(screen.getByRole('button', { name: dict.en.copyEmailAction }));
+    // No timer yet: copy() is still awaiting copyText(), which hasn't
+    // resolved, so settle() has not run.
+    expect(vi.getTimerCount()).toBe(0);
+
+    unmount();
+
+    // Resolving AFTER unmount is the regression: without the mounted guard,
+    // copy() would resume, call settle('ok', 2000), and schedule a new
+    // setTimeout that the unmount cleanup already ran and can never cancel
+    // -- a real leak, not a theoretical one (this assertion fails without
+    // the guard).
+    await act(async () => {
+      resolveWrite();
+      await flushMicrotasks();
+    });
+    expect(vi.getTimerCount()).toBe(0);
+    expect(warn).not.toHaveBeenCalled();
+    expect(error).not.toHaveBeenCalled();
+
+    warn.mockRestore();
+    error.mockRestore();
+  });
 });
 
 // Polish amendment A03: the copy button's icon does not swap outright -- a
@@ -127,7 +197,7 @@ describe('copy-email.css (A03 stroke-dashoffset exception)', () => {
           if (prop === 'stroke-dashoffset') {
             // The exception is real (this test would pass vacuously if the
             // rule were ever deleted) and stays scoped to the check icon.
-            expect(selector, `stroke-dashoffset transition outside .ok: ${selector}`).toContain('.ok');
+            expect(selector, `stroke-dashoffset transition outside .copy-ok: ${selector}`).toContain('.copy-ok');
             sawException = true;
             continue;
           }
@@ -135,7 +205,7 @@ describe('copy-email.css (A03 stroke-dashoffset exception)', () => {
         }
       }
     }
-    expect(sawException, 'expected exactly the .ok path stroke-dashoffset exception').toBe(true);
+    expect(sawException, 'expected exactly the .copy-ok path stroke-dashoffset exception').toBe(true);
   });
 
   it('turns off every transition, including the draw-on, under prefers-reduced-motion: reduce', () => {
@@ -156,6 +226,6 @@ describe('copy-email.css (A03 stroke-dashoffset exception)', () => {
     const block = blockFrom(CSS, at);
     // All three transitioning selectors -- including the draw-on check --
     // must be grouped into this one neutralising rule.
-    expect(block).toMatch(/\.copy-b,\s*\.clip,\s*\.ok path \{\s*transition: none;/);
+    expect(block).toMatch(/\.copy-b,\s*\.copy-clip,\s*\.copy-ok path \{\s*transition: none;/);
   });
 });

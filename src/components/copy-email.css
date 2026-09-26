@@ -1,9 +1,12 @@
 /* CopyEmail -- the prototype's `.mailrow` / `.copyb` / `.copyl`, updated per
    polish amendment A03: the button's icon does not swap outright. Two
-   stacked 18 px glyphs sit in `.box` -- the clipboard fades/scales out
+   stacked 18 px glyphs sit in `.copy-box` -- the clipboard fades/scales out
    (transform + opacity only) while the check draws itself via
    `stroke-dashoffset`, a named exception (master R27) allowed only on this
-   one 18 px inline-stroke icon. */
+   one 18 px inline-stroke icon. Every class here is `.copy-*`-prefixed
+   (fix round 1, Important): this is a plain global CSS import, not a CSS
+   module, so an unprefixed `.box`/`.clip`/`.ok` would collide with the
+   first unrelated component that reaches for the same generic name. */
 .mail-row {
   display: inline-flex;
   align-items: center;
@@ -38,32 +41,32 @@
   transform: scale(1.02);
 }
 /* A03: the two 18 px glyphs stack on top of each other in one box. */
-.box {
+.copy-box {
   position: relative;
   width: 18px;
   height: 18px;
 }
-.box svg {
+.copy-box svg {
   position: absolute;
   inset: 0;
   width: 18px;
   height: 18px;
 }
-.clip {
+.copy-clip {
   transition: opacity 160ms var(--ease-glide), transform 200ms var(--ease-tick);
 }
-.copy-b[data-state='ok'] .clip {
+.copy-b[data-state='ok'] .copy-clip {
   opacity: 0;
   transform: scale(0.7);
 }
-.ok path {
+.copy-ok path {
   /* Named exception (master R27): the only non-transform/opacity transition
      on the page, scoped to this one 18 px inline-stroke icon. */
   stroke-dasharray: 20;
   stroke-dashoffset: 20;
   transition: stroke-dashoffset 360ms var(--ease-tick) 80ms;
 }
-.copy-b[data-state='ok'] .ok path {
+.copy-b[data-state='ok'] .copy-ok path {
   stroke-dashoffset: 0;
 }
 .copy-l {
@@ -79,8 +82,8 @@ html:not(.js) .copy-l {
 }
 @media (prefers-reduced-motion: reduce) {
   .copy-b,
-  .clip,
-  .ok path {
+  .copy-clip,
+  .copy-ok path {
     transition: none;
   }
 }

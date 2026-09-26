@@ -30,9 +30,16 @@ export default function CopyEmail({ email, locale }: { email: string; locale: Lo
   const [state, setState] = useState<State>('idle');
   const addr = useRef<HTMLSpanElement>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Fix round 1 (minor): copyText() awaits the Clipboard API, so a visitor
+  // can navigate away or the parent can unmount this component mid-flight.
+  // Without this guard, the code after that await still calls setState and
+  // schedules a new setTimeout on an unmounted component -- a timer the
+  // cleanup below already ran and can no longer cancel.
+  const mounted = useRef(true);
 
   useEffect(
     () => () => {
+      mounted.current = false;
       if (timer.current) clearTimeout(timer.current);
     },
     [],
@@ -45,7 +52,9 @@ export default function CopyEmail({ email, locale }: { email: string; locale: Lo
   }
 
   async function copy() {
-    if (await copyText(email)) {
+    const ok = await copyText(email);
+    if (!mounted.current) return;
+    if (ok) {
       settle('ok', 2000);
       return;
     }
@@ -71,9 +80,9 @@ export default function CopyEmail({ email, locale }: { email: string; locale: Lo
         {email}
       </span>
       <button type="button" className="copy-b" data-state={state} aria-label={t.copyEmailAction} onClick={copy}>
-        <span className="box">
+        <span className="copy-box">
           <svg
-            className="clip"
+            className="copy-clip"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -89,7 +98,7 @@ export default function CopyEmail({ email, locale }: { email: string; locale: Lo
               path on success -- the one place on the page anything other
               than transform/opacity animates. */}
           <svg
-            className="ok"
+            className="copy-ok"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
