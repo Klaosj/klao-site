@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import TourBand from '@/components/sections/TourBand';
 import { dict } from '@/lib/dictionary';
 import type { Project } from '@/lib/models';
+import { P1_DEFAULTS } from './helpers/project';
 
 afterEach(cleanup);
 
@@ -26,6 +27,7 @@ const shipped: Project = {
   outcome: null,
   question: { en: 'One day in Bangkok — what is the real budget?', th: 'ไปเที่ยวหนึ่งวัน งบจริงเท่าไหร่?' },
   slug: null,
+  ...P1_DEFAULTS,
 };
 
 describe('TourBand', () => {

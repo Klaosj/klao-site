@@ -5,6 +5,7 @@ import PostPage, { generateMetadata as postMetadata } from '@/app/[locale]/writi
 import sitemap from '@/app/sitemap';
 import { SITE_URL } from '@/lib/site';
 import type { Locale, Post, PostMeta, Project } from '@/lib/models';
+import { P1_DEFAULTS } from './helpers/project';
 
 // Split out of tests/smoke.test.tsx, which is a REAL-fixture smoke test --
 // src/content/fixtures/posts.json holds the owner's actual (currently empty)
@@ -72,6 +73,7 @@ const synthProjects: Project[] = [
     outcome: null,
     question: { en: 'What is synthetic project one?', th: 'โปรเจกต์สังเคราะห์แรกคืออะไร?' },
     slug: 'gonai',
+    ...P1_DEFAULTS,
   },
   {
     id: 'synth-project-2',
@@ -87,6 +89,7 @@ const synthProjects: Project[] = [
     outcome: null,
     question: null,
     slug: null,
+    ...P1_DEFAULTS,
   },
 ];
 

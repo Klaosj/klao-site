@@ -9,7 +9,7 @@
 // so both consumers share one map). Locale-invariant on purpose: these
 // describe the fixed pixels of a static screenshot, not translated UI copy.
 const GONAI =
-  'A white landing-page hero with an airplane-and-Thai-flag logomark, a bold headline about planning a full day out and knowing every baht before leaving, a budget search field, a black "start planning" button, and small floating cards noting a confirmed fare and a BTS fare between two stations.';
+  'A white landing-page hero with an airplane-and-Thai-flag logomark, a bold headline about planning a full day out and knowing every baht before leaving, a budget search field, a black "start planning" button, and small floating cards noting fares from official tables and a BTS fare between two stations.';
 const AJE =
   'A dark blue idea-review screen with a four-step tracker (Describe, Review, Test, Learn) at "Level 2 of 9", a Thai-language business idea with three side-by-side panels for the idea, its biggest uncertainty and the next test to run, a bulleted list of ways the idea could fail, and a bottom tab bar for ideas, review, frameworks and forecast.';
 const KLAO_SITE =

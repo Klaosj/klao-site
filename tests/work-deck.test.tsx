@@ -5,6 +5,7 @@ import WorkDeck from '@/components/sections/WorkDeck';
 import { dict } from '@/lib/dictionary';
 import { IMAGE_ALT, imageAlt } from '@/lib/image-alt';
 import type { Project } from '@/lib/models';
+import { P1_DEFAULTS } from './helpers/project';
 
 // Same manual-cleanup + stub setup as every other jsdom test in this repo.
 // vitest.config.ts declares no setup file (White Edition P0 deleted
@@ -33,6 +34,7 @@ const build: Project = {
   outcome: null,
   question: { en: 'One day in Bangkok — what is the real budget?', th: 'ไปเที่ยวหนึ่งวัน งบจริงเท่าไหร่?' },
   slug: null,
+  ...P1_DEFAULTS,
 };
 
 const secondBuild: Project = { ...build, id: 'p-build2', name: 'Aje', order: 4 };
@@ -53,6 +55,7 @@ const business: Project = {
   outcome: { en: 'Validated with 3 paying pilots', th: 'ผ่านการทดสอบกับลูกค้าจ่ายจริง 3 ราย' },
   question: { en: 'Can a solo operator serve Thai SMEs?', th: 'คนเดียวดูแล SME ไทยได้ไหม?' },
   slug: null,
+  ...P1_DEFAULTS,
 };
 
 // The deck always ends with one internal "All projects →" footer link (to

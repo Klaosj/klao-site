@@ -14,21 +14,37 @@
     "order": 1,
     "type": "business",
     "outcome": {
-      "en": "Market sized (TAM–SAM–SOM, SOM THB 37M) · 5 revenue streams · first-year financial plan · clickable prototype",
-      "th": "ขนาดตลาด TAM–SAM–SOM (SOM 37 ล้านบาท) · 5 ช่องทางรายได้ · แผนการเงินปีแรก · prototype กดได้จริง"
+      "en": "Market sized (TAM–SAM–SOM, SOM THB 37M, an estimate) · 5 revenue streams · First-year financial plan · Clickable prototype",
+      "th": "ขนาดตลาด TAM–SAM–SOM (SOM 37 ล้านบาท เป็นการประเมิน) · 5 ช่องทางรายได้ · แผนการเงินปีแรก · prototype กดได้จริง"
     },
     "question": {
       "en": "Can a restaurant get wet-market fresh produce without the morning market run?",
       "th": "ร้านอาหารจะได้ของสดจากตลาด โดยไม่ต้องไปจ่ายตลาดเองตอนเช้า ได้ไหม?"
     },
-    "slug": null
+    "slug": null,
+    "statusKey": "pitched",
+    "status": { "en": "Pitched · TEP 2025", "th": "นำเสนอแล้ว · TEP 2025" },
+    "kicker": { "en": "Business · Co-founder · 2025", "th": "ธุรกิจ · Co-founder · 2025" },
+    "media": "rings",
+    "wash": "none",
+    "tour": false,
+    "tourOrder": null,
+    "lineageOf": null,
+    "alt": {
+      "en": "Three nested rings labelled TAM, SAM and SOM, with SOM filled. Method, not to scale.",
+      "th": "วงกลมซ้อนสามวง TAM, SAM และ SOM โดยระบาย SOM วิธีคิด ไม่ใช่สัดส่วนจริง"
+    },
+    "outcomes": {
+      "en": ["Market sized (TAM–SAM–SOM, SOM THB 37M, an estimate)", "5 revenue streams", "First-year financial plan", "Clickable prototype"],
+      "th": ["ขนาดตลาด TAM–SAM–SOM (SOM 37 ล้านบาท เป็นการประเมิน)", "5 ช่องทางรายได้", "แผนการเงินปีแรก", "prototype กดได้จริง"]
+    }
   },
   {
     "id": "fx-tripedia",
     "name": "Tripedia",
     "description": {
-      "en": "Travel-tech startup idea: one platform that plans the whole trip in one place. Co-founder at KATALYST Startup Launchpad 2022 — the idea GoNai was later built from.",
-      "th": "ไอเดียสตาร์ทอัพท่องเที่ยว: แพลตฟอร์มเดียวที่วางแผนทั้งทริปจบในที่เดียว เป็น Co-founder ใน KATALYST Startup Launchpad 2022 — คือไอเดียต้นทางที่ GoNai ถูกสร้างขึ้นจริงในภายหลัง"
+      "en": "Travel-tech startup idea: one platform that plans the whole trip in one place. Co-founder at KATALYST Startup Launchpad 2022, the idea GoNai was later built from.",
+      "th": "ไอเดียสตาร์ทอัพท่องเที่ยว: แพลตฟอร์มเดียวที่วางแผนทั้งทริปจบในที่เดียว เป็น Co-founder ใน KATALYST Startup Launchpad 2022 และเป็นไอเดียต้นทางที่ GoNai ถูกสร้างขึ้นจริงในภายหลัง"
     },
     "stack": [],
     "liveUrl": null,
@@ -38,45 +54,37 @@
     "order": 2,
     "type": "business",
     "outcome": {
-      "en": "Final 30 of 500 teams · market sized (TAM–SAM–SOM) · subscription + partner-margin revenue model",
+      "en": "Final 30 of 500 teams · Market sized (TAM–SAM–SOM) · Subscription + partner-margin revenue model",
       "th": "เข้ารอบ 30 ทีมสุดท้ายจาก 500 ทีม · ขนาดตลาด TAM–SAM–SOM · โมเดลรายได้ subscription + ส่วนแบ่งจากพาร์ตเนอร์"
     },
     "question": {
       "en": "Why does planning one trip take five apps?",
       "th": "ทำไมวางแผนทริปเดียวต้องใช้ตั้งห้าแอป?"
     },
-    "slug": null
-  },
-  {
-    "id": "fx-gonai",
-    "name": "GoNai",
-    "description": {
-      "en": "One-day Bangkok trip planner with exact budgets, built as a weekend project.",
-      "th": "แอปวางแผนเที่ยวกรุงเทพฯ 1 วัน พร้อมงบประมาณละเอียด สร้างเสร็จในสุดสัปดาห์เดียว"
+    "slug": null,
+    "statusKey": "finalist",
+    "status": { "en": "Final 30 of 500 · 2022", "th": "รอบ 30 ทีมสุดท้ายจาก 500 · 2022" },
+    "kicker": { "en": "Business · Co-founder · 2022", "th": "ธุรกิจ · Co-founder · 2022" },
+    "media": "five",
+    "wash": "none",
+    "tour": false,
+    "tourOrder": null,
+    "lineageOf": null,
+    "alt": {
+      "en": "Five separate app squares become one.",
+      "th": "แอปห้าตัวแยกกัน รวมเป็นหนึ่งเดียว"
     },
-    "stack": [
-      "Next.js",
-      "Supabase"
-    ],
-    "liveUrl": "https://gonai-three.vercel.app",
-    "repoUrl": null,
-    "imageSrc": "/images/gonai.jpg",
-    "featured": true,
-    "order": 4,
-    "type": "build",
-    "outcome": null,
-    "question": {
-      "en": "One day in Bangkok — what's the real budget?",
-      "th": "ไปเที่ยวหนึ่งวัน งบจริงๆ เท่าไหร่?"
-    },
-    "slug": null
+    "outcomes": {
+      "en": ["Final 30 of 500 teams", "Market sized (TAM–SAM–SOM)", "Subscription + partner-margin revenue model"],
+      "th": ["เข้ารอบ 30 ทีมสุดท้ายจาก 500 ทีม", "ขนาดตลาด TAM–SAM–SOM", "โมเดลรายได้ subscription + ส่วนแบ่งจากพาร์ตเนอร์"]
+    }
   },
   {
     "id": "fx-aje",
     "name": "Aje",
     "description": {
       "en": "Idea-grading workspace for startup ideas: write one paragraph, get it graded against proven frameworks, and leave with one small test to run next.",
-      "th": "เวิร์กสเปซตัดเกรดไอเดียสตาร์ทอัพ: เขียนหนึ่งย่อหน้า ระบบให้เกรดตาม framework ที่พิสูจน์แล้ว แล้วได้การทดสอบเล็ก ๆ หนึ่งอย่างไปทำต่อ"
+      "th": "เวิร์กสเปซตัดเกรดไอเดียสตาร์ทอัพ: เขียนหนึ่งย่อหน้า ระบบให้เกรดตาม framework ที่พิสูจน์แล้ว แล้วได้การทดสอบเล็กๆ หนึ่งอย่างไปทำต่อ"
     },
     "stack": ["Next.js", "Claude API", "Ollama"],
     "liveUrl": null,
@@ -86,14 +94,64 @@
     "order": 3,
     "type": "build",
     "outcome": {
-      "en": "Working prototype · 8-dimension report card with letter grades · 16 hand-drawn framework diagrams · advisor runs on Claude or a local model",
+      "en": "Working prototype · 8-dimension report card with letter grades · 16 hand-drawn framework diagrams · Advisor runs on Claude or a local model",
       "th": "prototype ใช้งานได้จริง · report card 8 มิติพร้อมเกรด · framework diagram 16 ใบวาดเอง · advisor รันบน Claude หรือโมเดล local"
     },
     "question": {
       "en": "Is this idea worth a weekend, or a year?",
       "th": "ไอเดียนี้คุ้มกับหนึ่งสุดสัปดาห์ หรือทั้งปี?"
     },
-    "slug": null
+    "slug": null,
+    "statusKey": "proto",
+    "status": { "en": "Working prototype", "th": "Prototype ใช้งานได้" },
+    "kicker": { "en": "Build · Working prototype", "th": "สร้างเอง · Prototype ใช้งานได้" },
+    "media": "img",
+    "wash": "aje",
+    "tour": true,
+    "tourOrder": 1,
+    "lineageOf": null,
+    "alt": {
+      "en": "Aje’s Review screen for a sample idea, BikeFix Home: the idea, its biggest uncertainty and the next test.",
+      "th": "หน้า Review ของ Aje สำหรับไอเดียตัวอย่าง BikeFix Home: ตัวไอเดีย ความไม่แน่นอนที่ใหญ่ที่สุด และการทดสอบถัดไป"
+    },
+    "outcomes": {
+      "en": ["Working prototype", "8-dimension report card with letter grades", "16 hand-drawn framework diagrams", "Advisor runs on Claude or a local model"],
+      "th": ["prototype ใช้งานได้จริง", "report card 8 มิติพร้อมเกรด", "framework diagram 16 ใบวาดเอง", "advisor รันบน Claude หรือโมเดล local"]
+    }
+  },
+  {
+    "id": "fx-gonai",
+    "name": "GoNai",
+    "description": {
+      "en": "One-day Bangkok trip planner with exact budgets, built as a weekend project.",
+      "th": "แอปวางแผนเที่ยวกรุงเทพฯ 1 วัน พร้อมงบประมาณละเอียด สร้างเสร็จในสุดสัปดาห์เดียว"
+    },
+    "stack": ["Next.js", "Supabase"],
+    "liveUrl": "https://gonai-three.vercel.app",
+    "repoUrl": null,
+    "imageSrc": "/images/gonai.jpg",
+    "featured": true,
+    "order": 4,
+    "type": "build",
+    "outcome": null,
+    "question": {
+      "en": "One day in Bangkok — what’s the real budget?",
+      "th": "ไปเที่ยวหนึ่งวัน งบจริงๆ เท่าไหร่?"
+    },
+    "slug": null,
+    "statusKey": "live",
+    "status": { "en": "Live · since Aug 2026", "th": "เปิดใช้งานแล้ว · ตั้งแต่ ส.ค. 2026" },
+    "kicker": { "en": "Build · Live", "th": "สร้างเอง · เปิดใช้งานแล้ว" },
+    "media": "win",
+    "wash": "gonai",
+    "tour": true,
+    "tourOrder": 2,
+    "lineageOf": "fx-tripedia",
+    "alt": {
+      "en": "GoNai home screen: Plan a full day out, know every baht before you leave, with a budget prompt.",
+      "th": "หน้าแรกของ GoNai: วางแผนเที่ยวทั้งวัน รู้ทุกบาทก่อนออกจากบ้าน พร้อมช่องพิมพ์งบประมาณ"
+    },
+    "outcomes": { "en": [], "th": [] }
   },
   {
     "id": "fx-klao-site",
@@ -105,9 +163,9 @@
     "stack": ["Next.js", "Notion API", "Vercel"],
     "liveUrl": "https://klao-site.vercel.app",
     "repoUrl": "https://github.com/Klaosj/klao-site",
-    "imageSrc": "/images/klao-site.jpg",
+    "imageSrc": null,
     "featured": true,
-    "order": 6,
+    "order": 5,
     "type": "build",
     "outcome": {
       "en": "Live since Aug 2026 · Notion as the only CMS · EN/TH · 400+ automated tests",
@@ -117,6 +175,22 @@
       "en": "Can a personal site update itself from Notion, in two languages?",
       "th": "เว็บส่วนตัวอัปเดตตัวเองจาก Notion สองภาษาได้ไหม?"
     },
-    "slug": null
+    "slug": null,
+    "statusKey": "live",
+    "status": { "en": "Live · since Aug 2026", "th": "เปิดใช้งานแล้ว · ตั้งแต่ ส.ค. 2026" },
+    "kicker": { "en": "Build · This site", "th": "สร้างเอง · เว็บนี้เอง" },
+    "media": "notion",
+    "wash": "site",
+    "tour": true,
+    "tourOrder": 3,
+    "lineageOf": null,
+    "alt": {
+      "en": "The project’s own Notion row: name, type, stack and status.",
+      "th": "แถวข้อมูลของโปรเจกต์นี้ใน Notion: ชื่อ ประเภท stack และสถานะ"
+    },
+    "outcomes": {
+      "en": ["Live since Aug 2026", "Notion as the only CMS", "EN/TH", "400+ automated tests"],
+      "th": ["ออนไลน์ตั้งแต่ ส.ค. 2026", "Notion เป็น CMS เดียว", "EN/TH", "เทสต์อัตโนมัติ 400+ ข้อ"]
+    }
   }
 ]

@@ -1,5 +1,5 @@
 import type { CareerEntry, ContentBlock, Localized, OpenQuestion, PostMeta, Profile, Project, QuestionStatus, RichSpan, Skill, SkillTier } from './models';
-import { QUESTION_STATUSES, SKILL_TIERS } from './models';
+import { PROJECT_MEDIA, PROJECT_STATUS_KEYS, PROJECT_WASHES, QUESTION_STATUSES, SKILL_TIERS } from './models';
 
 export type NotionPage = { id: string; created_time?: string; properties: Record<string, unknown> };
 
@@ -22,10 +22,26 @@ const hasFiles = (prop: any): boolean => Array.isArray(prop?.files) && prop.file
 // title/rich_text property, hence a dedicated reader rather than reusing
 // `text()`.
 const selectOf = (prop: any): string | null => prop?.select?.name ?? null;
+// Number that may be blank: TourOrder distinguishes "not set" (null) from 0,
+// unlike Order, whose blank has always meant 0.
+const numOrNull = (prop: any): number | null => (typeof prop?.number === 'number' ? prop.number : null);
+// Relation property: `{ relation: [{ id }], has_more }`. Only the first related
+// page counts (a project has one earlier idea); an empty list is "none".
+const relationFirst = (prop: any): string | null => {
+  const first = (prop?.relation ?? [])[0];
+  return typeof first?.id === 'string' && first.id ? first.id : null;
+};
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
 const localized = (en: string, th: string): Localized => ({ en, th: th || en });
 const lines = (s: string): string[] => s.split('\n').map((l) => l.trim()).filter(Boolean);
+// EN is the gate, as for Question/Outcome: a Thai-only value maps to null.
+const optLocalized = (en: string, th: string): Localized | null => (en ? localized(en, th) : null);
+// A select value that must be one of `allowed`; anything else (missing, blank,
+// an option added in Notion but not in code) is null, so the caller's default wins.
+function oneOf<T extends string>(value: string | null, allowed: readonly T[]): T | null {
+  return value !== null && (allowed as readonly string[]).includes(value) ? (value as T) : null;
+}
 
 const fileProxy = (page: NotionPage, propName: string): string | null =>
   hasFiles(page.properties[propName]) ? `/api/img/page/${page.id}/${propName}` : null;
@@ -38,6 +54,9 @@ function skip(db: string, page: NotionPage, reason: string): null {
 export function mapProject(page: NotionPage): Project | null {
   const name = text(page.properties.Name);
   if (!name) return skip('Projects', page, 'missing Name');
+  const imageSrc = fileProxy(page, 'Screenshot');
+  const outcomesEn = lines(text(page.properties.OutcomeEN));
+  const outcomesTh = lines(text(page.properties.OutcomeTH));
   return {
     id: page.id,
     name,
@@ -45,7 +64,7 @@ export function mapProject(page: NotionPage): Project | null {
     stack: multi(page.properties.Stack),
     liveUrl: urlOf(page.properties.LiveURL),
     repoUrl: urlOf(page.properties.RepoURL),
-    imageSrc: fileProxy(page, 'Screenshot'),
+    imageSrc,
     featured: check(page.properties.Featured),
     order: num(page.properties.Order),
     type: selectOf(page.properties.Type) === 'Business' ? 'business' : 'build',
@@ -56,6 +75,18 @@ export function mapProject(page: NotionPage): Project | null {
       ? localized(text(page.properties.QuestionEN), text(page.properties.QuestionTH))
       : null,
     slug: text(page.properties.Slug) || null,
+    // White Edition P1 (C5, spec §7). Each default below is what a Projects
+    // database that has never heard of the property maps to (Review Focus #1).
+    statusKey: oneOf(selectOf(page.properties.StatusKey), PROJECT_STATUS_KEYS),
+    status: optLocalized(text(page.properties.StatusEN), text(page.properties.StatusTH)),
+    kicker: optLocalized(text(page.properties.KickerEN), text(page.properties.KickerTH)),
+    media: oneOf(selectOf(page.properties.Media), PROJECT_MEDIA) ?? (imageSrc ? 'img' : 'win'),
+    wash: oneOf(selectOf(page.properties.Wash), PROJECT_WASHES) ?? 'none',
+    tour: check(page.properties.Tour),
+    tourOrder: numOrNull(page.properties.TourOrder),
+    lineageOf: relationFirst(page.properties.LineageOf),
+    alt: optLocalized(text(page.properties.AltEN), text(page.properties.AltTH)),
+    outcomes: { en: outcomesEn, th: outcomesTh.length ? outcomesTh : [...outcomesEn] },
   };
 }
 
