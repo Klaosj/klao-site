@@ -1,0 +1,153 @@
+/* FaqBand — the prototype's `.faq` / `.qs` block with the Apple calibration
+   (spec §5.2/§5.3). Type sizes come from C9 (.t-h2, .t-faq, .t-body). */
+
+/* A05 (polish plan): the disclosure's open/close height animates instead of
+   snapping, CSS-only. `interpolate-size` is what lets `block-size: auto`
+   take part in a transition at all (browsers otherwise only animate fixed
+   lengths) -- it has to sit on `html` because it isn't a property of the
+   <details> being transitioned, it's a browser-wide opt-in for the
+   "auto"/keyword interpolation model, so scoping it to `#faq` would have no
+   narrower effect and this exact rule is what the amendment names.
+   Browsers without support for `interpolate-size` or `::details-content`
+   simply don't match either rule below, and every <details> snaps
+   open/closed exactly as native <details> always has -- no JS height
+   measuring, ever (A05 ruling). The block-size/content-visibility
+   transition itself IS scoped, to `#faq` (this band's own id, the ".faq"
+   the amendment gives as its example) -- a named exception to the master
+   Global Constraint ("only transform and opacity animate"), same idiom as
+   copy-email.css's A03 stroke-dashoffset exception. */
+html {
+  interpolate-size: allow-keywords;
+}
+#faq details::details-content {
+  block-size: 0;
+  overflow: clip;
+  transition: block-size 360ms var(--ease-glide), content-visibility 360ms allow-discrete;
+}
+#faq details[open]::details-content {
+  block-size: auto;
+}
+.faq-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 16px;
+}
+.faq-xall {
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--link);
+  font-size: 14px;
+  cursor: pointer;
+}
+.faq-list {
+  margin-top: 28px;
+  border-top: 1px solid var(--line);
+}
+.faq-item {
+  border-bottom: 1px solid var(--line);
+}
+.faq-item > summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  padding: 24px 0;
+  font-weight: 600;
+  list-style: none;
+  cursor: pointer;
+}
+.faq-item > summary::-webkit-details-marker {
+  display: none;
+}
+.faq-chv {
+  flex: none;
+  display: grid;
+  place-items: center;
+  color: var(--ink-2);
+  transition: transform var(--dur-ui) var(--ease-glide);
+}
+/* caret-right turned to point down; the wrapper flips it up when open. */
+.faq-chv svg {
+  width: 20px;
+  height: 20px;
+  transform: rotate(90deg);
+}
+.faq-item[open] .faq-chv {
+  transform: rotate(180deg);
+}
+.faq-a {
+  max-width: 68ch;
+  margin: 0;
+  padding: 0 0 28px;
+}
+.faq-a p {
+  margin: 0;
+}
+.faq-src {
+  display: block;
+  margin-top: 8px;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--ink-2);
+}
+.faq-src a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  color: var(--link);
+  text-decoration: none;
+}
+.faq-src a:hover {
+  text-decoration: underline;
+}
+.faq-more {
+  margin: 20px 0 0;
+}
+.faq-ask {
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--link);
+  font-size: 17px;
+  text-align: left;
+  cursor: pointer;
+}
+.faq-ask:hover {
+  text-decoration: underline;
+}
+/* Both buttons need JavaScript; without it they would be dead controls. */
+html:not(.js) .faq-xall,
+html:not(.js) .faq-more {
+  display: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  html.js .faq-item[open] .faq-a {
+    animation: faq-fade 200ms var(--ease-glide);
+  }
+}
+@keyframes faq-fade {
+  from {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .faq-chv,
+  #faq details::details-content {
+    transition: none;
+  }
+}
+@media (max-width: 734px) {
+  .faq-head {
+    flex-direction: column;
+    align-items: start;
+    gap: 4px;
+  }
+  .faq-item > summary {
+    min-height: 56px;
+    padding: 18px 0;
+  }
+}

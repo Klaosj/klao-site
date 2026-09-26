@@ -1,14 +1,13 @@
 import AboutBand from '@/components/sections/AboutBand';
-import ClientsBand from '@/components/sections/ClientsBand';
 import ContactBand from '@/components/sections/ContactBand';
 import CraftBand from '@/components/sections/CraftBand';
 import CvBand from '@/components/sections/CvBand';
+import FaqBand from '@/components/sections/FaqBand';
 import Hero from '@/components/sections/Hero';
-import QuestionsBand from '@/components/sections/QuestionsBand';
 import SkillsBand from '@/components/sections/SkillsBand';
 import TourBand from '@/components/sections/TourBand';
 import WorkDeck from '@/components/sections/WorkDeck';
-import { getCareer, getFeaturedProjects, getProfile, getQuestions, getSkills } from '@/lib/content';
+import { getCareer, getFaq, getFeaturedProjects, getProfile, getSkills } from '@/lib/content';
 import { assertLocale } from '@/lib/locale';
 
 // See layout.tsx: a layout-level `dynamicParams = false` poisons
@@ -17,12 +16,12 @@ export const dynamicParams = false;
 
 export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
   const locale = assertLocale((await params).locale);
-  const [profile, projects, career, skills, questions] = await Promise.all([
+  const [profile, projects, career, skills, faq] = await Promise.all([
     getProfile(),
     getFeaturedProjects(),
     getCareer(),
     getSkills(),
-    getQuestions(),
+    getFaq(),
   ]);
 
   return (
@@ -32,10 +31,11 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       <AboutBand profile={profile} locale={locale} />
       <CraftBand locale={locale} />
       <WorkDeck projects={projects} locale={locale} />
-      <QuestionsBand questions={questions} locale={locale} />
-      <ClientsBand clients={profile.clients} locale={locale} />
       <SkillsBand skills={skills} locale={locale} />
       <CvBand entries={career} locale={locale} resumeUrl={profile.resumeUrl} />
+      {/* #faq (C7): Klao's FAQ DB — fixtures until NOTION_DB_FAQ is set.
+          ClientsBand stays in the codebase but is no longer rendered (spec §4). */}
+      <FaqBand items={faq} locale={locale} />
       <ContactBand profile={profile} locale={locale} />
     </>
   );
