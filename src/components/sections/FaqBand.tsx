@@ -22,7 +22,7 @@ export default function FaqBand({ items, locale }: { items: FaqItem[]; locale: L
       <div className="wrap-wide">
         <Reveal className="faq-head">
           <h2 id="faq-h" className="t-h2" tabIndex={-1}>
-            <ThaiText text={t.faqTitle} />
+            <ThaiText text={t.faqTitle} display />
           </h2>
           <FaqExpandAll expandLabel={t.faqExpand} collapseLabel={t.faqCollapse} />
         </Reveal>
@@ -31,7 +31,7 @@ export default function FaqBand({ items, locale }: { items: FaqItem[]; locale: L
             <details key={item.id} id={faqAnchorId(item.id)} className="faq-item">
               <summary className="t-faq">
                 <span>
-                  <ThaiText text={item.question[locale]} />
+                  <ThaiText text={item.question[locale]} display />
                 </span>
                 <span className="faq-chv" aria-hidden="true">
                   <Icon name="caret-right" />

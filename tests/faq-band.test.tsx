@@ -139,6 +139,22 @@ describe('FaqBand', () => {
     expect(screen.getByRole('link', { name: 'Career · A Bun Dance', hidden: true }).getAttribute('href')).toBe('/th#career');
   });
 
+  it('renders the Thai heading and every Thai question through ThaiText\'s display mode (fix round 1, R25: .kt keep-run spans, not .nw)', () => {
+    // R25 (master plan): every .t-hero/.t-h2/.t-title/.t-panel/.t-faq
+    // heading passes `display` -- ThaiText's default mode (.nw, a fixed
+    // keep-list) is for body copy, not headings/questions.
+    const { container } = render(<FaqBand items={items} locale="th" />);
+    const heading = container.querySelector('#faq-h');
+    expect(heading?.querySelector('.kt')).toBeTruthy();
+    expect(heading?.querySelector('.nw')).toBeNull();
+    const summaries = Array.from(container.querySelectorAll('summary.t-faq'));
+    expect(summaries).toHaveLength(items.length);
+    for (const summary of summaries) {
+      expect(summary.querySelector('.kt'), summary.textContent ?? '').toBeTruthy();
+      expect(summary.querySelector('.nw')).toBeNull();
+    }
+  });
+
   it('server HTML carries every answer and hides nothing inline (Review Focus #4)', () => {
     const html = renderToStaticMarkup(<FaqBand items={items} locale="en" />);
     for (const item of items) expect(html).toContain(item.answer.en);
