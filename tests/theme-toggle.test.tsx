@@ -46,6 +46,21 @@ describe('ThemeToggle', () => {
     ]);
   });
 
+  // P0 residual (a): `.seg-label::after` reserves the bold width from
+  // data-label, so a data-label that drifts from the visible word reserves
+  // the wrong width and the thumb nudges again when that option is checked.
+  it('gives every label a data-label equal to its visible text, in both locales (fix wave finding 6)', () => {
+    for (const locale of ['en', 'th'] as const) {
+      const { unmount } = render(<ThemeToggle locale={locale} />);
+      for (const radio of screen.getAllByRole('radio')) {
+        const label = radio.querySelector('.seg-label');
+        expect(label, `${locale}: ${radio.textContent}`).not.toBeNull();
+        expect(label!.getAttribute('data-label')).toBe(radio.textContent);
+      }
+      unmount();
+    }
+  });
+
   it('marks Auto when nothing is stored', () => {
     render(<ThemeToggle locale="en" />);
     expect(checked()).toEqual(['Auto']);
