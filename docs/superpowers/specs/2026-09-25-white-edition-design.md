@@ -108,7 +108,7 @@ Latin uses the system stack (`-apple-system, BlinkMacSystemFont, "Segoe UI", Rob
 | Body | 17/25 | 17/25 | 17 / 1.65 | 17 / 1.65 | −.022em |
 | Caption · legal | 14/20 · 12/18 | 14/20 · 14 | 14/22 · 13 | 14 | −.016em |
 
-Thai: letter-spacing 0 everywhere; no italics; display runs are inline-block keep-spans built from a keep-list (the prototype's `KEEP` array: เครื่องมือ, นอกเวลางาน, สุดสัปดาห์, …) plus `Intl.Segmenter('th')`; a `|` in Notion copy marks the one allowed break. Thai dates and number+unit pairs are no-break (`DATERE`, `UNITRE` in the prototype).
+Thai: letter-spacing 0 everywhere; no italics; display runs are inline-block keep-spans built from a keep-list (the prototype's `KEEP` array: เครื่องมือ, นอกเวลางาน, สุดสัปดาห์, …), and in headings each space-delimited Thai phrase is kept whole as in the prototype (*amended 26 Sep: no `Intl.Segmenter`, master R25*); a `|` in Notion copy marks the one allowed break. Thai dates and number+unit pairs are no-break (`DATERE`, `UNITRE` in the prototype).
 
 ### 5.3 Space, shape, elevation
 
