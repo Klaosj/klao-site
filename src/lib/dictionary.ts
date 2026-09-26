@@ -253,6 +253,14 @@ const en = {
   ] as readonly string[],
   storyHealth: ['On track', 'At risk', 'Off track'] as readonly string[],
   backToTour: 'Aje · GoNai · klao-site ↑',
+  // Amendment A10 (polish plan): the Short/Full segmented control above the
+  // chapters. Not in the approved prototype (it predates the polish pass) --
+  // "Detail" as the group's aria-label and "Short"/"Full" as the two option
+  // labels are the polish lab's own reference copy (polish-lab/index.html
+  // §10, `#depthSeg`), carried over verbatim rather than invented here.
+  storyDetailLabel: 'Detail',
+  storyShort: 'Short',
+  storyFull: 'Full',
 
   // --- White Edition P4: FAQ, close band, footer, ⌘K + Ask Preview. -----
   // Every string is the approved prototype's (design/white-edition/
@@ -427,6 +435,13 @@ const th: typeof en = {
   storyPhases: ['เงื่อนไขการค้า', 'เตรียมจอ', 'ติดตั้ง', 'พร้อมขาย', 'ตรวจหลังเปิดใช้งาน'] as readonly string[],
   storyHealth: ['ตามแผน', 'มีความเสี่ยง', 'หลุดแผน'] as readonly string[],
   backToTour: 'Aje · GoNai · klao-site ↑',
+  // A10: the polish lab's reference implementation only gave this control
+  // English copy (Short/Full, aria-label "Detail") -- there is no Thai
+  // wording to carry over, so this is our own translation, ตาม amendment
+  // A10's own fallback instruction ("otherwise use สั้น / เต็ม").
+  storyDetailLabel: 'รายละเอียด',
+  storyShort: 'สั้น',
+  storyFull: 'เต็ม',
 
   faqTitle: 'คำถามที่เจอบ่อย',
   faqExpand: 'เปิดทั้งหมด',
