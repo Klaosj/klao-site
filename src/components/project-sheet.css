@@ -39,3 +39,54 @@ html.sheet-open { overflow: hidden; }
   .sheet-name { font-size: 32px; line-height: 36px; }
   .sheet .sheet-name:lang(th) { font-size: 28px; line-height: 38px; }
 }
+
+/* Sheet content (media, facts, links, lineage card). */
+.smedia { position: relative; display: grid; place-items: center; aspect-ratio: 16 / 9; overflow: hidden; background: var(--wash, var(--mist)); }
+.sheet-win { align-self: start; width: 86%; margin-top: 6%; background: #fff; }
+.sheet-win img { display: block; width: 100%; height: auto; }
+/* A light window's chrome stays light in dark mode: it is a picture of a window. */
+.sheet-bar { display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; background: #f2f2f4; }
+.sheet-bar i { width: 8px; height: 8px; border-radius: 50%; background: #d4d4d8; }
+.sheet-bar span { margin: 0 auto; padding: 1px 12px; border-radius: 9px; background: #fff; color: #6e6e73; font-size: 11px; }
+.smedia-draw { display: grid; place-items: center; width: 100%; height: 100%; color: var(--ink-1); }
+.smedia-draw svg { width: 100%; height: 100%; }
+.sheet-notion { padding: 18px 22px; color: #1A1C20; }
+.sheet-notion-row { display: grid; grid-template-columns: 110px 1fr; gap: 12px; padding: 10px 0; border-bottom: 1px solid rgb(20 26 44 / .08); }
+.sheet-notion-row b { color: #666970; font-size: 13px; font-weight: 500; }
+.sheet-notion-row span { font-size: 14px; line-height: 20px; }
+.sheet-note { position: absolute; left: 0; right: 0; bottom: 14px; margin: 0; padding: 0 16px; color: var(--ink-2); font-size: 14px; text-align: center; }
+.sheet-kick { margin: 0; color: var(--ink-2); font-size: 14px; line-height: 20px; font-weight: 600; }
+.sheet-q { margin: 10px 0 0; color: var(--ink-2); font-size: 24px; line-height: 30px; letter-spacing: .009em; text-wrap: balance; }
+:lang(th) .sheet-q { line-height: 34px; letter-spacing: 0; }
+.sbody h3 { margin: 28px 0 8px; color: var(--ink-2); font-size: 14px; font-weight: 600; }
+.sheet-side > h3:first-child { margin-top: 6px; }
+.sheet-desc { margin: 0; font-size: 17px; line-height: 26px; }
+:lang(th) .sheet-desc { line-height: 28px; }
+.sheet-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.sheet-list li { position: relative; padding-left: 20px; font-size: 17px; line-height: 26px; }
+:lang(th) .sheet-list li { line-height: 28px; }
+.sheet-list li::before { content: ""; position: absolute; top: 11px; left: 2px; width: 5px; height: 5px; border-radius: 50%; background: var(--ink-3); }
+.sheet-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.sheet-chips span { padding: 4px 12px; border-radius: 14px; background: var(--mist); font-size: 14px; }
+.sheet .st-chip { font-size: 14px; }
+.sheet-links { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+/* GoNai's own green (spec §5.1: only in GoNai's frame, sheet and "Open app"); white on it in both themes. */
+.sheet-links .sheet-gonai, .sheet-links .sheet-gonai:hover { background: #1C7A57; color: #fff; }
+.sheet-story { display: inline-flex; align-items: center; min-height: 44px; margin-top: 12px; color: var(--link); font-size: 17px; text-decoration: none; }
+.sheet-story:hover { text-decoration: underline; }
+.lin { margin: 0 40px 32px; padding: 24px 28px; border-radius: 20px; background: var(--mist); }
+.lin h3 { margin: 0 0 12px; font-size: 21px; font-weight: 600; letter-spacing: .011em; }
+:lang(th) .lin h3 { letter-spacing: 0; }
+.lin table { width: 100%; border-collapse: collapse; font-size: 15px; line-height: 22px; }
+.lin :is(th, td) { padding: 10px 12px 10px 0; border-top: 1px solid var(--line); text-align: left; vertical-align: top; }
+.lin thead th { border-top: 0; color: var(--ink-2); font-size: 14px; }
+.lin tbody th { width: 22%; color: var(--ink-2); font-weight: 600; }
+@media (max-width: 734px) {
+  .sheet-win { width: 92%; }
+  .sheet-bar span { font-size: 14px; }
+  .sheet-notion-row b { font-size: 14px; }
+  .sheet-q { font-size: 19px; line-height: 26px; }
+  :lang(th) .sheet-q { line-height: 29px; }
+  .lin { margin: 0 20px 24px; padding: 18px; }
+  .lin table { font-size: 14px; }
+}

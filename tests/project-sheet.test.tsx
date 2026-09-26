@@ -9,6 +9,7 @@ import { projectKey, sheetHash } from '@/lib/sheet-url';
 import { stubDialog } from './helpers/dialog';
 import { makeProject } from './helpers/project';
 import { LINEUP } from './helpers/lineup';
+import { stubViewTransition } from './helpers/view-transition';
 
 let showModal: MockInstance<HTMLDialogElement['showModal']>;
 let close: MockInstance<HTMLDialogElement['close']>;
@@ -75,19 +76,6 @@ function PageWithThumbs() {
 const dialogOf = (c: HTMLElement) => c.querySelector('dialog.sheet') as HTMLDialogElement;
 const row = (name: string) => screen.getByText(name, { selector: 'a' });
 const closeButton = () => screen.getByRole('button', { name: dict.en.sheetClose });
-
-/** A07: jsdom has no View Transitions API. This stands in for a browser that has one --
- *  `update` runs synchronously (as a real `startViewTransition` invokes its callback), and
- *  `finished` settles on the next microtask, close enough for a test to `await` past it. */
-function stubViewTransition() {
-  const start = vi.fn((update: () => void) => {
-    update();
-    const settled = Promise.resolve();
-    return { ready: settled, finished: settled, updateCallbackDone: settled, types: new Set(), skipTransition() {} };
-  });
-  (document as unknown as { startViewTransition: typeof start }).startViewTransition = start;
-  return start;
-}
 
 describe('ProjectSheet: opening (Review Focus #3)', () => {
   it('a row click pushes #work/<key>, opens the dialog and focuses its heading', () => {
@@ -287,7 +275,7 @@ describe('ProjectSheet: shared-element View Transition (polish A07)', () => {
     await waitFor(() => expect(thumb.style.viewTransitionName).toBe(''));
   });
 
-  it('closing looks for the sheet’s own [data-vt="shot"] media to reverse, and falls back to the plain exit animation while none exists (T10 gives the sheet one)', async () => {
+  it('closing reverses into the sheet’s own [data-vt="shot"] media, now that T10 renders one', async () => {
     vi.stubGlobal('matchMedia', (q: string) => ({ matches: q.includes('no-preference'), addEventListener() {}, removeEventListener() {} }));
     const start = stubViewTransition();
     const { container } = render(<PageWithThumbs />);
@@ -296,22 +284,16 @@ describe('ProjectSheet: shared-element View Transition (polish A07)', () => {
     fireEvent.click(link);
     await waitFor(() => expect(thumb.style.viewTransitionName).toBe(''));
     const dialog = dialogOf(container);
-    vi.useFakeTimers();
-    try {
-      fireEvent.click(closeButton());
-      // This task's own SheetBody has no media yet, so hide() finds nothing at
-      // shotIn(dialog) to name as the "old" side -- one call to start, from the open, is all
-      // there is to reverse. Once Task 10 renders a `[data-vt="shot"]` media element, this
-      // same code path (unchanged) starts naming it and start is called a second time here.
-      expect(start).toHaveBeenCalledTimes(1);
-      expect(dialog.classList.contains('closing')).toBe(true); // falls back to the CSS exit animation
-      act(() => {
-        vi.advanceTimersByTime(280);
-      });
-    } finally {
-      vi.useRealTimers();
-    }
+    // T10's SheetMedia carries its own [data-vt="shot"] (see tests/project-sheet-content.test.tsx
+    // for the full content contract) -- hide() now finds it at shotIn(dialog) as the "old" side,
+    // so a second call to start reverses the same morph, with no CSS fallback animation.
+    const media = dialog.querySelector<HTMLElement>('[data-vt="shot"]')!;
+    fireEvent.click(closeButton());
+    expect(start).toHaveBeenCalledTimes(2);
+    expect(dialog.classList.contains('closing')).toBe(false);
     expect(dialog.open).toBe(false);
+    expect(media.style.viewTransitionName).toBe(''); // cleared as soon as the transition's callback ran
+    await waitFor(() => expect(thumb.style.viewTransitionName).toBe('')); // cleared once it settles
     expect(document.activeElement).toBe(link);
   });
 
