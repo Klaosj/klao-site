@@ -1,5 +1,26 @@
 @import "tailwindcss";
 
+/* Thai glyphs only (spec §5.2). Latin runs on the system stack -- SF Pro on
+   Apple devices -- so no Latin font file ships at all. This is the exact file
+   Google Fonts serves for `Anuphan:wght@400..700`, thai subset (19 KB,
+   SIL OFL 1.1 -- licence in public/fonts/OFL.txt), vendored because
+   next/font cannot produce a Thai-only face here: next/font/google downloads
+   every subset and adds a metric-adjusted Arial fallback face with no
+   unicode-range (it would catch every Latin letter), and Turbopack's
+   next/font/local drops the `declarations` option that would set one. The
+   file itself also carries Latin glyphs (space, A, nbsp), so the
+   unicode-range below is what keeps Latin text on the system font.
+   One variable file covers every weight the page uses, 400 through 700.
+   src/app/[locale]/layout.tsx preloads it. */
+@font-face {
+  font-family: "Anuphan Thai";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/anuphan-thai.woff2") format("woff2");
+  unicode-range: U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;
+}
+
 /* =====================================================================
    White Edition tokens (spec §5.1 · master plan C1).
    Raw variables, one set per theme. src/lib/theme.ts `TOKENS` mirrors the

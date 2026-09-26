@@ -92,6 +92,18 @@ describe('fonts', () => {
     expect(theme['font-sans']).toMatch(/sans-serif$/);
   });
 
+  it('declares the Thai face for the Thai block only, so Latin never renders in Anuphan', () => {
+    const face = /@font-face \{([^}]*)\}/.exec(CODE)?.[1] ?? '';
+    expect(face).toContain('font-family: "Anuphan Thai";');
+    expect(face).toContain('font-weight: 400 700;');
+    expect(face).toContain('font-display: swap;');
+    expect(face).toContain('src: url("/fonts/anuphan-thai.woff2") format("woff2");');
+    expect(face).toContain('unicode-range: U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;');
+    // The subset file also holds a Latin "A", space and nbsp: without this
+    // range every capital A on /en would render in Anuphan.
+    expect(face).not.toMatch(/U\+0000|U\+0041|U\+0020/);
+  });
+
   it('points the legacy display/thai font utilities at the same stack', () => {
     expect(theme['font-display']).toBe('var(--font-sans)');
     expect(theme['font-thai']).toBe('var(--font-sans)');

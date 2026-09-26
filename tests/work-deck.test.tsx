@@ -7,12 +7,11 @@ import { IMAGE_ALT, imageAlt } from '@/lib/image-alt';
 import type { Project } from '@/lib/models';
 
 // Same manual-cleanup + stub setup as every other jsdom test in this repo.
-// vitest.config.ts DOES declare setupFiles: ['./tests/setup.ts'], but that
-// file only mocks next/font/google (which resolves to `{}` outside Next's
-// own compiler) — it registers no RTL auto-cleanup and defines no browser
-// globals. So every jsdom file still owns its own afterEach(cleanup) plus
-// the matchMedia/IntersectionObserver stubs Reveal/TiltCard/MaskedHeading
-// reach for.
+// vitest.config.ts declares no setup file (White Edition P0 deleted
+// tests/setup.ts once nothing imported next/font), so there is no RTL
+// auto-cleanup and no browser globals: every jsdom file owns its own
+// afterEach(cleanup) plus the matchMedia/IntersectionObserver stubs
+// Reveal/TiltCard/MaskedHeading reach for.
 afterEach(cleanup);
 
 beforeEach(() => {

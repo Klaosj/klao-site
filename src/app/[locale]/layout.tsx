@@ -1,6 +1,5 @@
 import '../globals.css';
 import type { Metadata } from 'next';
-import { Anuphan, Space_Grotesk } from 'next/font/google';
 import SiteNav from '@/components/SiteNav';
 import SiteFooter from '@/components/SiteFooter';
 import { getProfile } from '@/lib/content';
@@ -8,30 +7,12 @@ import { dict } from '@/lib/dictionary';
 import { assertLocale } from '@/lib/locale';
 import { LOCALES, type Locale } from '@/lib/models';
 import { SITE_URL } from '@/lib/site';
+import { THEME_PREPAINT_SCRIPT } from '@/lib/theme';
 
-// Display pair. Self-hosted by next/font at build time (no runtime request
-// to Google), subset per script, swap display. Three weights each (500 for
-// display default, 600 for the AboutBand/ProjectCard/career `font-semibold`
-// headings, 700 for bold) -- a bare 500/700 pair would otherwise
-// CSS-font-match 600 up to 700, rendering "semibold" text bold. Both
-// families ship as variable fonts, so the 600 weight is free: next/font
-// emits extra @font-face declarations pointing at the SAME 7 woff2 files
-// (one set per unicode-range subset) rather than fetching new ones --
-// verified empirically (identical file hashes/sizes before and after this
-// weight was added). Measured total ~131KB across all 7 files, well inside
-// the A6 250KB budget.
-const spaceGrotesk = Space_Grotesk({
-  subsets: ['latin'],
-  weight: ['500', '600', '700'],
-  variable: '--font-sg',
-  display: 'swap',
-});
-const anuphan = Anuphan({
-  subsets: ['thai', 'latin'],
-  weight: ['500', '600', '700'],
-  variable: '--font-anuphan',
-  display: 'swap',
-});
+// The Thai face (the only font file this site ships) is declared in
+// globals.css. Preloading it here means Thai text swaps to Anuphan early
+// instead of after the stylesheet is parsed and Thai text is found.
+const THAI_FONT_URL = '/fonts/anuphan-thai.woff2';
 
 export const revalidate = 3600;
 
@@ -156,7 +137,18 @@ export default async function RootLayout({
   // and the page itself also make within the same request.
   const profile = await getProfile();
   return (
-    <html lang={l} className={`${spaceGrotesk.variable} ${anuphan.variable}`}>
+    // suppressHydrationWarning: THEME_PREPAINT_SCRIPT adds `js` and may set
+    // `data-theme` on <html> before React hydrates, so the client DOM
+    // legitimately differs from the server HTML on this one element. It only
+    // silences attribute warnings for <html> itself, not its children.
+    <html lang={l} suppressHydrationWarning>
+      <head>
+        {/* Runs before first paint: no flash of the wrong theme, and `js` is
+            on <html> before any reveal CSS could dim content. See
+            src/lib/theme.ts for what it does and why it is ES5. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_PREPAINT_SCRIPT }} />
+        <link rel="preload" href={THAI_FONT_URL} as="font" type="font/woff2" crossOrigin="anonymous" />
+      </head>
       <body className="flex min-h-screen flex-col">
         {/* Skip link (2026-08-09 QA, WCAG 2.4.1). The header is fixed and
             holds ~10 focusable items, so without this a keyboard user tabs
