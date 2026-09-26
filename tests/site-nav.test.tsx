@@ -230,6 +230,46 @@ describe('SiteNav', () => {
     expect(within(nav()).getByRole('link', { name: dict.en.navContact }).hasAttribute('data-filled')).toBe(false);
   });
 
+  // Wave-1 reconciliation (m): the layout, and so this nav, outlives a
+  // client-side navigation. Leaving home for /projects must drop what the
+  // home page's observers had set, and stop watching the old page's nodes.
+  it('clears the current section, the pill and the Contact fill on a route change, and lets go of the old observers', () => {
+    // The hooks sit in a slot that stays in place, so SiteNav keeps its
+    // state across the rerender (a remount would pass this vacuously).
+    const tree = (home: boolean) => (
+      <>
+        {home ? <HomeHooks /> : null}
+        <SiteNav locale="en" profile={profile} />
+      </>
+    );
+    const { rerender } = render(tree(true));
+    const work = document.getElementById('work')!;
+    const cta = document.getElementById('hero-cta')!;
+    const sectionsIO = FakeIO.watching(work);
+    const ctaIO = FakeIO.watching(cta);
+    sectionsIO.fire([{ target: work, isIntersecting: true }]);
+    ctaIO.fire([{ target: cta, isIntersecting: false, boundingClientRect: rect(-120) }]);
+    const contact = () => within(nav()).getByRole('link', { name: dict.en.navContact });
+    expect(sectionLinks()[0].getAttribute('aria-current')).toBe('location');
+    expect(nav().querySelector('.sn-act')!.hasAttribute('data-on')).toBe(true);
+    expect(contact().hasAttribute('data-filled')).toBe(true);
+    const sectionsGone = vi.spyOn(sectionsIO, 'disconnect');
+    const ctaGone = vi.spyOn(ctaIO, 'disconnect');
+
+    vi.mocked(usePathname).mockReturnValue('/en/projects');
+    rerender(tree(false));
+
+    expect(sectionLinks().some((a) => a.hasAttribute('aria-current'))).toBe(false);
+    expect(nav().querySelector('.sn-act')!.hasAttribute('data-on')).toBe(false);
+    expect(contact().hasAttribute('data-filled')).toBe(false);
+    expect(screen.getByTestId('thumb-bar').getAttribute('data-hero-gone')).toBe('false');
+    expect(screen.getByTestId('nav-menu').getAttribute('data-active')).toBe('');
+    expect(sectionsGone).toHaveBeenCalled();
+    expect(ctaGone).toHaveBeenCalled();
+    // Nothing on /projects has those ids, so nothing new is watched either.
+    expect(FakeIO.instances.some((o) => o.targets.length > 0)).toBe(false);
+  });
+
   it('server-renders every link, so the nav works before (and without) JavaScript (Review Focus #4)', () => {
     const html = renderToStaticMarkup(<SiteNav locale="en" profile={profile} />);
     for (const href of ['#top', '#work', '#career', '#story', '#faq', '#contact', '/th']) {
