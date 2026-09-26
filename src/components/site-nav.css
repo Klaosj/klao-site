@@ -38,6 +38,9 @@
     opacity: .8;
   }
   .sn-links a:hover, .sn-links a[aria-current] { opacity: 1; }
+  /* `contain: paint` on the row clips anything drawn outside it, which cut the
+     global 2px ring (offset 2px) on the first and last links. Inset instead. */
+  .sn-links a:focus-visible { outline-offset: -2px; }
   .sn-links a[aria-current] { font-weight: 600; }
   .sn-act {
     position: absolute; top: 12px; left: 0;

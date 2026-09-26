@@ -153,9 +153,9 @@ function splitSelectors(list: string): string[] {
 }
 
 /** Every declaration block whose selector list contains `selector` exactly. */
-function rulesFor(selector: string): string[] {
+function rulesFor(selector: string, code: string = CODE): string[] {
   const out: string[] = [];
-  for (const m of CODE.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+  for (const m of code.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
     if (splitSelectors(m[1]).includes(selector)) out.push(m[2]);
   }
   return out;
@@ -380,5 +380,21 @@ describe('external link arrow + press (A06)', () => {
 
   it('keeps the CTA press scale (.btn:active) that A06 confirms', () => {
     expect(rulesFor('.btn:active')[0]).toContain('transform: scale(.97)');
+  });
+});
+
+// The capsule's link row keeps `contain: layout paint` (the sliding pill's
+// measurements stay local to the row), and paint containment clips anything
+// drawn outside the row's box -- including the 2 px outer focus ring on the
+// first and last links. Drawing that ring inset keeps it whole.
+describe('site-nav.css focus ring (wave-1 reconciliation j)', () => {
+  const NAV = stripComments(NAV_CSS);
+
+  it('keeps paint containment on the link row', () => {
+    expect(rulesFor('.sn-links', NAV)[0]).toContain('contain: layout paint;');
+  });
+
+  it('draws the link focus ring inside the link, so the row never clips it', () => {
+    expect(rulesFor('.sn-links a:focus-visible', NAV)[0]).toMatch(/outline-offset:\s*-2px;/);
   });
 });
