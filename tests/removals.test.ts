@@ -50,4 +50,17 @@ describe('P0 removals', () => {
       }
     }
   });
+
+  // Spec §8 / success criterion 5: two projects leave the site entirely --
+  // copy, fixtures, alt text and their screenshots in public/images. The
+  // pattern is assembled from pieces so this file does not itself contain
+  // the names: the phase gate greps src/, public/ and tests/ for them.
+  it('mentions neither removed project anywhere in src/, public/ or tests/', () => {
+    const gone = new RegExp(['ai' + 'secretary', 'daily' + 'brief'].join('|'), 'i');
+    const textLike = /\.(ts|tsx|css|json|md|txt|svg|html)$/;
+    for (const file of [...walk('src'), ...walk('public'), ...walk('tests')]) {
+      expect(gone.test(file), `file name ${file}`).toBe(false);
+      if (textLike.test(file)) expect(gone.test(readFileSync(file, 'utf8')), file).toBe(false);
+    }
+  });
 });

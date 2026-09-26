@@ -36,10 +36,10 @@ const make = (id: string, name: string, order: number, extra: Partial<Project> =
 });
 
 const gonai = make('g', 'GoNai', 3, { liveUrl: 'https://gonai-three.vercel.app' });
-const secretary = make('a', 'AISecretary', 4, { outcome: { en: 'Runs every morning', th: 'รันทุกเช้า' } });
-const brief = make('d', 'DailyBrief', 5, { repoUrl: 'https://github.com/Klaosj/dailybrief' });
+const aje = make('a', 'Aje', 4, { outcome: { en: 'Working prototype', th: 'prototype ใช้งานได้จริง' } });
+const site = make('d', 'klao-site', 5, { repoUrl: 'https://github.com/Klaosj/klao-site' });
 const talatify = make('t', 'Talatify', 1, { imageSrc: null, type: 'business' });
-const three = [brief, talatify, secretary, gonai];
+const three = [site, talatify, aje, gonai];
 
 const stageImg = (c: HTMLElement) => c.querySelector('.tour-stage img') as HTMLImageElement;
 const tick = (ms: number) => act(() => { vi.advanceTimersByTime(ms); });
@@ -48,7 +48,7 @@ describe('ProjectTour', () => {
   it('lists only projects with a screenshot, in order, and opens on the first', () => {
     const { container } = render(<ProjectTour projects={three} locale="en" />);
     const items = screen.getAllByRole('tab');
-    expect(items.map((b) => b.querySelector('span')?.textContent)).toEqual(['GoNai', 'AISecretary', 'DailyBrief']);
+    expect(items.map((b) => b.querySelector('span')?.textContent)).toEqual(['GoNai', 'Aje', 'klao-site']);
     expect(items[0].getAttribute('aria-selected')).toBe('true');
     expect(items[1].getAttribute('aria-selected')).toBe('false');
     expect(stageImg(container).getAttribute('src')).toBe(gonai.imageSrc);
@@ -89,7 +89,7 @@ describe('ProjectTour', () => {
     const { container } = render(<ProjectTour projects={three} locale="en" />);
     expect(container.querySelector('.pframe-title')?.textContent).toBe('gonai-three.vercel.app');
     fireEvent.click(screen.getAllByRole('tab')[1]);
-    expect(container.querySelector('.pframe-title')?.textContent).toBe('AISecretary');
+    expect(container.querySelector('.pframe-title')?.textContent).toBe('Aje');
   });
 
   it('jumps to a clicked tab, wires tabpanel to it, and announces the move', () => {
@@ -97,20 +97,20 @@ describe('ProjectTour', () => {
     const second = screen.getAllByRole('tab')[1];
     fireEvent.click(second);
     expect(second.getAttribute('aria-selected')).toBe('true');
-    expect(stageImg(container).getAttribute('src')).toBe(secretary.imageSrc);
+    expect(stageImg(container).getAttribute('src')).toBe(aje.imageSrc);
     const panel = screen.getByRole('tabpanel');
     expect(panel.getAttribute('aria-labelledby')).toBe(second.id);
     expect(second.getAttribute('aria-controls')).toBe(panel.id);
-    expect(container.querySelector('[aria-live="polite"]')?.textContent).toBe('AISecretary · 2 / 3');
+    expect(container.querySelector('[aria-live="polite"]')?.textContent).toBe('Aje · 2 / 3');
   });
 
   it('advances on its own every TOUR_MS and wraps, without announcing', () => {
     vi.useFakeTimers();
     const { container } = render(<ProjectTour projects={three} locale="en" />);
     tick(TOUR_MS);
-    expect(stageImg(container).getAttribute('src')).toBe(secretary.imageSrc);
+    expect(stageImg(container).getAttribute('src')).toBe(aje.imageSrc);
     tick(TOUR_MS);
-    expect(stageImg(container).getAttribute('src')).toBe(brief.imageSrc);
+    expect(stageImg(container).getAttribute('src')).toBe(site.imageSrc);
     tick(TOUR_MS);
     expect(stageImg(container).getAttribute('src')).toBe(gonai.imageSrc);
     expect(container.querySelector('[aria-live="polite"]')?.textContent).toBe('');
@@ -125,7 +125,7 @@ describe('ProjectTour', () => {
     expect(stageImg(container).getAttribute('src')).toBe(gonai.imageSrc);
     fireEvent.mouseLeave(stage);
     tick(TOUR_MS);
-    expect(stageImg(container).getAttribute('src')).toBe(secretary.imageSrc);
+    expect(stageImg(container).getAttribute('src')).toBe(aje.imageSrc);
   });
 
   it('also holds still while the pointer is over the tab list', () => {
@@ -137,7 +137,7 @@ describe('ProjectTour', () => {
     expect(stageImg(container).getAttribute('src')).toBe(gonai.imageSrc);
     fireEvent.mouseLeave(list);
     tick(TOUR_MS);
-    expect(stageImg(container).getAttribute('src')).toBe(secretary.imageSrc);
+    expect(stageImg(container).getAttribute('src')).toBe(aje.imageSrc);
   });
 
   it('pause stops the clock and play restarts it', () => {
@@ -151,7 +151,7 @@ describe('ProjectTour', () => {
     expect(stageImg(container).getAttribute('src')).toBe(gonai.imageSrc);
     fireEvent.click(toggle);
     tick(TOUR_MS);
-    expect(stageImg(container).getAttribute('src')).toBe(secretary.imageSrc);
+    expect(stageImg(container).getAttribute('src')).toBe(aje.imageSrc);
   });
 
   it('never autoplays under reduced motion and offers a still-view label instead of play/pause', () => {
@@ -167,7 +167,7 @@ describe('ProjectTour', () => {
   it('prev/next wrap around', () => {
     const { container } = render(<ProjectTour projects={three} locale="en" />);
     fireEvent.click(screen.getByRole('button', { name: dict.en.tourPrev }));
-    expect(stageImg(container).getAttribute('src')).toBe(brief.imageSrc);
+    expect(stageImg(container).getAttribute('src')).toBe(site.imageSrc);
     fireEvent.click(screen.getByRole('button', { name: dict.en.tourNext }));
     expect(stageImg(container).getAttribute('src')).toBe(gonai.imageSrc);
   });
@@ -178,12 +178,12 @@ describe('ProjectTour', () => {
     const items = screen.getAllByRole('tab');
     expect(items.map((b) => b.tabIndex)).toEqual([0, -1, -1]);
     fireEvent.keyDown(list, { key: 'ArrowDown' });
-    expect(stageImg(container).getAttribute('src')).toBe(secretary.imageSrc);
+    expect(stageImg(container).getAttribute('src')).toBe(aje.imageSrc);
     expect(items.map((b) => b.tabIndex)).toEqual([-1, 0, -1]);
     fireEvent.keyDown(list, { key: 'ArrowUp' });
     expect(stageImg(container).getAttribute('src')).toBe(gonai.imageSrc);
     fireEvent.keyDown(list, { key: 'End' });
-    expect(stageImg(container).getAttribute('src')).toBe(brief.imageSrc);
+    expect(stageImg(container).getAttribute('src')).toBe(site.imageSrc);
     fireEvent.keyDown(list, { key: 'Home' });
     expect(stageImg(container).getAttribute('src')).toBe(gonai.imageSrc);
   });
@@ -200,18 +200,18 @@ describe('ProjectTour', () => {
     expect(liveLink.getAttribute('target')).toBe('_blank');
     expect(liveLink.textContent).toContain(dict.en.liveSite);
     cleanup();
-    const repo = render(<ProjectTour projects={[brief]} locale="en" />);
+    const repo = render(<ProjectTour projects={[site]} locale="en" />);
     expect(repo.container.querySelector('.tour-caption a')?.textContent).toContain(dict.en.viewCode);
     cleanup();
-    const bare = render(<ProjectTour projects={[secretary]} locale="en" />);
+    const bare = render(<ProjectTour projects={[aje]} locale="en" />);
     expect(bare.container.querySelector('.tour-caption a')).toBeNull();
   });
 
   it('captions with the outcome when there is one, else the description', () => {
-    const { container } = render(<ProjectTour projects={[secretary, gonai]} locale="en" />);
+    const { container } = render(<ProjectTour projects={[aje, gonai]} locale="en" />);
     expect(container.querySelector('.tour-line')?.textContent).toBe('GoNai in one line');
     fireEvent.click(screen.getAllByRole('tab')[1]);
-    expect(container.querySelector('.tour-line')?.textContent).toBe('Runs every morning');
+    expect(container.querySelector('.tour-line')?.textContent).toBe('Working prototype');
   });
 
   it('renders nothing at all when no project has a screenshot', () => {

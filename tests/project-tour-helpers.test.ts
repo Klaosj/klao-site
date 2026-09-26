@@ -38,7 +38,7 @@ describe('windowTitle', () => {
   });
 
   it('falls back to the project name without a live URL, or with an unparseable one', () => {
-    expect(windowTitle(make('a', 1, { name: 'AISecretary' }))).toBe('AISecretary');
+    expect(windowTitle(make('a', 1, { name: 'Aje' }))).toBe('Aje');
     expect(windowTitle(make('b', 1, { name: 'Broken', liveUrl: 'not a url' }))).toBe('Broken');
   });
 });

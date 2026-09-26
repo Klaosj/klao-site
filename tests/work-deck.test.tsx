@@ -35,7 +35,7 @@ const build: Project = {
   slug: null,
 };
 
-const secondBuild: Project = { ...build, id: 'p-build2', name: 'AISecretary', order: 4 };
+const secondBuild: Project = { ...build, id: 'p-build2', name: 'Aje', order: 4 };
 
 const business: Project = {
   id: 'p-biz',

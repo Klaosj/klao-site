@@ -27,7 +27,7 @@ describe('content API (fixture mode)', () => {
     expect(featured.every((p) => p.featured)).toBe(true);
     // Regression guard: with every fixture featured, a 4th-and-beyond
     // project (by `order`) must not be silently dropped by a cap.
-    expect(featured.map((p) => p.name)).toContain('DailyBrief');
+    expect(featured.map((p) => p.name)).toContain('klao-site');
   });
 
   it('returns posts newest first', async () => {
@@ -98,7 +98,7 @@ describe('content API (fixture mode)', () => {
   it('carries Aje and klao-site as featured builds, with Aje leading the Build chapter', async () => {
     const featured = await getFeaturedProjects();
     const builds = featured.filter((p) => p.type === 'build').map((p) => p.name);
-    expect(builds).toEqual(['Aje', 'GoNai', 'AISecretary', 'klao-site', 'DailyBrief']);
+    expect(builds).toEqual(['Aje', 'GoNai', 'klao-site']);
     const aje = featured.find((p) => p.name === 'Aje')!;
     expect(aje.outcome?.en).toContain('Working prototype');
     expect(aje.liveUrl).toBeNull();

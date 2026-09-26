@@ -68,9 +68,12 @@ export async function generateMetadata({
   // the TH card would need a Thai font file loaded at request time. Sources
   // are design/og/og-{en,th}.html — see design/og/README.md to regenerate
   // after changing the headline or the featured-project list.
+  // No project list here: the two removed projects (spec §8) are still drawn
+  // on the current og-*.png cards, and alt text may not name them. When the
+  // cards are re-rendered without them, a project list can come back.
   const ogAlt: Record<Locale, string> = {
-    en: 'Klao — business developer who builds his own tools. Selected work: GoNai, AISecretary, DailyBrief.',
-    th: 'Klao — นัก Business Development ที่สร้างเครื่องมือใช้เอง ผลงานเด่น: GoNai, AISecretary, DailyBrief',
+    en: 'Klao — business developer who builds his own tools.',
+    th: 'Klao — นัก Business Development ที่สร้างเครื่องมือใช้เอง',
   };
   // Relative path resolves against metadataBase, so this follows
   // NEXT_PUBLIC_SITE_URL automatically instead of hardcoding a domain.

@@ -48,30 +48,6 @@
     "slug": null
   },
   {
-    "id": "fx-dailybrief",
-    "name": "DailyBrief",
-    "description": {
-      "en": "Automated news pipeline: RSS to Thai summaries delivered to Notion every morning.",
-      "th": "ระบบข่าวอัตโนมัติ: RSS แปลสรุปเป็นไทย ส่งเข้า Notion ทุกเช้า"
-    },
-    "stack": [
-      "Python",
-      "Notion API"
-    ],
-    "liveUrl": null,
-    "repoUrl": null,
-    "imageSrc": "/images/dailybrief.jpg",
-    "featured": true,
-    "order": 7,
-    "type": "build",
-    "outcome": null,
-    "question": {
-      "en": "Why does the morning news take so long to read?",
-      "th": "ทำไมอ่านข่าวเช้าให้จบมันนานนัก?"
-    },
-    "slug": null
-  },
-  {
     "id": "fx-gonai",
     "name": "GoNai",
     "description": {
@@ -92,30 +68,6 @@
     "question": {
       "en": "One day in Bangkok — what's the real budget?",
       "th": "ไปเที่ยวหนึ่งวัน งบจริงๆ เท่าไหร่?"
-    },
-    "slug": null
-  },
-  {
-    "id": "fx-aisecretary",
-    "name": "AISecretary",
-    "description": {
-      "en": "macOS menu bar app tracking AI usage, quotas, and projects with a morning digest.",
-      "th": "แอป menu bar บน macOS ติดตามการใช้ AI โควตา และโปรเจกต์ พร้อมสรุปทุกเช้า"
-    },
-    "stack": [
-      "Swift",
-      "SwiftUI"
-    ],
-    "liveUrl": null,
-    "repoUrl": null,
-    "imageSrc": "/images/aisecretary.jpg",
-    "featured": true,
-    "order": 5,
-    "type": "build",
-    "outcome": null,
-    "question": {
-      "en": "How much AI am I actually using?",
-      "th": "เดือนนี้ใช้ AI ไปเท่าไหร่กันแน่?"
     },
     "slug": null
   },
