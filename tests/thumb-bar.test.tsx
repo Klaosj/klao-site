@@ -60,6 +60,24 @@ describe('ThumbBar', () => {
     expect(bar().hasAttribute('data-show')).toBe(true);
   });
 
+  // Wave-1 reconciliation (l): several records for the one target can
+  // arrive in a single callback, oldest first; the last is the current state.
+  it('reads the newest record when one callback batches two for the contact section', () => {
+    render(
+      <>
+        <section id="contact" />
+        <ThumbBar locale="en" profile={makeProfile()} heroGone />
+      </>,
+    );
+    const contact = document.getElementById('contact')!;
+    const onScreen = { target: contact, intersectionRatio: 0.5, isIntersecting: true, boundingClientRect: rect(200) };
+    const away = { target: contact, intersectionRatio: 0, isIntersecting: false, boundingClientRect: rect(2000) };
+    FakeIO.watching(contact).fire([away, onScreen]);
+    expect(bar().hasAttribute('data-show')).toBe(false);
+    FakeIO.watching(contact).fire([onScreen, away]);
+    expect(bar().hasAttribute('data-show')).toBe(true);
+  });
+
   it('counts a tall contact section as on screen once its top passes 70 % of the viewport', () => {
     render(
       <>

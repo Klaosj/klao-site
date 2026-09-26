@@ -63,12 +63,17 @@ export default function SiteNav({ locale, profile }: { locale: Locale; profile: 
   }, [pathname]);
 
   // The hero's buttons have left the viewport upwards. A row still below the
-  // fold (top > 0) doesn't count: the visitor hasn't passed it yet.
+  // fold (top > 0) doesn't count: the visitor hasn't passed it yet. One
+  // callback can batch several records for the row, oldest first; the last
+  // is where it is now.
   useEffect(() => {
     setHeroGone(false);
     const cta = document.getElementById('hero-cta');
     if (!cta || typeof IntersectionObserver === 'undefined') return;
-    const io = new IntersectionObserver(([entry]) => setHeroGone(!entry.isIntersecting && entry.boundingClientRect.top < 0));
+    const io = new IntersectionObserver((entries) => {
+      const entry = entries[entries.length - 1];
+      setHeroGone(!entry.isIntersecting && entry.boundingClientRect.top < 0);
+    });
     io.observe(cta);
     return () => io.disconnect();
   }, [pathname]);

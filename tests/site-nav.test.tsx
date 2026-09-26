@@ -196,6 +196,28 @@ describe('SiteNav', () => {
     expect(contact.hasAttribute('data-filled')).toBe(false);
   });
 
+  // Wave-1 reconciliation (l): an observer may batch several records for
+  // the one target into a single callback, oldest first. Only the last is
+  // the button row's current state.
+  it('reads the newest record when one callback batches two for the hero buttons', () => {
+    render(
+      <>
+        <HomeHooks />
+        <SiteNav locale="en" profile={profile} />
+      </>,
+    );
+    const cta = document.getElementById('hero-cta')!;
+    const contact = within(nav()).getByRole('link', { name: dict.en.navContact });
+    const gone = { target: cta, isIntersecting: false, boundingClientRect: rect(-120) };
+    const back = { target: cta, isIntersecting: true, boundingClientRect: rect(300) };
+    FakeIO.watching(cta).fire([back, gone]);
+    expect(contact.hasAttribute('data-filled')).toBe(true);
+    expect(screen.getByTestId('thumb-bar').getAttribute('data-hero-gone')).toBe('true');
+    FakeIO.watching(cta).fire([gone, back]);
+    expect(contact.hasAttribute('data-filled')).toBe(false);
+    expect(screen.getByTestId('thumb-bar').getAttribute('data-hero-gone')).toBe('false');
+  });
+
   it('does not count the hero buttons as gone while they are still below the fold', () => {
     render(
       <>

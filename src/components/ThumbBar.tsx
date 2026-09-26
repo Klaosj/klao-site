@@ -29,7 +29,10 @@ export default function ThumbBar({ locale, profile, heroGone }: { locale: Locale
     const contact = document.getElementById('contact');
     if (!contact || typeof IntersectionObserver === 'undefined') return;
     const io = new IntersectionObserver(
-      ([entry]) => {
+      (entries) => {
+        // One callback can batch several records for #contact, oldest
+        // first; the last is where it is now.
+        const entry = entries[entries.length - 1];
         setContactInView(
           entry.intersectionRatio >= 0.3 || (entry.isIntersecting && entry.boundingClientRect.top < innerHeight * 0.7),
         );
