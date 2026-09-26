@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { readFileSync } from 'node:fs';
 import { act, cleanup, render, screen } from '@testing-library/react';
 import { usePathname } from 'next/navigation';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -88,9 +89,36 @@ describe('ThumbBar', () => {
     expect(container.innerHTML).toBe('');
   });
 
+  it('offers only the conversation when there is an email but no résumé', () => {
+    render(<ThumbBar locale="en" profile={makeProfile({ resumeUrl: null })} heroGone />);
+    const links = Array.from(bar().querySelectorAll('a'));
+    expect(links.map((a) => a.textContent)).toEqual([dict.en.startConversation]);
+    expect(links[0].getAttribute('href')).toMatch(/^mailto:klao@example\.com/);
+  });
+
+  it('offers only the résumé when there is a résumé but no email', () => {
+    render(<ThumbBar locale="en" profile={makeProfile({ email: '' })} heroGone />);
+    const links = Array.from(bar().querySelectorAll('a'));
+    expect(links.map((a) => a.textContent)).toEqual([dict.en.resumeShort]);
+    expect(links[0].getAttribute('href')).toBe('/resume.pdf');
+  });
+
   it('speaks Thai', () => {
     render(<ThumbBar locale="th" profile={makeProfile()} heroGone />);
     const region = screen.getByRole('region', { name: dict.th.navQuickActions });
     expect(Array.from(region.querySelectorAll('a')).map((a) => a.textContent)).toEqual([dict.th.startConversation, dict.th.resumeShort]);
+  });
+});
+
+describe('thumb-bar.css', () => {
+  const css = readFileSync('src/components/thumb-bar.css', 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+
+  // The bar sits at 12px + the home-indicator inset and is 56 px tall, so the
+  // page's end room has to grow by the same inset or the last line hides
+  // under the bar on iPhones with a home indicator (P1 T8 review).
+  it("reserves the bar's height plus the safe-area inset at the page's end", () => {
+    const rule = css.match(/html:has\(#hero-cta\) body\s*\{([^}]*)\}/);
+    expect(rule, 'html:has(#hero-cta) body rule').not.toBeNull();
+    expect(rule![1]).toMatch(/padding-bottom:\s*calc\(88px \+ env\(safe-area-inset-bottom\)\)/);
   });
 });
