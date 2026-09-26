@@ -1,11 +1,10 @@
 import AboutBand from '@/components/sections/AboutBand';
+import CareerBand from '@/components/sections/CareerBand';
 import ClientsBand from '@/components/sections/ClientsBand';
 import ContactBand from '@/components/sections/ContactBand';
 import CraftBand from '@/components/sections/CraftBand';
-import CvBand from '@/components/sections/CvBand';
 import Hero from '@/components/sections/Hero';
 import QuestionsBand from '@/components/sections/QuestionsBand';
-import SkillsBand from '@/components/sections/SkillsBand';
 import TourBand from '@/components/sections/TourBand';
 import WorkDeck from '@/components/sections/WorkDeck';
 import { getCareer, getFeaturedProjects, getProfile, getQuestions, getSkills } from '@/lib/content';
@@ -34,8 +33,9 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       <WorkDeck projects={projects} locale={locale} />
       <QuestionsBand questions={questions} locale={locale} />
       <ClientsBand clients={profile.clients} locale={locale} />
-      <SkillsBand skills={skills} locale={locale} />
-      <CvBand entries={career} locale={locale} resumeUrl={profile.resumeUrl} />
+      {/* C7: what he shipped (#work), then where he has worked (#career).
+          The toolbox lives inside the career band (#toolbox). */}
+      <CareerBand entries={career} skills={skills} locale={locale} resumeUrl={profile.resumeUrl} />
       <ContactBand profile={profile} locale={locale} />
     </>
   );

@@ -77,11 +77,16 @@ describe('smoke: pages render in both locales (fixture mode)', () => {
       // MaskedHeading (see the collectText comment above for why that
       // matters here).
       expect(homeText).toContain(t.selectedProjects); // WorkDeck's eyebrow
-      expect(homeText).toContain(t.career); // CvBand's eyebrow
+      // CareerBand (P3): the section, its toolbox anchor and -- on /en --
+      // the headline (Thai headings go through ThaiText keep-spans, so only
+      // the Latin string is a contiguous substring of the HTML).
+      expect(homeText).toContain('id="career"');
+      expect(homeText).toContain('id="toolbox"');
+      if (locale === 'en') expect(homeText).toContain(t.cvHeading);
       // Render only the active locale -- the other language's equivalent
       // eyebrow labels must be entirely absent from the assembled page.
       expect(homeText).not.toContain(other.selectedProjects);
-      expect(homeText).not.toContain(other.career);
+      expect(homeText).not.toContain(other.cvHeading);
 
       const projects = await ProjectsPage(p(locale));
       expect(collectText(projects)).toContain(t.projects);

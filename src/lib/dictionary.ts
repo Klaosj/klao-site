@@ -67,17 +67,6 @@ const en = {
   basedIn: 'Based in',
   workingIn: 'Working in',
   photoPlaceholder: 'Photo',
-  careerUnpublished: 'Career data not yet published',
-  // T10: CvBand's stat grid is derived from the real `entries` array (role
-  // count, unique company count, wins shipped) plus LOCALES.length -- never
-  // fabricated numbers -- so only the four labels are fixed copy. Same
-  // rationale as craftHeading/aboutHeading above: this is fixed,
-  // non-profile UI copy, so it belongs in the dictionary, not a
-  // component-local constant.
-  statRoles: 'positions held',
-  statCompanies: 'companies worked with',
-  statWins: 'wins shipped, in both languages',
-  statLanguages: 'working languages, both first-class',
   // ContactBand's statement heading. Ported verbatim from
   // .superpowers/brainstorm/11719-1786211516/content/studio.html's #contact
   // bigHead, same as craftHeading/aboutHeading.
@@ -157,20 +146,6 @@ const en = {
   // as size and brightness, in that same order.
   toolbox: 'Toolbox',
   toolboxHeading: 'What I actually work with.',
-  tierDaily: 'Daily craft',
-  tierWorking: 'Working knowledge',
-  tierBasic: 'Familiar with',
-  tierLearning: 'Currently learning',
-  // Toolbox redesign, owner decision 2026-08-12: "too many chips reads as
-  // overclaiming" (his words, in Thai, on the live band). The band now
-  // renders only `top` + this one curated row of iconed tool badges +
-  // `learning` -- `tierDaily`/`tierWorking`/`tierBasic` above stay in this
-  // file (harmless, re-expansion later needs no schema work) but nothing
-  // in SkillsBand.tsx reads them anymore. `toolsLabel` is that row's own
-  // mono eyebrow, sized and cased like `tierDaily` et al. but naming a
-  // fixed, curated allowlist (SkillsBand's TOOLS_ALLOWLIST) rather than a
-  // whole honesty tier.
-  toolsLabel: 'Core tools',
   // Open-questions band (wave 2, spec 2026-08-13). The band's copy IS its
   // question list (owner-authored, from the Questions DB) -- these are just
   // the frame: the eyebrow, an optional bigger heading (openQuestionsHeading
@@ -344,11 +319,6 @@ const th: typeof en = {
   basedIn: 'ประจำอยู่',
   workingIn: 'ทำงานเป็น',
   photoPlaceholder: 'รูป',
-  careerUnpublished: 'ยังไม่ได้เผยแพร่ประวัติการทำงาน',
-  statRoles: 'ตำแหน่งที่ผ่านมา',
-  statCompanies: 'บริษัทที่เคยร่วมงาน',
-  statWins: 'ผลงานที่ส่งมอบ ทั้งสองภาษา',
-  statLanguages: 'สองภาษาที่ใช้ทำงานได้เท่ากัน',
   contactHeading: 'มีของที่ควรมีอยู่จริง แต่ยังไม่มีใครทำ?',
 
   skipToContent: 'ข้ามไปยังเนื้อหาหลัก',
@@ -381,11 +351,6 @@ const th: typeof en = {
 
   toolbox: 'กล่องเครื่องมือ',
   toolboxHeading: 'ของจริงที่ผมใช้ทำงาน',
-  tierDaily: 'ใช้ประจำ',
-  tierWorking: 'ใช้เป็น',
-  tierBasic: 'รู้พื้นฐาน',
-  tierLearning: 'กำลังเรียน',
-  toolsLabel: 'เครื่องมือหลัก',
   openQuestions: 'คำถามที่ยังเปิดอยู่',
   openQuestionsHeading: 'คำถามที่ยังไม่มีคำตอบ',
   statusBuilding: 'กำลังสร้าง',
