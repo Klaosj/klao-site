@@ -1,0 +1,599 @@
+<title>Daylight Polish Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600&display=swap">
+<style>
+:root {
+  --canvas: #FFFFFF; --mist: #F5F6F8; --card: #FFFFFF; --raised: #FFFFFF;
+  --ink-1: #1A1C20; --ink-2: #666970; --ink-3: #83868C;
+  --kram: #26314A; --on-kram: #FFFFFF; --link: #506CAF; --line: rgb(20 26 44 / .10);
+  --gonai: #1C7A57; --ctl: rgb(236 237 241 / .72); --thumb: #FFFFFF;
+  --e1: 0 0 0 1px rgb(20 26 44/.06), 0 1px 2px rgb(20 26 44/.05);
+  --e2: 0 0 0 1px rgb(20 26 44/.05), 0 2px 4px rgb(20 26 44/.04), 0 12px 28px -8px rgb(20 26 44/.12), 0 32px 64px -32px rgb(20 26 44/.18);
+  --lift: 0 18px 36px -14px rgb(20 26 44/.28);
+  --drift: cubic-bezier(.28,.11,.32,1); --glide: cubic-bezier(.4,0,.6,1); --settle: cubic-bezier(.32,.72,0,1); --exit: cubic-bezier(.4,0,1,1);
+  --pick: #1F6B4A; --pick-bg: #EAF4EE; --maybe: #8A5A00; --maybe-bg: #FBF3E2; --skip: #666970; --skip-bg: #F1F2F4;
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Anuphan", "Helvetica Neue", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --canvas: #0A0B0D; --mist: #141518; --card: #1C1E21; --raised: #202226;
+    --ink-1: #F2F3F5; --ink-2: #A6A9B0; --ink-3: #777A80;
+    --kram: #E0E8F9; --on-kram: #141A2A; --link: #91AAE1; --line: rgb(255 255 255 / .10);
+    --gonai: #1C7A57; --ctl: rgb(58 60 66 / .60); --thumb: #3A3D44;
+    --e1: inset 0 0 0 1px rgb(255 255 255/.06);
+    --e2: inset 0 1px 0 rgb(255 255 255/.06), 0 0 0 1px rgb(255 255 255/.06), 0 16px 40px -12px rgb(0 0 0/.6);
+    --lift: 0 18px 36px -14px rgb(0 0 0/.7);
+    --pick: #7FD1A8; --pick-bg: #13261C; --maybe: #E9C27A; --maybe-bg: #2A2112; --skip: #A6A9B0; --skip-bg: #1C1E21;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --canvas: #0A0B0D; --mist: #141518; --card: #1C1E21; --raised: #202226;
+  --ink-1: #F2F3F5; --ink-2: #A6A9B0; --ink-3: #777A80;
+  --kram: #E0E8F9; --on-kram: #141A2A; --link: #91AAE1; --line: rgb(255 255 255 / .10);
+  --gonai: #1C7A57; --ctl: rgb(58 60 66 / .60); --thumb: #3A3D44;
+  --e1: inset 0 0 0 1px rgb(255 255 255/.06);
+  --e2: inset 0 1px 0 rgb(255 255 255/.06), 0 0 0 1px rgb(255 255 255/.06), 0 16px 40px -12px rgb(0 0 0/.6);
+  --lift: 0 18px 36px -14px rgb(0 0 0/.7);
+  --pick: #7FD1A8; --pick-bg: #13261C; --maybe: #E9C27A; --maybe-bg: #2A2112; --skip: #A6A9B0; --skip-bg: #1C1E21;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { interpolate-size: allow-keywords; }
+body { margin: 0; background: var(--canvas); color: var(--ink-1); font: 17px/25px var(--font); letter-spacing: -.022em; -webkit-font-smoothing: antialiased; }
+:lang(th), .th { letter-spacing: 0; line-height: 1.65; }
+.wrap { max-width: 1040px; margin: 0 auto; padding-inline: 20px; }
+a { color: var(--link); }
+:focus-visible { outline: 2px solid var(--link); outline-offset: 3px; border-radius: 6px; }
+
+header.top { padding-block: 72px 40px; }
+.eyebrow { font-size: 14px; line-height: 20px; font-weight: 600; color: var(--ink-2); letter-spacing: 0; margin: 0 0 10px; }
+h1 { font-size: clamp(36px, 5vw, 56px); line-height: 1.07; font-weight: 600; letter-spacing: -.009em; margin: 0; text-wrap: balance; }
+.lead { font-size: 21px; line-height: 30px; color: var(--ink-2); max-width: 44em; margin: 16px 0 0; letter-spacing: .011em; text-wrap: pretty; }
+.facts { display: flex; flex-wrap: wrap; gap: 8px 22px; margin-top: 22px; font-size: 14px; color: var(--ink-2); letter-spacing: -.016em; }
+.facts b { color: var(--ink-1); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+section.grp { padding-block: 56px 8px; border-top: 1px solid var(--line); }
+h2 { font-size: 32px; line-height: 36px; font-weight: 600; margin: 0; letter-spacing: .004em; text-wrap: balance; }
+.grp > .wrap > p.sub { color: var(--ink-2); margin: 8px 0 28px; max-width: 46em; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+.card { background: var(--mist); border-radius: 28px; padding: 22px 22px 18px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.card.wide { grid-column: 1 / -1; }
+.card h3 { font-size: 19px; line-height: 24px; font-weight: 600; margin: 0; letter-spacing: .012em; display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.card h3 .n { font-size: 13px; color: var(--ink-3); font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: 0; }
+.stage { background: var(--canvas); border-radius: 18px; min-height: 150px; display: grid; place-items: center; padding: 22px; position: relative; overflow: hidden; }
+.why { font-size: 15px; line-height: 22px; color: var(--ink-2); margin: 0; letter-spacing: -.01em; }
+.why b { color: var(--ink-1); font-weight: 600; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; }
+.tag { font-size: 12px; line-height: 16px; font-weight: 600; padding: 4px 9px; border-radius: 999px; background: var(--canvas); color: var(--ink-2); letter-spacing: 0; }
+.tag.pick { background: var(--pick-bg); color: var(--pick); }
+.tag.maybe { background: var(--maybe-bg); color: var(--maybe); }
+.tag.skip { background: var(--skip-bg); color: var(--skip); box-shadow: inset 0 0 0 1px var(--line); }
+.src { font-size: 13px; color: var(--ink-3); letter-spacing: -.01em; }
+.src a { color: var(--ink-2); }
+
+/* 1 · segmented control with sliding thumb */
+.seg { position: relative; display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr; padding: 3px; border-radius: 999px; background: var(--ctl); box-shadow: inset 0 0 0 1px var(--line); isolation: isolate; }
+.seg .thumb { position: absolute; top: 3px; bottom: 3px; left: 3px; width: calc((100% - 6px) / var(--n, 3)); border-radius: 999px; background: var(--thumb); box-shadow: 0 1px 2px rgb(20 26 44/.12), 0 3px 8px -2px rgb(20 26 44/.14); transform: translateX(calc(var(--i, 0) * 100%)); transition: transform 320ms var(--settle); z-index: -1; }
+.seg button { font: inherit; font-size: 14px; line-height: 20px; letter-spacing: -.016em; border: 0; background: none; color: var(--ink-2); padding: 6px 16px; min-height: 32px; border-radius: 999px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: color 200ms linear; white-space: nowrap; }
+.seg button[aria-checked="true"] { color: var(--ink-1); font-weight: 600; }
+
+/* sun ↔ moon eclipse (only transform/opacity) */
+.sunmoon { width: 44px; height: 44px; color: var(--ink-1); overflow: visible; }
+.sunmoon .core { transform-box: fill-box; transform-origin: center; transition: transform 500ms var(--settle); }
+.sunmoon .cut { transform-box: fill-box; transform-origin: center; transform: translate(9px, -9px); transition: transform 500ms var(--settle); }
+.sunmoon .rays { transform-box: fill-box; transform-origin: center; transition: transform 500ms var(--settle), opacity 300ms var(--glide); }
+.is-dark .sunmoon .core { transform: scale(1.5); }
+.is-dark .sunmoon .cut { transform: translate(0, 0); }
+.is-dark .sunmoon .rays { transform: rotate(-45deg) scale(.4); opacity: 0; }
+.row { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; justify-content: center; }
+
+/* 2 · language */
+.langdemo { display: grid; gap: 14px; justify-items: center; }
+.langdemo p { margin: 0; font-size: 21px; line-height: 30px; font-weight: 600; text-align: center; transition: opacity 180ms var(--glide); }
+
+/* 3 · copy → check */
+.copy { font: inherit; font-size: 15px; display: inline-flex; align-items: center; gap: 10px; border: 0; cursor: pointer; background: var(--canvas); color: var(--ink-1); padding: 10px 16px; border-radius: 999px; box-shadow: var(--e1); transition: transform 120ms var(--settle); }
+.copy:active { transform: scale(.97); }
+.copy .box { position: relative; width: 18px; height: 18px; }
+.copy .box svg { position: absolute; inset: 0; width: 18px; height: 18px; }
+.copy .clip { transition: opacity 160ms var(--glide), transform 200ms var(--settle); }
+.copy .ok path { stroke-dasharray: 20; stroke-dashoffset: 20; transition: stroke-dashoffset 360ms var(--settle) 80ms; }
+.copy.done .clip { opacity: 0; transform: scale(.7); }
+.copy.done .ok path { stroke-dashoffset: 0; }
+.copy .lbl { min-width: 7.5em; text-align: left; }
+
+/* 4 · play ↔ pause (clip-path morph on a 20px glyph) */
+.pp { font: inherit; width: 48px; height: 48px; border: 0; cursor: pointer; border-radius: 50%; background: var(--kram); color: var(--on-kram); display: grid; place-items: center; transition: transform 120ms var(--settle); }
+.pp:active { transform: scale(.94); }
+.pp .g { position: relative; width: 20px; height: 20px; }
+.pp .g i { position: absolute; inset: 0; background: currentColor; transition: clip-path 260ms var(--settle); }
+.pp .g i:first-child { clip-path: polygon(18% 12%, 40% 12%, 40% 88%, 18% 88%); }
+.pp .g i:last-child { clip-path: polygon(60% 12%, 82% 12%, 82% 88%, 60% 88%); }
+.pp.paused .g i:first-child { clip-path: polygon(22% 8%, 56% 29%, 56% 71%, 22% 92%); }
+.pp.paused .g i:last-child { clip-path: polygon(56% 29%, 90% 50%, 90% 50%, 56% 71%); }
+
+/* 5 · FAQ smooth height (Chrome: interpolate-size; others: instant) */
+.faq { width: 100%; max-width: 440px; }
+.faq details { border-bottom: 1px solid var(--line); }
+.faq summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 2px; font-weight: 600; font-size: 17px; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq .chev { width: 18px; height: 18px; color: var(--ink-2); flex: none; transition: transform 320ms var(--settle); }
+.faq details[open] .chev { transform: rotate(180deg); }
+.faq details::details-content { block-size: 0; overflow: clip; transition: block-size 360ms var(--glide), content-visibility 360ms allow-discrete; }
+.faq details[open]::details-content { block-size: auto; }
+.faq .a { margin: 0; padding: 0 2px 14px; color: var(--ink-2); font-size: 15px; line-height: 22px; }
+
+/* 6 · link arrow nudge + press */
+.links { display: grid; gap: 12px; justify-items: start; }
+.xl { display: inline-flex; align-items: center; gap: 6px; color: var(--link); text-decoration: none; font-size: 17px; }
+.xl svg { width: 14px; height: 14px; transition: transform 200ms var(--settle); }
+@media (hover: hover) { .xl:hover svg { transform: translate(2px, -2px); } .xl:hover { text-decoration: underline; text-underline-offset: 3px; } }
+.btn { font: inherit; border: 0; cursor: pointer; min-height: 44px; padding: 0 22px; border-radius: 999px; background: var(--kram); color: var(--on-kram); transition: transform 220ms var(--settle); }
+.btn:active { transform: scale(.97); }
+
+/* 7 · row → sheet (shared-element view transition) */
+.rows { width: 100%; display: grid; gap: 2px; }
+.prow { font: inherit; text-align: left; display: grid; grid-template-columns: 88px 1fr auto; gap: 16px; align-items: center; padding: 12px; border: 0; border-radius: 18px; background: none; color: var(--ink-1); cursor: pointer; }
+.prow:hover { background: var(--mist); }
+.prow .th { position: relative; width: 88px; aspect-ratio: 16/10; border-radius: 10px; overflow: visible; }
+.prow .th img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 10px; box-shadow: var(--e1); position: relative; z-index: 1; transition: transform 240ms var(--settle); }
+.prow .th::after { content: ""; position: absolute; inset: 0; border-radius: 10px; box-shadow: var(--lift); opacity: 0; transition: opacity 240ms var(--glide); }
+@media (hover: hover) { .prow:hover .th img { transform: translateY(-3px); } .prow:hover .th::after { opacity: 1; } }
+.prow .nm { font-weight: 600; }
+.prow .q { display: block; color: var(--ink-2); font-size: 15px; line-height: 21px; font-weight: 400; }
+.prow .st { font-size: 13px; color: var(--ink-2); display: inline-flex; align-items: center; gap: 6px; }
+.prow .st::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.sheetwrap { position: fixed; inset: 0; z-index: 50; display: grid; place-items: end center; background: rgb(10 12 18 / .32); padding: 24px 16px; }
+.sheetwrap[hidden] { display: none !important; }
+.sheet { width: min(640px, 100%); max-height: calc(100vh - 48px); overflow: auto; background: var(--raised); border-radius: 28px; box-shadow: var(--e2); padding: 18px; position: relative; }
+.sheet .media { width: 100%; aspect-ratio: 1580/900; border-radius: 14px; overflow: hidden; box-shadow: var(--e1); }
+.sheet .media img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.sheet h4 { font-size: 28px; line-height: 32px; margin: 16px 4px 4px; font-weight: 600; }
+.sheet p { margin: 0 4px 8px; color: var(--ink-2); }
+.sheet .x { position: absolute; top: 26px; right: 26px; z-index: 2; width: 32px; height: 32px; border: 0; border-radius: 50%; background: var(--ctl); color: var(--ink-1); cursor: pointer; display: grid; place-items: center; -webkit-backdrop-filter: blur(12px) saturate(160%); backdrop-filter: blur(12px) saturate(160%); }
+.sheet .x svg { width: 14px; height: 14px; }
+@starting-style { .sheetwrap:not([hidden]) .sheet { opacity: 0; transform: translateY(24px); } }
+.sheetwrap:not([hidden]) .sheet { transition: opacity 320ms var(--glide), transform 420ms var(--settle); }
+::view-transition-group(shot) { animation-duration: 460ms; animation-timing-function: cubic-bezier(.32,.72,0,1); }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: 320ms; }
+
+/* 8 · screenshot fade mask */
+.fades { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: 100%; }
+.fades figure { margin: 0; display: grid; gap: 8px; }
+.fades .frame { aspect-ratio: 16/9; overflow: hidden; border-radius: 12px 12px 0 0; }
+.fades .frame img { display: block; width: 100%; height: auto; }
+.fades .frame.fade { -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent 98%); mask-image: linear-gradient(to bottom, #000 55%, transparent 98%); }
+.fades figcaption { font-size: 13px; color: var(--ink-2); text-align: center; }
+
+/* 9 · five grey apps → one GoNai */
+.five { display: grid; justify-items: center; gap: 16px; }
+.tiles { position: relative; width: 252px; max-width: 100%; height: 56px; }
+.tile { position: absolute; top: 6px; width: 44px; height: 44px; border-radius: 12px; background: var(--card); box-shadow: var(--e1); display: grid; place-items: center; color: var(--ink-3); transition: transform 640ms var(--settle), opacity 360ms var(--glide); }
+.tile svg { width: 22px; height: 22px; }
+.tile:nth-child(1) { left: 0; } .tile:nth-child(2) { left: 52px; } .tile:nth-child(3) { left: 104px; } .tile:nth-child(4) { left: 156px; } .tile:nth-child(5) { left: 208px; }
+.tile.one { left: 104px; background: var(--gonai); color: #fff; opacity: 0; transform: scale(.6); box-shadow: 0 10px 24px -10px rgb(28 122 87/.6); }
+.five.merged .tile:nth-child(1) { transform: translateX(104px) scale(.6); opacity: 0; }
+.five.merged .tile:nth-child(2) { transform: translateX(52px) scale(.6); opacity: 0; }
+.five.merged .tile:nth-child(3) { transform: scale(.6); opacity: 0; }
+.five.merged .tile:nth-child(4) { transform: translateX(-52px) scale(.6); opacity: 0; }
+.five.merged .tile:nth-child(5) { transform: translateX(-104px) scale(.6); opacity: 0; }
+.five.merged .tile.one { opacity: 1; transform: scale(1.25); transition-delay: 260ms; }
+.five .cap { font-size: 15px; color: var(--ink-2); margin: 0; min-height: 22px; text-align: center; }
+
+/* 10 · depth toggle */
+.depth { width: 100%; display: grid; gap: 14px; }
+.depth .ch { display: grid; gap: 2px; }
+.depth .ch b { font-size: 17px; }
+.depth .ch span { color: var(--ink-2); font-size: 15px; line-height: 22px; }
+.depth.short .ch span { display: none; }
+
+table.plan { width: 100%; border-collapse: collapse; font-size: 15px; line-height: 21px; letter-spacing: -.01em; }
+.tbl { overflow-x: auto; background: var(--mist); border-radius: 28px; padding: 8px 18px; }
+table.plan th, table.plan td { text-align: left; padding: 11px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.plan tr:last-child td { border-bottom: 0; }
+table.plan th { font-size: 12px; color: var(--ink-2); font-weight: 600; letter-spacing: 0; }
+table.plan td.num { font-variant-numeric: tabular-nums; color: var(--ink-3); }
+.avoid { display: flex; flex-wrap: wrap; gap: 8px; }
+.avoid span { font-size: 14px; padding: 6px 12px; border-radius: 999px; background: var(--mist); color: var(--ink-2); }
+.avoid span s { text-decoration-color: var(--ink-3); }
+.decide { background: var(--mist); border-radius: 28px; padding: 22px 24px; display: grid; gap: 10px; }
+.decide ol { margin: 0; padding-left: 22px; display: grid; gap: 8px; }
+.decide li b { font-weight: 600; }
+.sources { columns: 2 320px; column-gap: 32px; font-size: 14px; line-height: 21px; color: var(--ink-2); padding: 0; list-style: none; margin: 0; }
+.sources li { break-inside: avoid; padding: 4px 0; }
+footer { padding-block: 48px 64px; color: var(--ink-3); font-size: 13px; }
+@media (max-width: 734px) {
+  header.top { padding-block: 48px 28px; }
+  .lead { font-size: 19px; line-height: 27px; }
+  h2 { font-size: 28px; line-height: 32px; }
+  .fades { grid-template-columns: 1fr; }
+  .prow { grid-template-columns: 72px 1fr; }
+  .prow .th { width: 72px; }
+  .prow .st { display: none; }
+  .card { border-radius: 22px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 1ms !important; animation-duration: 1ms !important; transition-delay: 0ms !important; }
+}
+</style>
+
+<header class="top wrap">
+  <p class="eyebrow">klao-site · White Edition · research 26 Sep 2026</p>
+  <h1>Daylight Polish Lab</h1>
+  <p class="lead th" lang="th">ทดลองลูกเล่นที่ทำให้เว็บดู “เนี้ยบ” ขึ้นแบบไม่เว่อร์ — ทุกอันกดเล่นได้จริง ใช้สี ฟอนต์ และ easing ชุดเดียวกับ Daylight · ไม่เพิ่ม library · ขยับแค่ transform กับ opacity (ยกเว้นไอคอนเล็ก 2 ตัวที่บอกไว้)</p>
+  <div class="facts">
+    <span><b>16</b> reference sites captured live</span>
+    <span><b>18</b> motion sources checked</span>
+    <span><b>10</b> controls redesigned</span>
+    <span><b>0</b> new dependencies</span>
+  </div>
+</header>
+
+<section class="grp">
+  <div class="wrap">
+    <h2>Switches &amp; icons</h2>
+    <p class="sub th" lang="th">ปุ่มที่คนกดบ่อยที่สุดบนเว็บ ทำให้รู้สึก “มีคนคิดมาแล้ว” — แบบ iOS: thumb ไหลไปมา ไอคอนเปลี่ยนรูปแทนการสลับภาพ</p>
+    <div class="grid">
+      <article class="card">
+        <h3>Appearance switch <span class="n">01</span></h3>
+        <div class="stage">
+          <div class="row">
+            <svg class="sunmoon" viewBox="0 0 24 24" aria-hidden="true">
+              <mask id="eclipse"><rect x="-4" y="-4" width="32" height="32" fill="#fff"/><circle class="cut" cx="17" cy="7" r="5.5" fill="#000"/></mask>
+              <circle class="core" cx="12" cy="12" r="4.6" fill="currentColor" mask="url(#eclipse)"/>
+              <g class="rays" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"/></g>
+            </svg>
+            <div class="seg" role="radiogroup" aria-label="Appearance" id="themeSeg" style="--n:3">
+              <span class="thumb" aria-hidden="true"></span>
+              <button type="button" role="radio" aria-checked="true" data-v="auto">Auto</button>
+              <button type="button" role="radio" aria-checked="false" data-v="light">Light</button>
+              <button type="button" role="radio" aria-checked="false" data-v="dark">Dark</button>
+            </div>
+          </div>
+        </div>
+        <p class="why th" lang="th"><b>กดได้จริง: ทั้งหน้านี้เปลี่ยนธีม</b> พร้อม cross-fade ทั้งหน้า (View Transition) · ดวงอาทิตย์ค่อยๆ กลายเป็นเสี้ยวจันทร์ (eclipse) · thumb ไหลด้วย easing settle</p>
+        <div class="meta"><span class="tag pick">Pick</span><span class="tag">Footer · menu · ⌘K</span><span class="tag">S</span></div>
+        <p class="src">Pattern: <a href="https://toggles.dev" target="_blank" rel="noopener">theme-toggles</a> (MIT) · rebuilt inline, no install</p>
+      </article>
+
+      <article class="card">
+        <h3>Language switch <span class="n">02</span></h3>
+        <div class="stage">
+          <div class="langdemo">
+            <div class="seg" role="radiogroup" aria-label="Language" id="langSeg" style="--n:2">
+              <span class="thumb" aria-hidden="true"></span>
+              <button type="button" role="radio" aria-checked="true" data-v="en">EN</button>
+              <button type="button" role="radio" aria-checked="false" data-v="th">ไทย</button>
+            </div>
+            <p id="langText">Business developer who builds his own tools.</p>
+          </div>
+        </div>
+        <p class="why th" lang="th">ใช้ component เดียวกับ 01 (ไม่มีไอคอน) · ข้อความ fade 180 ms ตอนสลับ ไม่กระพริบ · บนเว็บจริงสลับ /en ↔ /th เหมือนเดิม</p>
+        <div class="meta"><span class="tag pick">Pick</span><span class="tag">Nav · menu</span><span class="tag">S</span></div>
+      </article>
+
+      <article class="card">
+        <h3>Copy email <span class="n">03</span></h3>
+        <div class="stage">
+          <button type="button" class="copy" id="copyBtn">
+            <span class="box">
+              <svg class="clip" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>
+              <svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+            </span>
+            <span class="lbl" id="copyLbl" aria-live="polite">suvichuk.j@gmail.com</span>
+          </button>
+        </div>
+        <p class="why th" lang="th">ไอคอน clipboard หดหาย แล้วเครื่องหมายถูก “วาดตัวเอง” (แบบ SF Symbols Draw) · ข้อความเปลี่ยนเป็น Copied · 2 วินาทีกลับเหมือนเดิม · ข้อยกเว้นเล็ก: ใช้ stroke-dashoffset บนไอคอน 18px</p>
+        <div class="meta"><span class="tag pick">Pick</span><span class="tag">Close section</span><span class="tag">S</span></div>
+      </article>
+
+      <article class="card">
+        <h3>Tour play / pause <span class="n">04</span></h3>
+        <div class="stage">
+          <div class="row">
+            <button type="button" class="pp" id="ppBtn" aria-label="Pause tour" aria-pressed="false"><span class="g"><i></i><i></i></span></button>
+            <span class="why" id="ppState">Playing</span>
+          </div>
+        </div>
+        <p class="why th" lang="th">สองแท่ง (pause) ค่อยๆ พับเป็นสามเหลี่ยม (play) ไม่ใช่สลับภาพ · ปุ่มนี้อยู่บน hero tour เสมอ — Apple ใส่ปุ่มหยุดให้ทุก animation ที่เล่นเอง · ข้อยกเว้นเล็ก: clip-path บนไอคอน 20px</p>
+        <div class="meta"><span class="tag pick">Pick</span><span class="tag">Hero tour</span><span class="tag">S</span></div>
+        <p class="src">Ref: <a href="https://www.apple.com/airpods-pro/" target="_blank" rel="noopener">apple.com/airpods-pro</a> pause control</p>
+      </article>
+
+      <article class="card">
+        <h3>FAQ opens smoothly <span class="n">05</span></h3>
+        <div class="stage">
+          <div class="faq">
+            <details><summary>Does he actually build the apps himself?<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary><p class="a">Yes, on nights and weekends, with AI-assisted development. GoNai is live, Aje is a working prototype, and this site is edited in Notion.</p></details>
+            <details><summary>Which languages does he work in?<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary><p class="a">Thai, and English at a conversational level.</p></details>
+          </div>
+        </div>
+        <p class="why th" lang="th">ความสูงค่อยๆ ขยายด้วย CSS ล้วน (interpolate-size) บน Chrome · Safari/Firefox เปิดทันทีแบบเดิม ไม่พัง · ลูกศรหมุน 180°</p>
+        <div class="meta"><span class="tag pick">Pick</span><span class="tag">FAQ</span><span class="tag">S</span></div>
+      </article>
+
+      <article class="card">
+        <h3>Links &amp; press <span class="n">06</span></h3>
+        <div class="stage">
+          <div class="links">
+            <a class="xl" href="https://gonai-three.vercel.app" target="_blank" rel="noopener">Open GoNai<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg></a>
+            <button type="button" class="btn">Start a conversation</button>
+          </div>
+        </div>
+        <p class="why th" lang="th">ลูกศร ↗ ขยับ 2px ตอน hover (บอกว่าจะออกไปเว็บอื่น) · ปุ่มยุบ 3% ตอนกด · ไม่มีปุ่มดูดเมาส์ (magnetic) แบบเดิมแล้ว</p>
+        <div class="meta"><span class="tag pick">Pick</span><span class="tag">ทุกลิงก์ภายนอก</span><span class="tag">S</span></div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="grp">
+  <div class="wrap">
+    <h2>Images &amp; motion</h2>
+    <p class="sub th" lang="th">ภาพ screenshot คือพระเอกของเว็บนี้ — ทำให้มัน “ต่อเนื่อง” กับหน้า ไม่ใช่กล่องสี่เหลี่ยมแปะ</p>
+    <div class="grid">
+      <article class="card wide">
+        <h3>Row opens into its sheet <span class="n">07</span></h3>
+        <div class="stage" style="place-items: stretch;">
+          <div class="rows">
+            <button type="button" class="prow" data-p="gonai"><span class="th"><img src="../prototype/img/t-gonai.jpg" alt="" data-full="../prototype/img/gonai.jpg"></span><span><span class="nm">GoNai</span><span class="q">One day in Bangkok — what’s the real budget?</span></span><span class="st">Live</span></button>
+            <button type="button" class="prow" data-p="aje"><span class="th"><img src="../prototype/img/t-aje.jpg" alt="" data-full="../prototype/img/aje.jpg"></span><span><span class="nm">Aje</span><span class="q">Is this idea worth a weekend, or a year?</span></span><span class="st">Working prototype</span></button>
+          </div>
+        </div>
+        <p class="why th" lang="th"><b>ลองกดแถว:</b> รูปเล็กขยายตัวเองกลายเป็นรูปใหญ่ใน sheet (shared-element View Transition) แทนการเด้งหน้าต่างใหม่ · hover แล้วรูปลอยขึ้น 3px พร้อมเงา · browser ที่ไม่รองรับจะเปิด sheet ปกติ</p>
+        <div class="meta"><span class="tag pick">Pick</span><span class="tag">Projects index → sheet</span><span class="tag">M</span><span class="tag">Chrome 111+ · Safari 18+ · Firefox 144+</span></div>
+        <p class="src">Ref: <a href="https://caniuse.com/view-transitions" target="_blank" rel="noopener">caniuse · View Transitions</a> (checked 26 Sep 2026) · craft notes <a href="https://animations.dev" target="_blank" rel="noopener">animations.dev</a></p>
+      </article>
+
+      <article class="card">
+        <h3>Screenshot fades into the page <span class="n">08</span></h3>
+        <div class="stage">
+          <div class="fades">
+            <figure><div class="frame"><img src="../prototype/img/aje.jpg" alt="Aje screenshot, hard crop"></div><figcaption>Now: hard crop</figcaption></figure>
+            <figure><div class="frame fade"><img src="../prototype/img/aje.jpg" alt="Aje screenshot, fading into the page"></div><figcaption>Fade mask</figcaption></figure>
+          </div>
+        </div>
+        <p class="why th" lang="th">ขอบล่างของภาพค่อยๆ จางหายไปในพื้นหน้า — ภาพดูเป็นส่วนหนึ่งของหน้า ไม่ใช่กรอบแปะ · CSS mask ตัวเดียว ไม่มีต้นทุนตอน scroll</p>
+        <div class="meta"><span class="tag pick">Pick</span><span class="tag">Hero tour · index</span><span class="tag">S</span></div>
+        <p class="src">Ref: <a href="https://linear.app" target="_blank" rel="noopener">linear.app</a> hero</p>
+      </article>
+
+      <article class="card">
+        <h3>Five grey apps become one <span class="n">09</span></h3>
+        <div class="stage">
+          <div class="five" id="five">
+            <div class="tiles" aria-hidden="true">
+              <span class="tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4 3 6.5v13L9 17l6 2.5 6-2.5V4l-6 2.5z"/><path d="M9 4v13M15 6.5v13"/></svg></span>
+              <span class="tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg></span>
+              <span class="tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H18v4"/><rect x="4" y="7" width="16" height="12" rx="2.5"/><path d="M16 13h.01"/></svg></span>
+              <span class="tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="3.5" width="12" height="14" rx="3"/><path d="M6 11h12M9 21l1.5-3.5M15 21l-1.5-3.5M9.5 14.5h.01M14.5 14.5h.01"/></svg></span>
+              <span class="tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4.2A8 8 0 1 1 20 12z"/></svg></span>
+              <span class="tile one"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6.5-5.4-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.6 12 21 12 21z"/><circle cx="12" cy="10" r="2.3"/></svg></span>
+            </div>
+            <p class="cap" id="fiveCap">Map · Calendar · Wallet · Transit · Chat</p>
+            <button type="button" class="btn" id="fiveBtn">Play</button>
+          </div>
+        </div>
+        <p class="why th" lang="th">ห้าแอปเป็นสีเทาเท่ากันหมด (ไม่แย่งสีกัน) → ยุบรวม → GoNai สีเขียวโผล่ขึ้นมาเป็นสีเดียวในฉาก · เล่าเรื่อง Tripedia → GoNai ด้วยสีแทนคำอธิบาย</p>
+        <div class="meta"><span class="tag pick">Pick</span><span class="tag">Signature scene</span><span class="tag">S</span></div>
+        <p class="src">Ref: <a href="https://vercel.com" target="_blank" rel="noopener">vercel.com</a> monochrome logo wall</p>
+      </article>
+
+      <article class="card">
+        <h3>Short / Full for By day <span class="n">10</span></h3>
+        <div class="stage" style="place-items: stretch;">
+          <div class="depth" id="depth">
+            <div class="seg" role="radiogroup" aria-label="Detail" id="depthSeg" style="--n:2; justify-self: start;">
+              <span class="thumb" aria-hidden="true"></span>
+              <button type="button" role="radio" aria-checked="false" data-v="short">Short</button>
+              <button type="button" role="radio" aria-checked="true" data-v="full">Full</button>
+            </div>
+            <div class="ch"><b>Find the room.</b><span>I open new channels with Modern Trade retailers, from first contact to the shape of the partnership.</span></div>
+            <div class="ch"><b>Make the deal work for both sides.</b><span>I weigh revenue share, profit share and a minimum guarantee, and model each in low, base and high cases.</span></div>
+            <div class="ch"><b>Know the week it slips.</b><span>Every task has an owner, a due date and a baseline agreed with management.</span></div>
+          </div>
+        </div>
+        <p class="why th" lang="th">คนอ่าน 60 วินาทีเห็นแค่หัวข้อ · คนอยากรู้กด Full · ช่วยให้หน้าสั้นลงเหลือ ≤ 8.6 จอได้โดยไม่ตัดเนื้อหา · ต้นทุน: ต้องเขียน copy สั้นเพิ่ม (EN + TH)</p>
+        <div class="meta"><span class="tag maybe">Maybe</span><span class="tag">By day</span><span class="tag">S + copy</span></div>
+        <p class="src">Ref: <a href="https://leerob.com" target="_blank" rel="noopener">leerob.com</a> Default / Long</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="grp">
+  <div class="wrap">
+    <h2>What it takes</h2>
+    <p class="sub th" lang="th">ทุกอัน “Pick” ใส่ในเฟสที่ยังไม่ได้เริ่มได้เลย ไม่ต้องรื้อของที่ทำไปแล้ว · ไม่มีค่าใช้จ่าย ไม่มี library ใหม่</p>
+    <div class="tbl">
+      <table class="plan">
+        <thead><tr><th>#</th><th>Idea</th><th>Goes into</th><th>Effort</th><th>Verdict</th><th>The risk</th></tr></thead>
+        <tbody>
+          <tr><td class="num">01</td><td>Appearance switch: sliding thumb + eclipse icon + page cross-fade</td><td>P0 ThemeToggle (not built yet) · P4 footer</td><td>S</td><td><span class="tag pick">Pick</span></td><td>Cross-fade must stay inside the View Transition, never <code>* { transition }</code> (hover states smear)</td></tr>
+          <tr><td class="num">02</td><td>Language switch as the same control</td><td>P1 nav</td><td>S</td><td><span class="tag pick">Pick</span></td><td>It still navigates /en ↔ /th, so the slide shows only until the next page loads</td></tr>
+          <tr><td class="num">03</td><td>Copy → check draw-on</td><td>P4 close</td><td>S</td><td><span class="tag pick">Pick</span></td><td>Clipboard can be refused in some app views: fall back to selecting the text</td></tr>
+          <tr><td class="num">04</td><td>Play ↔ pause morph</td><td>P1 hero tour</td><td>S</td><td><span class="tag pick">Pick</span></td><td>None worth naming</td></tr>
+          <tr><td class="num">05</td><td>FAQ smooth height</td><td>P4 FAQ</td><td>S</td><td><span class="tag pick">Pick</span></td><td>Chrome-only polish; Safari and Firefox open instantly (support re-checked at build time)</td></tr>
+          <tr><td class="num">06</td><td>Link arrow nudge + press scale</td><td>P0 classes</td><td>S</td><td><span class="tag pick">Pick</span></td><td>None</td></tr>
+          <tr><td class="num">07</td><td>Row → sheet shared-element transition + hover lift</td><td>P2 index + sheet</td><td>M</td><td><span class="tag pick">Pick</span></td><td>Needs care with the <code>&lt;dialog&gt;</code> top layer; the fallback is today’s plain open</td></tr>
+          <tr><td class="num">08</td><td>Screenshot fade mask</td><td>P1 tour · P2 index</td><td>S</td><td><span class="tag pick">Pick</span></td><td>The fade must not hide the tour pill’s caption area</td></tr>
+          <tr><td class="num">09</td><td>Grey apps → green GoNai</td><td>P2 signature</td><td>S</td><td><span class="tag pick">Pick</span></td><td>Fits the green rule: GoNai green only on GoNai</td></tr>
+          <tr><td class="num">10</td><td>Short / Full toggle for By day</td><td>P3 By day</td><td>S + copy</td><td><span class="tag maybe">Maybe</span></td><td>4 copy variants to keep in step (EN/TH × short/full)</td></tr>
+          <tr><td class="num">—</td><td>Full-bleed real photo as hero</td><td>Later</td><td>M</td><td><span class="tag maybe">Maybe</span></td><td>Needs a real photo shoot; a stock image would read hollow</td></tr>
+          <tr><td class="num">—</td><td>White radial glow behind a centerpiece</td><td>—</td><td>M</td><td><span class="tag skip">Skip</span></td><td>Reads as the glow you ruled out</td></tr>
+          <tr><td class="num">—</td><td>Diagonal or dashed section dividers</td><td>—</td><td>S</td><td><span class="tag skip">Skip</span></td><td>Adds noise; spacing already separates sections</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section class="grp">
+  <div class="wrap">
+    <h2>What we leave out</h2>
+    <p class="sub th" lang="th">เห็นบ่อยในเว็บ reference แต่ขัดกับ “ไม่เว่อร์”</p>
+    <div class="avoid">
+      <span><s>Magnetic buttons</s></span><span><s>Marquee ticker</s></span><span><s>Wiggle or bounce icons</s></span><span><s>Neon shapes over text</s></span><span><s>3D mascots, confetti blobs</s></span><span><s>Full-saturation brand backgrounds</s></span><span><s>Count-up numbers</s></span><span><s>Autoplay loops without a pause</s></span><span><s>Lordicon (licence forbids commercial use)</s></span>
+    </div>
+  </div>
+</section>
+
+<section class="grp">
+  <div class="wrap">
+    <h2>Decide</h2>
+    <div class="decide th" lang="th">
+      <ol>
+        <li><b>ใส่ 9 อันที่ Pick (01–09) ลงแผน</b> — เพิ่มประมาณ 9 task เล็กในเฟสที่ยังไม่ได้ทำ · <b>แนะนำ: ใส่</b></li>
+        <li><b>Short / Full ใน By day (10)</b> — ช่วยให้หน้าสั้นลงแต่ต้องเขียน copy สั้นเพิ่ม · <b>แนะนำ: ใส่</b> (ผมร่าง copy สั้นให้ก่อน คุณแก้ใน Notion)</li>
+        <li><b>ภาพถ่ายจริงเต็มจอเป็น hero</b> — ต้องถ่ายใหม่ · <b>แนะนำ: เก็บไว้ทีหลัง</b> หลังเว็บขึ้นแล้ว</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section class="grp">
+  <div class="wrap">
+    <h2>Sources</h2>
+    <p class="sub">All checked live on 26 Sep 2026.</p>
+    <ul class="sources">
+      <li><a href="https://linear.app" target="_blank" rel="noopener">linear.app</a> — screenshot fade into the page</li>
+      <li><a href="https://vercel.com" target="_blank" rel="noopener">vercel.com</a> — monochrome logo wall</li>
+      <li><a href="https://www.apple.com/airpods-pro/" target="_blank" rel="noopener">apple.com/airpods-pro</a> — pause control on autoplay</li>
+      <li><a href="https://leerob.com" target="_blank" rel="noopener">leerob.com</a> — Default / Long bio toggle</li>
+      <li><a href="https://emilkowal.ski" target="_blank" rel="noopener">emilkowal.ski</a>, <a href="https://paco.me" target="_blank" rel="noopener">paco.me</a> — restrained project rows</li>
+      <li><a href="https://interfaces.rauno.me" target="_blank" rel="noopener">interfaces.rauno.me</a> — interaction details</li>
+      <li><a href="https://animations.dev" target="_blank" rel="noopener">animations.dev</a> — web animation craft (Emil Kowalski)</li>
+      <li><a href="https://toggles.dev" target="_blank" rel="noopener">toggles.dev</a> — theme-toggles, MIT</li>
+      <li><a href="https://caniuse.com/view-transitions" target="_blank" rel="noopener">caniuse · View Transitions</a> · <a href="https://caniuse.com/mdn-css_at-rules_starting-style" target="_blank" rel="noopener">@starting-style</a></li>
+      <li><a href="https://developer.apple.com/design/human-interface-guidelines/sf-symbols" target="_blank" rel="noopener">Apple HIG · SF Symbols animations</a></li>
+      <li>Thai references: <a href="https://www.farmgroup.co.th" target="_blank" rel="noopener">farmgroup.co.th</a>, <a href="https://www.cadsondemak.com" target="_blank" rel="noopener">cadsondemak.com</a>, <a href="https://ohira.design" target="_blank" rel="noopener">ohira.design</a></li>
+    </ul>
+  </div>
+</section>
+
+<footer class="wrap">Built from the Daylight tokens (Kram accent, system type, drift / glide / settle easing). Demos only; nothing here is on the live site yet.</footer>
+
+<div class="sheetwrap" id="sheetWrap" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <button type="button" class="x" id="sheetX" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    <div class="media"><img id="sheetImg" alt=""></div>
+    <h4 id="sheetTitle"></h4>
+    <p id="sheetQ"></p>
+  </div>
+</div>
+
+<script>
+(() => {
+  const root = document.documentElement;
+  const reduce = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const vt = (fn) => (document.startViewTransition && !reduce()) ? document.startViewTransition(fn) : (fn(), null);
+
+  function seg(el, onPick) {
+    const btns = [...el.querySelectorAll('button')];
+    const pick = (b, fire) => {
+      btns.forEach((x) => x.setAttribute('aria-checked', String(x === b)));
+      el.style.setProperty('--i', btns.indexOf(b));
+      if (fire) onPick(b.dataset.v);
+    };
+    btns.forEach((b) => b.addEventListener('click', () => pick(b, true)));
+    el.addEventListener('keydown', (e) => {
+      const i = btns.findIndex((b) => b.getAttribute('aria-checked') === 'true');
+      const d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+      if (!d) return;
+      e.preventDefault();
+      const n = btns[(i + d + btns.length) % btns.length];
+      pick(n, true); n.focus();
+    });
+    pick(btns.find((b) => b.getAttribute('aria-checked') === 'true') || btns[0], false);
+  }
+
+  // 01 appearance
+  const stageRow = document.querySelector('.sunmoon').parentElement;
+  const isDarkNow = () => root.getAttribute('data-theme') === 'dark' || (!root.getAttribute('data-theme') && matchMedia('(prefers-color-scheme: dark)').matches);
+  const syncIcon = () => stageRow.classList.toggle('is-dark', isDarkNow());
+  seg(document.getElementById('themeSeg'), (v) => {
+    vt(() => {
+      if (v === 'auto') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', v);
+      syncIcon();
+    });
+  });
+  syncIcon();
+  const mq = matchMedia('(prefers-color-scheme: dark)');
+  if (mq.addEventListener) mq.addEventListener('change', syncIcon);
+
+  // 02 language
+  const lt = document.getElementById('langText');
+  const copy = { en: ['Business developer who builds his own tools.', 'en'], th: ['นัก Business Development ที่สร้างเครื่องมือใช้เอง', 'th'] };
+  seg(document.getElementById('langSeg'), (v) => {
+    lt.style.opacity = '0';
+    setTimeout(() => { lt.textContent = copy[v][0]; lt.lang = copy[v][1]; lt.classList.toggle('th', v === 'th'); lt.style.opacity = '1'; }, 180);
+  });
+
+  // 03 copy
+  const cb = document.getElementById('copyBtn'), cl = document.getElementById('copyLbl');
+  const email = 'suvichuk.j@gmail.com';
+  let ct;
+  const selectLabel = () => { const r = document.createRange(); r.selectNodeContents(cl); const s = getSelection(); s.removeAllRanges(); s.addRange(r); };
+  const done = () => { cb.classList.add('done'); cl.textContent = 'Copied'; clearTimeout(ct); ct = setTimeout(() => { cb.classList.remove('done'); cl.textContent = email; }, 2000); };
+  cb.addEventListener('click', () => {
+    try { navigator.clipboard.writeText(email).then(done, () => { selectLabel(); }); }
+    catch (e) { selectLabel(); }
+  });
+
+  // 04 play / pause
+  const pp = document.getElementById('ppBtn'), ps = document.getElementById('ppState');
+  pp.addEventListener('click', () => {
+    const paused = pp.classList.toggle('paused');
+    pp.setAttribute('aria-pressed', String(paused));
+    pp.setAttribute('aria-label', paused ? 'Play tour' : 'Pause tour');
+    ps.textContent = paused ? 'Paused' : 'Playing';
+  });
+
+  // 07 row → sheet
+  const wrap = document.getElementById('sheetWrap'), si = document.getElementById('sheetImg');
+  const st = document.getElementById('sheetTitle'), sq = document.getElementById('sheetQ');
+  let from = null;
+  document.querySelectorAll('.prow').forEach((row) => row.addEventListener('click', () => {
+    const img = row.querySelector('img');
+    from = { row, img };
+    img.style.viewTransitionName = 'shot';
+    vt(() => {
+      img.style.viewTransitionName = '';
+      si.src = img.dataset.full; si.alt = row.querySelector('.nm').textContent + ' screenshot';
+      st.textContent = row.querySelector('.nm').textContent; sq.textContent = row.querySelector('.q').textContent;
+      si.style.viewTransitionName = 'shot';
+      wrap.hidden = false;
+    });
+    setTimeout(() => document.getElementById('sheetX').focus(), 60);
+  }));
+  const close = () => {
+    if (wrap.hidden) return;
+    const back = from;
+    const t = vt(() => {
+      si.style.viewTransitionName = '';
+      if (back) back.img.style.viewTransitionName = 'shot';
+      wrap.hidden = true;
+    });
+    const tidy = () => { if (back) { back.img.style.viewTransitionName = ''; back.row.focus(); } };
+    if (t && t.finished) t.finished.then(tidy, tidy); else tidy();
+  };
+  document.getElementById('sheetX').addEventListener('click', close);
+  wrap.addEventListener('click', (e) => { if (e.target === wrap) close(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
+
+  // 09 five → one
+  const five = document.getElementById('five'), fb = document.getElementById('fiveBtn'), fc = document.getElementById('fiveCap');
+  fb.addEventListener('click', () => {
+    const merged = five.classList.toggle('merged');
+    fb.textContent = merged ? 'Reset' : 'Play';
+    fc.textContent = merged ? 'GoNai · one app for the whole day' : 'Map · Calendar · Wallet · Transit · Chat';
+  });
+
+  // 10 depth
+  const depth = document.getElementById('depth');
+  seg(document.getElementById('depthSeg'), (v) => depth.classList.toggle('short', v === 'short'));
+})();
+</script>
