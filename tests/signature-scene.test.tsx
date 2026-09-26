@@ -82,6 +82,30 @@ const sceneObserver = (root: Element) => observers.find((o) => o.targets.include
 const intersect = (o: Observed, root: Element) =>
   act(() => o.cb([{ isIntersecting: true, target: root } as unknown as IntersectionObserverEntry], {} as IntersectionObserver));
 
+// jsdom has no ResizeObserver at all (unlike IntersectionObserver, stubbed above), so this
+// scene's card/body watch (fix round 1, item 3) never ran in this suite until now.
+type ObservedRO = { cb: ResizeObserverCallback; targets: Element[] };
+const stubResizeObserver = () => {
+  const ros: ObservedRO[] = [];
+  vi.stubGlobal(
+    'ResizeObserver',
+    class {
+      entry: ObservedRO;
+      constructor(cb: ResizeObserverCallback) {
+        this.entry = { cb, targets: [] };
+        ros.push(this.entry);
+      }
+      observe(el: Element) {
+        this.entry.targets.push(el);
+      }
+      unobserve() {}
+      disconnect() {}
+    },
+  );
+  return ros;
+};
+const resize = (o: ObservedRO, target: Element) => act(() => o.cb([{ target } as unknown as ResizeObserverEntry], {} as ResizeObserver));
+
 describe('SignatureScene: server HTML (Review Focus #4)', () => {
   it('is the static stack: every caption present, nothing hidden inline, not pinned', () => {
     const html = renderToStaticMarkup(<SignatureScene copy={COPY} />);
@@ -216,6 +240,39 @@ describe('SignatureScene: motion modes', () => {
     expect(app.style.transform).toBe('');
     expect(sceneObserver(root)).toBeUndefined();
     expect(add.mock.calls.filter(([type]) => type === 'scroll')).toHaveLength(0);
+  });
+
+  it('watches both the pinned card and body (fix round 1, item 3)', () => {
+    const ros = stubResizeObserver();
+    const { container } = render(<SignatureScene copy={COPY} />);
+    const root = sectionOf(container);
+    expect(root.classList.contains('pin')).toBe(true);
+    const card = root.querySelector('.sig-card') as HTMLElement;
+    expect(ros[0].targets).toContain(card);
+    expect(ros[0].targets).toContain(document.body);
+  });
+
+  it('a body-only resize re-measures without relayouting (fix round 1, item 3)', () => {
+    // A fresh mount per resize-observer test, not two `resize()` calls in one: the rAF stub
+    // above calls back synchronously, so `roRaf = requestAnimationFrame(flush)`'s assignment
+    // completes *after* flush already reset `roRaf` to 0 inside itself, clobbering it back to a
+    // truthy id -- the same one-dispatch-per-test constraint already noted for `onScroll`/`raf`.
+    const ros = stubResizeObserver();
+    const { container } = render(<SignatureScene copy={COPY} />);
+    const root = sectionOf(container);
+    const toggle = vi.spyOn(root.classList, 'toggle');
+    resize(ros[0], document.body); // content above reflowing: re-measure the scroll track only
+    expect(toggle).not.toHaveBeenCalled();
+  });
+
+  it('the card itself resizing relayouts, since its size feeds sigGeometry (fix round 1, item 3)', () => {
+    const ros = stubResizeObserver();
+    const { container } = render(<SignatureScene copy={COPY} />);
+    const root = sectionOf(container);
+    const card = root.querySelector('.sig-card') as HTMLElement;
+    const toggle = vi.spyOn(root.classList, 'toggle');
+    resize(ros[0], card); // e.g. a Thai font swap re-wrapping the card question
+    expect(toggle).toHaveBeenCalled();
   });
 
   it('removes its listeners, observer, class and inline styles on unmount', () => {
