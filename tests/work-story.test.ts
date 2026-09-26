@@ -4,6 +4,7 @@ import { describe, it, expect, vi } from 'vitest';
 import type { Locale, OpenQuestion, Project, ProjectStory } from '@/lib/models';
 import { dict } from '@/lib/dictionary';
 import { SITE_URL } from '@/lib/site';
+import { P1_DEFAULTS } from './helpers/project';
 
 // Wave 1 task 4: mirrors tests/route-metadata.test.ts's post-page
 // generateMetadata section (the "writing/[slug]/page.tsx generateMetadata,
@@ -39,6 +40,7 @@ const baseProject: Omit<Project, 'id' | 'name' | 'question' | 'slug'> = {
   order: 1,
   type: 'build',
   outcome: null,
+  ...P1_DEFAULTS,
 };
 
 const gonaiStory: ProjectStory = {

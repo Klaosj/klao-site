@@ -6,6 +6,7 @@ import { dict } from '@/lib/dictionary';
 import { imageAlt } from '@/lib/image-alt';
 import type { Project } from '@/lib/models';
 import { TOUR_MS } from '@/lib/project-tour';
+import { P1_DEFAULTS } from './helpers/project';
 
 afterEach(() => {
   cleanup();
@@ -32,6 +33,7 @@ const make = (id: string, name: string, order: number, extra: Partial<Project> =
   outcome: null,
   question: { en: `Why ${name}?`, th: `ทำไมต้อง ${name}?` },
   slug: null,
+  ...P1_DEFAULTS,
   ...extra,
 });
 

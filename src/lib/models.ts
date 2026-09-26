@@ -43,6 +43,24 @@ export type ContentBlock =
 // additive-property treatment as CareerEntry.RoleTH / Profile.Clients.
 export type ProjectType = 'business' | 'build';
 
+// White Edition P1 (spec 2026-09-25 §7, contract C5). Each Notion select gets
+// the same "valid values + one declaration" array SKILL_TIERS and
+// QUESTION_STATUSES use, so notion-mappers.ts validates against exactly the
+// list the type names — an unknown option falls back to the field's default.
+export type ProjectStatusKey = 'live' | 'proto' | 'pitched' | 'finalist';
+export const PROJECT_STATUS_KEYS: readonly ProjectStatusKey[] = ['live', 'proto', 'pitched', 'finalist'];
+
+// What a project shows: a screenshot ('img'), a screenshot in a browser window
+// ('win'), the Notion-row vignette ('notion', klao-site), or a line drawing
+// ('rings' = Talatify's TAM/SAM/SOM, 'five' = Tripedia's five apps -> one).
+export type ProjectMedia = 'img' | 'win' | 'notion' | 'rings' | 'five';
+export const PROJECT_MEDIA: readonly ProjectMedia[] = ['img', 'win', 'notion', 'rings', 'five'];
+
+// The tint behind a project's picture (tour stage, P2 sheet) — the only place
+// project colour appears on the page (spec §3, 24 Sep).
+export type ProjectWash = 'aje' | 'gonai' | 'site' | 'none';
+export const PROJECT_WASHES: readonly ProjectWash[] = ['aje', 'gonai', 'site', 'none'];
+
 export interface Project {
   id: string;
   name: string;
@@ -63,6 +81,19 @@ export interface Project {
   // slug means "no story page", never a placeholder (spec §1 principle 5).
   question: Localized | null;
   slug: string | null;
+  // White Edition P1 (C5). Every field below is additive: mapProject gives a
+  // pre-migration Notion row (none of these properties yet) the default noted
+  // here, so the live site keeps rendering while Klao adds the properties.
+  statusKey: ProjectStatusKey | null; // StatusKey select; null = no status mark
+  status: Localized | null; // StatusEN/TH, e.g. "Live · since Aug 2026"
+  kicker: Localized | null; // KickerEN/TH, "<chapter> · <detail>", e.g. "Build · Working prototype"
+  media: ProjectMedia; // Media select; default imageSrc ? 'img' : 'win'
+  wash: ProjectWash; // Wash select; default 'none'
+  tour: boolean; // Tour checkbox: plays in the hero tour
+  tourOrder: number | null; // TourOrder; null sorts after every numbered project
+  lineageOf: string | null; // LineageOf relation: Project.id of the earlier idea (GoNai -> Tripedia)
+  alt: Localized | null; // AltEN/TH: what the picture shows; null falls back to image-alt.ts
+  outcomes: { en: string[]; th: string[] }; // OutcomeEN/TH one per line (th falls back to en); `outcome` stays for the old pages
 }
 
 export interface PostMeta {

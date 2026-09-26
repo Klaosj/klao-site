@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { TOUR_MS, tourProjects, windowTitle } from '@/lib/project-tour';
 import type { Project } from '@/lib/models';
+import { P1_DEFAULTS } from './helpers/project';
 
 const make = (id: string, order: number, extra: Partial<Project> = {}): Project => ({
   id,
@@ -16,6 +17,7 @@ const make = (id: string, order: number, extra: Partial<Project> = {}): Project 
   outcome: null,
   question: null,
   slug: null,
+  ...P1_DEFAULTS,
   ...extra,
 });
 

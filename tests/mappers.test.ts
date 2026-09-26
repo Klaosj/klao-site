@@ -115,6 +115,124 @@ describe('mapProject', () => {
   });
 });
 
+const numberProp = (n: number | null) => ({ number: n });
+const checkboxProp = (b: boolean) => ({ checkbox: b });
+const relationProp = (...ids: string[]) => ({ relation: ids.map((id) => ({ id })), has_more: false });
+
+describe('mapProject — White Edition fields (C5)', () => {
+  const fullRow = {
+    id: 'gonai-id',
+    properties: {
+      ...projectPage.properties,
+      StatusKey: select('live'),
+      StatusEN: rich('Live · since Aug 2026'),
+      StatusTH: rich('เปิดใช้งานแล้ว · ตั้งแต่ ส.ค. 2026'),
+      KickerEN: rich('Build · Live'),
+      KickerTH: rich('สร้างเอง · เปิดใช้งานแล้ว'),
+      Media: select('win'),
+      Wash: select('gonai'),
+      Tour: checkboxProp(true),
+      TourOrder: numberProp(2),
+      LineageOf: relationProp('tripedia-id'),
+      AltEN: rich('GoNai home screen.'),
+      AltTH: rich('หน้าแรกของ GoNai'),
+      OutcomeEN: rich('Live since Aug 2026\nNotion as the only CMS'),
+      OutcomeTH: rich('ออนไลน์ตั้งแต่ ส.ค. 2026\nNotion เป็น CMS เดียว'),
+    },
+  };
+
+  it('maps a full row', () => {
+    expect(mapProject(fullRow)).toMatchObject({
+      statusKey: 'live',
+      status: { en: 'Live · since Aug 2026', th: 'เปิดใช้งานแล้ว · ตั้งแต่ ส.ค. 2026' },
+      kicker: { en: 'Build · Live', th: 'สร้างเอง · เปิดใช้งานแล้ว' },
+      media: 'win',
+      wash: 'gonai',
+      tour: true,
+      tourOrder: 2,
+      lineageOf: 'tripedia-id',
+      alt: { en: 'GoNai home screen.', th: 'หน้าแรกของ GoNai' },
+      outcomes: {
+        en: ['Live since Aug 2026', 'Notion as the only CMS'],
+        th: ['ออนไลน์ตั้งแต่ ส.ค. 2026', 'Notion เป็น CMS เดียว'],
+      },
+    });
+  });
+
+  it('keeps a pre-migration row (old properties only) on the page, every new field at its default (Review Focus #1)', () => {
+    const p = mapProject(projectPage); // has a Screenshot, none of the new properties
+    expect(p).not.toBeNull();
+    expect(p).toMatchObject({
+      statusKey: null,
+      status: null,
+      kicker: null,
+      media: 'img',
+      wash: 'none',
+      tour: false,
+      tourOrder: null,
+      lineageOf: null,
+      alt: null,
+      outcomes: { en: [], th: [] },
+    });
+  });
+
+  it("defaults media to 'win' on a pre-migration row without a screenshot", () => {
+    const page = { ...projectPage, properties: { ...projectPage.properties, Screenshot: { files: [] } } };
+    expect(mapProject(page)!.media).toBe('win');
+  });
+
+  it('falls back to the default for an unknown select option, never passing it through or dropping the row', () => {
+    const page = {
+      ...projectPage,
+      properties: { ...projectPage.properties, StatusKey: select('shipped'), Media: select('video'), Wash: select('purple') },
+    };
+    const p = mapProject(page)!;
+    expect(p.statusKey).toBeNull();
+    expect(p.media).toBe('img');
+    expect(p.wash).toBe('none');
+  });
+
+  it('takes the first related page as the lineage, and an empty relation as none', () => {
+    const two = { ...projectPage, properties: { ...projectPage.properties, LineageOf: relationProp('first', 'second') } };
+    expect(mapProject(two)!.lineageOf).toBe('first');
+    const none = { ...projectPage, properties: { ...projectPage.properties, LineageOf: relationProp() } };
+    expect(mapProject(none)!.lineageOf).toBeNull();
+  });
+
+  it('keeps TourOrder 0 as a real position and a blank number as null', () => {
+    const zero = { ...projectPage, properties: { ...projectPage.properties, TourOrder: numberProp(0) } };
+    expect(mapProject(zero)!.tourOrder).toBe(0);
+    const blank = { ...projectPage, properties: { ...projectPage.properties, TourOrder: numberProp(null) } };
+    expect(mapProject(blank)!.tourOrder).toBeNull();
+  });
+
+  it('splits outcomes one per line, skips blank lines, and falls back th -> en per list', () => {
+    const page = {
+      ...projectPage,
+      properties: { ...projectPage.properties, OutcomeEN: rich('One\n\n  Two  \n'), OutcomeTH: rich('') },
+    };
+    expect(mapProject(page)!.outcomes).toEqual({ en: ['One', 'Two'], th: ['One', 'Two'] });
+  });
+
+  it('keeps the old single-string outcome for the pages that still read it', () => {
+    expect(mapProject(fullRow)!.outcome).toEqual({
+      en: 'Live since Aug 2026\nNotion as the only CMS',
+      th: 'ออนไลน์ตั้งแต่ ส.ค. 2026\nNotion เป็น CMS เดียว',
+    });
+  });
+
+  it('leaves status, kicker and alt null when only the Thai half is filled (EN is the gate, as for Question)', () => {
+    const page = {
+      ...projectPage,
+      properties: { ...projectPage.properties, StatusTH: rich('ไทยอย่างเดียว'), KickerTH: rich('ไทย'), AltTH: rich('ไทย') },
+    };
+    const p = mapProject(page)!;
+    expect(p.status).toBeNull();
+    expect(p.kicker).toBeNull();
+    expect(p.alt).toBeNull();
+  });
+});
+
 const careerPage = {
   id: 'c1',
   properties: {

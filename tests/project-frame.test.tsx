@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import ProjectFrame from '@/components/ProjectFrame';
 import { IMAGE_ALT, imageAlt } from '@/lib/image-alt';
 import type { Project } from '@/lib/models';
+import { P1_DEFAULTS } from './helpers/project';
 
 afterEach(cleanup);
 
@@ -21,6 +22,7 @@ const base: Project = {
   outcome: null,
   question: null,
   slug: null,
+  ...P1_DEFAULTS,
 };
 
 describe('ProjectFrame', () => {
