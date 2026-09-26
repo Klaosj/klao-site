@@ -1,0 +1,188 @@
+/* HeroTourStage — the project tour under the hero copy (spec §4 row 1, §6;
+   prototype .tour/.stage/.slide/.card/.vig/.tpill/.tdot). Classes are `ht-` so
+   they never meet C9's shared names. Only transform and opacity animate,
+   except the named A04 clip-path exception on the Pause/Play glyph. The one
+   JS clock lives in HeroTourStage.tsx; every animation here pauses with it
+   through `.ht-tour[data-hold]`. No scroll-linked animation: the prototype's
+   stage zoom on scroll is dropped, because Signature is the page's only one. */
+@layer components {
+  .ht-tour { position: relative; margin-top: 32px; }
+  .ht-stage-z { width: min(1040px, 100% - 48px); margin: 0 auto; }
+  .ht-stage {
+    position: relative; aspect-ratio: 20 / 9; overflow: hidden;
+    border-radius: 28px; background: var(--mist);
+    contain: layout paint; touch-action: pan-y;
+  }
+
+  /* Frames. Only the current one is on (and, during one crossfade, the one it
+     covers). The new frame fades in ON TOP of the old one, never a 50/50 blend. */
+  .ht-slide { position: absolute; inset: 0; background: var(--ht-wash, var(--mist)); opacity: 0; visibility: hidden; }
+  .ht-slide[data-on] { opacity: 1; visibility: visible; }
+  .ht-slide[data-top] { z-index: 2; animation: ht-in 700ms var(--ease-glide) both; }
+
+  /* The frame: a screenshot window that fades into the page at its bottom
+     edge, static and unconditional (polish A08) -- masked here, on the frame
+     itself, never on the caption pill below (see hero-tour-stage.test.tsx). */
+  .ht-card {
+    position: absolute; top: 40px; left: 7%; width: 86%; aspect-ratio: 1580 / 900;
+    overflow: hidden; border-radius: 14px;
+    background: var(--canvas); box-shadow: var(--e2);
+    -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent 98%);
+    mask-image: linear-gradient(to bottom, #000 55%, transparent 98%);
+  }
+  .ht-card::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 .5px rgb(0 0 0 / .14); pointer-events: none; }
+  .ht-cam { display: block; width: 100%; height: 100%; object-fit: cover; }
+  /* The camera: a slow, linear 1.00 -> 1.03 push across the frame's dwell and
+     on through the next crossfade (duration set inline per frame). */
+  .ht-cam[data-run] { animation: ht-push var(--ht-cam-ms, 6700ms) linear forwards; }
+
+  /* GoNai's live window and the klao-site vignette both depict a light UI, so
+     they dim a touch in dark mode (ruling C6, --shot-dim) -- Aje's own dark
+     app screenshot does not. */
+  .ht-slide[data-wash="gonai"] .ht-cam,
+  .ht-vig { filter: var(--shot-dim); }
+
+  /* klao-site vignette: a picture of Notion's light UI, so fixed colours on purpose. */
+  .ht-vig { position: absolute; inset: 0; display: grid; grid-template-columns: 1fr 1.15fr; text-align: left; background: #fff; color: #1A1C20; }
+  .ht-vig-n { padding: 28px 26px; border-right: 1px solid rgb(20 26 44 / .08); font-size: 14px; }
+  .ht-vt { margin-bottom: 14px; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #666970; }
+  .ht-vrow { position: relative; display: grid; grid-template-columns: 88px 1fr; gap: 12px; padding: 10px 0; border-bottom: 1px solid rgb(20 26 44 / .08); }
+  .ht-vrow b { font-size: 13px; font-weight: 500; color: #666970; }
+  .ht-vrow span { font-size: 14px; line-height: 20px; }
+  .ht-ul { position: absolute; left: 100px; right: 0; bottom: -1px; height: 2px; background: #26314A; transform: scaleX(0); transform-origin: 0 50%; }
+  .ht-vig-h { position: relative; display: grid; place-content: center; justify-items: center; gap: 10px; padding: 24px; text-align: center; }
+  .ht-vig-h img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; }
+  .ht-vh1 { grid-area: 2 / 1; max-width: 15em; font-size: 24px; line-height: 1.2; font-weight: 600; }
+  .ht-vh1[lang="th"] { line-height: 1.35; }
+  .ht-vig-h small { grid-area: 3 / 1; font-size: 12px; color: #666970; }
+  .ht-vh1[data-v="th"] { opacity: 0; }
+  .ht-vig[data-beat="en"] [data-row="en"] .ht-ul { transform: none; }
+  .ht-vig[data-beat="th"] .ht-vh1[data-v="en"] { opacity: 0; }
+  .ht-vig[data-beat="th"] .ht-vh1[data-v="th"] { opacity: 1; }
+  .ht-vig[data-beat="th"] [data-row="th"] .ht-ul { transform: none; }
+  .ht-vig[data-beat="play"] .ht-vh1[data-v="en"] { animation: ht-out 500ms var(--ease-glide) 3200ms both; }
+  .ht-vig[data-beat="play"] .ht-vh1[data-v="th"] { animation: ht-in 500ms var(--ease-glide) 3200ms both; }
+  .ht-vig[data-beat="play"] [data-row="en"] .ht-ul { animation: ht-ul-out 300ms var(--ease-settle) 3200ms both; }
+  .ht-vig[data-beat="play"] [data-row="th"] .ht-ul { animation: ht-ul-in 300ms var(--ease-settle) 3200ms both; }
+
+  /* The paddles (reduced motion only) use P0's shared small glass control
+     (.ctl, globals.css) for background/blur/fallbacks; only position and size
+     are local (ruling C4). */
+  .ht-paddle { position: absolute; top: 50%; z-index: 4; display: grid; place-items: center; width: 36px; height: 36px; margin-top: -18px; border-radius: 50%; font-size: 16px; }
+  .ht-paddle::after { content: ""; position: absolute; inset: -4px; }
+  .ht-prev { left: 16px; }
+  .ht-next { right: 16px; }
+
+  /* The subtitle pill (spec §5.4 "Tour pill": 56 px, r28, white .80, blur 16)
+     uses P0's shared `.glass.glass-pill` (globals.css) for background/blur/
+     fallbacks; only position, size and layout are local (ruling C4). */
+  .ht-pill.glass {
+    position: sticky; bottom: 24px; z-index: 6;
+    display: flex; align-items: center; gap: 12px;
+    width: min(760px, 100% - 48px); min-height: 56px;
+    margin: -28px auto 0; padding: 8px 18px 8px 8px;
+    border-radius: 28px; text-align: left;
+  }
+  .ht-pill.glass:not(:has(.ht-play)) { padding-left: 18px; }
+
+  /* The Pause/Play control uses P0's shared small glass control (.ctl) the
+     same way the paddles do; only position and size are local. */
+  .ht-play { position: relative; flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; font-size: 16px; }
+  .ht-play::after { content: ""; position: absolute; inset: -2px; }
+
+  /* Play/Pause glyph: two bars morph into a triangle via clip-path on a
+     20 px icon (polish A04) -- the one named clip-path exception (master
+     Global Constraints), scoped to exactly this glyph. No morph, no bars:
+     the two states just mean "click to pause" (bars, the tour is running)
+     and "click to play" (triangle, `data-paused`). */
+  .ht-pp { position: relative; width: 20px; height: 20px; }
+  .ht-pp i { position: absolute; inset: 0; background: currentColor; transition: clip-path 260ms var(--ease-settle); }
+  .ht-pp i:first-child { clip-path: polygon(18% 12%, 40% 12%, 40% 88%, 18% 88%); }
+  .ht-pp i:last-child { clip-path: polygon(60% 12%, 82% 12%, 82% 88%, 60% 88%); }
+  .ht-pp[data-paused] i:first-child { clip-path: polygon(22% 8%, 56% 29%, 56% 71%, 22% 92%); }
+  .ht-pp[data-paused] i:last-child { clip-path: polygon(56% 29%, 90% 50%, 90% 50%, 56% 71%); }
+
+  .ht-cap { flex: 1; min-width: 0; }
+  .ht-cap-in { display: grid; }
+  .ht-q {
+    justify-self: start; max-width: 100%; min-height: 24px;
+    font-size: 17px; line-height: 22px; font-weight: 600; color: var(--ink-1); text-decoration: none;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .ht-q:hover .ht-qt { text-decoration: underline; text-underline-offset: .15em; }
+  .ht-chev { display: inline-block; margin-left: 4px; transition: transform 200ms var(--ease-settle); }
+  .ht-q:hover .ht-chev { transform: translateX(2px); }
+  .ht-k { font-size: 13px; line-height: 18px; color: var(--ink-1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  :lang(th) .ht-k { line-height: 20px; }
+
+  /* Progress dots. The selected dot's width changes instantly; only its fill
+     animates (transform). */
+  .ht-dots { flex: none; display: flex; align-items: center; contain: layout paint; }
+  .ht-dot { display: grid; place-items: center; width: 24px; height: 24px; padding: 0; border: 0; background: none; cursor: pointer; }
+  .ht-dot[aria-selected="true"] { width: 52px; }
+  .ht-dot i { position: relative; display: block; width: 8px; height: 8px; overflow: hidden; border-radius: 4px; background: var(--ink-3); }
+  .ht-dot[aria-selected="true"] i { width: 36px; background: color-mix(in srgb, var(--ink-1) 22%, transparent); }
+  .ht-dot b { position: absolute; inset: 0; background: var(--ink-1); transform: scaleX(0); transform-origin: 0 50%; }
+  .ht-dot[data-done] b { transform: none; }
+  .ht-dot b[data-run] { animation: ht-fill var(--ht-ms, 6000ms) linear forwards; }
+
+  /* One pause for everything the clock drives. */
+  .ht-tour[data-hold] :is(.ht-cam, .ht-dot b, .ht-vh1, .ht-ul) { animation-play-state: paused; }
+
+  /* Load choreography (prototype H2/H3): the stage tilts up into place and the
+     pill rises, only once JS is running and motion is welcome. */
+  @media (prefers-reduced-motion: no-preference) {
+    html.js .ht-stage { animation: ht-stage-in 1000ms var(--ease-drift) 360ms both; }
+    html.js .ht-pill.glass { animation: ht-pill-in 420ms var(--ease-settle) 720ms both; }
+    html.js .ht-cap-in { animation: ht-cap-in 300ms var(--ease-settle) both; }
+  }
+  @media (max-width: 734px) and (prefers-reduced-motion: no-preference) {
+    html.js .ht-stage { animation-name: ht-stage-in-phone; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ht-slide[data-top] { animation-duration: 150ms; animation-timing-function: linear; }
+    .ht-cam[data-run], .ht-dot b[data-run], .ht-vig * { animation: none; }
+    .ht-dot[aria-selected="true"] b { transform: none; }
+    .ht-chev { transition: none; }
+  }
+
+  /* Phone: 6:5 stage, full-bleed picture, the pill below the stage (spec §6). */
+  @media (max-width: 734px) {
+    .ht-tour { margin-top: 28px; }
+    .ht-stage-z { width: calc(100% - 24px); }
+    .ht-stage { aspect-ratio: 6 / 5; border-radius: 18px; }
+    .ht-card { inset: 0; width: auto; top: 0; left: 0; aspect-ratio: auto; border-radius: 0; box-shadow: none; }
+    .ht-card::after { display: none; }
+    .ht-vig { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+    .ht-vig-n { padding: 16px 16px 8px; border-right: 0; border-bottom: 1px solid rgb(20 26 44 / .08); }
+    .ht-vt { margin-bottom: 4px; font-size: 14px; }
+    .ht-vrow { grid-template-columns: 76px 1fr; padding: 6px 0; }
+    .ht-vrow b { font-size: 14px; }
+    .ht-ul { left: 88px; }
+    .ht-vh1 { font-size: 20px; }
+    .ht-vig-h small { font-size: 14px; }
+    .ht-paddle { display: none; }
+    .ht-pill.glass {
+      position: relative; bottom: auto;
+      flex-wrap: wrap; gap: 4px 12px;
+      width: calc(100% - 24px); margin: 12px auto 0; padding: 10px 14px 6px 10px;
+      border-radius: 24px;
+    }
+    .ht-q { font-size: 16px; white-space: normal; text-wrap: balance; }
+    .ht-k { font-size: 14px; }
+    .ht-dots { width: 100%; justify-content: center; }
+    .ht-dot { width: 44px; height: 32px; }
+    .ht-dot[aria-selected="true"] { width: 56px; }
+  }
+
+  @keyframes ht-in { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes ht-out { from { opacity: 1; } to { opacity: 0; } }
+  @keyframes ht-push { from { transform: none; } to { transform: scale(1.03); } }
+  @keyframes ht-fill { from { transform: scaleX(0); } to { transform: none; } }
+  @keyframes ht-ul-in { from { transform: scaleX(0); } to { transform: none; } }
+  @keyframes ht-ul-out { from { transform: none; } to { transform: scaleX(0); } }
+  @keyframes ht-cap-in { from { opacity: 0; transform: translateY(4px); } }
+  @keyframes ht-pill-in { from { opacity: 0; transform: translateY(12px); } }
+  @keyframes ht-stage-in { from { transform: perspective(1800px) translateY(24px) rotateX(8deg); } }
+  @keyframes ht-stage-in-phone { from { transform: translateY(16px); } }
+}

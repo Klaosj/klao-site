@@ -195,6 +195,15 @@ const en = {
   tourPause: 'Pause the tour',
   tourPlay: 'Play the tour',
   tourStill: 'Still view',
+  // HeroTourStage (P1 Task 10): `{n}`/`{total}` are filled in by the
+  // component itself, not fill() -- the slot always sits at the same spot
+  // in both languages (no other template here needs per-locale reordering).
+  tourOf: '{n} of {total}',
+  tourChapters: 'Chapters',
+  tourReplay: 'Replay the tour',
+  tourEndTitle: 'The idea, then the app.',
+  // Years and arrow are locale-invariant (sharedKeys in dictionary.test.ts).
+  tourEndKicker: '2022 → 2026 ↓',
   // White Edition theme control (ThemeToggle): footer, phone menu, ⌘K.
   // Prototype copy. P1 and P4 reuse these keys rather than adding their own.
   appearance: 'Appearance',
@@ -390,6 +399,11 @@ const th: typeof en = {
   tourPause: 'หยุดทัวร์ชั่วคราว',
   tourPlay: 'เล่นทัวร์',
   tourStill: 'มุมมองภาพนิ่ง',
+  tourOf: '{n} จาก {total}',
+  tourChapters: 'ตอน',
+  tourReplay: 'ดูทัวร์อีกครั้ง',
+  tourEndTitle: 'ไอเดียมาก่อน แล้วค่อยเป็นแอป',
+  tourEndKicker: '2022 → 2026 ↓',
   appearance: 'การแสดงผล',
   themeAuto: 'ตามเครื่อง',
   themeLight: 'สว่าง',
