@@ -1,0 +1,171 @@
+/* Signature: "The idea, then the app." (spec §4 row 2, §5.5, §6; prototype `.sig` block).
+   The page's only scroll-linked scene. One markup, three modes:
+   1. Static stack -- the default: no JS, before hydration, reduced motion, screens under 600 px
+      tall, phones held sideways. Every caption is visible; nothing starts hidden (Review Focus #4).
+   2. Pinned + CSS scroll-driven -- `.sig.pin` (added only by SignatureScene) in browsers with
+      animation-timeline. The keyframes below read the geometry as custom properties
+      (--s --k --p per tile, --z0 on the frame) from src/lib/signature.ts `sigVars`.
+   3. Pinned + JS fallback -- `.sig.pin` without animation-timeline (Firefox today):
+      SignatureScene paints inline opacity/transform from `sigFrame(p)` on each frame.
+   Keyframe percentages mirror `SIG` in src/lib/signature.ts (tests/p2-css.test.ts).
+   Only opacity and transform animate.
+   Horizontal bleed (R28): tiles scatter past the card's edges by design (`sigGeometry`), but
+   only inside `.sig.pin .sig-stage`, which already clips itself -- no page-wide overflow-x rule. */
+
+.sig { position: relative; margin-top: 120px; }
+.sig-stage { position: relative; }
+.sig-tint { position: absolute; inset: 0; background: var(--w-gonai); opacity: 0; pointer-events: none; }
+.sig-head { text-align: center; }
+.sig-head .t-lead { max-width: 34em; margin-inline: auto; }
+.sig-chip { display: none; }
+
+/* The 2022 pitch card: an Apple tile (r28, mist, no shadow). */
+.sig-card { width: min(440px, 100%); padding: 30px 32px; border-radius: 28px; background: var(--mist); text-align: left; }
+.sig-card p { margin: 0; }
+.sig-card .sig-card-kick, .sig-card .sig-card-label { color: var(--ink-2); }
+.sig-card .sig-card-q { margin: 10px 0 18px; font-size: 21px; line-height: 27px; font-weight: 600; letter-spacing: .011em; text-wrap: balance; }
+:lang(th) .sig-card .sig-card-q { line-height: 32px; letter-spacing: 0; }
+.sig-card .sig-card-label { margin-top: 6px; }
+.sig-stat-of { color: var(--ink-2); }
+
+/* Five apps: map, calendar, wallet, transit, chat -- one uniform grey, no brand colour (polish A09).
+   Only the tile that becomes GoNai (`.sig-app-face`, below) breaks from grey. */
+.sig-apps { display: flex; justify-content: center; gap: 10px; }
+.sig-app { position: relative; display: grid; place-items: center; width: 56px; height: 56px; overflow: hidden; border-radius: 14px; background: var(--card); color: var(--ink-3); box-shadow: var(--e1), 0 6px 14px -8px rgb(20 26 44 / .18); }
+.sig-app > svg, .sig-app-face > svg { width: 26px; height: 26px; }
+.sig-ln { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+/* GoNai's own green (spec §5.1: only in GoNai's frame, sheet and "Open app"); white on it in both
+   themes -- the literal hex, not `var(--gonai)`, because the dark-mode token (#79C3A1) is too
+   light for white text (ruling C-3). */
+.sig-app-face { position: absolute; inset: 0; display: grid; place-items: center; background: #1C7A57; color: #fff; opacity: 0; }
+
+/* GoNai's screenshot: a window keeps its hairline + soft shadow so a white UI shot never vanishes
+   on white. It fades into the page at its bottom edge, static and unconditional (polish A08). */
+.sig-frame { position: relative; width: min(1040px, 100%); aspect-ratio: 16 / 9; overflow: hidden; border-radius: 14px; background: #fff; box-shadow: var(--e2); -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent 98%); mask-image: linear-gradient(to bottom, #000 55%, transparent 98%); }
+.sig-frame img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+/* Glass captions. */
+.sig-cap { position: relative; width: min(600px, 100%); padding: 12px 22px; border-radius: 26px; text-align: left; }
+.sig-cap p { margin: 0; }
+.sig-cap .sig-cap-t1 { font-size: 17px; line-height: 22px; font-weight: 600; }
+.sig-cap .sig-cap-t2 { font-size: 14px; line-height: 20px; color: var(--ink-1); }
+:lang(th) .sig-cap .sig-cap-t1 { line-height: 26px; }
+:lang(th) .sig-cap .sig-cap-t2 { line-height: 22px; }
+.sig-cap-b { display: flex; align-items: center; gap: 16px; }
+.sig-cap-b > div { flex: 1; min-width: 0; }
+.sig-open { position: relative; flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 16px; border-radius: 18px; background: #1C7A57; color: #fff; font-size: 14px; font-weight: 500; text-decoration: none; }
+.sig-open::after { content: ""; position: absolute; inset: -4px; }
+
+/* 1 · static stack */
+.sig:not(.pin) .sig-stage { display: flex; flex-direction: column; align-items: center; gap: 28px; padding: 0 20px; }
+.sig:not(.pin) .sig-cap { margin-top: 4px; }
+
+/* 2 + 3 · pinned layout, shared by both motion paths. Positions come from SignatureScene. */
+.sig.pin .sig-track { height: 200vh; }
+.sig.pin .sig-stage { position: sticky; top: 0; height: 100vh; overflow: clip; }
+.sig.pin .sig-head { position: absolute; top: 12vh; left: 0; right: 0; z-index: 3; padding: 0 20px; }
+.sig.pin :is(.sig-card, .sig-app, .sig-frame, .sig-chip) { position: absolute; top: 0; left: 0; will-change: transform; }
+.sig.pin .sig-card { width: min(440px, 100% - 40px); }
+.sig.pin .sig-apps { display: contents; }
+.sig.pin .sig-chip { display: grid; padding: 4px 12px; border-radius: 14px; background: var(--glass-ctl); color: var(--ink-1); font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.sig.pin .sig-year { grid-area: 1 / 1; opacity: 0; }
+.sig.pin .sig-frame { max-width: none; transform-origin: 50% 50%; opacity: 0; }
+.sig.pin .sig-cap { position: absolute; left: 50%; bottom: 32px; z-index: 4; width: min(600px, 100% - 32px); margin-left: calc(min(600px, 100% - 32px) / -2); opacity: 0; transform: translateY(8px); }
+/* Off-stage until its window: an invisible "Open app" must not catch clicks. */
+.sig.pin .sig-cap-b { transform: translateY(100vh); }
+/* A keyboard user who tabs to "Open app" early sees it: focus wins over the scrub. */
+.sig.pin .sig-cap-b:focus-within { opacity: 1 !important; transform: none !important; }
+
+/* 2 · CSS scroll-driven path. `contain 0%` = the 200vh track's top at the viewport top,
+   `contain 100%` = its bottom at the viewport bottom: the same 0..1 as sigProgress(). */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .sig.pin .sig-track { view-timeline: --sig block; }
+    .sig.pin :is(.sig-head-in, .sig-app, .sig-app-face, .sig-card, .sig-frame, .sig-tint, .sig-chip, .sig-cap-a, .sig-cap-b) {
+      animation-duration: auto;
+      animation-timing-function: linear;
+      animation-fill-mode: both;
+      animation-timeline: --sig;
+      animation-range: contain 0% contain 100%;
+    }
+    .sig.pin .sig-head-in { animation-name: sig-head; }
+    .sig.pin .sig-app { animation-name: sig-app; }
+    .sig.pin .sig-app-face { animation-name: sig-face; }
+    .sig.pin .sig-card { animation-name: sig-card; }
+    .sig.pin .sig-frame { animation-name: sig-frame; }
+    .sig.pin .sig-tint { animation-name: sig-tint; }
+    .sig.pin .sig-chip { animation-name: sig-chip; }
+    .sig.pin .sig-cap-a { animation-name: sig-cap-a; }
+    .sig.pin .sig-cap-b { animation-name: sig-cap-b; }
+    /* Each year is visible only inside its own slice of the track (fill none = base opacity 0 outside it). */
+    .sig.pin .sig-year { animation-name: sig-year-on; animation-duration: auto; animation-timing-function: linear; animation-fill-mode: none; animation-timeline: --sig; }
+    .sig.pin .sig-year[data-y="0"] { animation-range: contain 0% contain 40%; }
+    .sig.pin .sig-year[data-y="1"] { animation-range: contain 40% contain 50%; }
+    .sig.pin .sig-year[data-y="2"] { animation-range: contain 50% contain 60%; }
+    .sig.pin .sig-year[data-y="3"] { animation-range: contain 60% contain 70%; }
+    .sig.pin .sig-year[data-y="4"] { animation-range: contain 70% contain 100%; }
+  }
+}
+
+@keyframes sig-head {
+  0%, 10% { opacity: 1; transform: none; }
+  13%, 100% { opacity: 0; transform: translateY(-16px); }
+}
+@keyframes sig-app {
+  0% { opacity: 1; transform: var(--s); }
+  10% { transform: var(--s); animation-timing-function: cubic-bezier(.4, 0, .6, 1); }
+  34% { transform: var(--k); }
+  40% { transform: var(--k); animation-timing-function: cubic-bezier(.4, 0, .6, 1); }
+  50% { transform: var(--p); }
+  52% { opacity: 1; }
+  56% { opacity: 0; }
+  100% { opacity: 0; transform: var(--p); }
+}
+@keyframes sig-face {
+  0%, 46% { opacity: 0; }
+  50%, 100% { opacity: 1; }
+}
+@keyframes sig-card {
+  0%, 38% { opacity: 1; transform: scale(1); }
+  48%, 100% { opacity: 0; transform: scale(.94); }
+}
+@keyframes sig-frame {
+  0% { opacity: 0; transform: var(--z0); }
+  50% { opacity: 0; transform: var(--z0); animation-timing-function: cubic-bezier(.4, 0, .6, 1); }
+  54% { opacity: 1; }
+  80%, 100% { opacity: 1; transform: translate(0px, 0px) scale(1); }
+}
+@keyframes sig-tint {
+  0%, 55% { opacity: 0; }
+  85%, 100% { opacity: 1; }
+}
+@keyframes sig-chip {
+  0%, 74% { opacity: 1; }
+  80%, 100% { opacity: 0; }
+}
+@keyframes sig-cap-a {
+  0%, 35% { opacity: 0; transform: translateY(8px); }
+  38%, 62% { opacity: 1; transform: translateY(0px); }
+  65%, 100% { opacity: 0; transform: translateY(8px); }
+}
+@keyframes sig-cap-b {
+  0%, 71.9% { opacity: 0; transform: translateY(100vh); }
+  72% { opacity: 0; transform: translateY(8px); }
+  75%, 100% { opacity: 1; transform: translateY(0px); }
+}
+@keyframes sig-year-on {
+  from, to { opacity: 1; }
+}
+
+@media (max-width: 734px) {
+  .sig { margin-top: 88px; }
+  .sig-card { padding: 24px 22px; }
+  .sig-card .sig-card-q { font-size: 19px; line-height: 25px; }
+  .sig-frame { border-radius: 10px; }
+  .sig.pin .sig-track { height: 170svh; }
+  .sig.pin .sig-stage { height: 100svh; }
+  /* The nav capsule clears the notch with the same term (P1 `.sn-wrap`); the pinned head sits
+     lower still, so it needs it too (ruling C-12). */
+  .sig.pin .sig-head { top: calc(80px + env(safe-area-inset-top)); }
+  .sig.pin .sig-cap { bottom: 92px; } /* clears the phone thumb bar */
+}
