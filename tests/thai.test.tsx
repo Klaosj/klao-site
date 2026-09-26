@@ -144,10 +144,10 @@ describe('keepRuns display option (master R25)', () => {
     const runs = keepRuns('เปิดดีล CRM ให้ทีม', { display: true });
     expect(runs).toEqual([
       { text: 'เปิดดีล', keep: true },
-      { text: ' CRM ', keep: false },
+      { text: '\u00A0CRM ', keep: false },
       { text: 'ให้ทีม', keep: true },
     ]);
-    expect(joined(runs)).toBe('เปิดดีล CRM ให้ทีม');
+    expect(joined(runs)).toBe('เปิดดีล\u00A0CRM ให้ทีม');
   });
 
   // Fix wave finding 4 (prototype disp() l.938): the glue only runs one
@@ -248,6 +248,6 @@ describe('<ThaiText>', () => {
   // prototype's disp() spelled it, building raw HTML strings by hand).
   it('display: joins a Thai token and a following non-Thai token with a no-break space', () => {
     const html = renderToStaticMarkup(<ThaiText text="เปิดดีล CRM" display />);
-    expect(html).toBe('<span class="kt">เปิดดีล</span> CRM');
+    expect(html).toBe('<span class="kt">เปิดดีล</span>\u00A0CRM');
   });
 });

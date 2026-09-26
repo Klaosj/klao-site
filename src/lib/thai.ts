@@ -134,7 +134,7 @@ function displayRuns(text: string): Run[] {
       const prev = tokens[i - 1];
       const next = tokens[i + 1];
       const glues = prev !== undefined && next !== undefined && THAI_RE.test(prev) && !THAI_RE.test(next);
-      pushRun(runs, glues ? piece.replace(/ /g, ' ') : piece, false);
+      pushRun(runs, glues ? piece.replace(/ /g, '\u00A0') : piece, false);
       return;
     }
     // Fix round 1, finding 2: each `|`-split fragment is Thai-tested on its
