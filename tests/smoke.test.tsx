@@ -305,4 +305,25 @@ describe('smoke: pages render in both locales (fixture mode)', () => {
   // self-referential canonical' moved to tests/sitemap-posts.test.ts: it
   // asserted posts.length >= 2, which the now-empty fixture can never
   // satisfy. See that file's header comment for the full rationale.
+
+  // Lane note (merge notes in the P4 T9 report): the brief's version of this
+  // test also asserts `id="story"` sits before `id="faq"`. This lane (P4b)
+  // branched from the wave-2 base before P2/P3 merged in, so ByDay's #story
+  // section does not exist here yet -- only P4's own ordering (FAQ, then
+  // Close, last) is this task's to guard. The controller should restore the
+  // storyAt >  -1 / faqAt > storyAt assertions once P2/P3 land in this chain.
+  it('ends the home page with FAQ then Close, without the retired bands', async () => {
+    for (const locale of locales) {
+      const html = renderToStaticMarkup(await HomePage(p(locale)));
+      const text = html.replace(/<[^>]+>/g, '');
+      const faqAt = html.indexOf('id="faq"');
+      const contactAt = html.indexOf('id="contact"');
+      expect(faqAt).toBeGreaterThan(-1);
+      expect(contactAt).toBeGreaterThan(faqAt);
+      expect(html).not.toContain('id="questions"');
+      expect(html).not.toContain('id="clients"');
+      expect(text).toContain(dict[locale].faqTitle);
+      expect(text).toContain(dict[locale].contactHeading);
+    }
+  });
 });

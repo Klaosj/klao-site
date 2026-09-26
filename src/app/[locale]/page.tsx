@@ -1,5 +1,5 @@
 import AboutBand from '@/components/sections/AboutBand';
-import ContactBand from '@/components/sections/ContactBand';
+import CloseBand from '@/components/sections/CloseBand';
 import CraftBand from '@/components/sections/CraftBand';
 import CvBand from '@/components/sections/CvBand';
 import FaqBand from '@/components/sections/FaqBand';
@@ -7,7 +7,7 @@ import Hero from '@/components/sections/Hero';
 import SkillsBand from '@/components/sections/SkillsBand';
 import TourBand from '@/components/sections/TourBand';
 import WorkDeck from '@/components/sections/WorkDeck';
-import { getCareer, getFaq, getFeaturedProjects, getProfile, getSkills } from '@/lib/content';
+import { getCareer, getFaq, getFeaturedProjects, getProfile, getQuestions, getSkills } from '@/lib/content';
 import { assertLocale } from '@/lib/locale';
 
 // See layout.tsx: a layout-level `dynamicParams = false` poisons
@@ -16,12 +16,13 @@ export const dynamicParams = false;
 
 export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
   const locale = assertLocale((await params).locale);
-  const [profile, projects, career, skills, faq] = await Promise.all([
+  const [profile, projects, career, skills, faq, questions] = await Promise.all([
     getProfile(),
     getFeaturedProjects(),
     getCareer(),
     getSkills(),
     getFaq(),
+    getQuestions(),
   ]);
 
   return (
@@ -36,7 +37,9 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       {/* #faq (C7): Klao's FAQ DB — fixtures until NOTION_DB_FAQ is set.
           ClientsBand stays in the codebase but is no longer rendered (spec §4). */}
       <FaqBand items={faq} locale={locale} />
-      <ContactBand profile={profile} locale={locale} />
+      {/* #contact (C7), last on the page: close CTA, email, Based in /
+          Working in, and one open question from the Questions DB. */}
+      <CloseBand profile={profile} questions={questions} locale={locale} />
     </>
   );
 }
