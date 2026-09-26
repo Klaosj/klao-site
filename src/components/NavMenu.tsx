@@ -6,6 +6,7 @@ import { useEffect, useId, useRef, useState, type MouseEvent } from 'react';
 import { Icon } from '@/components/icons';
 import LocaleToggle from '@/components/LocaleToggle';
 import ThemeToggle from '@/components/ThemeToggle';
+import { copyShortcutHint, copyText } from '@/lib/clipboard';
 import { dict } from '@/lib/dictionary';
 import { openPalette } from '@/lib/deep-link';
 import { mailtoHref } from '@/lib/format';
@@ -36,7 +37,11 @@ export default function NavMenu({ locale, profile, active }: { locale: Locale; p
   const buttonRef = useRef<HTMLButtonElement>(null);
   const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [open, setOpen] = useState(false);
-  const [copied, setCopied] = useState(false);
+  // Wave-1 integration review carry-over (b): 'fail' is the honest third
+  // state CopyEmail already has (src/components/CopyEmail.tsx) -- a plain
+  // boolean can't say "we tried and it didn't work" without silently
+  // claiming success or nothing at all.
+  const [copyState, setCopyState] = useState<'idle' | 'ok' | 'fail'>('idle');
 
   useEffect(
     () => () => {
@@ -63,17 +68,14 @@ export default function NavMenu({ locale, profile, active }: { locale: Locale; p
     openPalette();
   };
   const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(profile.email);
-    } catch {
-      // No clipboard (non-secure context) or permission refused: say nothing
-      // rather than claim a copy that didn't happen. The address is still in
-      // the mailto link above.
-      return;
-    }
-    setCopied(true);
+    // The one copy path (src/lib/clipboard.ts), shared with CopyEmail: on
+    // failure -- no clipboard (non-secure context) or permission refused --
+    // this shows the same honest hint CopyEmail does instead of the mailto
+    // link above's address being the only way to find out.
+    const ok = await copyText(profile.email);
+    setCopyState(ok ? 'ok' : 'fail');
     if (copyTimer.current) clearTimeout(copyTimer.current);
-    copyTimer.current = setTimeout(() => setCopied(false), COPIED_MS);
+    copyTimer.current = setTimeout(() => setCopyState('idle'), COPIED_MS);
   };
 
   return (
@@ -134,7 +136,7 @@ export default function NavMenu({ locale, profile, active }: { locale: Locale; p
               )}
               {profile.email && (
                 <button type="button" className="btn btn-out" onClick={copy}>
-                  {copied ? t.copied : t.copyEmail}
+                  {copyState === 'ok' ? t.copied : copyState === 'fail' ? copyShortcutHint(t.closeCopyFail) : t.copyEmail}
                 </button>
               )}
               {profile.resumeUrl && (
@@ -144,7 +146,7 @@ export default function NavMenu({ locale, profile, active }: { locale: Locale; p
               )}
             </div>
             <span className="sr-only" aria-live="polite">
-              {copied ? t.copied : ''}
+              {copyState === 'ok' ? t.copied : copyState === 'fail' ? copyShortcutHint(t.closeCopyFail) : ''}
             </span>
           </>
         )}
