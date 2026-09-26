@@ -2,7 +2,7 @@
 
 Owner ask (Klao, 2026-09-24): "ผมแอบไม่ชอบธีมสีดำเท่าไร" → "อยากธีมขาว ตัดด้วยลูกเล่นของภาพ … hero tour … คิดเหมือน designer ของ apple แบบละเอียด".
 Follow-up (2026-09-25): "ไปดูขนาดและสไตล์ของ apple หน้า page หน่อย" → measured scale applied.
-Status: **Draft for Klao's review.** Nothing here is implemented yet. After approval → `writing-plans`.
+Status: **Approved by Klao 2026-09-25.** Amended 26 Sep during planning (fonts §5.2, reveal values §5.5, phone eyebrow §5.2) — see the master plan's Reconciliation table. Plan: `docs/superpowers/plans/2026-09-25-white-edition.md`.
 
 ## 1. Goal
 
@@ -95,7 +95,7 @@ GoNai green `#1C7A57` appears only inside GoNai's own frame, sheet and "Open app
 
 ### 5.2 Type (Apple-calibrated)
 
-Latin uses the system stack (`-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif`), which is SF Pro on Apple devices — no font files shipped for Latin. **Space Grotesk is removed.** Thai uses Anuphan, loaded through `next/font/google` with `subsets: ['thai']` only (so its `@font-face` carries the Thai unicode-range and Latin falls through to the system font), weights **400**, 500, 600, 700 (400 is new).
+Latin uses the system stack (`-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif`), which is SF Pro on Apple devices — no font files shipped for Latin. **Space Grotesk is removed.** Thai uses Anuphan, self-hosted as a Thai-only subset (`public/fonts/anuphan-thai.woff2`, SIL OFL 1.1) through a plain `@font-face` with the Thai `unicode-range`, weights **400**–700, preloaded. *Amended 26 Sep during planning:* `next/font` was dropped because its Google loader still ships a Latin face and Turbopack drops `next/font/local`'s `unicode-range`, so Latin would have rendered in Anuphan.
 
 | Role | EN desktop | EN phone (≤ 734) | TH desktop | TH phone | Tracking (EN) |
 |---|---|---|---|---|---|
@@ -104,7 +104,7 @@ Latin uses the system stack (`-apple-system, BlinkMacSystemFont, "Segoe UI", Rob
 | Stat numeral | 48/48 | 48/48 (Career panel 40/44) | same | same | −.003em, tabular |
 | Chapter / panel title | 28/32 · 32/36 | 22/28 · 28/32 | 26/36 | 22/32 | +.007em · +.004em |
 | FAQ question | 28/32 | 21/25 | 26/36 | 19/28 | +.007em (phone +.011em) |
-| Eyebrow · lead | 21/25 · 21/29 | 21/25 · 19/27 | 21/28 · 21/32 | — | +.011em |
+| Eyebrow · lead | 21/25 · 21/29 | 17/21 · 19/27 | 21/28 · 21/32 | 23 · 29 | +.011em |
 | Body | 17/25 | 17/25 | 17 / 1.65 | 17 / 1.65 | −.022em |
 | Caption · legal | 14/20 · 12/18 | 14/20 · 14 | 14/22 · 13 | 14 | −.016em |
 
@@ -139,7 +139,7 @@ Rim 1 px `rgb(20 26 44 / .07)` + top highlight. Glass turns solid under `prefers
 | exit | .4,0,1,1 | leaving |
 | tick | .34,1.56,.64,1 | copy-to-clipboard confirmation only |
 
-Headlines fade and rise once when they reach 85 % of the viewport (opacity .55 → 1, 30 px, 0.9 s glide). Only `transform` and `opacity` animate. One scroll-linked loop on the page (signature). Reduced motion: tour shows ‹ › buttons and does not autoplay; signature becomes a static stack with every caption; reveals are off; content is never hidden.
+Headlines fade and rise once when they reach 85 % of the viewport, with the prototype's values (16 px rise, 24 px for big headlines; 600 ms rise, 800 ms fade; drift easing). *Amended 26 Sep:* the earlier "30 px, 0.9 s glide" line was superseded by the reviewed prototype. Only `transform` and `opacity` animate. One scroll-linked loop on the page (signature). Reduced motion: tour shows ‹ › buttons and does not autoplay; signature becomes a static stack with every caption; reveals are off; content is never hidden.
 
 ## 6. Components
 
