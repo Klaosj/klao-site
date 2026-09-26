@@ -95,10 +95,10 @@ describe('content API (fixture mode)', () => {
     await expect(getQuestions()).resolves.toEqual([]);
   });
 
-  it('carries Aje and klao-site as featured builds, with Aje leading the Build chapter', async () => {
+  it('carries the 24-Sep lineup: three builds led by Aje, two business plays', async () => {
     const featured = await getFeaturedProjects();
-    const builds = featured.filter((p) => p.type === 'build').map((p) => p.name);
-    expect(builds).toEqual(['Aje', 'GoNai', 'klao-site']);
+    expect(featured.filter((p) => p.type === 'build').map((p) => p.name)).toEqual(['Aje', 'GoNai', 'klao-site']);
+    expect(featured.filter((p) => p.type === 'business').map((p) => p.name)).toEqual(['Talatify', 'Tripedia']);
     const aje = featured.find((p) => p.name === 'Aje')!;
     expect(aje.outcome?.en).toContain('Working prototype');
     expect(aje.liveUrl).toBeNull();
