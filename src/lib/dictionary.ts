@@ -40,28 +40,9 @@ const en = {
   deckSubtitleBuildOnly: 'Every project opens with the question it answers.',
   // Finding 17: /projects index gets its own one-line voice under the h1.
   projectsSubtitle: 'Every project, business and build — each opens with the question it answers.',
-  craft: [
-    'Scope it honestly.',
-    'Ship something that runs.',
-    'Write it in both languages.',
-    'Leave it maintainable.',
-    'Say the number out loud.',
-    'Then hand over the keys.',
-  ] as readonly string[],
-  // Distinct from `about`/`howIWork` above, which are the short eyebrow
-  // labels: these are the bigger thesis-statement headings (and, for About,
-  // its sub-head) that sit below each eyebrow. Ported verbatim from
-  // .superpowers/brainstorm/11719-1786211516/content/studio.html, which
-  // gives every band its own eyebrow/bigHead pair. Originally kept as
-  // component-local constants (T8 first pass); moved here on review because
-  // `craft` above is the same category of fixed, non-profile copy and
-  // already lives in the dictionary, and because a local constant sits
-  // outside both `th: typeof en`'s compile-time key check and this file's
-  // own empty-string/untranslated-string tests below -- exactly the kind of
-  // guard a translated <h2>/<h3> needs.
-  craftHeading: 'Six things I will not trade away.',
+  // By day's headline (ByDay, P3). Ported verbatim from the studio.html
+  // brainstorm and kept in the approved White Edition prototype.
   aboutHeading: 'I like building things that are simple, and that stay running.',
-  aboutSubhead: 'A short story about how I ended up on both sides of the table.',
   copied: 'Copied',
   startConversation: 'Start a conversation',
   basedIn: 'Based in',
@@ -108,16 +89,6 @@ const en = {
   // profile field.
   identities: ['Business development.', 'Barista.', 'Builds his own tools.'] as readonly string[],
 
-  // About band's story beats. Every sentence is traceable to career.json:
-  // A Bun Dance (business owner), VELA Central World (senior barista),
-  // ActMedia (senior BD) + the projects in projects.json. Fixed copy, same
-  // category as `craft`, hence dictionary not profile.
-  aboutStory: [
-    'Started on the owner side of the table — ran A Bun Dance, a craft-burger shop, where menu R&D, pricing and gross margin were all mine to get right.',
-    'Learned service the honest way, behind the bar at VELA — one quality standard per cup, kept under pressure.',
-    'Now I sell for ActMedia by day and build my own tools at night. When I scope software for a business, I have already sat on both sides of the table.',
-  ] as readonly string[],
-
   // /writing rendered a bare empty <ul> with no message once the two
   // placeholder posts were pulled. Mirrors `careerUnpublished` above: say
   // the content is not there yet rather than showing an empty container the
@@ -136,22 +107,18 @@ const en = {
   // nights-and-weekends per profile.now) — personality, not fabrication.
   footerNote: 'Built at night, powered by good coffee.',
 
-  // SkillsBand ("Toolbox" band). Fixed, non-profile UI copy -- same
-  // category as craftHeading/aboutHeading/cvHeading above, hence dictionary
-  // entries rather than component-local constants. The four tier labels sit
-  // between `craftHeading` and dict-level eyebrow labels elsewhere: not the
-  // full-sentence claim a bigHead makes, but not a one-word nav label
-  // either -- they name the five-way honesty scale (top/daily/working/
-  // basic/learning, src/lib/models.ts's SkillTier) the band itself renders
-  // as size and brightness, in that same order.
+  // "Toolbox" band copy (CareerBand's #toolbox div, P3) -- fixed,
+  // non-profile UI copy, hence dictionary entries rather than
+  // component-local constants. The retired standalone SkillsBand rendered
+  // this as a five-way honesty scale; CareerBand instead groups it into
+  // three plain categories (Works in / Focus / Languages, CareerBand.tsx).
   toolbox: 'Toolbox',
   toolboxHeading: 'What I actually work with.',
   // Open-questions band (wave 2, spec 2026-08-13). The band's copy IS its
   // question list (owner-authored, from the Questions DB) -- these are just
   // the frame: the eyebrow, an optional bigger heading (openQuestionsHeading
   // is dormant until browser review decides the eyebrow alone reads too
-  // quiet -- same keep-the-key reasoning as tierDaily above), and the one
-  // status marker a `building` question carries.
+  // quiet), and the one status marker a `building` question carries.
   openQuestions: 'Open questions',
   openQuestionsHeading: 'Questions I have not answered yet.',
   statusBuilding: 'building',
@@ -303,17 +270,7 @@ const th: typeof en = {
   deckSubtitle: 'ธุรกิจมาก่อน — ทุกโปรเจกต์เริ่มจากคำถามที่มันตอบ',
   deckSubtitleBuildOnly: 'ทุกโปรเจกต์เริ่มจากคำถามที่มันตอบ',
   projectsSubtitle: 'ทุกโปรเจกต์ทั้งฝั่งธุรกิจและฝั่งสร้าง — แต่ละอันเริ่มจากคำถามที่มันตอบ',
-  craft: [
-    'ประเมินตามจริง',
-    'ส่งของที่รันได้จริง',
-    'เขียนให้ครบสองภาษา',
-    'ทิ้งไว้ให้ดูแลต่อได้',
-    'พูดตัวเลขออกมาตรงๆ',
-    'แล้วส่งกุญแจให้',
-  ] as readonly string[],
-  craftHeading: 'หกข้อที่ผมไม่ยอมแลก',
   aboutHeading: 'ผมชอบสร้างของที่เรียบง่าย และยังทำงานอยู่ได้เอง',
-  aboutSubhead: 'เรื่องสั้นๆ ว่าทำไมผมถึงมายืนอยู่ทั้งสองฝั่งของโต๊ะ',
   copied: 'คัดลอกแล้ว',
   startConversation: 'เริ่มคุยกัน',
   basedIn: 'ประจำอยู่',
@@ -335,12 +292,6 @@ const th: typeof en = {
   copyEmailAction: 'คัดลอกที่อยู่อีเมล',
 
   identities: ['พัฒนาธุรกิจ', 'บาริสต้า', 'สร้างเครื่องมือใช้เอง'] as readonly string[],
-
-  aboutStory: [
-    'เริ่มจากฝั่งเจ้าของโต๊ะ — ทำร้าน A Bun Dance เบอร์เกอร์คราฟต์ ที่ทั้งคิดเมนู ตั้งราคา และคุมกำไรขั้นต้นเองทั้งหมด',
-    'เรียนรู้งานบริการแบบตรงไปตรงมาหลังบาร์ที่ VELA — มาตรฐานเดียวกันทุกแก้ว แม้หน้าร้านจะแน่นแค่ไหน',
-    'ตอนนี้ขายงานให้ ActMedia ตอนกลางวัน และสร้างเครื่องมือของตัวเองตอนกลางคืน เวลาคุยเรื่องระบบกับธุรกิจ ผมเลยนั่งมาแล้วทั้งสองฝั่งของโต๊ะ',
-  ] as readonly string[],
 
   writingUnpublished: 'ยังไม่ได้เผยแพร่บทความ',
 

@@ -6,11 +6,6 @@ describe('dictionary', () => {
     expect(Object.keys(dict.th).sort()).toEqual(Object.keys(dict.en).sort());
   });
 
-  it('carries exactly six craft imperatives in both locales', () => {
-    expect(dict.en.craft).toHaveLength(6);
-    expect(dict.th.craft).toHaveLength(6);
-  });
-
   it('has no empty strings in either locale', () => {
     for (const d of [dict.en, dict.th]) {
       for (const [k, v] of Object.entries(d)) {

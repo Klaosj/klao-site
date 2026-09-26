@@ -83,6 +83,8 @@ describe('smoke: pages render in both locales (fixture mode)', () => {
       expect(homeText).toContain('id="career"');
       expect(homeText).toContain('id="toolbox"');
       if (locale === 'en') expect(homeText).toContain(t.cvHeading);
+      expect(homeText).toContain('id="story"'); // ByDay (P3)
+      if (locale === 'en') expect(homeText).toContain(t.storyLead);
       // Render only the active locale -- the other language's equivalent
       // eyebrow labels must be entirely absent from the assembled page.
       expect(homeText).not.toContain(other.selectedProjects);
