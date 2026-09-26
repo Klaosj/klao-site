@@ -1,0 +1,197 @@
+// @vitest-environment jsdom
+import { cleanup, render } from '@testing-library/react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { afterEach, describe, expect, it } from 'vitest';
+import ThaiText from '@/components/ThaiText';
+import { THAI_KEEP, THAI_RE, keepRuns, type Run } from '@/lib/thai';
+
+afterEach(cleanup);
+
+const joined = (runs: Run[]) => runs.map((r) => r.text).join('');
+const kept = (runs: Run[]) => runs.filter((r) => r.keep).map((r) => r.text);
+
+describe('THAI_RE / THAI_KEEP', () => {
+  it('detects Thai characters only', () => {
+    expect(THAI_RE.test('ไทย')).toBe(true);
+    expect(THAI_RE.test('Thai 2026 – ok')).toBe(false);
+  });
+
+  it('carries the prototype keep list verbatim', () => {
+    expect(THAI_KEEP).toEqual([
+      'เบอร์เกอร์คราฟต์', 'พาร์ตเนอร์ชิป', 'ซัพพลายเออร์', 'นอกเวลางาน', 'กำไรขั้นต้น', 'สุดสัปดาห์',
+      'เครื่องมือ', 'งบประมาณ', 'สตาร์ทอัพ', 'โปรเจกต์', 'บาริสต้า', 'ค้าปลีก', 'ไอเดีย', 'ดีล',
+    ]);
+  });
+});
+
+describe('keepRuns', () => {
+  it('returns non-Thai text untouched as one plain run', () => {
+    expect(keepRuns('Business developer who builds his own tools.')).toEqual([
+      { text: 'Business developer who builds his own tools.', keep: false },
+    ]);
+  });
+
+  // Review Focus #5 -- the four edge inputs.
+  it('handles an empty string without throwing', () => {
+    expect(keepRuns('')).toEqual([{ text: '', keep: false }]);
+  });
+
+  it('leaves Thai with no keep word as one plain run, nothing dropped', () => {
+    const s = 'ร้านอาหารจะได้ของสดจากตลาด โดยไม่ต้องไปจ่ายตลาดเองตอนเช้า ได้ไหม?';
+    expect(keepRuns(s)).toEqual([{ text: s, keep: false }]);
+    // D4 (preflight): Review Focus #5 asks that this edge string also *render*
+    // without throwing or dropping characters, not just survive keepRuns.
+    expect(renderToStaticMarkup(<ThaiText text={s} />)).toBe(s);
+  });
+
+  it('turns `|` into the one allowed break: each side kept whole, the bar removed', () => {
+    const runs = keepRuns('นัก Business Development ที่สร้างเครื่องมือ|ใช้เอง');
+    expect(runs).toEqual([
+      { text: 'นัก Business Development ', keep: false },
+      { text: 'ที่สร้างเครื่องมือ', keep: true },
+      { text: 'ใช้เอง', keep: true },
+    ]);
+    expect(joined(runs)).toBe('นัก Business Development ที่สร้างเครื่องมือใช้เอง');
+  });
+
+  it('keeps a `|` group whole even with trailing text after a space', () => {
+    const runs = keepRuns('ไอเดียนี้คุ้มกับ|หนึ่งสุดสัปดาห์ หรือทั้งปี?');
+    expect(kept(runs)).toEqual(['ไอเดียนี้คุ้มกับ', 'หนึ่งสุดสัปดาห์']);
+    expect(joined(runs)).toBe('ไอเดียนี้คุ้มกับหนึ่งสุดสัปดาห์ หรือทั้งปี?');
+  });
+
+  it('mixes Thai with a URL and English brand names without losing a character', () => {
+    const s = 'ดูได้ที่ https://gonai-three.vercel.app และวางระบบ Salesforce CRM ให้ทีมขาย';
+    const runs = keepRuns(s);
+    expect(joined(runs)).toBe(s);
+    expect(kept(runs)).toEqual([]);
+    // D4 (preflight): render this edge string too, not just keepRuns it.
+    expect(renderToStaticMarkup(<ThaiText text={s} />)).toBe(s);
+  });
+
+  it('keeps words from the keep list, longest first', () => {
+    expect(keepRuns('ผมสร้างเครื่องมือใช้เอง')).toEqual([
+      { text: 'ผมสร้าง', keep: false },
+      { text: 'เครื่องมือ', keep: true },
+      { text: 'ใช้เอง', keep: false },
+    ]);
+    expect(kept(keepRuns('ได้รูปแบบพาร์ตเนอร์ชิปกับค้าปลีก'))).toEqual(['พาร์ตเนอร์ชิป', 'ค้าปลีก']);
+    expect(kept(keepRuns('ทำดีลให้คุ้มทั้งสองฝั่ง'))).toEqual(['ดีล']);
+  });
+
+  it('keeps Thai dates together, with or without the day', () => {
+    expect(kept(keepRuns('ออนไลน์ตั้งแต่ ส.ค. 2026 · Notion'))).toEqual(['ส.ค. 2026']);
+    expect(kept(keepRuns('เริ่ม 14 ก.ย. 2026 เป็นต้นไป'))).toEqual(['14 ก.ย. 2026']);
+  });
+
+  it('keeps a number with its unit, including ranges', () => {
+    expect(kept(keepRuns('ทุกการเปิดตัวเดินตาม checklist 30 ข้อ'))).toEqual(['30 ข้อ']);
+    expect(kept(keepRuns('SOM 37 ล้านบาท'))).toEqual(['37 ล้านบาท']);
+    expect(kept(keepRuns('ใช้เวลา 3–5 เดือน'))).toEqual(['3–5 เดือน']);
+    // The unit is itself a keep word; the number+unit pair wins as one run.
+    expect(kept(keepRuns('ดูแล 3 โปรเจกต์'))).toEqual(['3 โปรเจกต์']);
+  });
+
+  it('never drops or reorders characters: runs join back to the input minus `|`', () => {
+    const samples = [
+      'ผมเปิดช่องทางใหม่กับค้าปลีก Modern Trade ตั้งแต่ติดต่อครั้งแรกจนได้รูปแบบพาร์ตเนอร์ชิป',
+      'ทำไมวางแผนทริปเดียว|ต้องใช้ตั้งห้าแอป?',
+      'ออนไลน์ตั้งแต่ ส.ค. 2026 · Notion เป็น CMS เดียว · EN/TH · เทสต์อัตโนมัติ 400+ ข้อ',
+      '|ขึ้นต้นด้วยขีด และจบด้วยขีด|',
+      'สร้างตอนกลางคืน ด้วยกาแฟดีๆ',
+    ];
+    for (const s of samples) {
+      const runs = keepRuns(s);
+      expect(joined(runs), s).toBe(s.replace(/\|/g, ''));
+      expect(runs.every((r) => r.text.length > 0), s).toBe(true);
+    }
+  });
+});
+
+// Master R25 / preflight A1: an additive `display` option ports the
+// prototype's disp() -- every space-delimited Thai token is kept whole,
+// ignoring the keep list/dates/units the default mode uses. No Intl.Segmenter.
+describe('keepRuns display option (master R25)', () => {
+  it('keeps every space-delimited Thai token whole, ignoring the keep list', () => {
+    const runs = keepRuns('ผมสร้าง เครื่องมือ ใช้เอง', { display: true });
+    expect(runs).toEqual([
+      { text: 'ผมสร้าง', keep: true },
+      { text: ' ', keep: false },
+      { text: 'เครื่องมือ', keep: true },
+      { text: ' ', keep: false },
+      { text: 'ใช้เอง', keep: true },
+    ]);
+    expect(joined(runs)).toBe('ผมสร้าง เครื่องมือ ใช้เอง');
+  });
+
+  it('still splits at `|`, same as the default mode', () => {
+    const runs = keepRuns('ที่สร้างเครื่องมือ|ใช้เอง', { display: true });
+    expect(runs).toEqual([
+      { text: 'ที่สร้างเครื่องมือ', keep: true },
+      { text: 'ใช้เอง', keep: true },
+    ]);
+    expect(joined(runs)).toBe('ที่สร้างเครื่องมือใช้เอง');
+  });
+
+  it('leaves a non-Thai token between Thai tokens as plain text', () => {
+    // The space either side of "CRM" is itself a plain run, so it merges
+    // with "CRM" the same way adjacent plain runs always merge (D1's rule).
+    const runs = keepRuns('เปิดดีล CRM ให้ทีม', { display: true });
+    expect(runs).toEqual([
+      { text: 'เปิดดีล', keep: true },
+      { text: ' CRM ', keep: false },
+      { text: 'ให้ทีม', keep: true },
+    ]);
+    expect(joined(runs)).toBe('เปิดดีล CRM ให้ทีม');
+  });
+
+  it('leaves non-Thai text untouched, same as the default mode', () => {
+    expect(keepRuns('Business developer who builds his own tools.', { display: true })).toEqual([
+      { text: 'Business developer who builds his own tools.', keep: false },
+    ]);
+  });
+
+  it('handles an empty string without throwing', () => {
+    expect(keepRuns('', { display: true })).toEqual([{ text: '', keep: false }]);
+  });
+
+  it('does not change default behaviour when the option is omitted or false', () => {
+    const s = 'ผมสร้างเครื่องมือใช้เอง';
+    expect(keepRuns(s, { display: false })).toEqual(keepRuns(s));
+    expect(keepRuns(s)).not.toEqual(keepRuns(s, { display: true }));
+  });
+});
+
+describe('<ThaiText>', () => {
+  it('wraps keep runs in .nw spans and leaves the rest as text', () => {
+    const { container } = render(<ThaiText text="ผมสร้างเครื่องมือใช้เอง" />);
+    const spans = container.querySelectorAll('span.nw');
+    expect(Array.from(spans).map((s) => s.textContent)).toEqual(['เครื่องมือ']);
+    expect(container.textContent).toBe('ผมสร้างเครื่องมือใช้เอง');
+  });
+
+  it('puts a <wbr> between two adjacent keep runs -- the allowed break', () => {
+    const html = renderToStaticMarkup(<ThaiText text="ที่สร้างเครื่องมือ|ใช้เอง" />);
+    expect(html).toBe('<span class="nw">ที่สร้างเครื่องมือ</span><wbr/><span class="nw">ใช้เอง</span>');
+  });
+
+  it('renders English exactly as given, with no spans', () => {
+    const html = renderToStaticMarkup(<ThaiText text="Have something that should exist?" />);
+    expect(html).toBe('Have something that should exist?');
+  });
+
+  it('renders nothing for an empty string, without throwing', () => {
+    expect(() => render(<ThaiText text="" />)).not.toThrow();
+    expect(renderToStaticMarkup(<ThaiText text="" />)).toBe('');
+  });
+
+  it('display: wraps every space-delimited Thai token, not just keep-list words', () => {
+    const html = renderToStaticMarkup(<ThaiText text="ผมสร้าง เครื่องมือ" display />);
+    expect(html).toBe('<span class="nw">ผมสร้าง</span> <span class="nw">เครื่องมือ</span>');
+  });
+
+  it('display: still puts a <wbr> between two `|`-split keep runs', () => {
+    const html = renderToStaticMarkup(<ThaiText text="ที่สร้างเครื่องมือ|ใช้เอง" display />);
+    expect(html).toBe('<span class="nw">ที่สร้างเครื่องมือ</span><wbr/><span class="nw">ใช้เอง</span>');
+  });
+});
