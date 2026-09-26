@@ -6,7 +6,7 @@ import { splitBold } from '@/lib/bold';
 
 afterEach(cleanup);
 
-const norm = (s: string | null | undefined): string => (s ?? '').replace(/ /g, ' ').replace(/​/g, '');
+const norm = (s: string | null | undefined): string => (s ?? '').replace(/\u00A0/g, ' ').replace(/\u200B/g, '');
 
 describe('splitBold', () => {
   it('returns plain text as one segment and nothing for an empty string', () => {

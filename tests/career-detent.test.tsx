@@ -9,19 +9,14 @@ import { installFakeIO } from './helpers/io';
 // No RTL auto-cleanup in this project (see tests/hero.test.tsx).
 afterEach(cleanup);
 
-let scrolled: ReturnType<typeof vi.fn>;
-
 beforeEach(() => {
   vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
   installFakeIO();
-  // jsdom has no layout, so scrollIntoView does not exist; record calls instead.
-  scrolled = vi.fn();
-  Element.prototype.scrollIntoView = scrolled as unknown as Element['scrollIntoView'];
 });
 
 // ThaiText keep-runs may use no-break spaces; compare on plain text.
 const norm = (s: string | null | undefined): string =>
-  (s ?? '').replace(/ /g, ' ').replace(/​/g, '').trim();
+  (s ?? '').replace(/\u00A0/g, ' ').replace(/\u200B/g, '').trim();
 
 const entries: CareerEntry[] = [
   {

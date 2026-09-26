@@ -20,7 +20,7 @@ beforeEach(() => {
 const entries = careerFixture as CareerEntry[];
 const skills = skillsFixture as Skill[];
 const norm = (s: string | null | undefined): string =>
-  (s ?? '').replace(/ /g, ' ').replace(/​/g, '').trim();
+  (s ?? '').replace(/\u00A0/g, ' ').replace(/\u200B/g, '').trim();
 
 describe('CareerBand', () => {
   it('ships the headline, résumé line, the current role panel and the toolbox in server HTML (no JS)', () => {
