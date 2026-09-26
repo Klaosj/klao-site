@@ -86,6 +86,18 @@ export interface ProjectStory extends Project {
   body: { en: ContentBlock[]; th: ContentBlock[] };
 }
 
+// White Edition P3 (C5): the one big number a role's panel may carry (spec
+// §6: big numerals only for 30 / 500 and the Career panel figures). `value`
+// is shown as typed ("THB 1.1M", "~35%") -- Notion has a single
+// FigureValue, so it is the same string in both locales. `label` says what
+// the number is; `note` is the short verdict next to it ("Target met"),
+// null when FigureNoteEN is empty.
+export interface CareerFigure {
+  value: string;
+  label: Localized;
+  note: Localized | null;
+}
+
 export interface CareerEntry {
   id: string;
   // Localized as of the 2026-08-09 QA pass. It was a plain string, so English
@@ -99,6 +111,16 @@ export interface CareerEntry {
   period: string;
   wins: { en: string[]; th: string[] };
   order: number;
+  // White Edition P3 (C5, spec §7 Career). `key` is slugKey(company): the
+  // stable handle FAQ deep links (`career:<key>`) and the ⌘K palette use to
+  // open this role's pill. start/end are 'YYYY-MM' from Notion's StartDate /
+  // EndDate date properties, null when the property is absent -- a Career
+  // database from before the migration still maps, and the band falls back
+  // to `period` and draws no rail. A dated role with end null is "now".
+  key: string;
+  start: string | null;
+  end: string | null;
+  figure: CareerFigure | null;
 }
 
 export interface Profile {

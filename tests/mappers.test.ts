@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { mapProject, mapCareerEntry, mapProfile, mapSkill, mapQuestion } from '@/lib/notion-mappers';
+import { slugKey } from '@/lib/format';
 
 const title = (s: string) => ({ title: [{ plain_text: s }] });
 const rich = (s: string) => ({ rich_text: s ? [{ plain_text: s }] : [] });
@@ -141,6 +142,12 @@ describe('mapCareerEntry', () => {
       period: '2024 – present',
       wins: { en: ['Win one', 'Win two'], th: ['Win one', 'Win two'] },
       order: 1,
+      // White Edition P3: this page has none of the new properties -- it
+      // stands for the live Career DB before migration, which must still map.
+      key: 'actmedia',
+      start: null,
+      end: null,
+      figure: null,
     });
     // wins.th falls back to wins.en's *content*, not the same array reference,
     // so an in-place mutation (.sort()/.push()) on one locale can't leak into the other.
@@ -178,6 +185,75 @@ describe('mapCareerEntry', () => {
     expect(mapCareerEntry(page)).toBeNull();
     expect(warn).toHaveBeenCalled();
     warn.mockRestore();
+  });
+});
+
+describe('mapCareerEntry — White Edition fields (P3)', () => {
+  const full = {
+    id: 'c2',
+    properties: {
+      Role: title('Brand Representative'),
+      RoleTH: rich('ตัวแทนแบรนด์'),
+      Company: rich('Casetify'),
+      Period: rich('MAY 2024 – MAR 2026'),
+      StartDate: { date: { start: '2024-05-01', end: null } },
+      // Notion's "Include time" toggle yields a timestamp; only the month matters.
+      EndDate: { date: { start: '2026-03-31T18:00:00.000+07:00', end: null } },
+      FigureValue: rich('THB 1.1M'),
+      FigureLabelEN: rich('My personal monthly sales target'),
+      FigureLabelTH: rich('เป้ายอดขายส่วนตัวต่อเดือน'),
+      FigureNoteEN: rich('Target met'),
+      FigureNoteTH: rich('ทำถึงเป้า'),
+      WinsEN: rich('Ran the store on shift'),
+      WinsTH: rich(''),
+      Order: { number: 2 },
+    },
+  };
+
+  it('maps a full row: slug key, YYYY-MM dates, figure with label and note', () => {
+    expect(mapCareerEntry(full)).toMatchObject({
+      key: 'casetify',
+      start: '2024-05',
+      end: '2026-03',
+      figure: {
+        value: 'THB 1.1M',
+        label: { en: 'My personal monthly sales target', th: 'เป้ายอดขายส่วนตัวต่อเดือน' },
+        note: { en: 'Target met', th: 'ทำถึงเป้า' },
+      },
+    });
+  });
+
+  it('derives the key from the company with slugKey (FAQ links use career:<key>)', () => {
+    const page = { ...full, properties: { ...full.properties, Company: rich('A Bun Dance') } };
+    expect(mapCareerEntry(page)!.key).toBe(slugKey('A Bun Dance'));
+  });
+
+  it('maps a pre-migration row (no StartDate/EndDate/Figure*) to null dates and no figure', () => {
+    // `careerPage` (above) carries only the properties the Career DB had
+    // before the White Edition -- it must map, not skip (master Review Focus #1).
+    expect(mapCareerEntry(careerPage)).toMatchObject({ key: 'actmedia', start: null, end: null, figure: null });
+  });
+
+  it('treats an empty or malformed date as absent', () => {
+    const page = {
+      ...full,
+      properties: { ...full.properties, StartDate: { date: null }, EndDate: { date: { start: '26-3' } } },
+    };
+    expect(mapCareerEntry(page)).toMatchObject({ start: null, end: null });
+  });
+
+  it('has no figure when FigureValue is empty, even if its labels are filled', () => {
+    const page = { ...full, properties: { ...full.properties, FigureValue: rich('') } };
+    expect(mapCareerEntry(page)!.figure).toBeNull();
+  });
+
+  it('keeps the figure without a note when FigureNoteEN is empty; the label falls back th -> en', () => {
+    const page = { ...full, properties: { ...full.properties, FigureNoteEN: rich(''), FigureLabelTH: rich('') } };
+    expect(mapCareerEntry(page)!.figure).toEqual({
+      value: 'THB 1.1M',
+      label: { en: 'My personal monthly sales target', th: 'My personal monthly sales target' },
+      note: null,
+    });
   });
 });
 

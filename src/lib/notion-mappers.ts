@@ -1,5 +1,6 @@
 import type { CareerEntry, ContentBlock, Localized, OpenQuestion, PostMeta, Profile, Project, QuestionStatus, RichSpan, Skill, SkillTier } from './models';
 import { QUESTION_STATUSES, SKILL_TIERS } from './models';
+import { slugKey } from './format';
 
 export type NotionPage = { id: string; created_time?: string; properties: Record<string, unknown> };
 
@@ -22,6 +23,16 @@ const hasFiles = (prop: any): boolean => Array.isArray(prop?.files) && prop.file
 // title/rich_text property, hence a dedicated reader rather than reusing
 // `text()`.
 const selectOf = (prop: any): string | null => prop?.select?.name ?? null;
+// Career StartDate/EndDate are Notion Date properties. Only the month is
+// used ('YYYY-MM'), so a timestamp from the "Include time" toggle and a
+// plain date read the same. Anything else -- empty, null, a typo -- is
+// "no date", never a crash (pre-migration rows have no such property).
+const yearMonth = (prop: any): string | null => {
+  const start = prop?.date?.start;
+  if (typeof start !== 'string') return null;
+  const ym = start.slice(0, 7);
+  return /^\d{4}-(0[1-9]|1[0-2])$/.test(ym) ? ym : null;
+};
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
 const localized = (en: string, th: string): Localized => ({ en, th: th || en });
@@ -67,13 +78,29 @@ export function mapCareerEntry(page: NotionPage): CareerEntry | null {
   if (!role) return skip('Career', page, 'missing Role');
   const winsEn = lines(text(page.properties.WinsEN));
   const winsTh = lines(text(page.properties.WinsTH));
+  const company = text(page.properties.Company);
+  // White Edition P3: every new property is optional, same additive
+  // treatment as RoleTH -- a missing FigureValue means "no figure", a
+  // missing FigureNoteEN means "no note", missing dates mean null.
+  const figureValue = text(page.properties.FigureValue);
+  const noteEn = text(page.properties.FigureNoteEN);
   return {
     id: page.id,
     role: localized(role, text(page.properties.RoleTH)),
-    company: text(page.properties.Company),
+    company,
     period: text(page.properties.Period),
     wins: { en: winsEn, th: winsTh.length ? winsTh : [...winsEn] },
     order: num(page.properties.Order),
+    key: slugKey(company),
+    start: yearMonth(page.properties.StartDate),
+    end: yearMonth(page.properties.EndDate),
+    figure: figureValue
+      ? {
+          value: figureValue,
+          label: localized(text(page.properties.FigureLabelEN), text(page.properties.FigureLabelTH)),
+          note: noteEn ? localized(noteEn, text(page.properties.FigureNoteTH)) : null,
+        }
+      : null,
   };
 }
 
