@@ -9,7 +9,10 @@ import { describe, expect, it } from 'vitest';
 // src/ or tests/ still ends in its path -- so a revert or a stray merge shows
 // up here before it shows up in `next build`. Later P0 tasks append to the
 // list; P1-P5 append their own removals the same way.
-const REMOVED_FILES = ['src/components/motion/HeroMonument.tsx'] as const;
+const REMOVED_FILES = [
+  'src/components/motion/HeroMonument.tsx',
+  'src/components/motion/PointerFx.tsx',
+] as const;
 
 const THIS_FILE = join('tests', 'removals.test.ts');
 

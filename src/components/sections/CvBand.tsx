@@ -22,8 +22,9 @@ export default function CvBand({
 
   // Rendered in both branches below, so it is defined once here. The resume
   // and the Notion Career DB are independent: an unpopulated DB says nothing
-  // about whether a PDF exists to download. `.btn` opts the capsule into the
-  // magnetic-pointer pull PointerFx drives (globals.css).
+  // about whether a PDF exists to download. `.btn` was the hook for the
+  // PointerFx magnet (removed in White Edition P0); the class now picks up
+  // the shared button rule in globals.css.
   //
   // This capsule used to be the pill system's undocumented fifth variant
   // (2026-08-15 QA finding 6): primary geometry, the neutral pill's faint
