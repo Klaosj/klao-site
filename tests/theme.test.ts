@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { readFileSync } from 'node:fs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   THEME_EVENT,
@@ -8,6 +9,7 @@ import {
   isThemePref,
   readThemePref,
   writeThemePref,
+  type RawToken,
 } from '@/lib/theme';
 
 const root = document.documentElement;
@@ -195,5 +197,53 @@ describe('writeThemePref', () => {
     root.setAttribute('data-theme', 'dark');
     writeThemePref('sepia' as never);
     expect(root.hasAttribute('data-theme')).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// TOKENS <-> globals.css parity. CSS cannot import TypeScript, so the colour
+// values live twice; these tests are what keeps the two copies equal. The
+// three blocks are found by the marker comments globals.css carries above
+// them (`/* tokens:light */`, `/* tokens:dark:system */`,
+// `/* tokens:dark:attr */`).
+// ---------------------------------------------------------------------------
+const CSS = readFileSync('src/app/globals.css', 'utf8');
+const norm = (v: string) => v.replace(/\s+/g, ' ').trim().toLowerCase();
+
+function tokenBlock(marker: string): Record<string, string> {
+  const at = CSS.indexOf(`/* ${marker} */`);
+  if (at < 0) throw new Error(`globals.css lost its /* ${marker} */ marker`);
+  const rest = CSS.slice(at);
+  const open = rest.indexOf('{', rest.indexOf(':root'));
+  const body = rest.slice(open + 1, rest.indexOf('}', open));
+  return Object.fromEntries(
+    [...body.matchAll(/--([\w-]+)\s*:\s*([^;]+);/g)].map((m) => [m[1], norm(m[2])]),
+  );
+}
+
+describe('globals.css mirrors TOKENS', () => {
+  const light = tokenBlock('tokens:light');
+  const darkSystem = tokenBlock('tokens:dark:system');
+  const darkAttr = tokenBlock('tokens:dark:attr');
+  const names = Object.keys(TOKENS.light) as RawToken[];
+
+  it.each(names)('light --%s matches TOKENS.light', (name) => {
+    expect(light[name]).toBe(norm(TOKENS.light[name]));
+  });
+
+  it.each(names)('system-dark --%s matches TOKENS.dark', (name) => {
+    expect(darkSystem[name]).toBe(norm(TOKENS.dark[name]));
+  });
+
+  it.each(names)('toggle-dark --%s matches TOKENS.dark', (name) => {
+    expect(darkAttr[name]).toBe(norm(TOKENS.dark[name]));
+  });
+
+  it('keeps the two dark blocks identical, so Auto-on-a-dark-Mac and the Dark toggle look the same', () => {
+    expect(darkAttr).toEqual(darkSystem);
+  });
+
+  it('defines the same variables in light and dark, so no token silently keeps its light value in dark', () => {
+    expect(Object.keys(darkAttr).sort()).toEqual(Object.keys(light).sort());
   });
 });

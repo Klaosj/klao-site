@@ -46,6 +46,17 @@ describe('Hero', () => {
     expect(container.querySelector('[data-pills]')?.getAttribute('aria-hidden')).toBe('true');
   });
 
+  it('styles the annotation pills with .hero-pill, leaving the shared .pill chip class free', () => {
+    const { container } = render(<Hero profile={profile} locale="en" />);
+    const pills = container.querySelectorAll('[data-pills] > span');
+    expect(pills).toHaveLength(3);
+    pills.forEach((pill, i) => {
+      expect(pill.classList.contains('hero-pill')).toBe(true);
+      expect(pill.classList.contains(`hero-pill-${i + 1}`)).toBe(true);
+      expect(pill.classList.contains('pill')).toBe(false);
+    });
+  });
+
   it('shows a labelled placeholder when no portrait is supplied', () => {
     const { container } = render(<Hero profile={profile} locale="en" />);
     expect(container.querySelector('[data-portrait-placeholder]')).toBeTruthy();

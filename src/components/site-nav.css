@@ -22,14 +22,12 @@
       background-color 0.35s ease;
   }
   header.nav-chrome.nav-hidden { transform: translateY(-100%); }
-  header.nav-chrome.nav-solid { background-color: rgba(23, 23, 26, 0.94); }
-  /* Over a light band the solid fill must be light, or the inverted
-     dark-on-light link colors land on a dark background. */
-  header.nav-chrome.nav-solid.nav-on-light { background-color: rgba(255, 255, 255, 0.96); }
-
-  /* Burger inherits currentColor; give it the same inversion the links get. */
-  header.nav-chrome .nav-burger { color: var(--color-on-dark); }
-  header.nav-on-light .nav-burger { color: var(--color-on-light); }
+  /* White Edition P0: every band is light (or dark, with the theme), so the
+     scrolled header is one canvas-coloured fill and the burger one ink colour.
+     The old nav-on-light inversion had nothing left to invert. P1 replaces
+     this file with the capsule glass nav. */
+  header.nav-chrome.nav-solid { background-color: color-mix(in srgb, var(--canvas) 94%, transparent); }
+  header.nav-chrome .nav-burger { color: var(--ink-1); }
 
   @media (prefers-reduced-motion: reduce) {
     header.nav-chrome { transition: none; }

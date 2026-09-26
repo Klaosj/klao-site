@@ -166,7 +166,7 @@ export default async function RootLayout({
             is only visually hidden until focused. */}
         <a
           href="#main"
-          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-light focus:px-5 focus:py-3 focus:text-[13px] focus:font-semibold focus:text-dark"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-kram focus:px-5 focus:py-3 focus:text-[13px] focus:font-semibold focus:text-on-kram"
         >
           {dict[l].skipToContent}
         </a>

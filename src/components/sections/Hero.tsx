@@ -35,13 +35,13 @@ export default function Hero({
         className="sticky top-0 flex h-screen flex-col justify-center px-6 pt-28 pb-40 sm:px-12"
       >
         {/* Decoration only -- the same three facts appear in the copy below.
-            Absolutely positioned (see #hero .pill in globals.css), so its
+            Absolutely positioned (see .hero-pill in globals.css), so its
             place in the DOM doesn't affect layout -- it just needs to stay a
             descendant of the sticky stage, which remains its containing
             block. */}
         <div data-pills aria-hidden="true">
           {PILLS[locale].map((label, i) => (
-            <span key={label} className={`pill pill-${i + 1}`} style={{ ['--pi' as string]: String(i) }}>
+            <span key={label} className={`hero-pill hero-pill-${i + 1}`} style={{ ['--pi' as string]: String(i) }}>
               {label}
             </span>
           ))}
