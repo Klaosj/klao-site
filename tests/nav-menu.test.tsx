@@ -76,6 +76,10 @@ describe('NavMenu', () => {
     const resume = within(dialog).getByRole('link', { name: dict.en.resumeShort });
     expect(resume.getAttribute('href')).toBe('/resume.pdf');
     expect(resume.getAttribute('target')).toBe('_blank');
+    // Wave-1 integration review: the repo's convention for target="_blank"
+    // is rel="noreferrer" (this dialog's own LinkedIn/GitHub links already
+    // use it, below).
+    expect(resume.getAttribute('rel')).toBe('noreferrer');
   });
 
   it('copies the email, confirms it on the button, and says so to screen readers', async () => {

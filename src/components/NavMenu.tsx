@@ -138,7 +138,7 @@ export default function NavMenu({ locale, profile, active }: { locale: Locale; p
                 </button>
               )}
               {profile.resumeUrl && (
-                <a className="btn btn-out" href={profile.resumeUrl} target="_blank" rel="noopener">
+                <a className="btn btn-out" href={profile.resumeUrl} target="_blank" rel="noreferrer">
                   {t.resumeShort}
                 </a>
               )}
