@@ -31,6 +31,7 @@ afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
+  vi.useRealTimers(); // safety net for the fake-timer resize test below, even if it throws first
 });
 
 beforeEach(() => {
@@ -68,6 +69,11 @@ beforeEach(() => {
   // jsdom 30 implements CSS.supports and answers true for 'animation-timeline: view()'. Default
   // these tests to the fallback path (Firefox today); the CSS-path test opts in explicitly.
   vi.stubGlobal('CSS', { supports: () => false });
+  // The pin decision now reads `document.documentElement.clientHeight` (fix round 1, Important),
+  // not `window.innerHeight` -- toolbar-proof on mobile. jsdom has no layout engine and defaults
+  // it to 0; give it the same 768 jsdom already gives `window.innerHeight` so the existing
+  // "pinned by default" tests keep their prior baseline, and let individual tests override it.
+  Object.defineProperty(document.documentElement, 'clientHeight', { value: 768, configurable: true });
 });
 
 const sectionOf = (c: HTMLElement) => c.querySelector('#signature') as HTMLElement;
@@ -104,6 +110,18 @@ describe('SignatureScene: markup', () => {
     expect(open.getAttribute('rel')).toContain('noreferrer');
   });
 
+  it('locks the two captions to .glass.glass-pill (C-4) and the GoNai face to exactly one, first, tile (A09)', () => {
+    const { container } = render(<SignatureScene copy={COPY} />);
+    for (const sel of ['.sig-cap-a', '.sig-cap-b']) {
+      const cap = container.querySelector(sel);
+      expect(cap?.classList.contains('glass')).toBe(true);
+      expect(cap?.classList.contains('glass-pill')).toBe(true);
+    }
+    expect(container.querySelectorAll('.sig-app-face')).toHaveLength(1);
+    // The first .sig-app in document order is the one that becomes GoNai's pin.
+    expect(container.querySelector('.sig-app')?.querySelector('.sig-app-face')).not.toBeNull();
+  });
+
   it('drops the frame, the link and the card question when the data has none', () => {
     reduce = true;
     const { container } = render(<SignatureScene copy={{ ...COPY, frameSrc: null, openHref: null, cardQuestion: null }} />);
@@ -126,9 +144,40 @@ describe('SignatureScene: motion modes', () => {
   });
 
   it('stays the static stack on a screen under 600 px tall', () => {
-    vi.stubGlobal('innerHeight', 560);
+    // The stable height (document.documentElement.clientHeight), not window.innerHeight --
+    // see the toolbar-resize test below for why.
+    Object.defineProperty(document.documentElement, 'clientHeight', { value: 560, configurable: true });
     const { container } = render(<SignatureScene copy={COPY} />);
     expect(sectionOf(container).classList.contains('pin')).toBe(false);
+  });
+
+  it('ignores a toolbar-only resize (window.innerHeight moving, stable height unchanged), but relayouts on a real width change (fix round 1, Important)', () => {
+    vi.useFakeTimers();
+    const { container } = render(<SignatureScene copy={COPY} />);
+    const root = sectionOf(container);
+    expect(root.classList.contains('pin')).toBe(true); // default env: width 1024, stable height 768
+    // classList.toggle('pin', …) is the first thing layout() does, every time it runs -- a direct
+    // proxy for "did the resize handler actually relayout", independent of whether pin flips.
+    const toggle = vi.spyOn(root.classList, 'toggle');
+
+    // Mobile Safari/Chrome resize the window whenever their toolbar collapses or expands --
+    // near enough every scroll-direction change -- moving window.innerHeight without moving
+    // document.documentElement.clientHeight, the stable height layout() now reads.
+    vi.stubGlobal('innerHeight', 500);
+    act(() => {
+      window.dispatchEvent(new Event('resize'));
+      vi.advanceTimersByTime(150);
+    });
+    expect(toggle).not.toHaveBeenCalled();
+    expect(root.classList.contains('pin')).toBe(true);
+
+    // A real width change across the 734 px breakpoint must still relayout.
+    vi.stubGlobal('innerWidth', 700);
+    act(() => {
+      window.dispatchEvent(new Event('resize'));
+      vi.advanceTimersByTime(150);
+    });
+    expect(toggle).toHaveBeenCalled();
   });
 
   it('without scroll timelines, pins and paints each frame from JS', () => {
@@ -175,10 +224,13 @@ describe('SignatureScene: motion modes', () => {
     const root = sectionOf(container);
     const io = sceneObserver(root)!;
     intersect(io, root);
+    // Painted while mounted (pinned by default): proves the post-unmount check below isn't vacuous.
+    expect(root.querySelector<HTMLElement>('.sig-card')!.getAttribute('style')).not.toBeNull();
     unmount();
     expect(io.disconnected).toBe(true);
     expect(remove).toHaveBeenCalledWith('scroll', expect.any(Function));
     expect(remove).toHaveBeenCalledWith('resize', expect.any(Function));
     expect(root.classList.contains('pin')).toBe(false);
+    for (const el of root.querySelectorAll('[data-sig-part]')) expect(el.getAttribute('style')).toBeNull();
   });
 });

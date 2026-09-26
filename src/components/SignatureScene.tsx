@@ -84,6 +84,14 @@ export default function SignatureScene({ copy }: { copy: SignatureCopy }) {
     let listening = false;
     let inView = typeof IntersectionObserver === 'undefined'; // no observer: treat as always in view
     let resizeTimer = 0;
+    // The two numbers the pin decision was last computed from (fix round 1, Important): a real
+    // `resize` is compared against these, so a toolbar-only change that moves neither is ignored.
+    let lastWidth = 0;
+    let lastHeight = 0;
+    let roRaf = 0;
+    let cardResized = false;
+    let io: IntersectionObserver | null = null;
+    let ro: ResizeObserver | null = null;
 
     const clear = () => {
       for (const el of root.querySelectorAll<HTMLElement>('[data-sig-part]')) el.removeAttribute('style');
@@ -165,27 +173,45 @@ export default function SignatureScene({ copy }: { copy: SignatureCopy }) {
       }
     };
     const layout = () => {
-      const pin = shouldPin({ reducedMotion: reduce.matches, width: window.innerWidth, height: window.innerHeight });
+      // `document.documentElement.clientHeight`, not `window.innerHeight` (fix round 1,
+      // Important): mobile Safari/Chrome resize the window whenever their toolbar collapses or
+      // expands -- close to every scroll-direction change -- which moves `innerHeight` by ~70 px
+      // without moving this stable height, and matches the pinned stage's own `100svh`.
+      const width = window.innerWidth;
+      const height = document.documentElement.clientHeight;
+      lastWidth = width;
+      lastHeight = height;
+      const pin = shouldPin({ reducedMotion: reduce.matches, width, height });
       root.classList.toggle('pin', pin);
       clear();
       geo = null;
       last = -1;
+      // The card-resize watch (below) only matters while pinned: drop it on unpin, re-attach on
+      // re-pin (`observe` on an already-observed target is a no-op, so this is safe every call).
+      ro?.disconnect();
       if (pin) {
         // Read after `.pin` applies: the card's pinned width is what the tiles orbit.
         geo = sigGeometry({ width: stage.clientWidth, height: stage.clientHeight, cardWidth: card.offsetWidth, cardHeight: card.offsetHeight });
         place(geo);
         measure();
         paint(true);
+        ro?.observe(document.body);
+        ro?.observe(card);
       }
       syncListening();
     };
     const onResize = () => {
       window.clearTimeout(resizeTimer);
-      resizeTimer = window.setTimeout(layout, 120);
+      resizeTimer = window.setTimeout(() => {
+        // Toolbar-only resizes move `window.innerHeight` but not `window.innerWidth` or the
+        // stable height `layout()` reads; skip the relayout when neither actually moved, so the
+        // scene doesn't pin/unpin -- or just churn its inline styles -- on every scroll-direction
+        // change on a phone (fix round 1, Important).
+        if (window.innerWidth === lastWidth && document.documentElement.clientHeight === lastHeight) return;
+        layout();
+      }, 120);
     };
 
-    let io: IntersectionObserver | null = null;
-    let ro: ResizeObserver | null = null;
     if (!cssPath) {
       if (typeof IntersectionObserver !== 'undefined') {
         io = new IntersectionObserver(
@@ -197,12 +223,27 @@ export default function SignatureScene({ copy }: { copy: SignatureCopy }) {
         );
         io.observe(root);
       }
-      // Content above can change height after load (images, fonts): keep `start` honest.
+      // Content above can change height after load (images, fonts), and the pinned card can
+      // reflow on its own (e.g. a Thai font swap re-wrapping the card question) -- either goes
+      // stale without this (fix round 1, item 3). rAF-throttled so a burst of callbacks in one
+      // frame does one flush; `layout()` (not just `measure()`) is what a card resize needs,
+      // since the card's own size feeds `sigGeometry`. `layout()` attaches and detaches this
+      // observer itself (observed only while pinned), so it also disconnects on unpin.
       if (typeof ResizeObserver !== 'undefined') {
-        ro = new ResizeObserver(() => {
-          if (geo) measure();
+        ro = new ResizeObserver((entries) => {
+          for (const e of entries) if (e.target === card) cardResized = true;
+          if (roRaf) return;
+          roRaf = requestAnimationFrame(() => {
+            roRaf = 0;
+            if (!geo) return;
+            if (cardResized) {
+              cardResized = false;
+              layout();
+            } else {
+              measure();
+            }
+          });
         });
-        ro.observe(document.body);
       }
     }
     window.addEventListener('resize', onResize);
@@ -217,6 +258,7 @@ export default function SignatureScene({ copy }: { copy: SignatureCopy }) {
       reduce.removeEventListener?.('change', layout);
       window.clearTimeout(resizeTimer);
       if (raf) cancelAnimationFrame(raf);
+      if (roRaf) cancelAnimationFrame(roRaf);
       root.classList.remove('pin');
       clear();
     };
