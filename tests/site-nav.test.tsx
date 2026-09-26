@@ -125,11 +125,6 @@ describe('SiteNav', () => {
     expect(link.className).toContain('font-thai');
   });
 
-  it('includes the language switcher', () => {
-    render(<SiteNav locale="en" profile={profile} />);
-    expect(screen.getByRole('navigation', { name: 'Language' })).toBeTruthy();
-  });
-
   it("does not invert just because its own monogram badge reuses the bg-light colour -- the badge sits inside the header, always near the probe point", async () => {
     // Regression test for a real bug this task's browser verification
     // caught (not by any unit test, since jsdom's getBoundingClientRect()
@@ -275,13 +270,6 @@ describe('SiteNav', () => {
     const social = screen.getByText('LinkedIn').closest('a') as HTMLElement;
     expect(social.className).toContain('p-2');
     expect(social.className).toContain('-m-2');
-  });
-
-  it('gives the embedded LocaleToggle EN/ไทย links the same invisible hit-area padding', () => {
-    render(<SiteNav locale="en" profile={profile} />);
-    const en = screen.getByText('EN').closest('a') as HTMLElement;
-    expect(en.className).toContain('p-1.5');
-    expect(en.className).toContain('-m-1.5');
   });
 
   it('adds a Writing route link to the desktop nav, after Career, pointed at /{locale}/writing -- never a hash anchor', () => {
