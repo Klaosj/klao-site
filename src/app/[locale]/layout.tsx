@@ -133,11 +133,12 @@ export default async function RootLayout({
   const { locale } = await params;
   const l = assertLocale(locale);
   // Fetched here (not inside SiteNav) so SiteNav can stay a plain client
-  // component driven entirely by props -- its own useEffect scroll listener
-  // already needs 'use client', and an async server-fetch has no business
-  // living in the same file as that. getProfile() is cache()-wrapped (see
-  // src/lib/content.ts), so this doesn't double the real fetch SiteFooter
-  // and the page itself also make within the same request.
+  // component driven entirely by props -- its section and hero-button
+  // observers already need 'use client', and an async server-fetch has no
+  // business living in the same file as that. getProfile() is
+  // cache()-wrapped (see src/lib/content.ts), so this doesn't double the
+  // real fetch SiteFooter and the page itself also make within the same
+  // request.
   const profile = await getProfile();
   return (
     // suppressHydrationWarning: THEME_PREPAINT_SCRIPT adds `js` and may set

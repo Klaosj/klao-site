@@ -60,10 +60,10 @@ describe('SiteNav', () => {
     expect(nav().classList.contains('glass')).toBe(true);
     expect(nav().classList.contains('sn-cap')).toBe(true);
     fireEvent.scroll(window);
-    // C1(a): the old negative-class probe can never fail once the whole file
-    // is rewritten (grepping for the pattern below always finds a hit in this
-    // very test, and in ContactBand's comment) -- this proves the same thing
-    // a different way: the header carries no class beyond its own `sn-wrap`.
+    // C1(a): the old scroll probe toggled a class on the header. Rather than
+    // naming that class in a negative check (which would keep the removed
+    // name alive for every grep), this proves the same thing a different
+    // way: after a scroll the header carries no class beyond its own `sn-wrap`.
     expect(container.querySelector('header')?.className).toBe('sn-wrap');
   });
 
