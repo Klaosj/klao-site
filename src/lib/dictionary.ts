@@ -221,6 +221,38 @@ const en = {
   // NavMenu's navSearchPrompt (the phone menu's full search row copy).
   navContact: 'Contact',
   navSearch: 'Search (⌘K)',
+
+  // --- White Edition P3: Career band + By day ------------------------------
+  // Copy from the approved prototype (design/white-edition/prototype). The
+  // headlines reuse cvHeading / toolboxHeading / aboutHeading above, whose
+  // copy is already the prototype's, rather than duplicating the strings.
+  resumeLink: 'Résumé (PDF) ↗',
+  // Describes public/suwichak-jarunopratamp-resume.pdf. Update it in the same
+  // commit whenever that PDF is rebuilt (spec §3: rebuilt at ship time).
+  resumeMeta: '2 pages · updated Aug 2026',
+  careerNow: 'Now',
+  careerPresent: 'Present',
+  careerMonthsUnit: 'mo',
+  careerEarlier: 'Earlier: ',
+  careerDealLink: 'How a deal runs ↓',
+  monthsShort: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] as readonly string[],
+  toolboxStack: 'Works in',
+  toolboxMethods: 'Focus',
+  toolboxLanguages: 'Languages',
+  toolLanguageNames: ['Thai', 'English (conversational)'] as readonly string[],
+  storyEyebrow: 'By day',
+  storyLead: 'One retail-media deal, start to finish, with the names taken out.',
+  portraitAlt: 'Portrait of Suwichak (Klao)',
+  storyPhasesLabel: 'Five launch phases',
+  storyPhases: [
+    'Commercial terms',
+    'Screen preparation',
+    'Installation',
+    'Sales readiness',
+    'Post-launch audit',
+  ] as readonly string[],
+  storyHealth: ['On track', 'At risk', 'Off track'] as readonly string[],
+  backToTour: 'Aje · GoNai · klao-site ↑',
 };
 
 const th: typeof en = {
@@ -337,6 +369,26 @@ const th: typeof en = {
   navQuickActions: 'ทางลัด',
   navContact: 'ติดต่อ',
   navSearch: 'ค้นหา (⌘K)',
+
+  resumeLink: 'เรซูเม่ (PDF) ↗',
+  resumeMeta: '2 หน้า · อัปเดต ส.ค. 2026',
+  careerNow: 'ปัจจุบัน',
+  careerPresent: 'ปัจจุบัน',
+  careerMonthsUnit: 'เดือน',
+  careerEarlier: 'ก่อนหน้า: ',
+  careerDealLink: 'ดีลหนึ่งเดินอย่างไร ↓',
+  monthsShort: ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'] as readonly string[],
+  toolboxStack: 'ใช้ทำงาน',
+  toolboxMethods: 'ถนัด',
+  toolboxLanguages: 'ภาษา',
+  toolLanguageNames: ['ไทย', 'อังกฤษ (ระดับสนทนา)'] as readonly string[],
+  storyEyebrow: 'ตอนกลางวัน',
+  storyLead: 'ดีลสื่อในร้านค้าปลีกหนึ่งดีล ตั้งแต่ต้นจนจบ โดยตัดชื่อออกทั้งหมด',
+  portraitAlt: 'ภาพของ Suwichak (Klao)',
+  storyPhasesLabel: 'ห้าช่วงของการเปิดตัว',
+  storyPhases: ['เงื่อนไขการค้า', 'เตรียมจอ', 'ติดตั้ง', 'พร้อมขาย', 'ตรวจหลังเปิดใช้งาน'] as readonly string[],
+  storyHealth: ['ตามแผน', 'มีความเสี่ยง', 'หลุดแผน'] as readonly string[],
+  backToTour: 'Aje · GoNai · klao-site ↑',
 };
 
 export type UiDict = typeof en;

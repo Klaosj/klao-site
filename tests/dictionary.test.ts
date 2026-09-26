@@ -29,7 +29,9 @@ describe('dictionary', () => {
   // same string in both locales (e.g. a brand name or a URL), add it to
   // `sharedKeys` below rather than weakening this check.
   it('has no untranslated (en === th) string values, aside from explicitly shared keys', () => {
-    const sharedKeys = new Set<string>(['navFaq']); // "FAQ" is the Thai UI's word too (prototype UI.th.nav)
+    // navFaq: "FAQ" is the Thai UI's word too (prototype UI.th.nav).
+    // backToTour is three project names and an arrow -- identical by design.
+    const sharedKeys = new Set<string>(['navFaq', 'backToTour']);
     for (const [k, enVal] of Object.entries(dict.en)) {
       if (sharedKeys.has(k)) continue;
       const thVal = (dict.th as Record<string, unknown>)[k];
@@ -64,5 +66,29 @@ describe('dictionary', () => {
     for (const k of ['tourLabel', 'tourListLabel', 'tourPrev', 'tourNext', 'tourPause', 'tourPlay', 'tourStill'] as const) {
       expect(dict.th[k]).toBeTruthy();
     }
+  });
+
+  it('carries the Career band and By day copy from the approved prototype', () => {
+    expect(dict.en.cvHeading).toBe('Where I have been, and what came of it.');
+    expect(dict.en.toolboxHeading).toBe('What I actually work with.');
+    expect(dict.en.aboutHeading).toBe('I like building things that are simple, and that stay running.');
+    expect(dict.en.resumeLink).toBe('Résumé (PDF) ↗');
+    expect(dict.en.storyEyebrow).toBe('By day');
+    expect(dict.th.storyEyebrow).toBe('ตอนกลางวัน');
+    expect(dict.en.monthsShort).toHaveLength(12);
+    expect(dict.th.monthsShort).toHaveLength(12);
+    expect(dict.th.monthsShort[2]).toBe('มี.ค.');
+    expect(dict.en.storyPhases).toEqual([
+      'Commercial terms',
+      'Screen preparation',
+      'Installation',
+      'Sales readiness',
+      'Post-launch audit',
+    ]);
+    expect(dict.th.storyPhases).toHaveLength(5);
+    expect(dict.en.storyHealth).toEqual(['On track', 'At risk', 'Off track']);
+    expect(dict.th.storyHealth).toHaveLength(3);
+    expect(dict.en.toolLanguageNames).toEqual(['Thai', 'English (conversational)']);
+    expect(dict.th.toolLanguageNames).toEqual(['ไทย', 'อังกฤษ (ระดับสนทนา)']);
   });
 });

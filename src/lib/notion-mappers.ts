@@ -1,5 +1,6 @@
-import type { CareerEntry, ContentBlock, Localized, OpenQuestion, PostMeta, Profile, Project, QuestionStatus, RichSpan, Skill, SkillTier } from './models';
+import type { CareerEntry, ContentBlock, Localized, OpenQuestion, PostMeta, Profile, Project, QuestionStatus, RichSpan, Skill, SkillTier, StoryChapter } from './models';
 import { PROJECT_MEDIA, PROJECT_STATUS_KEYS, PROJECT_WASHES, QUESTION_STATUSES, SKILL_TIERS } from './models';
+import { slugKey } from './format';
 
 export type NotionPage = { id: string; created_time?: string; properties: Record<string, unknown> };
 
@@ -30,6 +31,16 @@ const numOrNull = (prop: any): number | null => (typeof prop?.number === 'number
 const relationFirst = (prop: any): string | null => {
   const first = (prop?.relation ?? [])[0];
   return typeof first?.id === 'string' && first.id ? first.id : null;
+};
+// Career StartDate/EndDate are Notion Date properties. Only the month is
+// used ('YYYY-MM'), so a timestamp from the "Include time" toggle and a
+// plain date read the same. Anything else -- empty, null, a typo -- is
+// "no date", never a crash (pre-migration rows have no such property).
+const yearMonth = (prop: any): string | null => {
+  const start = prop?.date?.start;
+  if (typeof start !== 'string') return null;
+  const ym = start.slice(0, 7);
+  return /^\d{4}-(0[1-9]|1[0-2])$/.test(ym) ? ym : null;
 };
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
@@ -98,13 +109,29 @@ export function mapCareerEntry(page: NotionPage): CareerEntry | null {
   if (!role) return skip('Career', page, 'missing Role');
   const winsEn = lines(text(page.properties.WinsEN));
   const winsTh = lines(text(page.properties.WinsTH));
+  const company = text(page.properties.Company);
+  // White Edition P3: every new property is optional, same additive
+  // treatment as RoleTH -- a missing FigureValue means "no figure", a
+  // missing FigureNoteEN means "no note", missing dates mean null.
+  const figureValue = text(page.properties.FigureValue);
+  const noteEn = text(page.properties.FigureNoteEN);
   return {
     id: page.id,
     role: localized(role, text(page.properties.RoleTH)),
-    company: text(page.properties.Company),
+    company,
     period: text(page.properties.Period),
     wins: { en: winsEn, th: winsTh.length ? winsTh : [...winsEn] },
     order: num(page.properties.Order),
+    key: slugKey(company),
+    start: yearMonth(page.properties.StartDate),
+    end: yearMonth(page.properties.EndDate),
+    figure: figureValue
+      ? {
+          value: figureValue,
+          label: localized(text(page.properties.FigureLabelEN), text(page.properties.FigureLabelTH)),
+          note: noteEn ? localized(noteEn, text(page.properties.FigureNoteTH)) : null,
+        }
+      : null,
   };
 }
 
@@ -130,6 +157,15 @@ export function mapProfile(page: NotionPage): Profile | null {
     // `NameNative` property maps to null, and the /th particle wordmark
     // falls back to the Latin word (see src/app/[locale]/page.tsx).
     nameNative: text(page.properties.NameNative) || null,
+    // White Edition P3: optional rich text, same additive treatment as
+    // NameNative -- a Profile database without these properties maps to
+    // null rather than failing.
+    prologue: text(page.properties.PrologueEN)
+      ? localized(text(page.properties.PrologueEN), text(page.properties.PrologueTH))
+      : null,
+    closingLine: text(page.properties.ClosingLineEN)
+      ? localized(text(page.properties.ClosingLineEN), text(page.properties.ClosingLineTH))
+      : null,
   };
 }
 
@@ -192,6 +228,24 @@ export function mapQuestion(page: NotionPage): OpenQuestion | null {
     status: statusOf(page),
     linkSlug: text(page.properties.LinkSlug) || null,
     date,
+  };
+}
+
+// White Edition P3: the Story DB (spec §7). Gated on TitleEN alone -- the
+// same "one required field, everything else optional" shape as mapCareerEntry
+// -- so a half-written chapter in Notion still renders its title rather than
+// vanishing. Order falls back to 0 via num().
+export function mapStoryChapter(page: NotionPage): StoryChapter | null {
+  const titleEn = text(page.properties.TitleEN);
+  if (!titleEn) return skip('Story', page, 'missing TitleEN');
+  return {
+    id: page.id,
+    title: localized(titleEn, text(page.properties.TitleTH)),
+    body: localized(text(page.properties.BodyEN), text(page.properties.BodyTH)),
+    rule: localized(text(page.properties.RuleEN), text(page.properties.RuleTH)),
+    icon: selectOf(page.properties.Icon) ?? '',
+    sketch: selectOf(page.properties.Sketch) ?? '',
+    order: num(page.properties.Order),
   };
 }
 

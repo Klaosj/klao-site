@@ -28,6 +28,10 @@ const entries: CareerEntry[] = [
     period: '2024 — present',
     wins: { en: ['Opened two channels'], th: ['เปิดช่องทางใหม่สองช่อง'] },
     order: 1,
+    key: 'acme',
+    start: null,
+    end: null,
+    figure: null,
   },
   {
     id: 'c2',
@@ -36,6 +40,10 @@ const entries: CareerEntry[] = [
     period: '2022 — 2024',
     wins: { en: ['Shipped the first pilot', 'Closed three logos'], th: ['ส่งไพลอตแรกสำเร็จ', 'ปิดดีลสามราย'] },
     order: 2,
+    key: 'globex',
+    start: null,
+    end: null,
+    figure: null,
   },
 ];
 

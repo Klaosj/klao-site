@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
-import { mapProject, mapCareerEntry, mapProfile, mapSkill, mapQuestion } from '@/lib/notion-mappers';
+import { mapProject, mapCareerEntry, mapProfile, mapSkill, mapQuestion, mapStoryChapter } from '@/lib/notion-mappers';
+import { slugKey } from '@/lib/format';
 
 const title = (s: string) => ({ title: [{ plain_text: s }] });
 const rich = (s: string) => ({ rich_text: s ? [{ plain_text: s }] : [] });
@@ -259,6 +260,12 @@ describe('mapCareerEntry', () => {
       period: '2024 – present',
       wins: { en: ['Win one', 'Win two'], th: ['Win one', 'Win two'] },
       order: 1,
+      // White Edition P3: this page has none of the new properties -- it
+      // stands for the live Career DB before migration, which must still map.
+      key: 'actmedia',
+      start: null,
+      end: null,
+      figure: null,
     });
     // wins.th falls back to wins.en's *content*, not the same array reference,
     // so an in-place mutation (.sort()/.push()) on one locale can't leak into the other.
@@ -296,6 +303,75 @@ describe('mapCareerEntry', () => {
     expect(mapCareerEntry(page)).toBeNull();
     expect(warn).toHaveBeenCalled();
     warn.mockRestore();
+  });
+});
+
+describe('mapCareerEntry — White Edition fields (P3)', () => {
+  const full = {
+    id: 'c2',
+    properties: {
+      Role: title('Brand Representative'),
+      RoleTH: rich('ตัวแทนแบรนด์'),
+      Company: rich('Casetify'),
+      Period: rich('MAY 2024 – MAR 2026'),
+      StartDate: { date: { start: '2024-05-01', end: null } },
+      // Notion's "Include time" toggle yields a timestamp; only the month matters.
+      EndDate: { date: { start: '2026-03-31T18:00:00.000+07:00', end: null } },
+      FigureValue: rich('THB 1.1M'),
+      FigureLabelEN: rich('My personal monthly sales target'),
+      FigureLabelTH: rich('เป้ายอดขายส่วนตัวต่อเดือน'),
+      FigureNoteEN: rich('Target met'),
+      FigureNoteTH: rich('ทำถึงเป้า'),
+      WinsEN: rich('Ran the store on shift'),
+      WinsTH: rich(''),
+      Order: { number: 2 },
+    },
+  };
+
+  it('maps a full row: slug key, YYYY-MM dates, figure with label and note', () => {
+    expect(mapCareerEntry(full)).toMatchObject({
+      key: 'casetify',
+      start: '2024-05',
+      end: '2026-03',
+      figure: {
+        value: 'THB 1.1M',
+        label: { en: 'My personal monthly sales target', th: 'เป้ายอดขายส่วนตัวต่อเดือน' },
+        note: { en: 'Target met', th: 'ทำถึงเป้า' },
+      },
+    });
+  });
+
+  it('derives the key from the company with slugKey (FAQ links use career:<key>)', () => {
+    const page = { ...full, properties: { ...full.properties, Company: rich('A Bun Dance') } };
+    expect(mapCareerEntry(page)!.key).toBe(slugKey('A Bun Dance'));
+  });
+
+  it('maps a pre-migration row (no StartDate/EndDate/Figure*) to null dates and no figure', () => {
+    // `careerPage` (above) carries only the properties the Career DB had
+    // before the White Edition -- it must map, not skip (master Review Focus #1).
+    expect(mapCareerEntry(careerPage)).toMatchObject({ key: 'actmedia', start: null, end: null, figure: null });
+  });
+
+  it('treats an empty or malformed date as absent', () => {
+    const page = {
+      ...full,
+      properties: { ...full.properties, StartDate: { date: null }, EndDate: { date: { start: '26-3' } } },
+    };
+    expect(mapCareerEntry(page)).toMatchObject({ start: null, end: null });
+  });
+
+  it('has no figure when FigureValue is empty, even if its labels are filled', () => {
+    const page = { ...full, properties: { ...full.properties, FigureValue: rich('') } };
+    expect(mapCareerEntry(page)!.figure).toBeNull();
+  });
+
+  it('keeps the figure without a note when FigureNoteEN is empty; the label falls back th -> en', () => {
+    const page = { ...full, properties: { ...full.properties, FigureNoteEN: rich(''), FigureLabelTH: rich('') } };
+    expect(mapCareerEntry(page)!.figure).toEqual({
+      value: 'THB 1.1M',
+      label: { en: 'My personal monthly sales target', th: 'My personal monthly sales target' },
+      note: null,
+    });
   });
 });
 
@@ -345,6 +421,8 @@ describe('mapProfile', () => {
       // above: this fixture page has no `NameNative` property, so an
       // existing Profile database maps to null rather than failing.
       nameNative: null,
+      prologue: null,
+      closingLine: null,
     });
   });
 
@@ -356,6 +434,28 @@ describe('mapProfile', () => {
       properties: { ...profilePage.properties, NameNative: rich('สุวิจักขณ์') },
     };
     expect(mapProfile(page)!.nameNative).toBe('สุวิจักขณ์');
+  });
+
+  it('maps PrologueEN/TH and ClosingLineEN/TH, TH falling back to EN', () => {
+    const page = {
+      ...profilePage,
+      properties: {
+        ...profilePage.properties,
+        PrologueEN: rich('I started on the owner side. **Now I build my own tools.**'),
+        PrologueTH: rich(''),
+        ClosingLineEN: rich('Business developer who builds his own tools.'),
+        ClosingLineTH: rich('นัก Business Development ที่สร้างเครื่องมือ|ใช้เอง'),
+      },
+    };
+    const p = mapProfile(page)!;
+    expect(p.prologue).toEqual({
+      en: 'I started on the owner side. **Now I build my own tools.**',
+      th: 'I started on the owner side. **Now I build my own tools.**',
+    });
+    expect(p.closingLine).toEqual({
+      en: 'Business developer who builds his own tools.',
+      th: 'นัก Business Development ที่สร้างเครื่องมือ|ใช้เอง',
+    });
   });
 
   it('returns null and warns on missing Name', () => {
@@ -482,6 +582,59 @@ describe('mapQuestion', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const page = { ...questionPage, properties: { ...questionPage.properties, Question: title('') } };
     expect(mapQuestion(page)).toBeNull();
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
+  });
+});
+
+const storyPage = {
+  id: 'st1',
+  properties: {
+    TitleEN: title('Find the room.'),
+    TitleTH: rich('หาห้องที่ใช่'),
+    BodyEN: rich('I scope first, and **the NDA comes before any data changes hands.**'),
+    BodyTH: rich(''),
+    RuleEN: rich('Scope it honestly.'),
+    RuleTH: rich('ประเมินตามจริง'),
+    Icon: select('target-duotone'),
+    Sketch: select('room'),
+    Order: { number: 1 },
+    Published: { checkbox: true },
+  },
+};
+
+describe('mapStoryChapter', () => {
+  it('maps a full row, TH falling back to EN', () => {
+    expect(mapStoryChapter(storyPage)).toEqual({
+      id: 'st1',
+      title: { en: 'Find the room.', th: 'หาห้องที่ใช่' },
+      body: {
+        en: 'I scope first, and **the NDA comes before any data changes hands.**',
+        th: 'I scope first, and **the NDA comes before any data changes hands.**',
+      },
+      rule: { en: 'Scope it honestly.', th: 'ประเมินตามจริง' },
+      icon: 'target-duotone',
+      sketch: 'room',
+      order: 1,
+    });
+  });
+
+  it('maps a row with only a title to empty defaults instead of dropping it', () => {
+    expect(mapStoryChapter({ id: 'st2', properties: { TitleEN: title('Know the week it slips.') } })).toEqual({
+      id: 'st2',
+      title: { en: 'Know the week it slips.', th: 'Know the week it slips.' },
+      body: { en: '', th: '' },
+      rule: { en: '', th: '' },
+      icon: '',
+      sketch: '',
+      order: 0,
+    });
+  });
+
+  it('returns null and warns when TitleEN is missing', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const page = { ...storyPage, properties: { ...storyPage.properties, TitleEN: title('') } };
+    expect(mapStoryChapter(page)).toBeNull();
     expect(warn).toHaveBeenCalled();
     warn.mockRestore();
   });

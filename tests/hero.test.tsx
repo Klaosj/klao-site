@@ -28,6 +28,8 @@ const profile: Profile = {
   resumeUrl: '',
   clients: [],
   nameNative: null,
+  prologue: null,
+  closingLine: null,
 };
 
 describe('Hero', () => {

@@ -25,6 +25,8 @@ const profile: Profile = {
   resumeUrl: null,
   clients: [],
   nameNative: null,
+  prologue: null,
+  closingLine: null,
 };
 
 describe('ContactBand', () => {
