@@ -90,10 +90,13 @@ export default function SignatureScene({ copy }: { copy: SignatureCopy }) {
     let lastHeight = 0;
     let roRaf = 0;
     let cardResized = false;
-    // The card's last-seen content height, from the ResizeObserver itself (fix round 2, item 2):
-    // null means "no notification since the observer was last (re)armed", so the guaranteed
-    // first notification after `observe()` only establishes this baseline instead of relayouting.
-    let lastCardHeight: number | null = null;
+    // The card height the current geometry was built from: layout() records the very
+    // `card.offsetHeight` it hands to sigGeometry (wave-1 reconciliation p). A card notification
+    // relayouts only when the card's border box has moved off this -- so the guaranteed first
+    // notification after `observe()` is a no-op when nothing changed (fix round 2, item 2), yet a
+    // change that lands between layout() and that first notification (a web font re-wrapping the
+    // question) still counts, which the old "first notification sets the baseline" rule missed.
+    let cardBaseline = 0;
     // Whether body/card are currently ResizeObserver-watched -- mirrors `listening` below, and
     // exists so the watch is armed/disarmed once per pin transition, not on every layout() call
     // (fix round 2, Critical; see `syncResizeWatch`).
@@ -191,9 +194,10 @@ export default function SignatureScene({ copy }: { copy: SignatureCopy }) {
       if (pin === watching) return;
       watching = pin;
       if (pin) {
-        // This pin's own first notification (guaranteed, per spec) establishes the baseline
-        // instead of counting as a change (item 2) -- see the callback below.
-        lastCardHeight = null;
+        // layout() has just recorded this pin's baseline (`cardBaseline`). A card change flagged
+        // during the previous pin whose frame never ran (a resize unpinned first) belongs to that
+        // old geometry; left set, it would relayout the new pin for nothing.
+        cardResized = false;
         ro?.observe(document.body);
         ro?.observe(card);
       } else {
@@ -216,7 +220,8 @@ export default function SignatureScene({ copy }: { copy: SignatureCopy }) {
       last = -1;
       if (pin) {
         // Read after `.pin` applies: the card's pinned width is what the tiles orbit.
-        geo = sigGeometry({ width: stage.clientWidth, height: stage.clientHeight, cardWidth: card.offsetWidth, cardHeight: card.offsetHeight });
+        cardBaseline = card.offsetHeight;
+        geo = sigGeometry({ width: stage.clientWidth, height: stage.clientHeight, cardWidth: card.offsetWidth, cardHeight: cardBaseline });
         place(geo);
         measure();
         paint(true);
@@ -257,16 +262,12 @@ export default function SignatureScene({ copy }: { copy: SignatureCopy }) {
         ro = new ResizeObserver((entries) => {
           for (const e of entries) {
             if (e.target !== card) continue;
-            const h = e.contentRect.height;
-            // The first notification after (re-)observing only sets the baseline (item 2): the
-            // browser guarantees one regardless of whether anything actually changed, so without
-            // this it would relayout, which would (with the old, since-removed re-observe-every-
-            // layout()) manufacture another guaranteed notification forever (fix round 2, Critical).
-            if (lastCardHeight === null) lastCardHeight = h;
-            else if (h !== lastCardHeight) {
-              lastCardHeight = h;
-              cardResized = true;
-            }
+            // Border box, the same box offsetHeight measures (contentRect is the content box, so
+            // any padding would read as a permanent change); offsetHeight where a browser has no
+            // borderBoxSize yet. offsetHeight is a whole number and borderBoxSize is not, so only
+            // a change of a pixel or more counts -- less than that never moves the geometry.
+            const h = e.borderBoxSize?.[0]?.blockSize ?? card.offsetHeight;
+            if (Math.abs(h - cardBaseline) >= 1) cardResized = true;
           }
           if (roRaf) return;
           roRaf = requestAnimationFrame(() => {

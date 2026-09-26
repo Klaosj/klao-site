@@ -73,9 +73,17 @@ const intersect = (o: FakeIO, root: Element) => o.fire([{ isIntersecting: true, 
 //  - disconnect() really stops delivery: it clears both the observed set and the queue.
 //  - Notifications are queued, not delivered synchronously from observe()/setSize() -- the test
 //    calls flush() to deliver them, "the next rAF/microtask you control".
-const stubResizeObserver = () => {
+//  - Each notification carries the target's border box (`borderBoxSize`) as well as
+//    `contentRect`, and `offsetHeight` answers from the same sizes: jsdom has no layout and
+//    always says 0, but the scene lays the card out from `card.offsetHeight` and compares
+//    notifications against that same number (wave-1 reconciliation p), so the two must agree
+//    the way they do in a browser. `initialCardHeight` is the card's height before any setSize().
+const stubResizeObserver = (initialCardHeight = 0) => {
   const observeCounts = new Map<Element, number>();
   const sizes = new Map<Element, { width: number; height: number }>();
+  vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockImplementation(function (this: HTMLElement) {
+    return sizes.get(this)?.height ?? (this.dataset.sigPart === 'card' ? initialCardHeight : 0);
+  });
   let observed = new Set<Element>();
   let queue = new Set<Element>();
   let cb: ResizeObserverCallback | null = null;
@@ -116,24 +124,48 @@ const stubResizeObserver = () => {
     // "layout() itself must never disconnect or re-observe" (fix round 2, item 1): it must stay
     // 1 for the whole pin session, no matter how many relayouts happen afterwards.
     observeCallCount: (el: Element) => observeCounts.get(el) ?? 0,
-    // Simulates the browser detecting a real size change on an observed target -- only queues a
-    // notification if still observed, mirroring the real API (fix round 2, item 5).
+    // Simulates the element changing size. The size itself changes whether or not anything is
+    // watching; a notification is queued only if the target is still observed, mirroring the
+    // real API (fix round 2, item 5).
     setSize: (el: Element, height: number, width = 0) => {
-      if (!observed.has(el)) return;
       sizes.set(el, { width, height });
-      queue.add(el);
+      if (observed.has(el)) queue.add(el);
     },
     // Delivers every currently-queued notification in one batch.
     flush: () => {
       if (!cb || queue.size === 0) return;
-      const entries = Array.from(queue).map((target) => ({
-        target,
-        contentRect: { ...(sizes.get(target) ?? { width: 0, height: 0 }) },
-      })) as unknown as ResizeObserverEntry[];
+      const entries = Array.from(queue).map((target) => {
+        const size = sizes.get(target) ?? { width: 0, height: (target as HTMLElement).offsetHeight };
+        return { target, contentRect: { ...size }, borderBoxSize: [{ blockSize: size.height, inlineSize: size.width }] };
+      }) as unknown as ResizeObserverEntry[];
       queue = new Set();
       act(() => cb!(entries, {} as ResizeObserver));
     },
   };
+};
+
+// Frames that run only when the test says so (the shared stubs run a frame synchronously), for
+// the one ordering a synchronous frame can't show: a resize lands between a card notification
+// and the frame that would act on it.
+const deferFrames = () => {
+  const frames: FrameRequestCallback[] = [];
+  vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => frames.push(cb));
+  return {
+    run: () =>
+      act(() => {
+        while (frames.length) frames.shift()!(0);
+      }),
+  };
+};
+
+// A real resize of the stable height layout() reads, through the scene's 120 ms debounce (needs
+// fake timers).
+const resizeStableHeight = (height: number) => {
+  Object.defineProperty(document.documentElement, 'clientHeight', { value: height, configurable: true });
+  act(() => {
+    window.dispatchEvent(new Event('resize'));
+    vi.advanceTimersByTime(150);
+  });
 };
 
 describe('SignatureScene: server HTML (Review Focus #4)', () => {
@@ -288,7 +320,7 @@ describe('SignatureScene: motion modes', () => {
     const ro = stubResizeObserver();
     const { container } = render(<SignatureScene copy={COPY} />);
     const root = sectionOf(container);
-    ro.flush(); // the guaranteed first notification for card + body just settles the baseline
+    ro.flush(); // the guaranteed first notification for card + body: nothing changed since layout()
     const toggle = vi.spyOn(root.classList, 'toggle');
     ro.setSize(document.body, 900); // content above reflowing
     ro.flush();
@@ -301,7 +333,7 @@ describe('SignatureScene: motion modes', () => {
     const root = sectionOf(container);
     const card = root.querySelector('.sig-card') as HTMLElement;
     expect(ro.isObserving(card)).toBe(true); // the notification below only works because of this
-    ro.flush(); // the guaranteed first notification just settles the baseline (item 2)
+    ro.flush(); // the guaranteed first notification: nothing changed since layout() (item 2)
     const toggle = vi.spyOn(root.classList, 'toggle');
     ro.setSize(card, 200); // e.g. a Thai font swap re-wrapping the card question
     ro.flush();
@@ -316,7 +348,7 @@ describe('SignatureScene: motion modes', () => {
     expect(ro.observeCallCount(card)).toBe(1);
     expect(ro.observeCallCount(document.body)).toBe(1);
 
-    ro.flush(); // settle the baseline
+    ro.flush(); // the guaranteed first notification: nothing to do
     ro.setSize(card, 200);
     ro.flush(); // a genuine card resize: relayouts once (proven by the previous test)
 
@@ -339,6 +371,82 @@ describe('SignatureScene: motion modes', () => {
     // 5 more frames, nothing new set: an endless loop would keep re-queuing and relayouting here.
     for (let frame = 0; frame < 5; frame++) ro.flush();
     expect(toggle).not.toHaveBeenCalled();
+  });
+
+  // Wave-1 reconciliation (p), from the round-2 re-review. The baseline a card notification is
+  // compared against is the card.offsetHeight layout() itself used (border box, like
+  // borderBoxSize), not whatever the first notification happened to report.
+  it('A: the first notification after arming only confirms the laid-out height, so nothing relayouts', () => {
+    const ro = stubResizeObserver(180);
+    const { container } = render(<SignatureScene copy={COPY} />);
+    const root = sectionOf(container);
+    const toggle = vi.spyOn(root.classList, 'toggle'); // attached BEFORE the initial flush
+    ro.flush();
+    expect(toggle).not.toHaveBeenCalled();
+  });
+
+  it('B: a real card height change relayouts exactly once, even when it lands in the first notification', () => {
+    const ro = stubResizeObserver(180);
+    const { container } = render(<SignatureScene copy={COPY} />);
+    const root = sectionOf(container);
+    const card = root.querySelector('.sig-card') as HTMLElement;
+    const toggle = vi.spyOn(root.classList, 'toggle');
+    // The seed race: the card re-wraps (a web font arriving) after layout() measured it but
+    // before the observer's first notification. That notification must count as a change.
+    ro.setSize(card, 240);
+    ro.flush();
+    expect(toggle).toHaveBeenCalledTimes(1);
+  });
+
+  it('C: the same card height again does not relayout', () => {
+    const ro = stubResizeObserver(180);
+    const { container } = render(<SignatureScene copy={COPY} />);
+    const root = sectionOf(container);
+    const card = root.querySelector('.sig-card') as HTMLElement;
+    ro.flush();
+    ro.setSize(card, 240);
+    ro.flush(); // one real change: one relayout, which lays out at 240
+    const toggle = vi.spyOn(root.classList, 'toggle');
+    ro.setSize(card, 240);
+    ro.flush();
+    expect(toggle).not.toHaveBeenCalled();
+  });
+
+  it('D: unpinned it watches nothing; each pin arms once; a change left pending from the last pin does not relayout the next', () => {
+    vi.useFakeTimers();
+    const ro = stubResizeObserver(180);
+    const frames = deferFrames();
+    const { container } = render(<SignatureScene copy={COPY} />);
+    const root = sectionOf(container);
+    const card = root.querySelector('.sig-card') as HTMLElement;
+    ro.flush();
+    frames.run(); // settle
+    ro.setSize(card, 250);
+    ro.flush(); // the card's change is in; its relayout waits for the next frame ...
+    resizeStableHeight(560); // ... but a resize to a short screen unpins first
+    expect(root.classList.contains('pin')).toBe(false);
+    expect(ro.isObserving(card)).toBe(false);
+    expect(ro.isObserving(document.body)).toBe(false);
+    frames.run(); // that frame finds no geometry and does nothing
+    resizeStableHeight(700); // pinned again, laid out at the card's current 250
+    expect(root.classList.contains('pin')).toBe(true);
+    expect(ro.observeCallCount(card)).toBe(2);
+    expect(ro.observeCallCount(document.body)).toBe(2);
+    const toggle = vi.spyOn(root.classList, 'toggle');
+    ro.flush(); // the new pin's first notification: 250, the height it was just laid out at
+    frames.run();
+    expect(toggle).not.toHaveBeenCalled();
+  });
+
+  it('E: lets go of both the card and the body on unmount', () => {
+    const ro = stubResizeObserver(180);
+    const { container, unmount } = render(<SignatureScene copy={COPY} />);
+    const card = sectionOf(container).querySelector('.sig-card') as HTMLElement;
+    expect(ro.isObserving(card)).toBe(true);
+    expect(ro.isObserving(document.body)).toBe(true);
+    unmount();
+    expect(ro.isObserving(card)).toBe(false);
+    expect(ro.isObserving(document.body)).toBe(false);
   });
 
   it('removes its listeners, observer, class and inline styles on unmount', () => {
