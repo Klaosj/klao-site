@@ -230,6 +230,11 @@ const en = {
   // NavMenu's navSearchPrompt (the phone menu's full search row copy).
   navContact: 'Contact',
   navSearch: 'Search (⌘K)',
+  // HeroTour's (T11) second action -- the same résumé link as ThumbBar's
+  // `resumeShort` and NavMenu's, but the hero's own full "Résumé (PDF) ›"
+  // copy (prototype ctas). P4's CloseBand reuses this exact key rather than
+  // adding its own (preflight ruling: one canonical résumé-link string).
+  resumePdf: 'Résumé (PDF) ›',
 
   // --- White Edition P3: Career band + By day ------------------------------
   // Copy from the approved prototype (design/white-edition/prototype). The
@@ -421,6 +426,7 @@ const th: typeof en = {
   navQuickActions: 'ทางลัด',
   navContact: 'ติดต่อ',
   navSearch: 'ค้นหา (⌘K)',
+  resumePdf: 'เรซูเม่ (PDF) ›',
 
   resumeLink: 'เรซูเม่ (PDF) ↗',
   resumeMeta: '2 หน้า · อัปเดต ส.ค. 2026',
