@@ -1,0 +1,41 @@
+/* Project sheet (spec §4 row "#work/<slug>", §5.3 radii, §5.5 settle/exit; prototype `.sheet`).
+   A native modal <dialog>: the browser owns the top layer, the inert page and Esc. It enters on
+   the settle curve and leaves on exit; reduced motion gets neither. Only opacity/transform
+   animate. Phone: a full-height sheet with a grab handle.
+   Ruling C-5: the prototype's own sheet is `--raised`/`--e4` over a `--curtain` backdrop, not
+   `--card`/`--e3` over a `--mist` tint (those are the flatter surface a step down -- P0 added
+   the darker/deeper tokens for exactly this dialog, prototype lines 623-624). */
+html.sheet-open { overflow: hidden; }
+.sheet { width: min(1040px, 100% - 48px); max-width: none; max-height: calc(100vh - 80px); margin: 40px auto auto; padding: 0; overflow: auto; overscroll-behavior: contain; border: 0; border-radius: 28px; background: var(--raised); color: var(--ink-1); box-shadow: var(--e4); }
+.sheet::backdrop { background: var(--curtain); }
+@media (prefers-reduced-motion: no-preference) {
+  .sheet[open] { animation: sheet-in 500ms var(--ease-settle); }
+  .sheet.closing { animation: sheet-out 280ms var(--ease-exit) forwards; }
+}
+@keyframes sheet-in {
+  from { opacity: 0; transform: translateY(24px) scale(.985); }
+}
+@keyframes sheet-out {
+  to { opacity: 0; transform: translateY(16px); }
+}
+/* Ruling C-5: reuses P0's .ctl (globals.css, "Small glass controls (tour paddles, sheet
+   close)") for the blur/fill/fallbacks -- this rule only adds the close button's position and
+   size, not its surface. */
+.sheet-close { position: sticky; top: 16px; z-index: 5; float: right; display: grid; place-items: center; width: 36px; height: 36px; margin: 16px 16px 0 0; border-radius: 50%; font-size: 16px; }
+.sheet-close::after { content: ""; position: absolute; inset: -4px; }
+.sbody { display: grid; grid-template-columns: 7fr 5fr; gap: 40px; padding: 40px; }
+.sheet-name { margin: 6px 0 0; font-size: 40px; line-height: 44px; font-weight: 600; letter-spacing: 0; }
+/* Ruling C-9 (Global Constraint "Thai is one size step smaller than English everywhere"):
+   specificity (0,3,0) beats globals.css's legacy Thai heading rule (0,2,1), so this is the size
+   that actually renders, on desktop and (below) on phone. */
+.sheet .sheet-name:lang(th) { font-size: 36px; line-height: 47px; }
+/* Focus lands on the heading programmatically (tabindex -1); the ring is for keyboard stops. */
+.sheet-name:focus { outline: none; }
+@media (max-width: 734px) {
+  .sheet { width: 100%; max-width: 100%; height: calc(100dvh - 12px); max-height: none; margin: 12px 0 0; border-radius: 20px 20px 0 0; }
+  .sheet::before { content: ""; position: absolute; top: 6px; left: 50%; z-index: 6; width: 36px; height: 5px; margin-left: -18px; border-radius: 3px; background: var(--ink-3); }
+  .sheet-close { width: 44px; height: 44px; margin: 12px 12px 0 0; }
+  .sbody { grid-template-columns: 1fr; gap: 8px; padding: 24px 20px; }
+  .sheet-name { font-size: 32px; line-height: 36px; }
+  .sheet .sheet-name:lang(th) { font-size: 28px; line-height: 38px; }
+}

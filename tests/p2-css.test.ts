@@ -4,7 +4,7 @@ import { SIG, SIG_YEAR_STEPS, type SigWindow } from '@/lib/signature';
 
 // Global constraint: only transform and opacity animate. Scoped to the CSS this phase owns, so
 // every other phase's CSS is judged by its own tests. Later P2 tasks append their files here.
-const P2_CSS = ['src/components/signature.css', 'src/components/status-chip.css'];
+const P2_CSS = ['src/components/signature.css', 'src/components/status-chip.css', 'src/components/project-sheet.css'];
 
 function block(css: string, name: string): string {
   const start = css.indexOf(`@keyframes ${name} {`);
