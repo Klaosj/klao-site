@@ -1,11 +1,16 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from '@testing-library/react';
+import { act, cleanup, render, screen } from '@testing-library/react';
 import { usePathname } from 'next/navigation';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import LocaleToggle, { switchLocaleHref } from '@/components/LocaleToggle';
 import { dict } from '@/lib/dictionary';
 
 vi.mock('next/navigation', () => ({ usePathname: vi.fn(() => '/en') }));
+
+// Same helper as tests/theme-toggle.test.tsx: a real requestAnimationFrame
+// tick, since that's what the component's mount effect actually uses (not a
+// fake timer).
+const flushRaf = () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
 
 afterEach(() => {
   cleanup();
@@ -77,5 +82,30 @@ describe('LocaleToggle', () => {
     render(<LocaleToggle />);
     const thGroup = document.querySelector('.lt-seg') as HTMLElement;
     expect(thGroup.style.getPropertyValue('--i')).toBe('1');
+  });
+
+  // --- Fix round 1 (merge alignment): the P0 fix wave generalised .seg's
+  // child selectors to :is(button, a) and added a shared inner structure
+  // (ThemeToggle) that LocaleToggle must now match exactly, or the fix
+  // wave's own mount-time CSS guard silently breaks it (see the component's
+  // doc comment and this task's report, "Fix round 1").
+  it('wraps each label in .seg-label with a matching data-label, same inner structure as ThemeToggle (fix wave finding 6)', () => {
+    const { container } = render(<LocaleToggle />);
+    const labels = Array.from(container.querySelectorAll('.lt-seg a .seg-label'));
+    expect(labels.map((el) => el.textContent)).toEqual(['EN', 'ไทย']);
+    expect(labels.map((el) => el.getAttribute('data-label'))).toEqual(['EN', 'ไทย']);
+  });
+
+  // Fix wave finding 1: globals.css keys the thumb's mount-time transition
+  // guard off `.seg:not([data-ready])` -- a selector that, unlike
+  // ThemeToggle's, would match this control FOREVER if it never set the
+  // attribute (there is no server-guess-vs-real-preference sync to settle
+  // here), permanently killing the thumb's slide on every later click.
+  it('marks data-ready one frame after mount, not on the initial render (fix wave finding 1)', async () => {
+    render(<LocaleToggle />);
+    const group = document.querySelector('.lt-seg') as HTMLElement;
+    expect(group.hasAttribute('data-ready')).toBe(false);
+    await act(() => flushRaf());
+    expect(group.getAttribute('data-ready')).toBe('true');
   });
 });

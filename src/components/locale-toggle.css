@@ -1,41 +1,24 @@
-/* LocaleToggle (amendment A02). The pill and its sliding thumb are
-   globals.css's `.seg`/`.thumb` (ThemeToggle, amendment A01), reused as-is
-   (R19) -- not redefined here. Those rules also style the CURRENT option
-   (`.seg button[aria-checked="true"]`), but that selector is scoped to
-   <button>: LocaleToggle's two options are real <a> links (they must stay
-   real per-locale routes), so `.seg button`/`.seg button[aria-checked="true"]`
-   never match them. The two rules below are the minimum needed to give the
-   links the same sizing and the same current-option mark, and nothing else
-   from `.seg` is repeated (no background, no box-shadow, no border-radius --
-   the shared pill already paints all of that behind the thumb and the
-   links).
+/* LocaleToggle (amendment A02). The pill, its sliding thumb, the per-link
+   sizing/colour and the current-locale mark are all globals.css's
+   `.seg`/`.thumb` block (ThemeToggle, amendment A01), reused as-is (R19) --
+   nothing about them is redefined here.
 
-   This is deliberately the minimum, not a parallel definition: a fix
-   already generalising `.seg`'s own selectors to `.seg > :is(button,a)`
-   with `[aria-current="page"]` is landing on the main checkout's globals.css
-   (outside this lane at the time this file was written). Once that merges,
-   `.lt-seg a` and `.lt-seg a[aria-current]` below fold into `.seg`'s own
-   rules and should be deleted -- see this task's report, "Merge notes".
+   Fix wave merge note (round 1): before the P0 fix wave landed, `.seg`'s own
+   selectors were scoped to `button` (`.seg button`, `.seg
+   button[aria-checked="true"]`), which never matched these <a> tags, so this
+   file used to carry a `.lt-seg a` / `.lt-seg a[aria-current]` pair
+   duplicating that styling for links. The fix wave generalised those to
+   `.seg > :is(button, a)` and `[aria-current="page"]` (globals.css, "Fix
+   wave finding 5"), which now matches LocaleToggle's links directly -- so
+   that duplicate pair is deleted; keeping it would have been a second,
+   competing definition of the same rule (R19: ".seg is defined once").
 
-   `.lt-wide` is the phone-menu row (P4's footer can reuse it too); `.seg`'s
-   grid (`grid-auto-columns: 1fr`) already splits the pill evenly between
-   the two links once the pill itself is full width, so only the width and
-   the slightly larger touch target need setting here. */
+   `.lt-wide` is genuinely LocaleToggle-specific (ThemeToggle has no
+   full-width variant) -- the phone-menu row (P4's footer can reuse it too).
+   `.seg`'s grid (`grid-auto-columns: 1fr`) already splits the pill evenly
+   between the two links once the pill itself is full width, so only the
+   width and the slightly larger touch target need setting here. */
 @layer components {
-  .lt-seg a {
-    font-size: 14px;
-    line-height: 20px;
-    color: var(--ink-2);
-    padding: 0 16px;
-    min-height: 32px;
-    border-radius: 999px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    white-space: nowrap;
-    text-decoration: none;
-  }
-  .lt-seg a[aria-current] { color: var(--ink-1); font-weight: 600; }
   .lt-seg.lt-wide { width: 100%; }
   .lt-seg.lt-wide a { min-height: 36px; font-size: 15px; }
 }
