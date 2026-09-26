@@ -222,7 +222,7 @@
 }
 
 /* LEGACY NAMES -- P5 deletes this block once `grep` finds no usage.
-   The dark-era sections (Hero, TourBand, AboutBand, CraftBand, WorkDeck,
+   The dark-era sections (AboutBand, CraftBand, WorkDeck,
    QuestionsBand, SkillsBand, CvBand, ContactBand, SiteNav, SiteFooter) and the
    four untouched routes still spell colours with the old names. Pointing each
    old name at its White Edition role makes every one of them render light (or
@@ -315,34 +315,6 @@
     transition-delay: calc(var(--wi, 0) * 52ms);
   }
   .rv-mask.in .w { transform: none; }
-
-  /* Hero annotation pills (Hero.tsx, replaced in P1). Renamed from `.pill`,
-     which is now the shared 28 px chip. Decoration only (aria-hidden). */
-  .hero-pill {
-    position: absolute;
-    z-index: 3;
-    white-space: nowrap;
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--ink-1);
-    background: var(--mist);
-    border: 1px solid var(--line);
-    border-radius: 100px;
-    padding: 8px 15px;
-  }
-  .hero-pill-1 { right: 13%; left: auto; top: 27%; animation: hero-pill-drift-1 9s ease-in-out infinite 1.1s; }
-  .hero-pill-2 { right: 7%; top: 43%; animation: hero-pill-drift-2 11s ease-in-out infinite 1.5s; }
-  .hero-pill-3 { right: 18%; left: auto; bottom: 30%; animation: hero-pill-drift-3 10s ease-in-out infinite 0.8s; }
-  @keyframes hero-pill-drift-1 { 0%, 100% { translate: 0 0; } 50% { translate: 0 -10px; } }
-  @keyframes hero-pill-drift-2 { 0%, 100% { translate: 0 0; } 50% { translate: 0 12px; } }
-  @keyframes hero-pill-drift-3 { 0%, 100% { translate: 0 0; } 50% { translate: 7px -7px; } }
-  @media (max-width: 1080px) {
-    .hero-pill { display: none; }
-  }
-
-  /* Hero portrait halo (replaced in P1). */
-  .halo { animation: halo-spin 24s linear infinite; }
-  @keyframes halo-spin { to { transform: rotate(360deg); } }
 }
 
 /* LEGACY, unlayered on purpose (unlayered CSS outranks Tailwind's utilities
@@ -372,21 +344,9 @@
   line-height: 1.5;
 }
 
-/* LEGACY reduced-motion overrides: .rv-mask (P5); .hero-pill, #hero, .halo (P1). */
+/* LEGACY reduced-motion override: .rv-mask (P5). */
 @media (prefers-reduced-motion: reduce) {
   .rv-mask .w { transform: none !important; transition: none !important; }
-  .hero-pill { animation: none !important; }
-  /* Releases Hero's 130vh sticky stage: a reduced-motion visitor should not
-     scroll through empty space. */
-  #hero { height: auto !important; min-height: 100vh; }
-  #hero [data-hero-stage] {
-    position: static !important;
-    height: auto !important;
-    min-height: 100vh;
-    opacity: 1 !important;
-    visibility: visible !important;
-  }
-  .halo { animation: none !important; }
 }
 
 /* =====================================================================

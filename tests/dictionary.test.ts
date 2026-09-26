@@ -56,15 +56,15 @@ describe('dictionary', () => {
     expect(dict.th.deckSubtitle).toBeTruthy();
   });
 
-  it('carries the project-tour labels in both locales', () => {
-    expect(dict.en.tourLabel).toBe('Things I shipped, running');
+  it('carries the hero-tour labels in both locales', () => {
     expect(dict.en.tourListLabel).toBe('Project tour');
-    expect(dict.en.tourPrev).toBe('Previous project');
-    expect(dict.en.tourNext).toBe('Next project');
     expect(dict.en.tourPause).toBe('Pause the tour');
     expect(dict.en.tourPlay).toBe('Play the tour');
-    expect(dict.en.tourStill).toBe('Still view');
-    for (const k of ['tourLabel', 'tourListLabel', 'tourPrev', 'tourNext', 'tourPause', 'tourPlay', 'tourStill'] as const) {
+    expect(dict.en.tourReplay).toBe('Replay the tour');
+    expect(dict.en.tourEndTitle).toBe('The idea, then the app.');
+    expect('tourLabel' in dict.en).toBe(false);
+    expect('tourStill' in dict.en).toBe(false);
+    for (const k of ['tourListLabel', 'tourPrev', 'tourNext', 'tourPause', 'tourPlay', 'tourReplay', 'tourChapters', 'tourOf', 'tourEndTitle', 'tourEndKicker'] as const) {
       expect(dict.th[k]).toBeTruthy();
     }
   });

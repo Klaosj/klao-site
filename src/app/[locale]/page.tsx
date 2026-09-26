@@ -3,10 +3,9 @@ import ClientsBand from '@/components/sections/ClientsBand';
 import ContactBand from '@/components/sections/ContactBand';
 import CraftBand from '@/components/sections/CraftBand';
 import CvBand from '@/components/sections/CvBand';
-import Hero from '@/components/sections/Hero';
+import HeroTour from '@/components/sections/HeroTour';
 import QuestionsBand from '@/components/sections/QuestionsBand';
 import SkillsBand from '@/components/sections/SkillsBand';
-import TourBand from '@/components/sections/TourBand';
 import WorkDeck from '@/components/sections/WorkDeck';
 import { getCareer, getFeaturedProjects, getProfile, getQuestions, getSkills } from '@/lib/content';
 import { assertLocale } from '@/lib/locale';
@@ -27,8 +26,12 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
   return (
     <>
-      <Hero profile={profile} locale={locale} />
-      <TourBand projects={projects} locale={locale} />
+      {/* White Edition (spec §4 row 1): the hero copy and the project tour are
+          one section (#top with #tour inside). It replaces the old dark Hero
+          and the separate tour band. The bands below are the pre-White-Edition
+          ones; P2–P4 replace them in C7 order, so this list shrinks phase by
+          phase. */}
+      <HeroTour profile={profile} projects={projects} locale={locale} />
       <AboutBand profile={profile} locale={locale} />
       <CraftBand locale={locale} />
       <WorkDeck projects={projects} locale={locale} />

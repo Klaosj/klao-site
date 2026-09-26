@@ -1,10 +1,6 @@
 import { imageAlt } from './image-alt';
 import type { Locale, Project, ProjectWash } from './models';
 
-/** The old ProjectTour's fixed slide length. Only ProjectTour still reads it;
- *  it goes with ProjectTour when HeroTour takes the page (this phase, Task 12). */
-export const TOUR_MS = 7000;
-
 /** Dwell per frame in ms, by what the frame shows (prototype TOUR, 24 Sep): a
  *  dense app screen ('img', Aje) 6.0 s, a live landing page ('win', GoNai)
  *  5.5 s, the Notion-row vignette ('notion', klao-site) 7.0 s — it plays two

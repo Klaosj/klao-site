@@ -188,13 +188,11 @@ const en = {
   // posts and questions, or nothing at all when neither has a date yet.
   contentUpdated: 'Content last updated',
   // Project tour (spec 2026-09-10 §8): the hero's screenshot walkthrough.
-  tourLabel: 'Things I shipped, running',
   tourListLabel: 'Project tour',
   tourPrev: 'Previous project',
   tourNext: 'Next project',
   tourPause: 'Pause the tour',
   tourPlay: 'Play the tour',
-  tourStill: 'Still view',
   // HeroTourStage (P1 Task 10): `{n}`/`{total}` are filled in by the
   // component itself, not fill() -- the slot always sits at the same spot
   // in both languages (no other template here needs per-locale reordering).
@@ -397,13 +395,11 @@ const th: typeof en = {
   statusBuilding: 'กำลังสร้าง',
   askedOn: 'ตั้งคำถามไว้เมื่อ',
   contentUpdated: 'อัปเดตเนื้อหาล่าสุด',
-  tourLabel: 'ของที่ผมสร้าง และยังรันอยู่',
   tourListLabel: 'ทัวร์โปรเจกต์',
   tourPrev: 'โปรเจกต์ก่อนหน้า',
   tourNext: 'โปรเจกต์ถัดไป',
   tourPause: 'หยุดทัวร์ชั่วคราว',
   tourPlay: 'เล่นทัวร์',
-  tourStill: 'มุมมองภาพนิ่ง',
   tourOf: '{n} จาก {total}',
   tourChapters: 'ตอน',
   tourReplay: 'ดูทัวร์อีกครั้ง',
