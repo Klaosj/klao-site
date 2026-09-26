@@ -31,8 +31,12 @@ function resolvedIsDark(): boolean {
  *  slides over the sun's core while the rays rotate and fade -- transform
  *  and opacity only, so it needs neither of the plan's two named CSS
  *  exceptions. `aria-hidden`: the segmented control next to it already
- *  carries the accessible name and the checked state. */
-function ThemeGlyph({ dark }: { dark: boolean }) {
+ *  carries the accessible name and the checked state. `ready` (fix wave
+ *  finding 1): unset for one frame after mount, so the mount-time sync from
+ *  the server's default guess to the visitor's actual theme never itself
+ *  plays as an eclipse -- see the `.seg-glyph:not([data-ready])` guard in
+ *  globals.css. */
+function ThemeGlyph({ dark, ready }: { dark: boolean; ready: boolean }) {
   const uid = useId();
   const maskId = `${uid}-eclipse`;
   return (
@@ -43,6 +47,7 @@ function ThemeGlyph({ dark }: { dark: boolean }) {
       aria-hidden="true"
       focusable="false"
       className={`seg-glyph${dark ? ' is-dark' : ''}`}
+      data-ready={ready ? 'true' : undefined}
     >
       <mask id={maskId}>
         <rect x="-4" y="-4" width="32" height="32" fill="#fff" />
@@ -71,6 +76,11 @@ export default function ThemeToggle({ locale, icons = true, className = '' }: Pr
   const labels: Record<ThemePref, string> = { auto: t.themeAuto, light: t.themeLight, dark: t.themeDark };
   const [pref, setPref] = useState<ThemePref>('auto');
   const [dark, setDark] = useState(false);
+  // Fix wave finding 1: false until one requestAnimationFrame after the
+  // first sync below, so globals.css can suppress the thumb/glyph
+  // transitions for that one sync (server guess -> visitor's real theme)
+  // without also killing them for every later click or arrow key.
+  const [ready, setReady] = useState(false);
   const btnRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   useEffect(() => {
@@ -86,9 +96,12 @@ export default function ThemeToggle({ locale, icons = true, className = '' }: Pr
     const mq = typeof matchMedia === 'function' ? matchMedia('(prefers-color-scheme: dark)') : null;
     const onSystemChange = () => setDark(resolvedIsDark());
     mq?.addEventListener?.('change', onSystemChange);
+    const raf =
+      typeof requestAnimationFrame === 'function' ? requestAnimationFrame(() => setReady(true)) : undefined;
     return () => {
       window.removeEventListener(THEME_EVENT, follow);
       mq?.removeEventListener?.('change', onSystemChange);
+      if (raf !== undefined) cancelAnimationFrame(raf);
     };
   }, []);
 
@@ -104,8 +117,13 @@ export default function ThemeToggle({ locale, icons = true, className = '' }: Pr
 
   // ARIA APG radiogroup pattern: arrow keys move the checked option (and
   // apply it at once, same as a click); every other key is left alone.
-  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    const dir = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+  // Fix wave finding 7: Right/Down both move forward and Left/Up both move
+  // back -- a radiogroup's arrow-key support isn't only horizontal -- and
+  // the focus move below is the roving tabIndex the APG pattern calls for
+  // (each button's tabIndex is 0 only when it is the checked one).
+  const onKeyDown = (e: KeyboardEvent<HTMLSpanElement>) => {
+    const dir =
+      e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 0;
     if (!dir) return;
     e.preventDefault();
     const i = PREFS.indexOf(pref);
@@ -116,11 +134,15 @@ export default function ThemeToggle({ locale, icons = true, className = '' }: Pr
 
   return (
     <span className={['inline-flex items-center gap-2', className].filter(Boolean).join(' ')}>
-      {icons && <ThemeGlyph dark={dark} />}
-      <div
+      {icons && <ThemeGlyph dark={dark} ready={ready} />}
+      {/* Fix wave finding 8: role="radiogroup" is a `span`, not a `div` --
+          the enclosing element two lines up is itself an inline `span`, and
+          a div is invalid content inside one (HTML5 §flow content nesting). */}
+      <span
         role="radiogroup"
         aria-label={t.appearance}
         className="seg"
+        data-ready={ready ? 'true' : undefined}
         style={{ ['--i' as string]: String(PREFS.indexOf(pref)) }}
         onKeyDown={onKeyDown}
       >
@@ -137,10 +159,16 @@ export default function ThemeToggle({ locale, icons = true, className = '' }: Pr
             tabIndex={pref === p ? 0 : -1}
             onClick={() => choose(p)}
           >
-            {labels[p]}
+            {/* Fix wave finding 6: `data-label` feeds the inner span's
+                hidden bold duplicate (globals.css `.seg-label::after`) that
+                reserves this label's width at font-weight 600, so becoming
+                the checked (bold) option never nudges the thumb. */}
+            <span className="seg-label" data-label={labels[p]}>
+              {labels[p]}
+            </span>
           </button>
         ))}
-      </div>
+      </span>
     </span>
   );
 }

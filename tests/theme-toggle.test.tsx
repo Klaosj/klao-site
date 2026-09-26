@@ -7,6 +7,9 @@ import { THEME_STORAGE_KEY, writeThemePref } from '@/lib/theme';
 
 const root = document.documentElement;
 const realStorage = Object.getOwnPropertyDescriptor(window, 'localStorage')!;
+// Same helper as tests/site-nav.test.tsx: waits for a real requestAnimationFrame
+// tick rather than a fake timer, since that's what the component itself uses.
+const flushRaf = () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
 
 beforeEach(() => {
   window.localStorage.clear();
@@ -68,19 +71,39 @@ describe('ThemeToggle', () => {
     expect(seg.style.getPropertyValue('--i')).toBe('0');
   });
 
-  it('moves the selection with ArrowRight/ArrowLeft and applies it at once (A01)', () => {
+  // Fix wave finding 7: a radiogroup's arrow-key support is not only
+  // horizontal (ARIA APG) -- ArrowDown/ArrowUp move the checked option
+  // exactly like ArrowRight/ArrowLeft -- and each move also carries focus
+  // to the newly-checked radio (roving tabIndex: only the checked radio is
+  // ever tabIndex 0).
+  it('moves the selection with ArrowRight/ArrowLeft/ArrowDown/ArrowUp, applies it at once, and moves focus (A01)', () => {
     render(<ThemeToggle locale="en" />);
     const seg = screen.getByRole('radiogroup');
     fireEvent.keyDown(seg, { key: 'ArrowRight' });
     expect(checked()).toEqual(['Light']);
     expect(root.getAttribute('data-theme')).toBe('light');
-    fireEvent.keyDown(seg, { key: 'ArrowRight' });
-    expect(checked()).toEqual(['Dark']);
-    fireEvent.keyDown(seg, { key: 'ArrowLeft' });
-    expect(checked()).toEqual(['Light']);
-    // Arrow keys that are not Left/Right do nothing.
+    let radio = screen.getByRole('radio', { name: 'Light' });
+    expect(document.activeElement).toBe(radio);
+    expect(radio.tabIndex).toBe(0);
+    expect(screen.getByRole('radio', { name: 'Auto' }).tabIndex).toBe(-1);
+
     fireEvent.keyDown(seg, { key: 'ArrowDown' });
+    expect(checked()).toEqual(['Dark']);
+    radio = screen.getByRole('radio', { name: 'Dark' });
+    expect(document.activeElement).toBe(radio);
+    expect(radio.tabIndex).toBe(0);
+
+    fireEvent.keyDown(seg, { key: 'ArrowUp' });
     expect(checked()).toEqual(['Light']);
+    expect(document.activeElement).toBe(screen.getByRole('radio', { name: 'Light' }));
+
+    fireEvent.keyDown(seg, { key: 'ArrowLeft' });
+    expect(checked()).toEqual(['Auto']);
+    expect(document.activeElement).toBe(screen.getByRole('radio', { name: 'Auto' }));
+
+    // A key that is not one of the four arrows does nothing.
+    fireEvent.keyDown(seg, { key: 'Enter' });
+    expect(checked()).toEqual(['Auto']);
   });
 
   it('keeps every toggle on the page in step (footer, phone menu, ⌘K)', () => {
@@ -149,5 +172,62 @@ describe('ThemeToggle', () => {
     fireEvent.click(screen.getByRole('radio', { name: 'Dark' }));
     expect(root.getAttribute('data-theme')).toBe('dark');
     expect(checked()).toEqual(['Dark']);
+  });
+
+  // Fix wave finding 8: the radiogroup wrapper is a <span>, matching the
+  // (also inline) <span> it lives inside -- a <div> there is invalid HTML
+  // (block content inside inline content) even though most browsers used
+  // to render it without visible damage.
+  it('renders the radiogroup itself as a <span>, not a <div> (A01, valid nesting)', () => {
+    const { container } = render(<ThemeToggle locale="en" />);
+    const group = screen.getByRole('radiogroup');
+    expect(group.tagName).toBe('SPAN');
+    expect(container.querySelector('div')).toBeNull();
+  });
+
+  // Fix wave finding 1: the mount-time sync (server's Auto guess -> the
+  // visitor's real theme) must not itself animate; `data-ready` is what
+  // globals.css keys that guard on, and it must show up shortly after
+  // mount (one requestAnimationFrame), not stay off forever.
+  it('marks `data-ready` on the segmented control and the glyph one frame after mount (fix wave finding 1)', async () => {
+    const { container } = render(<ThemeToggle locale="en" />);
+    const seg = screen.getByRole('radiogroup');
+    const glyph = container.querySelector('svg')!;
+    expect(seg.hasAttribute('data-ready')).toBe(false);
+    expect(glyph.hasAttribute('data-ready')).toBe(false);
+    // Unlike SiteNav's rAF-throttled sync() (a direct DOM mutation),
+    // setReady is a React state update, so committing it needs an act().
+    await act(() => flushRaf());
+    expect(seg.getAttribute('data-ready')).toBe('true');
+    expect(glyph.getAttribute('data-ready')).toBe('true');
+  });
+
+  // Deferred-T9: the glyph's is-dark class must follow the RESOLVED theme,
+  // including a live prefers-color-scheme change while the page stays open
+  // and the visitor is still on Auto (no stored light/dark choice).
+  it('T9: ThemeGlyph is-dark follows the resolved theme, incl. a live OS-level flip under Auto', () => {
+    let systemDark = true;
+    let onChange: (() => void) | undefined;
+    vi.stubGlobal('matchMedia', (q: string) => ({
+      matches: q.includes('dark') ? systemDark : false,
+      addEventListener: (_event: string, cb: () => void) => {
+        onChange = cb;
+      },
+      removeEventListener() {},
+    }));
+    const { container } = render(<ThemeToggle locale="en" />);
+    const glyph = () => container.querySelector('svg')!;
+    // Auto + a dark system starts the glyph in its moon state.
+    expect(glyph().classList.contains('is-dark')).toBe(true);
+
+    // The system flips to light while the page is still open, still Auto.
+    systemDark = false;
+    act(() => onChange?.());
+    expect(glyph().classList.contains('is-dark')).toBe(false);
+
+    // And back to dark.
+    systemDark = true;
+    act(() => onChange?.());
+    expect(glyph().classList.contains('is-dark')).toBe(true);
   });
 });
