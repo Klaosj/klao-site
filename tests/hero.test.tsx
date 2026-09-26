@@ -2,6 +2,7 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import Hero from '@/components/sections/Hero';
+import { dict } from '@/lib/dictionary';
 import type { Profile } from '@/lib/models';
 
 // This project has no RTL auto-cleanup wired up (see tests/particle-field.test.tsx,
@@ -169,14 +170,15 @@ describe('Hero', () => {
     // CopyEmail renders the plain-text email address as a real fallback,
     // always in the DOM regardless of clipboard support.
     expect(screen.getByText('real@example.com')).toBeTruthy();
-    // Its accessible name comes from CopyEmail's own aria-label
-    // (dict.en.copyEmailAction), not from its (mutating) text content.
-    // Matched by substring, not exact string: the name must CONTAIN the
-    // visible address to satisfy WCAG 2.5.3 Label in Name, and an exact-match
-    // assertion is exactly what let that regress unnoticed once already.
-    // CopyEmail's own spec owns the full contract.
-    const copyButton = screen.getByRole('button', { name: /Copy email address/ });
-    expect(copyButton.getAttribute('aria-label')).toContain('real@example.com');
+    // Task 8 rework: the address moved out of the button into its own
+    // always-visible sibling span (`.mail-addr`), so the icon-only button's
+    // accessible name is now a fixed dict.copyEmailAction rather than
+    // `${email}, ${action}` -- WCAG 2.5.3 Label in Name no longer applies to
+    // this button, because the address is no longer part of ITS visible
+    // content. CopyEmail's own spec (tests/copy-email.test.tsx) owns the
+    // full contract; this just checks Hero still wires the real address in.
+    const copyButton = screen.getByRole('button', { name: dict.en.copyEmailAction });
+    expect(copyButton.getAttribute('aria-label')).toBe(dict.en.copyEmailAction);
     // The mailto capsule is still present and still the primary action.
     const mailLink = container.querySelector('a[href="mailto:real@example.com"]');
     expect(mailLink).toBeTruthy();

@@ -1,0 +1,86 @@
+/* CopyEmail -- the prototype's `.mailrow` / `.copyb` / `.copyl`, updated per
+   polish amendment A03: the button's icon does not swap outright. Two
+   stacked 18 px glyphs sit in `.box` -- the clipboard fades/scales out
+   (transform + opacity only) while the check draws itself via
+   `stroke-dashoffset`, a named exception (master R27) allowed only on this
+   one 18 px inline-stroke icon. */
+.mail-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 22px;
+  font-size: 17px;
+  line-height: 25px;
+}
+.copy-b {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 22px;
+  background: transparent;
+  color: var(--ink-1);
+  cursor: pointer;
+  /* --ease-tick is reserved for exactly this confirmation (spec §5.5). */
+  transition: transform 260ms var(--ease-tick);
+}
+.copy-b:hover {
+  background: color-mix(in srgb, var(--ink-1) 6%, transparent);
+}
+.copy-b:active {
+  /* A03 press feedback: this button is a 44x44 icon-only circle, not P0's
+     44px-tall .btn pill, so the scale mirrors the polish lab's
+     `.copy:active` directly instead of inheriting `.btn:active`. */
+  transform: scale(0.97);
+}
+.copy-b[data-state='ok'] {
+  transform: scale(1.02);
+}
+/* A03: the two 18 px glyphs stack on top of each other in one box. */
+.box {
+  position: relative;
+  width: 18px;
+  height: 18px;
+}
+.box svg {
+  position: absolute;
+  inset: 0;
+  width: 18px;
+  height: 18px;
+}
+.clip {
+  transition: opacity 160ms var(--ease-glide), transform 200ms var(--ease-tick);
+}
+.copy-b[data-state='ok'] .clip {
+  opacity: 0;
+  transform: scale(0.7);
+}
+.ok path {
+  /* Named exception (master R27): the only non-transform/opacity transition
+     on the page, scoped to this one 18 px inline-stroke icon. */
+  stroke-dasharray: 20;
+  stroke-dashoffset: 20;
+  transition: stroke-dashoffset 360ms var(--ease-tick) 80ms;
+}
+.copy-b[data-state='ok'] .ok path {
+  stroke-dashoffset: 0;
+}
+.copy-l {
+  min-width: 5em;
+  font-size: 14px;
+  color: var(--ink-2);
+  text-align: left;
+}
+/* Copying needs JavaScript; the address itself stays for everyone. */
+html:not(.js) .copy-b,
+html:not(.js) .copy-l {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .copy-b,
+  .clip,
+  .ok path {
+    transition: none;
+  }
+}
