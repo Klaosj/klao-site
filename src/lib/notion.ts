@@ -1,8 +1,9 @@
 import { Client } from '@notionhq/client';
-import type { CareerEntry, OpenQuestion, Post, PostMeta, Profile, Project, ProjectStory, Skill } from './models';
+import type { CareerEntry, FaqItem, OpenQuestion, Post, PostMeta, Profile, Project, ProjectStory, Skill } from './models';
 import {
   mapBlocks,
   mapCareerEntry,
+  mapFaqItem,
   mapPostMeta,
   mapProfile,
   mapProject,
@@ -18,7 +19,7 @@ import {
 let cachedClient: Client | undefined;
 const client = (): Client => (cachedClient ??= new Client({ auth: process.env.NOTION_TOKEN }));
 
-const dbId = (name: 'PROJECTS' | 'POSTS' | 'CAREER' | 'PROFILE' | 'SKILLS' | 'QUESTIONS'): string => {
+const dbId = (name: 'PROJECTS' | 'POSTS' | 'CAREER' | 'PROFILE' | 'SKILLS' | 'QUESTIONS' | 'FAQ'): string => {
   const id = process.env[`NOTION_DB_${name}`];
   if (!id) throw new Error(`Missing env NOTION_DB_${name}`);
   return id;
@@ -115,6 +116,12 @@ export async function fetchSkills(): Promise<Skill[]> {
 
 export async function fetchQuestions(): Promise<OpenQuestion[]> {
   return (await queryAll(dbId('QUESTIONS'), true)).map(mapQuestion).filter(nonNull);
+}
+
+// P4 (spec §7): the FAQ DB. Only called by content.ts once NOTION_DB_FAQ is
+// set (getFaq serves fixtures until then), so dbId's throw can't fire mid-migration.
+export async function fetchFaq(): Promise<FaqItem[]> {
+  return (await queryAll(dbId('FAQ'), true)).map(mapFaqItem).filter(nonNull);
 }
 
 // Notion page/block ids are UUIDs: 32 hex chars, with or without dashes.
