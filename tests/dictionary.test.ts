@@ -31,7 +31,9 @@ describe('dictionary', () => {
   it('has no untranslated (en === th) string values, aside from explicitly shared keys', () => {
     // navFaq: "FAQ" is the Thai UI's word too (prototype UI.th.nav).
     // backToTour is three project names and an arrow -- identical by design.
-    const sharedKeys = new Set<string>(['navFaq', 'backToTour']);
+    // sigCardKicker (P2): "2022 · Tripedia · Co-founder" is a year, a name and a role title the
+    // prototype keeps in English on /th too.
+    const sharedKeys = new Set<string>(['navFaq', 'backToTour', 'sigCardKicker']);
     for (const [k, enVal] of Object.entries(dict.en)) {
       if (sharedKeys.has(k)) continue;
       const thVal = (dict.th as Record<string, unknown>)[k];
@@ -115,5 +117,30 @@ describe('dictionary', () => {
 
   it('never promises instant updates (the site refreshes through ISR, about an hour)', () => {
     expect(JSON.stringify(dict)).not.toMatch(/instant|immediately|ทันที/i);
+  });
+
+  it('carries the White Edition signature, index and sheet copy (prototype wording) in both locales', () => {
+    // sigTitle is not a key here (D-4 ruling): the scene's heading is P1's tourEndTitle reused,
+    // so it is asserted there, not duplicated in this dictionary.
+    expect(dict.en.sigCaption).toBe('Four years. The idea stayed.');
+    expect(dict.en.workDoor).toBe('By day: one retail-media deal, from first meeting to a network that runs itself ›');
+    expect(dict.en.lineageTitle).toBe('Same idea, four years apart.');
+    expect(dict.th.workTypeBuild).toBe('สร้างเอง');
+    expect(dict.th.deckSubtitle).toBe('ธุรกิจมาก่อน ทุกโปรเจกต์เริ่มจากคำถามที่มันตอบ');
+    // C-6 ruling: the rings sheet's own caption (prototype line 1170), so the drawing never
+    // reads as a real proportion.
+    expect(dict.en.sheetRingsCaption).toBe('Method, not to scale.');
+    expect(dict.th.sheetRingsCaption).toBe('วิธีคิด ไม่ใช่สัดส่วนจริง');
+    for (const k of ['lineageExisted', 'lineageTeam', 'lineageResult'] as const) {
+      expect(dict.en[k]).toHaveLength(3);
+      expect(dict.th[k]).toHaveLength(3);
+    }
+  });
+
+  it('never promises instant updates in the sheet note (ISR takes about an hour)', () => {
+    expect(dict.en.sheetNotionNote).toContain('within the hour');
+    for (const d of [dict.en, dict.th]) {
+      expect(d.sheetNotionNote).not.toMatch(/instant|immediately|ทันที/i);
+    }
   });
 });
