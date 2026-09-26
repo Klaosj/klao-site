@@ -21,6 +21,12 @@ export function makeProfile(overrides: Partial<Profile> = {}): Profile {
     resumeUrl: '/resume.pdf',
     clients: [],
     nameNative: null,
+    // P3 (By day) and P4 (close band) fields, at their mapper defaults: a
+    // Profile row from before the migration maps each of them to null.
+    prologue: null,
+    closingLine: null,
+    basedIn: null,
+    workingIn: null,
     ...overrides,
   };
 }
