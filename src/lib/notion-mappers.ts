@@ -1,4 +1,4 @@
-import type { CareerEntry, ContentBlock, Localized, OpenQuestion, PostMeta, Profile, Project, QuestionStatus, RichSpan, Skill, SkillTier } from './models';
+import type { CareerEntry, ContentBlock, Localized, OpenQuestion, PostMeta, Profile, Project, QuestionStatus, RichSpan, Skill, SkillTier, StoryChapter } from './models';
 import { QUESTION_STATUSES, SKILL_TIERS } from './models';
 import { slugKey } from './format';
 
@@ -197,6 +197,24 @@ export function mapQuestion(page: NotionPage): OpenQuestion | null {
     status: statusOf(page),
     linkSlug: text(page.properties.LinkSlug) || null,
     date,
+  };
+}
+
+// White Edition P3: the Story DB (spec §7). Gated on TitleEN alone -- the
+// same "one required field, everything else optional" shape as mapCareerEntry
+// -- so a half-written chapter in Notion still renders its title rather than
+// vanishing. Order falls back to 0 via num().
+export function mapStoryChapter(page: NotionPage): StoryChapter | null {
+  const titleEn = text(page.properties.TitleEN);
+  if (!titleEn) return skip('Story', page, 'missing TitleEN');
+  return {
+    id: page.id,
+    title: localized(titleEn, text(page.properties.TitleTH)),
+    body: localized(text(page.properties.BodyEN), text(page.properties.BodyTH)),
+    rule: localized(text(page.properties.RuleEN), text(page.properties.RuleTH)),
+    icon: selectOf(page.properties.Icon) ?? '',
+    sketch: selectOf(page.properties.Sketch) ?? '',
+    order: num(page.properties.Order),
   };
 }
 

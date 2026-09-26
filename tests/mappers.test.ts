@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { mapProject, mapCareerEntry, mapProfile, mapSkill, mapQuestion } from '@/lib/notion-mappers';
+import { mapProject, mapCareerEntry, mapProfile, mapSkill, mapQuestion, mapStoryChapter } from '@/lib/notion-mappers';
 import { slugKey } from '@/lib/format';
 
 const title = (s: string) => ({ title: [{ plain_text: s }] });
@@ -464,6 +464,59 @@ describe('mapQuestion', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const page = { ...questionPage, properties: { ...questionPage.properties, Question: title('') } };
     expect(mapQuestion(page)).toBeNull();
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
+  });
+});
+
+const storyPage = {
+  id: 'st1',
+  properties: {
+    TitleEN: title('Find the room.'),
+    TitleTH: rich('หาห้องที่ใช่'),
+    BodyEN: rich('I scope first, and **the NDA comes before any data changes hands.**'),
+    BodyTH: rich(''),
+    RuleEN: rich('Scope it honestly.'),
+    RuleTH: rich('ประเมินตามจริง'),
+    Icon: select('target-duotone'),
+    Sketch: select('room'),
+    Order: { number: 1 },
+    Published: { checkbox: true },
+  },
+};
+
+describe('mapStoryChapter', () => {
+  it('maps a full row, TH falling back to EN', () => {
+    expect(mapStoryChapter(storyPage)).toEqual({
+      id: 'st1',
+      title: { en: 'Find the room.', th: 'หาห้องที่ใช่' },
+      body: {
+        en: 'I scope first, and **the NDA comes before any data changes hands.**',
+        th: 'I scope first, and **the NDA comes before any data changes hands.**',
+      },
+      rule: { en: 'Scope it honestly.', th: 'ประเมินตามจริง' },
+      icon: 'target-duotone',
+      sketch: 'room',
+      order: 1,
+    });
+  });
+
+  it('maps a row with only a title to empty defaults instead of dropping it', () => {
+    expect(mapStoryChapter({ id: 'st2', properties: { TitleEN: title('Know the week it slips.') } })).toEqual({
+      id: 'st2',
+      title: { en: 'Know the week it slips.', th: 'Know the week it slips.' },
+      body: { en: '', th: '' },
+      rule: { en: '', th: '' },
+      icon: '',
+      sketch: '',
+      order: 0,
+    });
+  });
+
+  it('returns null and warns when TitleEN is missing', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const page = { ...storyPage, properties: { ...storyPage.properties, TitleEN: title('') } };
+    expect(mapStoryChapter(page)).toBeNull();
     expect(warn).toHaveBeenCalled();
     warn.mockRestore();
   });

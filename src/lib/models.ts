@@ -208,3 +208,18 @@ export interface OpenQuestion {
   // an invented one.
   date: string;
 }
+
+// White Edition P3 (C5, spec §7 Story DB): one By day chapter. `body`
+// carries one **bold** clause (BoldText renders it). `icon` / `sketch` are
+// the Notion select values as typed ('' when unset); src/lib/story.ts decides
+// which of them the page can actually draw, so a typo in Notion drops the
+// icon, never the chapter.
+export interface StoryChapter {
+  id: string;
+  title: Localized;
+  body: Localized;
+  rule: Localized;
+  icon: string;
+  sketch: string;
+  order: number;
+}

@@ -1,0 +1,110 @@
+[
+  {
+    "id": "fx-story-1",
+    "title": {
+      "en": "Find the room.",
+      "th": "หาห้องที่ใช่"
+    },
+    "body": {
+      "en": "I open new channels with Modern Trade retailers, from first contact to the shape of the partnership. I scope what is possible first, and **the NDA comes before any data changes hands.**",
+      "th": "ผมเปิดช่องทางใหม่กับค้าปลีก Modern Trade ตั้งแต่ติดต่อครั้งแรกจนได้รูปแบบพาร์ตเนอร์ชิป ประเมินสิ่งที่ทำได้จริงก่อน และ**เซ็น NDA ก่อนแลกข้อมูลกันเสมอ**"
+    },
+    "rule": {
+      "en": "Scope it honestly.",
+      "th": "ประเมินตามจริง"
+    },
+    "icon": "target-duotone",
+    "sketch": "room",
+    "order": 1
+  },
+  {
+    "id": "fx-story-2",
+    "title": {
+      "en": "Make the deal work for both sides.",
+      "th": "ทำดีลให้คุ้มทั้งสองฝั่ง"
+    },
+    "body": {
+      "en": "I weigh revenue share, profit share and a minimum guarantee, and model each in low, base and high cases before we commit, **so our position has a number behind it.**",
+      "th": "ผมชั่งระหว่าง revenue share, profit share และ minimum guarantee แล้วทำโมเดลแบบ low / base / high ก่อนตัดสินใจ **จุดยืนของเราจึงมีตัวเลขรองรับเสมอ**"
+    },
+    "rule": {
+      "en": "Say the number out loud.",
+      "th": "พูดตัวเลขออกมาตรงๆ"
+    },
+    "icon": "chart-line-up-duotone",
+    "sketch": "cases",
+    "order": 2
+  },
+  {
+    "id": "fx-story-3",
+    "title": {
+      "en": "Design what goes on the wall.",
+      "th": "ออกแบบสิ่งที่จะขึ้นบนผนังร้าน"
+    },
+    "body": {
+      "en": "With the planning team I price new in-store formats (digital shelf strips, LED archways, e-paper) and package them into tiered rate cards **a brand can buy and a store can run.**",
+      "th": "ร่วมกับทีม planning ผมตั้งราคาสื่อรูปแบบใหม่ในร้าน ทั้ง digital shelf strip, LED archway และ e-paper แล้วจัดเป็น rate card หลายระดับ **ที่แบรนด์ซื้อได้และร้านใช้งานได้จริง**"
+    },
+    "rule": {
+      "en": "Write it in both languages.",
+      "th": "เขียนให้ครบสองภาษา"
+    },
+    "icon": "translate-duotone",
+    "sketch": "formats",
+    "order": 3
+  },
+  {
+    "id": "fx-story-4",
+    "title": {
+      "en": "Put it in the stores.",
+      "th": "ติดตั้งให้ถึงหน้าร้าน"
+    },
+    "body": {
+      "en": "I roll out store by store, in batches, with a cost cap per store. When a supplier raised prices mid-project, **I renegotiated and found a new source**, and the budget held.",
+      "th": "ผมทยอยติดตั้งทีละสาขาเป็นล็อต โดยคุมงบต่อสาขาไว้ ตอนซัพพลายเออร์ขึ้นราคากลางโปรเจกต์ **ผมเจรจาใหม่และหาแหล่งใหม่** งบจึงไม่บาน"
+    },
+    "rule": {
+      "en": "Ship something that runs.",
+      "th": "ส่งของที่รันได้จริง"
+    },
+    "icon": "rocket-launch-duotone",
+    "sketch": "rollout",
+    "order": 4
+  },
+  {
+    "id": "fx-story-5",
+    "title": {
+      "en": "Hand it over so it keeps running.",
+      "th": "ส่งต่อให้ระบบเดินต่อได้เอง"
+    },
+    "body": {
+      "en": "I hand over to operations with an owner map, and set sales up in a Salesforce CRM they can run. The audience-measurement pilot has **consent written in from day one.**",
+      "th": "ผมส่งต่องานให้ทีม Operations พร้อมแผนผังว่าใครดูแลอะไร และวางระบบ Salesforce CRM ให้ทีมขายใช้งานเองได้ ส่วน pilot วัดผู้ชมหน้าจอ**ใส่เงื่อนไข consent ไว้ตั้งแต่วันแรก**"
+    },
+    "rule": {
+      "en": "Then hand over the keys.",
+      "th": "แล้วส่งกุญแจให้"
+    },
+    "icon": "key-duotone",
+    "sketch": "handover",
+    "order": 5
+  },
+  {
+    "id": "fx-story-6",
+    "title": {
+      "en": "Know the week it slips.",
+      "th": "รู้ตั้งแต่สัปดาห์ที่งานเริ่มเลื่อน"
+    },
+    "body": {
+      "en": "Every task has an owner, a due date and a baseline agreed with management, so a slip shows up the week it happens. A 30-point checklist covers every launch, from terms to audit. **I built that tracker myself.**",
+      "th": "ทุกงานมีเจ้าของ มีวันส่ง และมีแผนที่ตกลงกับผู้บริหารไว้ งานไหนเลื่อนจะเห็นภายในสัปดาห์นั้นเลย ทุกการเปิดตัวเดินตาม checklist 30 ข้อ ตั้งแต่เงื่อนไขการค้าจนถึงการตรวจหลังเปิดใช้งาน **ระบบนี้ผมสร้างเอง**"
+    },
+    "rule": {
+      "en": "Leave it maintainable.",
+      "th": "ทิ้งไว้ให้ดูแลต่อได้"
+    },
+    "icon": "wrench-duotone",
+    "sketch": "",
+    "order": 6
+  }
+]

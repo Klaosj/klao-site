@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'vitest';
+import { renderToStaticMarkup } from 'react-dom/server';
 import careerFixture from '@/content/fixtures/career.json';
 import profileFixture from '@/content/fixtures/profile.json';
+import storyFixture from '@/content/fixtures/story.json';
+import { Sketch } from '@/components/sketches';
 import { getCareer, getProfile } from '@/lib/content';
 import { slugKey } from '@/lib/format';
-import type { CareerEntry } from '@/lib/models';
+import { isStoryIcon, isStorySketch } from '@/lib/story';
+import type { CareerEntry, StoryChapter } from '@/lib/models';
 
 // Two-layer rule (master Global Constraints): the fixtures are what the site
 // renders without Notion, so they must carry every field the mapper
@@ -67,5 +71,36 @@ describe('profile fixture (P3 fields)', () => {
 
   it('spells Actmedia the approved way everywhere in the profile', () => {
     expect(JSON.stringify(profileFixture)).not.toContain('ActMedia');
+  });
+});
+
+describe('story fixture (prototype CH + RULES)', () => {
+  const chapters = storyFixture as StoryChapter[];
+
+  it('has six chapters ordered 1..6, each body with exactly one bold clause per language', () => {
+    expect(chapters.map((c) => c.order)).toEqual([1, 2, 3, 4, 5, 6]);
+    expect(chapters[0].title).toEqual({ en: 'Find the room.', th: 'หาห้องที่ใช่' });
+    expect(chapters[5].rule.en).toBe('Leave it maintainable.');
+    for (const c of chapters) {
+      expect(c.body.en.match(/\*\*/g)).toHaveLength(2);
+      expect(c.body.th.match(/\*\*/g)).toHaveLength(2);
+    }
+  });
+
+  it('uses only icon and sketch names the page can draw; chapter 6 has no sketch (phase strip instead)', () => {
+    for (const c of chapters) {
+      expect(isStoryIcon(c.icon)).toBe(true);
+      if (c.sketch) expect(isStorySketch(c.sketch)).toBe(true);
+    }
+    expect(chapters[5].sketch).toBe('');
+    expect(isStoryIcon('not-an-icon')).toBe(false);
+    expect(isStorySketch('nope')).toBe(false);
+  });
+
+  it('every named sketch renders an <svg> through the P0 Sketch component', () => {
+    for (const c of chapters) {
+      if (!isStorySketch(c.sketch)) continue;
+      expect(renderToStaticMarkup(<Sketch name={c.sketch} />)).toContain('<svg');
+    }
   });
 });
