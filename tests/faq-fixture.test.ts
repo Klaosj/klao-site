@@ -3,7 +3,7 @@ import careerFixture from '@/content/fixtures/career.json';
 import faqFixture from '@/content/fixtures/faq.json';
 import projectsFixture from '@/content/fixtures/projects.json';
 import { parseTarget } from '@/lib/link-target';
-import type { FaqItem, Project } from '@/lib/models';
+import type { CareerEntry, FaqItem, Project } from '@/lib/models';
 import { mapFaqItem } from '@/lib/notion-mappers';
 import { projectKey } from '@/lib/sheet-url';
 
@@ -46,30 +46,15 @@ describe('faq.json (two-layer rule: Notion + fixtures)', () => {
   });
 
   it('points every link at something the fixtures actually have', () => {
-    // Merge note (lane l3, P4 Task 4): CareerEntry.key is P3's field
-    // (lane l2, `key: slugKey(company)`, master plan P3 line ~230) and has
-    // not landed in this worktree yet -- career.json here still has no
-    // `key` property. Until P3 merges, check the FAQ's career targets
-    // against the companies they're meant to name (per preflight.md row
-    // P3-b's pinned key list: actmedia, casetify, mmb-technology,
-    // vela-central-world, a-bun-dance) instead of a stored `key`. Once
-    // P3's CareerEntry.key lands, swap this back to
-    // `new Set((careerFixture as CareerEntry[]).map((c) => c.key))`.
-    const companyByCareerKey: Record<string, string> = {
-      actmedia: 'Actmedia',
-      'a-bun-dance': 'A Bun Dance (Craft Burger)',
-    };
-    const careerCompanies = new Set((careerFixture as { company: string }[]).map((c) => c.company));
+    // Career targets resolve against CareerEntry.key (P3, slugKey(company)),
+    // the same handle CareerDetent and the palette use to open a role.
+    const careerKeys = new Set((careerFixture as CareerEntry[]).map((c) => c.key));
     const projectKeys = new Set((projectsFixture as Project[]).map((p) => projectKey(p)));
     for (const item of items) {
       for (const link of item.links) {
         const t = parseTarget(link.target);
         expect(t, link.target).not.toBeNull();
-        if (t?.kind === 'career') {
-          const company = companyByCareerKey[t.key];
-          expect(company, `career key "${t.key}" has no known company mapping`).toBeDefined();
-          expect(careerCompanies.has(company), `career company "${company}"`).toBe(true);
-        }
+        if (t?.kind === 'career') expect(careerKeys.has(t.key), `career key "${t.key}"`).toBe(true);
         if (t?.kind === 'sheet') expect(projectKeys.has(t.key), `project key "${t.key}"`).toBe(true);
       }
     }
