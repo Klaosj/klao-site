@@ -20,16 +20,28 @@
   .ht-slide[data-on] { opacity: 1; visibility: visible; }
   .ht-slide[data-top] { z-index: 2; animation: ht-in 700ms var(--ease-glide) both; }
 
-  /* The frame: a screenshot window that fades into the page at its bottom
-     edge, static and unconditional (polish A08) -- masked here, on the frame
-     itself, never on the caption pill below (see hero-tour-stage.test.tsx). */
+  /* The frame. */
   .ht-card {
     position: absolute; top: 40px; left: 7%; width: 86%; aspect-ratio: 1580 / 900;
     overflow: hidden; border-radius: 14px;
-    background: var(--canvas); box-shadow: var(--e2);
+    background: var(--canvas);
+  }
+  /* Fix round 1 (Important #1): the bottom-fade mask (polish A08) is a
+     screenshot-window effect only -- it must never reach the klao-site
+     Notion vignette, whose headline (including its EN -> TH switch) has to
+     stay fully legible. `:has(> .ht-cam)` is true only for a card that
+     actually holds a screenshot <img>; the vignette's card has none. Never
+     on the caption pill below either (see hero-tour-stage.test.tsx). */
+  .ht-card:has(> .ht-cam) {
     -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent 98%);
     mask-image: linear-gradient(to bottom, #000 55%, transparent 98%);
   }
+  /* Fix round 1 (Important #3): a mask clips everything painted for the
+     element it's on, box-shadow included -- so `--e2` on a masked card
+     rendered invisible anyway (mask-clip's default border-box). Declaring
+     it only on the one card kind that keeps it (the vignette, never
+     masked) means the CSS says what actually renders. */
+  .ht-card:not(:has(> .ht-cam)) { box-shadow: var(--e2); }
   .ht-card::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 .5px rgb(0 0 0 / .14); pointer-events: none; }
   .ht-cam { display: block; width: 100%; height: 100%; object-fit: cover; }
   /* The camera: a slow, linear 1.00 -> 1.03 push across the frame's dwell and
@@ -89,12 +101,21 @@
      same way the paddles do; only position and size are local. */
   .ht-play { position: relative; flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; font-size: 16px; }
   .ht-play::after { content: ""; position: absolute; inset: -2px; }
+  /* Fix round 1 (Important #8): before JS runs there is no click handler
+     and no autoplay behind this button (html.js, the P0 pre-paint script,
+     only exists once JS is live) -- html:not(.js) means a no-JS visitor
+     never sees a dead control. The prototype hides Play under reduced
+     motion the same way; doing it here in CSS, not by waiting for the
+     component's own post-mount effect, means it is gone from the very
+     first paint -- never a flash of a control about to disappear. */
+  html:not(.js) .ht-play { display: none; }
 
   /* Play/Pause glyph: two bars morph into a triangle via clip-path on a
      20 px icon (polish A04) -- the one named clip-path exception (master
-     Global Constraints), scoped to exactly this glyph. No morph, no bars:
-     the two states just mean "click to pause" (bars, the tour is running)
-     and "click to play" (triangle, `data-paused`). */
+     Global Constraints), scoped to exactly this glyph. Default (no
+     [data-paused]): two bars, "click to pause" -- the tour is running.
+     [data-paused]: the same two bars reclipped into a triangle, "click to
+     play". */
   .ht-pp { position: relative; width: 20px; height: 20px; }
   .ht-pp i { position: absolute; inset: 0; background: currentColor; transition: clip-path 260ms var(--ease-settle); }
   .ht-pp i:first-child { clip-path: polygon(18% 12%, 40% 12%, 40% 88%, 18% 88%); }
@@ -110,6 +131,12 @@
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .ht-q:hover .ht-qt { text-decoration: underline; text-underline-offset: .15em; }
+  /* Fix round 1 (Important #5): ThaiText's keep-runs (.nw/.kt) are
+     inline-block, so an ancestor's text-decoration stops at each one's own
+     edge instead of drawing through it (documented trap, ThaiText.tsx) --
+     a Thai caption's hover underline needs the same declaration repeated
+     on the keep-run spans themselves to actually reach them. */
+  .ht-q:hover .ht-qt :is(.nw, .kt) { text-decoration: underline; text-underline-offset: .15em; }
   .ht-chev { display: inline-block; margin-left: 4px; transition: transform 200ms var(--ease-settle); }
   .ht-q:hover .ht-chev { transform: translateX(2px); }
   .ht-k { font-size: 13px; line-height: 18px; color: var(--ink-1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -119,6 +146,14 @@
      animates (transform). */
   .ht-dots { flex: none; display: flex; align-items: center; contain: layout paint; }
   .ht-dot { display: grid; place-items: center; width: 24px; height: 24px; padding: 0; border: 0; background: none; cursor: pointer; }
+  /* Fix round 1 (Important #2): the global focus ring (globals.css) draws
+     2px outside the element with a 2px offset, but `.ht-dots`' own paint
+     containment clips anything painted outside ITS bounds -- on the only
+     tabbable dot, only a sliver of the ring survives (WCAG 2.4.7). Drawing
+     the ring INSIDE the dot's own box instead keeps `contain: paint`
+     (the animated fill bar inside each dot is the reason it's there) and
+     keeps the ring fully visible. */
+  .ht-dot:focus-visible { outline-offset: -2px; }
   .ht-dot[aria-selected="true"] { width: 52px; }
   .ht-dot i { position: relative; display: block; width: 8px; height: 8px; overflow: hidden; border-radius: 4px; background: var(--ink-3); }
   .ht-dot[aria-selected="true"] i { width: 36px; background: color-mix(in srgb, var(--ink-1) 22%, transparent); }
@@ -144,6 +179,11 @@
     .ht-cam[data-run], .ht-dot b[data-run], .ht-vig * { animation: none; }
     .ht-dot[aria-selected="true"] b { transform: none; }
     .ht-chev { transition: none; }
+    /* Fix round 1 (Important #8): same reasoning as html:not(.js) above --
+       the component already renders the paddles instead of Play once its
+       own effect detects this, but that effect runs after mount; this
+       hides the button from the first paint, before that effect can run. */
+    .ht-play { display: none; }
   }
 
   /* Phone: 6:5 stage, full-bleed picture, the pill below the stage (spec §6). */
@@ -151,7 +191,12 @@
     .ht-tour { margin-top: 28px; }
     .ht-stage-z { width: calc(100% - 24px); }
     .ht-stage { aspect-ratio: 6 / 5; border-radius: 18px; }
-    .ht-card { inset: 0; width: auto; top: 0; left: 0; aspect-ratio: auto; border-radius: 0; box-shadow: none; }
+    .ht-card { inset: 0; width: auto; top: 0; left: 0; aspect-ratio: auto; border-radius: 0; }
+    /* Matches the desktop rule's own selector, not just `.ht-card`: that
+       rule's `:not(:has(...))` outweighs a plain `.ht-card` on specificity
+       alone, so a same-specificity override is the only way this actually
+       wins on mobile (the screenshot cards never had a shadow to reset). */
+    .ht-card:not(:has(> .ht-cam)) { box-shadow: none; }
     .ht-card::after { display: none; }
     .ht-vig { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
     .ht-vig-n { padding: 16px 16px 8px; border-right: 0; border-bottom: 1px solid rgb(20 26 44 / .08); }

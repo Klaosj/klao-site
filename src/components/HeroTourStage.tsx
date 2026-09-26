@@ -4,6 +4,7 @@ import { useEffect, useId, useReducer, useRef, useState, type FocusEvent, type K
 import { Icon } from '@/components/icons';
 import ThaiText from '@/components/ThaiText';
 import { dict } from '@/lib/dictionary';
+import { fill } from '@/lib/format';
 import type { Locale, ProjectWash } from '@/lib/models';
 import type { TourSlide, TourVignette } from '@/lib/project-tour';
 import { initialTourState, tourReducer } from '@/lib/tour-player';
@@ -94,7 +95,13 @@ export default function HeroTourStage({ slides, vignette, locale }: Props) {
       setInView(true);
       return;
     }
-    const io = new IntersectionObserver(([entry]) => setInView(entry.intersectionRatio >= 0.5), { threshold: [0, 0.5, 1] });
+    // Fix round 1 (Important #7): a browser may deliver more than one entry
+    // in a single callback (e.g. two threshold crossings coalesced into one
+    // frame); the LAST one is the current state, not the first.
+    const io = new IntersectionObserver(
+      (entries) => setInView(entries[entries.length - 1].intersectionRatio >= 0.5),
+      { threshold: [0, 0.5, 1] },
+    );
     io.observe(el);
     return () => io.disconnect();
   }, []);
@@ -175,7 +182,7 @@ export default function HeroTourStage({ slides, vignette, locale }: Props) {
     if (Math.abs(dx) > SWIPE_PX && Math.abs(dx) > 1.5 * Math.abs(dy)) go(s.index + (dx < 0 ? 1 : -1));
   };
 
-  const of = (n: number) => t.tourOf.replace('{n}', String(n)).replace('{total}', String(count));
+  const of = (n: number) => fill(t.tourOf, { n, total: count });
   const current = slides[s.index];
   const playLabel = ended ? t.tourReplay : s.phase === 'playing' ? t.tourPause : t.tourPlay;
   // The vignette plays its EN -> TH beat while autoplay sits on it; at rest it
@@ -259,7 +266,11 @@ export default function HeroTourStage({ slides, vignette, locale }: Props) {
             type="button"
             className="ht-play ctl"
             aria-label={playLabel}
-            aria-pressed={s.phase === 'paused'}
+            // Fix round 1 (Important #6): Replay (phase 'done') is a
+            // one-shot action, not a toggle -- it must not claim a pressed
+            // state either way. aria-pressed only ever applies to the
+            // Pause/Play toggle itself.
+            aria-pressed={ended ? undefined : s.phase === 'paused'}
             onClick={onPlay}
           >
             {ended ? (
@@ -284,13 +295,13 @@ export default function HeroTourStage({ slides, vignette, locale }: Props) {
             {ended ? (
               <a className="ht-q" href="#signature">
                 <span className="ht-qt">
-                  <ThaiText text={t.tourEndTitle} />
+                  <ThaiText text={t.tourEndTitle} display />
                 </span>
               </a>
             ) : (
               <a className="ht-q" href={current.href}>
                 <span className="ht-qt">
-                  <ThaiText text={current.question} />
+                  <ThaiText text={current.question} display />
                 </span>
                 <span className="ht-chev" aria-hidden="true">
                   ›
@@ -355,7 +366,7 @@ function Vignette({ vignette, beat }: { vignette: TourVignette; beat: VignetteBe
         <div className="ht-vrow" data-row="th">
           <b>Title TH</b>
           <span lang="th">
-            <ThaiText text={vignette.titleTh} />
+            <ThaiText text={vignette.titleTh} display />
           </span>
           <i className="ht-ul" />
         </div>
@@ -370,7 +381,7 @@ function Vignette({ vignette, beat }: { vignette: TourVignette; beat: VignetteBe
           {vignette.titleEn}
         </div>
         <div className="ht-vh1" data-v="th" lang="th">
-          <ThaiText text={vignette.titleTh} />
+          <ThaiText text={vignette.titleTh} display />
         </div>
         <small>klao-site · EN / TH</small>
       </div>

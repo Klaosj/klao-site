@@ -15,6 +15,11 @@ import { firstName, NAV_LABEL_KEY, NAV_SECTIONS, sectionHref, type NavSection } 
 import './nav-menu.css';
 
 const COPIED_MS = 2000;
+// Fix round 1 (Minor #12, from P1 T11's review): CopyEmail holds its honest
+// failure hint longer than a plain success, on the reasoning that a hint
+// telling someone to do something themselves (⌘C) needs more reading time
+// than a one-word confirmation.
+const COPY_FAILED_MS = 3000;
 
 /**
  * The phone menu (spec §6; prototype renderMenu): the Menu button that sits in
@@ -75,8 +80,12 @@ export default function NavMenu({ locale, profile, active }: { locale: Locale; p
     const ok = await copyText(profile.email);
     setCopyState(ok ? 'ok' : 'fail');
     if (copyTimer.current) clearTimeout(copyTimer.current);
-    copyTimer.current = setTimeout(() => setCopyState('idle'), COPIED_MS);
+    copyTimer.current = setTimeout(() => setCopyState('idle'), ok ? COPIED_MS : COPY_FAILED_MS);
   };
+  // Fix round 1 (Minor #12): computed once and reused for both the button's
+  // own label and the sr-only live region, the way CopyEmail does -- two
+  // separate ternaries could drift out of sync with each other.
+  const copyMessage = copyState === 'ok' ? t.copied : copyState === 'fail' ? copyShortcutHint(t.closeCopyFail) : '';
 
   return (
     <>
@@ -136,7 +145,7 @@ export default function NavMenu({ locale, profile, active }: { locale: Locale; p
               )}
               {profile.email && (
                 <button type="button" className="btn btn-out" onClick={copy}>
-                  {copyState === 'ok' ? t.copied : copyState === 'fail' ? copyShortcutHint(t.closeCopyFail) : t.copyEmail}
+                  {copyMessage || t.copyEmail}
                 </button>
               )}
               {profile.resumeUrl && (
@@ -146,7 +155,7 @@ export default function NavMenu({ locale, profile, active }: { locale: Locale; p
               )}
             </div>
             <span className="sr-only" aria-live="polite">
-              {copyState === 'ok' ? t.copied : copyState === 'fail' ? copyShortcutHint(t.closeCopyFail) : ''}
+              {copyMessage}
             </span>
           </>
         )}

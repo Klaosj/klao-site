@@ -193,9 +193,6 @@ const en = {
   tourNext: 'Next project',
   tourPause: 'Pause the tour',
   tourPlay: 'Play the tour',
-  // HeroTourStage (P1 Task 10): `{n}`/`{total}` are filled in by the
-  // component itself, not fill() -- the slot always sits at the same spot
-  // in both languages (no other template here needs per-locale reordering).
   tourOf: '{n} of {total}',
   tourChapters: 'Chapters',
   tourReplay: 'Replay the tour',

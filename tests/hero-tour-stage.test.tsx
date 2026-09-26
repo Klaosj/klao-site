@@ -139,6 +139,9 @@ describe('HeroTourStage', () => {
     expect(tour().querySelector('.ht-q')!.getAttribute('href')).toBe('#signature');
     expect(kicker()).toBe(dict.en.tourEndKicker);
     expect(playButton().getAttribute('aria-label')).toBe(dict.en.tourReplay);
+    // Fix round 1 (Important #6): Replay is a one-shot action, not a
+    // toggle -- it must not report a pressed state either way.
+    expect(playButton().hasAttribute('aria-pressed')).toBe(false);
     expect(tabs().every((b) => b.hasAttribute('data-done'))).toBe(true);
     tick(60000);
     expect(selected()).toBe(2); // never wraps
@@ -348,7 +351,14 @@ describe('HeroTourStage', () => {
   it('ends on the klao-site Notion-row vignette: the headline in both languages, decorative for screen readers', () => {
     renderStage();
     const vig = tour().querySelector('.ht-vig') as HTMLElement;
-    const text = (vig.textContent ?? '').replace(/ /g, ' '); // keep-runs (C3) may use no-break spaces
+    // Fix round 1 (found alongside #4): this must replace the ACTUAL no-break
+    // space (U+00A0, not a plain ASCII space either side) -- display mode
+    // (R25, now used for this Thai text) inserts one right after "นัก" and
+    // before "Business" (src/lib/thai.ts's displayRuns), which the previous
+    // `replace(/ /g, ' ')` here never matched (both sides were plain spaces,
+    // a no-op that only "passed" because default mode happened not to emit
+    // one for this particular string).
+    const text = (vig.textContent ?? '').replace(/ /g, ' ');
     expect(vig.getAttribute('aria-hidden')).toBe('true');
     expect(text).toContain('Business developer who builds his own tools.');
     expect(text).toContain('นัก Business Development ที่สร้างเครื่องมือใช้เอง');
@@ -383,6 +393,24 @@ describe('HeroTourStage', () => {
     expect(playButton().getAttribute('aria-label')).toBe(dict.th.tourPlay);
   });
 
+  // Fix round 1 (Important #7): a browser can deliver more than one entry
+  // to a single IntersectionObserver callback (coalesced threshold
+  // crossings); only the LAST one is the current state.
+  it('uses the last entry when the observer delivers more than one in a single callback', () => {
+    renderStage();
+    FakeIO.watching(stage()).fire([
+      { target: stage(), intersectionRatio: 0.9, isIntersecting: true },
+      { target: stage(), intersectionRatio: 0.2, isIntersecting: false },
+    ]);
+    tick(20000);
+    expect(selected()).toBe(0); // the LAST entry (0.2) is under half: never started
+    FakeIO.watching(stage()).fire([
+      { target: stage(), intersectionRatio: 0.1, isIntersecting: false },
+      { target: stage(), intersectionRatio: 0.9, isIntersecting: true },
+    ]);
+    expect(playButton().getAttribute('aria-label')).toBe(dict.en.tourPause); // the LAST entry (0.9) starts it
+  });
+
   // Polish amendment A04: the Pause/Play control is one clip-path morph, not
   // an icon swap. aria-pressed is a second, independent signal from the
   // label -- it reflects the tour-player phase 'paused' specifically (not
@@ -404,13 +432,32 @@ describe('HeroTourStage', () => {
 // Polish amendments A04 (Pause/Play clip-path morph) and A08 (screenshot
 // fade). Both are named exceptions to the master Global Constraint ("only
 // transform and opacity animate") and a placement rule ("mask the frame,
-// never the pill") -- this reads the stylesheet as text (jsdom computes no
-// CSS) so a regression that widens either exception, or moves the mask onto
-// the caption pill, fails here rather than only being visible on screen.
+// never the pill, never the vignette") -- this reads the stylesheet as text
+// (jsdom computes no CSS) so a regression that widens either exception, or
+// moves the mask onto the caption pill or the klao-site vignette, fails here
+// rather than only being visible on screen.
 describe('hero-tour-stage.css (polish A04 + A08 exceptions)', () => {
   const CSS = readFileSync('src/components/hero-tour-stage.css', 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
 
-  it("animates only transform/opacity, except the Pause/Play glyph's clip-path", () => {
+  // Extracts one `@keyframes name { ... }` block by balanced braces (a
+  // flat regex can't stop at the right `}` once a block itself is
+  // multi-line) -- same technique as tests/p2-css.test.ts.
+  function keyframeBlock(css: string, name: string): string {
+    const start = css.indexOf(`@keyframes ${name} {`);
+    if (start < 0) throw new Error(`missing @keyframes ${name}`);
+    let depth = 0;
+    for (let i = css.indexOf('{', start); i < css.length; i++) {
+      if (css[i] === '{') depth++;
+      else if (css[i] === '}') {
+        depth--;
+        if (depth === 0) return css.slice(start, i + 1);
+      }
+    }
+    throw new Error(`unbalanced @keyframes ${name}`);
+  }
+  const keyframeNames = (css: string): string[] => [...css.matchAll(/@keyframes\s+([\w-]+)\s*\{/g)].map((m) => m[1]);
+
+  it("animates only transform/opacity via transition, except the Pause/Play glyph's clip-path", () => {
     let sawException = false;
     for (const rule of CSS.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
       const selector = rule[1].trim();
@@ -432,10 +479,45 @@ describe('hero-tour-stage.css (polish A04 + A08 exceptions)', () => {
     expect(sawException).toBe(true);
   });
 
-  it('fades the screenshot frame into the page, never the pill (polish A08)', () => {
-    const frameRule = CSS.slice(CSS.indexOf('.ht-card {'), CSS.indexOf('.ht-card::after'));
-    expect(frameRule).toContain('-webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent 98%);');
-    expect(frameRule).toContain('mask-image: linear-gradient(to bottom, #000 55%, transparent 98%);');
+  // Fix round 1 (Important #10): the transition scan above never looked
+  // inside @keyframes -- a keyframe that animated some other property
+  // would have slipped through uncaught.
+  it('animates only transform/opacity inside every @keyframes block', () => {
+    const names = keyframeNames(CSS);
+    expect(names.length).toBeGreaterThan(0); // the scan itself works
+    for (const name of names) {
+      const kf = keyframeBlock(CSS, name);
+      for (const decl of kf.matchAll(/([a-z-]+)\s*:/g)) {
+        expect(['opacity', 'transform'], `@keyframes ${name}: ${decl[1]}`).toContain(decl[1]);
+      }
+    }
+  });
+
+  it('fades only the screenshot frame into the page, never the vignette or the pill (polish A08)', () => {
+    const maskStart = CSS.indexOf('.ht-card:has(> .ht-cam) {');
+    expect(maskStart, 'no .ht-card:has(> .ht-cam) rule').toBeGreaterThan(-1);
+    const maskRule = CSS.slice(maskStart, CSS.indexOf('}', maskStart));
+    expect(maskRule).toContain('-webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent 98%);');
+    expect(maskRule).toContain('mask-image: linear-gradient(to bottom, #000 55%, transparent 98%);');
+    // Fix round 1 (Important #1): the mask must never reach the card that
+    // does NOT hold a screenshot (the klao-site Notion vignette), the
+    // caption pill, or the .ht-vig element itself.
+    expect(CSS).not.toMatch(/\.ht-card:not\(:has\(> \.ht-cam\)\)[^{]*\{[^}]*mask-image/);
+    expect(CSS).not.toMatch(/\.ht-vig[^{]*\{[^}]*mask-image/);
     expect(CSS).not.toMatch(/\.ht-pill[^{]*\{[^}]*mask-image/);
+  });
+
+  // Fix round 1 (Important #3): a masked card's outer box-shadow paints
+  // invisibly (the mask clips it too), so it must be declared only on the
+  // card kind that is never masked -- the vignette.
+  it('declares the outer lift shadow only on the unmasked (vignette) card', () => {
+    expect(CSS).toContain('.ht-card:not(:has(> .ht-cam)) { box-shadow: var(--e2); }');
+    expect(CSS).not.toMatch(/\.ht-card:has\(> \.ht-cam\)[^{]*\{[^}]*box-shadow/);
+  });
+
+  // Fix round 1 (Important #2): WCAG 2.4.7 -- the only tabbable dot's focus
+  // ring must not be clipped by `.ht-dots`' paint containment.
+  it("keeps the tab dots' focus ring inside the containing box (WCAG 2.4.7)", () => {
+    expect(CSS).toContain('.ht-dot:focus-visible { outline-offset: -2px; }');
   });
 });
