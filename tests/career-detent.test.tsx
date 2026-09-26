@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import CareerDetent from '@/components/CareerDetent';
 import { CAREER_EVENT } from '@/lib/career';
 import type { CareerEntry } from '@/lib/models';
+import { installFakeIO } from './helpers/io';
 
 // No RTL auto-cleanup in this project (see tests/hero.test.tsx).
 afterEach(cleanup);
@@ -12,7 +13,7 @@ let scrolled: ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
   vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
-  vi.stubGlobal('IntersectionObserver', class { observe() {} unobserve() {} disconnect() {} });
+  installFakeIO();
   // jsdom has no layout, so scrollIntoView does not exist; record calls instead.
   scrolled = vi.fn();
   Element.prototype.scrollIntoView = scrolled as unknown as Element['scrollIntoView'];

@@ -3,6 +3,7 @@ import { act, cleanup, render } from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import SignatureScene, { type SignatureCopy } from '@/components/SignatureScene';
+import { FakeIO, installFakeIO } from './helpers/io';
 
 const COPY: SignatureCopy = {
   eyebrow: '2022 → 2026',
@@ -23,8 +24,6 @@ const COPY: SignatureCopy = {
   frameAlt: 'GoNai home screen: Plan a full day out, know every baht before you leave, with a budget prompt.',
 };
 
-type Observed = { cb: IntersectionObserverCallback; targets: Element[]; disconnected: boolean };
-let observers: Observed[] = [];
 let reduce = false;
 
 afterEach(() => {
@@ -35,7 +34,6 @@ afterEach(() => {
 });
 
 beforeEach(() => {
-  observers = [];
   reduce = false;
   // "(prefers-reduced-motion: reduce)" follows `reduce`; "(… no-preference)" is its inverse.
   vi.stubGlobal('matchMedia', (q: string) => ({
@@ -44,23 +42,7 @@ beforeEach(() => {
     addEventListener() {},
     removeEventListener() {},
   }));
-  vi.stubGlobal(
-    'IntersectionObserver',
-    class {
-      entry: Observed;
-      constructor(cb: IntersectionObserverCallback) {
-        this.entry = { cb, targets: [], disconnected: false };
-        observers.push(this.entry);
-      }
-      observe(el: Element) {
-        this.entry.targets.push(el);
-      }
-      unobserve() {}
-      disconnect() {
-        this.entry.disconnected = true;
-      }
-    },
-  );
+  installFakeIO();
   vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
     cb(0);
     return 1;
@@ -78,9 +60,9 @@ beforeEach(() => {
 
 const sectionOf = (c: HTMLElement) => c.querySelector('#signature') as HTMLElement;
 // Reveal (the headline) runs its own observer; the scene's is the one watching the section.
-const sceneObserver = (root: Element) => observers.find((o) => o.targets.includes(root));
-const intersect = (o: Observed, root: Element) =>
-  act(() => o.cb([{ isIntersecting: true, target: root } as unknown as IntersectionObserverEntry], {} as IntersectionObserver));
+// undefined (not FakeIO.watching's throw) so the CSS-path test can assert there is none.
+const sceneObserver = (root: Element) => FakeIO.instances.find((o) => o.targets.includes(root));
+const intersect = (o: FakeIO, root: Element) => o.fire([{ isIntersecting: true, target: root }]);
 
 // jsdom has no ResizeObserver at all (unlike IntersectionObserver, stubbed above), so this
 // scene's card/body watch (fix round 1, item 3; fix round 2, item 3) never ran in this suite
@@ -365,10 +347,11 @@ describe('SignatureScene: motion modes', () => {
     const root = sectionOf(container);
     const io = sceneObserver(root)!;
     intersect(io, root);
+    const disconnect = vi.spyOn(io, 'disconnect');
     // Painted while mounted (pinned by default): proves the post-unmount check below isn't vacuous.
     expect(root.querySelector<HTMLElement>('.sig-card')!.getAttribute('style')).not.toBeNull();
     unmount();
-    expect(io.disconnected).toBe(true);
+    expect(disconnect).toHaveBeenCalled();
     expect(remove).toHaveBeenCalledWith('scroll', expect.any(Function));
     expect(remove).toHaveBeenCalledWith('resize', expect.any(Function));
     expect(root.classList.contains('pin')).toBe(false);
