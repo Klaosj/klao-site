@@ -29,7 +29,7 @@ describe('dictionary', () => {
   // same string in both locales (e.g. a brand name or a URL), add it to
   // `sharedKeys` below rather than weakening this check.
   it('has no untranslated (en === th) string values, aside from explicitly shared keys', () => {
-    const sharedKeys = new Set<string>();
+    const sharedKeys = new Set<string>(['navFaq']); // "FAQ" is the Thai UI's word too (prototype UI.th.nav)
     for (const [k, enVal] of Object.entries(dict.en)) {
       if (sharedKeys.has(k)) continue;
       const thVal = (dict.th as Record<string, unknown>)[k];

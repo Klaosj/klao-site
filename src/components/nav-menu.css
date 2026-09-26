@@ -1,0 +1,91 @@
+/* NavMenu — the Menu button and the phone menu panel (prototype .menu-b,
+   .menu, .mhead, .msearch, .mgrid, .mact, .mpref, .mlinks). The button only
+   exists at ≤ 899 px, where the capsule's own links, ⌘K and Contact fold away.
+   Classes are `nm-` so nothing meets C9's shared names; the actions reuse C9's
+   `.btn`, and the brand mark and close button reuse the capsule's `.sn-brand`/
+   `.sn-mono` (C8) and the shared `.ctl` small-glass control (C4/R19) rather
+   than redeclaring either. Only transform and opacity animate. */
+@layer components {
+  .nm-open { display: none; }
+  @media (max-width: 899px) {
+    .nm-open {
+      position: relative;
+      display: inline-flex; align-items: center;
+      min-height: 32px; padding: 0 14px;
+      border: 0; border-radius: 16px; background: transparent;
+      box-shadow: inset 0 0 0 1px var(--ink-3);
+      font-size: 14px; font-weight: 500; color: var(--ink-1);
+      cursor: pointer;
+    }
+    .nm-open::after { content: ""; position: absolute; inset: -6px -2px; }
+  }
+
+  .nm {
+    width: min(358px, 100% - 32px); max-width: none; max-height: calc(100svh - 16px);
+    margin: 8px auto auto; padding: 16px;
+    border: 0; border-radius: 28px;
+    background: var(--card); color: var(--ink-1);
+    box-shadow: 0 24px 60px -20px rgb(0 0 0 / .35);
+    overflow: auto; overscroll-behavior: contain;
+  }
+  .nm::backdrop { background: rgb(0 0 0 / .24); }
+  @media (prefers-reduced-motion: no-preference) {
+    .nm[open] { animation: nm-in var(--dur-ui) var(--ease-settle); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .nm[open] { animation: nm-fade 150ms linear; }
+  }
+
+  .nm-head { display: flex; align-items: center; justify-content: space-between; }
+  /* C8: no .nm-brand/.nm-mono here -- the brand link renders `.sn-brand`/
+     `.sn-mono`, the capsule's own classes (SiteNav, T9), so this markup picks
+     up that styling once T9 lands instead of a second declaration of it. */
+  /* C4/R19: no background/blur/color/cursor here -- the close button carries
+     `.ctl` (globals.css's shared small-glass control, "tour paddles, sheet
+     close") for those, so only its own size and position are set. */
+  .nm-close {
+    position: relative;
+    display: grid; place-items: center;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    font-size: 16px;
+  }
+  .nm-close::after { content: ""; position: absolute; inset: -4px; }
+  .nm-search {
+    display: flex; align-items: center; gap: 10px;
+    width: 100%; min-height: 44px; margin-top: 14px; padding: 0 14px;
+    border: 0; border-radius: 12px;
+    background: var(--mist); color: var(--ink-2);
+    font-size: 16px; text-align: left; cursor: pointer;
+  }
+  .nm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+  .nm-grid a {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 44px; border-radius: 22px;
+    box-shadow: inset 0 0 0 1px var(--line);
+    font-size: 17px; font-weight: 500; color: var(--ink-1); text-decoration: none;
+  }
+  .nm-grid a[aria-current] { background: var(--ink-1); color: var(--canvas); box-shadow: none; }
+  .nm-div { height: 1px; margin: 16px 0; background: var(--line); }
+  .nm-act { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .nm-act .btn { padding: 0 12px; font-size: 16px; }
+  .nm-act .btn:first-child { grid-column: 1 / -1; }
+  .nm-pref { display: grid; gap: 10px; }
+  .nm-label { margin: 0; font-size: 14px; font-weight: 600; color: var(--ink-2); }
+  /* C7: ThemeToggle has no `wide` prop (unlike LocaleToggle) -- this is the
+     same effect LocaleToggle's own `.lt-wide` gets, written against `.seg` in
+     context instead. `.seg`'s grid (`grid-auto-columns: 1fr`, globals.css)
+     already splits the row evenly between options once the pill itself has
+     the room to grow into, so only the width and the per-option touch target
+     need setting here, same as locale-toggle.css's `.lt-wide` pair. The fix
+     wave generalised `.seg`'s child selectors to `:is(button, a)`, which this
+     also targets so it reads the same whether the control inside is
+     ThemeToggle's <button> or (P4 footer reuse) LocaleToggle's <a>. */
+  .nm-pref .seg { width: 100%; }
+  .nm-pref .seg > :is(button, a) { min-height: 36px; font-size: 15px; }
+  .nm-links { display: flex; gap: 20px; margin-top: 12px; }
+  .nm-links a { display: inline-flex; align-items: center; min-height: 44px; font-size: 17px; color: var(--link); text-decoration: none; }
+
+  @keyframes nm-in { from { opacity: 0; transform: translateY(24px) scale(.985); } }
+  @keyframes nm-fade { from { opacity: 0; } }
+}

@@ -201,6 +201,21 @@ const en = {
   themeAuto: 'Auto',
   themeLight: 'Light',
   themeDark: 'Dark',
+  // White Edition P1 — navigation (contract C7). Words from the prototype's UI.en.
+  // No `navAppearance` here (preflight ruling C5): the phone menu's Appearance
+  // label reuses the `appearance` key above instead of a duplicate.
+  navWork: 'Projects',
+  navCareer: 'Career',
+  navStory: 'How I work',
+  navFaq: 'FAQ',
+  // `{name}` becomes the first word of profile.name. The visible brand text is
+  // that name, so the accessible name starts with it (WCAG 2.5.3).
+  navBrandAria: '{name}, back to top',
+  navMenu: 'Menu',
+  navCloseMenu: 'Close menu',
+  navSearchPrompt: 'Search or jump to…',
+  copyEmail: 'Copy email',
+  resumeShort: 'Résumé',
 };
 
 const th: typeof en = {
@@ -304,6 +319,16 @@ const th: typeof en = {
   themeAuto: 'ตามเครื่อง',
   themeLight: 'สว่าง',
   themeDark: 'มืด',
+  navWork: 'โปรเจกต์',
+  navCareer: 'เส้นทางอาชีพ',
+  navStory: 'วิธีทำงาน',
+  navFaq: 'FAQ',
+  navBrandAria: '{name} กลับขึ้นด้านบน',
+  navMenu: 'เมนู',
+  navCloseMenu: 'ปิดเมนู',
+  navSearchPrompt: 'ค้นหา หรือไปที่…',
+  copyEmail: 'คัดลอกอีเมล',
+  resumeShort: 'เรซูเม่',
 };
 
 export type UiDict = typeof en;
