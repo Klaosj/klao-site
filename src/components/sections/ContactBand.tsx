@@ -40,7 +40,7 @@ export default function ContactBand({ profile, locale }: { profile: Profile; loc
             // `duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]`: without them
             // Tailwind's default 150ms/`ease-in-out` applies, and this pill
             // was the one element on the page that SNAPPED while everything
-            // hand-written around it (.rv, .btn, .u-draw) eases
+            // hand-written around it (.rv, .btn) eases
             // on the 250-950ms house curve.
             className="btn inline-flex items-center gap-3 rounded-full bg-light px-8 py-4 text-[13.5px] font-semibold text-dark transition-shadow duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:shadow-[0_0_0_3px_rgba(168,174,203,0.35),0_18px_60px_-12px_rgba(168,174,203,0.45)]"
           >

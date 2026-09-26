@@ -343,23 +343,6 @@
   /* Hero portrait halo (replaced in P1). */
   .halo { animation: halo-spin 24s linear infinite; }
   @keyframes halo-spin { to { transform: rotate(360deg); } }
-
-  /* Underline that draws in from the left (ContactBand, replaced in P4). */
-  .u-draw { position: relative; }
-  .u-draw::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: -2px;
-    height: 1px;
-    background: currentColor;
-    transform: scaleX(0);
-    transform-origin: left;
-    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  .u-draw:hover::after,
-  .u-draw:focus-visible::after { transform: scaleX(1); }
 }
 
 /* LEGACY, unlayered on purpose (unlayered CSS outranks Tailwind's utilities
@@ -389,7 +372,7 @@
   line-height: 1.5;
 }
 
-/* LEGACY reduced-motion overrides: .rv-mask (P5); .hero-pill, #hero, .halo (P1); .u-draw (P4). */
+/* LEGACY reduced-motion overrides: .rv-mask (P5); .hero-pill, #hero, .halo (P1). */
 @media (prefers-reduced-motion: reduce) {
   .rv-mask .w { transform: none !important; transition: none !important; }
   .hero-pill { animation: none !important; }
@@ -404,7 +387,6 @@
     visibility: visible !important;
   }
   .halo { animation: none !important; }
-  .u-draw::after { transition: none !important; }
 }
 
 /* =====================================================================

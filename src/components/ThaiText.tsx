@@ -18,7 +18,7 @@ export default function ThaiText({ text, display }: { text: string; display?: bo
   const runs = keepRuns(text, display ? { display: true } : undefined);
   const keepClass = display ? 'kt' : 'nw';
   // Trap (fix wave finding 13, doc only): .nw/.kt are inline-block, which
-  // also means an ancestor <a>'s or .u-draw's underline stops at each
+  // also means an ancestor <a>'s underline stops at each
   // keep-span's edge instead of drawing straight through it -- an
   // inline-block always starts a new text-decoration run. Never observed
   // on this site (no keep run sits inside an underlined link today), but a
