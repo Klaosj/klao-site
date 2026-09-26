@@ -49,6 +49,8 @@ export function mailtoHref(email: string): string {
 // 'Ask Klao: “{q}”'). Word order differs between Thai and English, so the
 // dictionary owns the whole sentence and code only supplies the values. An
 // unknown slot stays as written: a typo shows on screen instead of vanishing.
+// Own keys only: `name in vars` would also match Object.prototype names, so a
+// '{toString}' slot would print a native function instead of staying as written.
 export function fill(template: string, vars: Record<string, string | number>): string {
-  return template.replace(/\{(\w+)\}/g, (slot, name: string) => (name in vars ? String(vars[name]) : slot));
+  return template.replace(/\{(\w+)\}/g, (slot, name: string) => (Object.hasOwn(vars, name) ? String(vars[name]) : slot));
 }

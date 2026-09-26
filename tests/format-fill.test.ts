@@ -10,4 +10,11 @@ describe('fill', () => {
   it('leaves an unknown slot visible, so a typo shows on screen instead of vanishing', () => {
     expect(fill('{x} stays', {})).toBe('{x} stays');
   });
+
+  it('only fills slots the caller passed, never names inherited from Object.prototype', () => {
+    // `'toString' in {}` is true through the prototype chain; the slot must
+    // stay as written instead of rendering a native function's source.
+    expect(fill('{toString}', {})).toBe('{toString}');
+    expect(fill('{constructor} {hasOwnProperty}', {})).toBe('{constructor} {hasOwnProperty}');
+  });
 });
