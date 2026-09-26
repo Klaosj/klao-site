@@ -111,7 +111,7 @@ describe('ContactBand', () => {
   it('runs the primary pill hover on the house curve, not Tailwind default timing', () => {
     // QA finding 14: bare `transition-shadow` inherits Tailwind's 150ms
     // ease-in-out, so this pill snapped while every hand-written transition
-    // around it (.rv 0.95s, .btn 0.45s, .u-draw 0.35s, nav-chrome 0.5s) eases
+    // around it (.rv 0.95s, .btn 0.45s, .u-draw 0.35s) eases
     // on cubic-bezier(.16,1,.3,1). jsdom computes no timing, so the
     // utilities themselves are what's pinned.
     render(<ContactBand profile={profile} locale="en" />);

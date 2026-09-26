@@ -217,6 +217,10 @@ const en = {
   copyEmail: 'Copy email',
   resumeShort: 'Résumé',
   navQuickActions: 'Quick actions',
+  // The capsule's own Contact pill and ⌘K button (T9), distinct from
+  // NavMenu's navSearchPrompt (the phone menu's full search row copy).
+  navContact: 'Contact',
+  navSearch: 'Search (⌘K)',
 };
 
 const th: typeof en = {
@@ -331,6 +335,8 @@ const th: typeof en = {
   copyEmail: 'คัดลอกอีเมล',
   resumeShort: 'เรซูเม่',
   navQuickActions: 'ทางลัด',
+  navContact: 'ติดต่อ',
+  navSearch: 'ค้นหา (⌘K)',
 };
 
 export type UiDict = typeof en;

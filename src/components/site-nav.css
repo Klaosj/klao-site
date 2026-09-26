@@ -1,38 +1,85 @@
-/* SiteNav scroll chrome. Lives in its own file (not globals.css) so this
-   task stays file-disjoint from the token work happening in parallel.
-   No backdrop-filter anywhere: the header overlaps the live WebGL canvas
-   in the hero, and a blurred backdrop would be recomputed on every canvas
-   frame (same reasoning as .pill / #cursor in globals.css). A near-opaque
-   flat fill reads fine and costs nothing.
+/* SiteNav — the floating capsule (spec §5.4 glass, §6 nav; prototype
+   .navwrap/.cap-nav). `position: fixed`, not the prototype's sticky: every
+   other route (/projects, /writing, /career, /work/[slug]) already clears a
+   fixed header with its own pt-28, so the capsule drops onto them with no
+   layout change. The home hero adds the capsule's 62 px to its own top padding
+   (sections/hero-tour.css).
 
-   Wrapped in `@layer components`: Tailwind v4 ranks `@layer utilities`
-   above `@layer components` unconditionally (see globals.css's LEGACY
-   NAMES / LocaleToggle comments for the same fact), so this is only safe
-   because nothing here collides with a Tailwind utility that could land on
-   the same element. `header.nav-chrome` in SiteNav.tsx only carries layout
-   utilities (fixed/inset-x-0/flex/gap/padding) -- none set transform,
-   background-color or transition -- and `.nav-burger`'s own utilities
-   (-m-1/inline-flex/h-10/w-10/flex-col/...) don't set color either. If a
-   future utility on either element ever does, move that rule back outside
-   this layer (same escape hatch globals.css already documents). */
+   Classes are `sn-` so nothing here meets C9's shared names. Glass comes from
+   C9's `.glass`; the rule that positions it uses two classes (`.sn-cap.glass`)
+   so it wins whatever `.glass` itself sets. `.sn-brand`/`.sn-mono` are
+   declared here once (C8) — NavMenu's phone-menu brand mark reuses them
+   rather than a second `.nm-brand`/`.nm-mono` pair. Only transform and
+   opacity animate: the active pill slides with transform, its width snaps,
+   and the Contact pill's fill changes without a colour transition. */
 @layer components {
-  header.nav-chrome {
-    transition:
-      transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
-      background-color 0.35s ease;
-  }
-  header.nav-chrome.nav-hidden { transform: translateY(-100%); }
-  /* White Edition P0: every band is light (or dark, with the theme), so the
-     scrolled header is one canvas-coloured fill and the burger one ink colour.
-     The old nav-on-light inversion had nothing left to invert. P1 replaces
-     this file with the capsule glass nav. */
-  header.nav-chrome.nav-solid { background-color: color-mix(in srgb, var(--canvas) 94%, transparent); }
-  header.nav-chrome .nav-burger { color: var(--ink-1); }
+  html { scroll-padding-top: 76px; }
 
+  .sn-wrap {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+    display: flex; justify-content: center;
+    padding: 10px 24px 0;
+    pointer-events: none;
+  }
+  .sn-cap.glass {
+    position: relative; pointer-events: auto;
+    display: flex; align-items: center; gap: 12px;
+    width: min(1024px, 100%); height: 52px;
+    padding: 0 10px 0 14px; border-radius: 18px;
+  }
+  .sn-brand { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; font-size: 17px; font-weight: 600; color: var(--ink-1); text-decoration: none; }
+  .sn-mono { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--ink-1); color: var(--canvas); font-size: 14px; font-weight: 600; letter-spacing: 0; }
+
+  .sn-links { position: relative; display: flex; gap: 4px; margin-left: auto; padding: 12px 0; contain: layout paint; }
+  .sn-links a {
+    position: relative; z-index: 1;
+    padding: 0 12px; border-radius: 14px;
+    font-size: 14px; line-height: 28px; color: var(--ink-1); text-decoration: none;
+    opacity: .8;
+  }
+  .sn-links a:hover, .sn-links a[aria-current] { opacity: 1; }
+  .sn-links a[aria-current] { font-weight: 600; }
+  .sn-act {
+    position: absolute; top: 12px; left: 0;
+    width: 0; height: 28px; border-radius: 14px;
+    background: color-mix(in srgb, var(--ink-1) 7%, transparent);
+    opacity: 0;
+    transition: transform var(--dur-ui) var(--ease-settle), opacity 200ms linear;
+  }
+  .sn-act[data-on] { opacity: 1; }
+
+  .sn-right { display: flex; align-items: center; gap: 8px; }
+  .sn-icon {
+    position: relative;
+    display: grid; place-items: center;
+    width: 32px; height: 32px;
+    border: 0; border-radius: 50%; background: transparent;
+    font-size: 17px; color: var(--ink-1); cursor: pointer;
+  }
+  .sn-icon::after { content: ""; position: absolute; inset: -6px; }
+  @media (hover: hover) {
+    .sn-icon:hover { background: color-mix(in srgb, var(--ink-1) 6%, transparent); }
+  }
+  .sn-pill {
+    position: relative;
+    display: inline-flex; align-items: center;
+    min-height: 28px; padding: 0 14px; border-radius: 14px;
+    box-shadow: inset 0 0 0 1px var(--ink-3);
+    font-size: 14px; font-weight: 500; white-space: nowrap; color: var(--ink-1); text-decoration: none;
+  }
+  .sn-pill::after { content: ""; position: absolute; inset: -8px -2px; }
+  .sn-pill[data-filled] { background: var(--kram); color: var(--on-kram); box-shadow: none; }
+
+  @media (max-width: 899px) {
+    .sn-links, .sn-search, .sn-contact { display: none; }
+    .sn-right { margin-left: auto; }
+  }
+  @media (max-width: 734px) {
+    .sn-wrap { padding: calc(8px + env(safe-area-inset-top)) 16px 0; }
+    .sn-cap.glass { padding: 0 8px 0 10px; border-radius: 16px; }
+    .sn-brand { font-size: 15px; }
+  }
   @media (prefers-reduced-motion: reduce) {
-    header.nav-chrome { transition: none; }
-    /* Never hide the nav from a reduced-motion user mid-scroll: a header that
-       teleports away with no transition is worse than one that stays. */
-    header.nav-chrome.nav-hidden { transform: none; }
+    .sn-act { transition: opacity 200ms linear; }
   }
 }

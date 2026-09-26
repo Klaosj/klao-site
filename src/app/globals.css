@@ -340,23 +340,11 @@
     .hero-pill { display: none; }
   }
 
-  /* SiteNav links (replaced in P1). One colour pair for every band now that
-     no band is dark -- the old nav-on-light inversion has nothing to invert. */
-  .nav-link,
-  .nav-social {
-    color: var(--ink-2);
-    transition: color 0.25s;
-  }
-  .nav-link:hover,
-  .nav-social:hover { color: var(--ink-1); }
-  .nav-mark { transition: background 0.4s, color 0.4s, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
-  .nav-mark:hover { transform: rotate(-12deg) scale(1.06); }
-
   /* Hero portrait halo (replaced in P1). */
   .halo { animation: halo-spin 24s linear infinite; }
   @keyframes halo-spin { to { transform: rotate(360deg); } }
 
-  /* Underline that draws in from the left (SiteNav links, replaced in P1). */
+  /* Underline that draws in from the left (ContactBand, replaced in P4). */
   .u-draw { position: relative; }
   .u-draw::after {
     content: '';
@@ -401,7 +389,7 @@
   line-height: 1.5;
 }
 
-/* LEGACY reduced-motion overrides: .rv-mask (P5); .hero-pill, #hero, .nav-*, .halo, .u-draw (P1). */
+/* LEGACY reduced-motion overrides: .rv-mask (P5); .hero-pill, #hero, .halo (P1); .u-draw (P4). */
 @media (prefers-reduced-motion: reduce) {
   .rv-mask .w { transform: none !important; transition: none !important; }
   .hero-pill { animation: none !important; }
@@ -415,11 +403,6 @@
     opacity: 1 !important;
     visibility: visible !important;
   }
-  /* Rotation is motion; the colour fade on .nav-mark is not, so only
-     transform is neutralised. */
-  .nav-mark:hover { transform: none !important; }
-  /* The burger's X must still appear -- only its tween goes. */
-  .nav-burger span { transition-property: opacity !important; }
   .halo { animation: none !important; }
   .u-draw::after { transition: none !important; }
 }
