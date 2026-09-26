@@ -195,6 +195,12 @@ const en = {
   tourPause: 'Pause the tour',
   tourPlay: 'Play the tour',
   tourStill: 'Still view',
+  // White Edition theme control (ThemeToggle): footer, phone menu, ⌘K.
+  // Prototype copy. P1 and P4 reuse these keys rather than adding their own.
+  appearance: 'Appearance',
+  themeAuto: 'Auto',
+  themeLight: 'Light',
+  themeDark: 'Dark',
 };
 
 const th: typeof en = {
@@ -294,6 +300,10 @@ const th: typeof en = {
   tourPause: 'หยุดทัวร์ชั่วคราว',
   tourPlay: 'เล่นทัวร์',
   tourStill: 'มุมมองภาพนิ่ง',
+  appearance: 'การแสดงผล',
+  themeAuto: 'ตามเครื่อง',
+  themeLight: 'สว่าง',
+  themeDark: 'มืด',
 };
 
 export type UiDict = typeof en;

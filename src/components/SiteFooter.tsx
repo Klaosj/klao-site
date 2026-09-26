@@ -1,3 +1,4 @@
+import ThemeToggle from '@/components/ThemeToggle';
 import { getPosts, getProfile, getQuestions } from '@/lib/content';
 import { dict } from '@/lib/dictionary';
 import { formatDate } from '@/lib/format';
@@ -53,6 +54,10 @@ export default async function SiteFooter({ locale = 'en' }: { locale?: Locale } 
       <p className={`mt-2 text-[10.5px] uppercase text-on-dark-soft ${eyebrowFont(locale, 'tracking-[0.18em]')}`}>
         © {new Date().getFullYear()} {profile.name}
       </p>
+      {/* P0-TEMP-THEME-TOGGLE */}
+      {/* The theme control's temporary home: P4's new footer removes this
+          mount (grep the marker above) and places ThemeToggle itself. */}
+      <ThemeToggle locale={locale} className="mt-4" />
     </footer>
   );
 }

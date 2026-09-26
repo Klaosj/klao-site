@@ -145,6 +145,16 @@ describe('SiteFooter', () => {
     expect(text).not.toContain('Jul 1, 2026');
   });
 
+  it('carries the Appearance toggle after the copyright line, in the page locale', async () => {
+    const { default: SiteFooter } = await import('@/components/SiteFooter');
+    const { default: ThemeToggle } = await import('@/components/ThemeToggle');
+    const jsx = (await SiteFooter({ locale: 'th' })) as El;
+    const children = jsx.props?.children as El[];
+    // [freshness, footerNote, copyright, toggle] -- the copyright keeps index 2.
+    expect(children[3].type).toBe(ThemeToggle);
+    expect((children[3].props as { locale?: string }).locale).toBe('th');
+  });
+
   it('omits the freshness line entirely when no dated content exists', async () => {
     mockPosts = [];
     mockQuestions = [];

@@ -254,3 +254,43 @@ describe('shared classes (C9)', () => {
     expect(CODE).toMatch(/\.t-legal:lang\(th\) \{ font-size: 14px; line-height: 21px; \}/);
   });
 });
+
+// Amendment A01 (docs/superpowers/plans/2026-09-26-white-edition-polish.md):
+// ThemeToggle's segmented control moved from a background swap per pressed
+// button to ONE sliding thumb, positioned by --i. The row wins over the
+// task brief's original .seg (background/aria-pressed) test, which this
+// replaces rather than keeps alongside.
+describe('segmented control (.seg) with a sliding thumb (A01)', () => {
+  it('positions one thumb by --i, animating transform only', () => {
+    expect(rulesFor('.seg').length).toBeGreaterThan(0);
+    const thumb = rulesFor('.seg .thumb')[0];
+    expect(thumb).toContain('transform: translateX(calc(var(--i, 0) * 100%));');
+    expect(thumb).toContain('transition: transform 320ms var(--ease-settle);');
+    // Nothing else on the thumb rule may animate a non-transform property.
+    expect(thumb).not.toMatch(/transition:[^;]*\b(background|color|opacity|width)\b/);
+  });
+
+  it('marks the checked segment by colour/weight, not by moving it', () => {
+    const checkedRule = rulesFor('.seg button[aria-checked="true"]')[0];
+    expect(checkedRule).toContain('color: var(--ink-1);');
+    expect(checkedRule).toContain('font-weight: 600;');
+  });
+});
+
+// Amendment A06: the external-link arrow only nudges on real hover
+// (`(hover: hover)`, so touch screens never fake a hover state), and only
+// `transform` animates -- never colour/opacity, per the Global Constraints.
+describe('external link arrow + press (A06)', () => {
+  it('keeps the .xl arrow nudge inside @media (hover: hover), not @media (hover: hover) and (pointer: fine)', () => {
+    const block = [...CODE.matchAll(/@media \(hover: hover\)(?! and)/g)]
+      .map((m) => blockFrom(CODE, m.index!))
+      .find((b) => b.includes('.xl'));
+    expect(block, '.xl hover block').toBeTruthy();
+    expect(block).toMatch(/\.xl:hover svg \{[^}]*transform: translate\(2px,\s?-2px\);/);
+    expect(block).not.toMatch(/\.xl:hover svg \{[^}]*(color|background|opacity)\s*:/);
+  });
+
+  it('keeps the CTA press scale (.btn:active) that A06 confirms', () => {
+    expect(rulesFor('.btn:active')[0]).toContain('transform: scale(.97)');
+  });
+});

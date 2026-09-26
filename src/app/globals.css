@@ -682,6 +682,79 @@
   }
   .win img { filter: var(--shot-dim); }
 
+  /* ---- segmented control (ThemeToggle; amendment A01) -----------------
+     role="radiogroup" with ONE sliding thumb, not a background swap per
+     button: --i (set inline by the component, to the checked option's
+     index) drives `transform: translateX(...)`, so only transform ever
+     animates. P1's LocaleToggle (A02) reuses this exact block with two
+     options via var(--n, 3)'s fallback. */
+  .seg {
+    position: relative;
+    display: inline-grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    padding: 3px;
+    border-radius: 999px;
+    background: var(--ctl);
+    box-shadow: inset 0 0 0 1px var(--line);
+    isolation: isolate;
+  }
+  .seg .thumb {
+    position: absolute;
+    top: 3px;
+    bottom: 3px;
+    left: 3px;
+    width: calc((100% - 6px) / var(--n, 3));
+    border-radius: 999px;
+    background: var(--canvas);
+    box-shadow: var(--e1);
+    transform: translateX(calc(var(--i, 0) * 100%));
+    transition: transform 320ms var(--ease-settle);
+    z-index: -1;
+  }
+  .seg button {
+    font: inherit;
+    font-size: 14px;
+    line-height: 20px;
+    border: 0;
+    background: none;
+    color: var(--ink-2);
+    padding: 0 16px;
+    min-height: 32px;
+    border-radius: 999px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+  }
+  .seg button[aria-checked="true"] { color: var(--ink-1); font-weight: 600; }
+
+  /* ---- appearance glyph (ThemeGlyph; amendment A01) --------------------
+     Sun <-> moon eclipse next to the segmented control: a mask circle
+     slides over the sun's core and the rays rotate + fade out. Transform
+     and opacity only. */
+  .seg-glyph { color: var(--ink-1); overflow: visible; }
+  .seg-glyph .core,
+  .seg-glyph .cut,
+  .seg-glyph .rays { transform-box: fill-box; transform-origin: center; }
+  .seg-glyph .core,
+  .seg-glyph .cut { transition: transform 500ms var(--ease-settle); }
+  .seg-glyph .cut { transform: translate(9px, -9px); }
+  .seg-glyph .rays { transition: transform 500ms var(--ease-settle), opacity 300ms var(--ease-glide); }
+  .seg-glyph.is-dark .core { transform: scale(1.5); }
+  .seg-glyph.is-dark .cut { transform: translate(0, 0); }
+  .seg-glyph.is-dark .rays { transform: rotate(-45deg) scale(.4); opacity: 0; }
+
+  /* ---- external link arrow nudge + press (amendment A06) --------------
+     `(hover: hover)` only, so a touch tap never fakes a hover nudge; the
+     arrow's own transform is the only thing that animates. */
+  .xl { display: inline-flex; align-items: center; gap: 6px; }
+  .xl svg { transition: transform 200ms var(--ease-settle); }
+  @media (hover: hover) {
+    .xl:hover svg { transform: translate(2px, -2px); }
+  }
+
   /* ---- Thai keep-span (C3) ------------------------------------------- */
   .nw { display: inline-block; white-space: nowrap; }
 }
@@ -708,10 +781,11 @@
 }
 
 /* Theme switches cross-fade through the View Transitions API when the
-   browser has it (ThemeToggle); under reduced motion there is no fade. */
+   browser has it (ThemeToggle); under reduced motion there is no fade.
+   320ms (amendment A01) matches the segmented control's own thumb slide. */
 ::view-transition-old(root),
 ::view-transition-new(root) {
-  animation-duration: 240ms;
+  animation-duration: 320ms;
   animation-timing-function: var(--ease-glide);
 }
 @media (prefers-reduced-motion: reduce) {
