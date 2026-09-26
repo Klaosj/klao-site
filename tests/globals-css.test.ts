@@ -279,10 +279,89 @@ describe('segmented control (.seg) with a sliding thumb (A01)', () => {
     expect(thumb).not.toMatch(/transition:[^;]*\b(background|color|opacity|width)\b/);
   });
 
-  it('marks the checked segment by colour/weight, not by moving it', () => {
-    const checkedRule = rulesFor('.seg button[aria-checked="true"]')[0];
-    expect(checkedRule).toContain('color: var(--ink-1);');
-    expect(checkedRule).toContain('font-weight: 600;');
+  // Fix wave finding 5: generalised from `.seg button` so P1's LocaleToggle
+  // (real `<a>` links, A02) can reuse this same block; "selected" covers a
+  // radio's aria-checked and a current-page link's aria-current alike.
+  it('styles any child button or link, not only <button>', () => {
+    expect(rulesFor('.seg > :is(button, a)').length).toBeGreaterThan(0);
+  });
+
+  it('marks the checked segment by colour/weight, not by moving it, for either aria-checked or aria-current', () => {
+    for (const selector of [
+      '.seg > :is(button, a)[aria-checked="true"]',
+      '.seg > :is(button, a)[aria-current="page"]',
+    ]) {
+      const checkedRule = rulesFor(selector)[0];
+      expect(checkedRule, selector).toContain('color: var(--ink-1);');
+      expect(checkedRule, selector).toContain('font-weight: 600;');
+    }
+  });
+
+  // Fix wave finding 6: a hidden, always-600 duplicate of the label
+  // reserves its bold width, so the visible label's own weight can change
+  // (on select) without resizing the button, the thumb's %, or the
+  // control's centring.
+  it('reserves the checked label\u2019s bold width with a hidden ::after duplicate', () => {
+    const after = rulesFor('.seg > :is(button, a) .seg-label::after')[0];
+    expect(after).toContain('content: attr(data-label);');
+    expect(after).toContain('font-weight: 600;');
+    expect(after).toContain('visibility: hidden;');
+    expect(after).toContain('height: 0;');
+  });
+
+  // Fix wave finding 1: the mount-time sync from the server's Auto guess to
+  // the visitor's real theme must not itself animate, but every later
+  // click or arrow key still should -- ThemeToggle sets `data-ready` one
+  // requestAnimationFrame after that first sync.
+  it('suppresses the thumb and glyph transitions until `data-ready` (mount-time sync only)', () => {
+    expect(rulesFor('.seg:not([data-ready]) .thumb')[0]).toMatch(/transition:\s*none;?/);
+    expect(rulesFor('.seg-glyph:not([data-ready]) *')[0]).toMatch(/transition:\s*none;?/);
+  });
+
+  it('also turns the thumb slide and the eclipse off under reduced motion', () => {
+    const block = [...CODE.matchAll(/@media \(prefers-reduced-motion: reduce\)/g)]
+      .map((m) => blockFrom(CODE, m.index!))
+      .find((b) => b.includes('.seg .thumb'));
+    expect(block, 'reduced-motion block for .seg/.seg-glyph').toBeTruthy();
+    expect(block).toMatch(/\.seg-glyph \.core,\s*\.seg-glyph \.cut,\s*\.seg-glyph \.rays \{ transition: none; \}/);
+  });
+});
+
+// Fix wave finding 9: .ctl (tour paddles, sheet close) is Liquid Glass the
+// same as .glass, so it must turn solid under prefers-contrast: more too --
+// it already does under @supports-not and reduced transparency (the test
+// above this one), but higher contrast had left it out.
+describe('.ctl solid under higher contrast (fix wave finding 9)', () => {
+  it('turns solid, like .glass, under prefers-contrast: more', () => {
+    const contrast = [...CODE.matchAll(/@media \(prefers-contrast: more\)/g)]
+      .map((m) => blockFrom(CODE, m.index!))
+      .find((b) => b.includes('.ctl'));
+    expect(contrast).toMatch(/\.ctl \{[^}]*background: var\(--mist\)/);
+  });
+});
+
+// Fix wave finding 2 (master R28): no page-wide clip. A section that
+// intentionally bleeds off-screen (a tour stage, the signature scene)
+// clips its own wrapper instead, so QA's overflow check on
+// document.documentElement actually sees a real overflow if one exists.
+describe('no page-wide overflow-x clip (fix wave finding 2, master R28)', () => {
+  it('never sets overflow-x: clip on body', () => {
+    const body = rulesFor('body').join(' ');
+    expect(body).not.toMatch(/overflow-x:\s*clip/);
+  });
+});
+
+// Fix wave finding 3: the legacy Thai heading rule used to exclude new
+// headings by naming each type class (.t-hero etc) in a :not() list, so any
+// heading it did not yet know about was still caught. Scoped instead to
+// what every legacy heading actually shares.
+describe('legacy Thai heading leading is scoped to legacy headings only (fix wave finding 3)', () => {
+  it('targets the tight arbitrary leading-[...] utility, not h1/h2/h3 in general', () => {
+    const rule = rulesFor(':lang(th) :is(h1, h2, h3)[class*="leading-["]')[0];
+    expect(rule).toContain('line-height: 1.5;');
+    // The old catch-all is gone -- a heading is caught by its own utility
+    // now, not by exclusion from a growing list of new type classes.
+    expect(CODE).not.toMatch(/:lang\(th\) :is\(h1, h2, h3\):not\(/);
   });
 });
 
