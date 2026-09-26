@@ -125,7 +125,7 @@ export default function Hero({
                 {t.startConversation} <span aria-hidden="true">→</span>
               </a>
               <span className="text-on-dark-soft">
-                <CopyEmail email={profile.email} copiedLabel={t.copied} locale={locale} />
+                <CopyEmail email={profile.email} locale={locale} />
               </span>
             </Reveal>
           )}

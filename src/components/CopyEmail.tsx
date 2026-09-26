@@ -1,111 +1,129 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import type { Locale } from '@/lib/models';
+import { copyShortcutHint, copyText } from '@/lib/clipboard';
 import { dict } from '@/lib/dictionary';
-import { eyebrowFont } from '@/lib/typography';
+import type { Locale } from '@/lib/models';
+import './copy-email.css';
 
-// Rauno Freiberg's clipboard button, ported into React: the address is
-// always plain readable text (a real fallback, not decoration -- it is
-// still selectable/copyable by hand when the button below does nothing).
+type State = 'idle' | 'ok' | 'fail';
+
+// The prototype's `.mailrow`: the address as plain text (always readable and
+// selectable by hand, the real fallback) + a 44 px icon button + a status
+// word. The status is written twice on purpose (QA C2): once visibly
+// (aria-hidden, so it never joins the button's name) and once in an
+// sr-only live region that only changes text on a real outcome, so screen
+// readers hear exactly one announcement per click.
 //
-// QA C2 (WCAG 4.1.2 + 4.1.3): the original single "Copied" span was wrong
-// two ways at once, and fixing one without the other just trades one bug
-// for the other:
-//   1. It was always in the DOM with static text, only toggling opacity --
-//      an aria-live region announces on *text* mutation, not on a style
-//      change, so a screen-reader user never heard a confirmation.
-//   2. Being static text inside the <button>, it was concatenated into the
-//      button's accessible name from the very first render (before any
-//      click): "a@b.co Copied, button".
-// The fix splits the one node into two, so each side can do the thing the
-// other couldn't: a purely visual label (`aria-hidden`, same fade
-// in/out as before, still driven by `done`) for sighted users, plus a
-// visually-hidden (`sr-only`) sibling that is genuinely empty and only
-// gets the copied label's text -- and therefore only *mutates* -- on a
-// real successful copy, clearing again when `done` resets. The button's
-// own accessible name now comes from a fixed `aria-label`
-// (`copyEmailAction`, added to the dictionary for this) instead of from
-// its child content, so it reads the same before, during and after a
-// click, and never announces on the failure paths (aria-label is static;
-// the live region only ever holds text when `done` is true, and `done`
-// only becomes true after `writeText` resolves).
-// `locale` is required rather than defaulted: the whole point of the prop is
-// to keep Thai out of the monospace stack, and a default of 'en' would hand
-// the broken treatment to exactly the callers that forgot to pass it.
-export default function CopyEmail({
-  email,
-  copiedLabel,
-  locale,
-}: {
-  email: string;
-  copiedLabel: string;
-  locale: Locale;
-}) {
-  const [done, setDone] = useState(false);
+// Polish amendment A03: the icon does not swap outright on success. The
+// button holds two stacked 18 px glyphs -- a clipboard that fades/scales out
+// (transform + opacity only) and a check that draws itself via
+// `stroke-dashoffset`, a named exception (master R27) allowed only on this
+// one 18 px inline-stroke icon. Both are hand-written inline SVGs rather
+// than the shared `Icon` component: `Icon`'s paths (including
+// `check-duotone`) are filled 256x256 duotone shapes, not open strokes, so
+// none of them can "draw on" -- and a filled glyph stacked over a stroked
+// one would read as two different icon languages, not one resolving into
+// the other.
+export default function CopyEmail({ email, locale }: { email: string; locale: Locale }) {
+  const t = dict[locale];
+  const [state, setState] = useState<State>('idle');
+  const addr = useRef<HTMLSpanElement>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Fix round 1 (minor): copyText() awaits the Clipboard API, so a visitor
+  // can navigate away or the parent can unmount this component mid-flight.
+  // Without this guard, the code after that await still calls setState and
+  // schedules a new setTimeout on an unmounted component -- a timer the
+  // cleanup below already ran and can no longer cancel.
+  const mounted = useRef(true);
 
-  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
+  // Fix round 2: the effect body must set this back to true. Next's App
+  // Router runs in StrictMode by default, and StrictMode's dev-only double
+  // invoke (mount -> cleanup -> mount) ran the cleanup below once with no
+  // matching "re-mounted" signal -- leaving mounted.current stuck at false
+  // for the component's entire real lifetime, so copy() silently did
+  // nothing after every click's await. useRef(true)'s initial value only
+  // covers the very first mount, not a StrictMode remount.
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      if (timer.current) clearTimeout(timer.current);
+    };
+  }, []);
 
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(email);
-    } catch {
-      // navigator.clipboard is only available in a secure context (HTTPS or
-      // localhost), so this branch is real, reachable code in production --
-      // not a defensive catch that never fires. There used to be a
-      // document.execCommand('copy') fallback here, but it was dropped
-      // (Task 10/11 review): the API is deprecated, fires only in the same
-      // narrow non-secure-context case this catch already covers, and the
-      // old code called setDone(true) unconditionally even when
-      // execCommand's own return value was false -- telling the visitor an
-      // address was on their clipboard when it might not be. Doing nothing
-      // here is honest; the always-present plain-text <span> below is the
-      // real fallback, still selectable/copyable by hand.
-      return;
-    }
-    setDone(true);
+  function settle(next: State, ms: number) {
+    setState(next);
     if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(() => setDone(false), 2000);
+    timer.current = setTimeout(() => setState('idle'), ms);
   }
 
+  async function copy() {
+    const ok = await copyText(email);
+    if (!mounted.current) return;
+    if (ok) {
+      settle('ok', 2000);
+      return;
+    }
+    // Honest failure (no clipboard, or permission denied): select the
+    // address so ⌘C / Ctrl+C works, and say so. No execCommand fallback --
+    // it is deprecated and used to report success it couldn't verify.
+    const node = addr.current;
+    const selection = window.getSelection();
+    if (node && selection) {
+      const range = document.createRange();
+      range.selectNodeContents(node);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+    settle('fail', 3000);
+  }
+
+  const message = state === 'ok' ? t.copied : state === 'fail' ? copyShortcutHint(t.closeCopyFail) : '';
+
   return (
-    <button
-      type="button"
-      onClick={copy}
-      // The email comes FIRST and in full, because it is the button's visible
-      // text. WCAG 2.5.3 Label in Name requires the accessible name to contain
-      // the visible label: a speech-input user says what they can see ("click
-      // suvichuk.j@gmail.com"), and a bare "Copy email address" label -- which
-      // this was, and which Lighthouse caught as
-      // label-content-name-mismatch -- would leave them with no way to hit it.
-      // Naming the action after it keeps the purpose clear for screen readers
-      // without overriding the visible label.
-      aria-label={`${email}, ${dict[locale].copyEmailAction}`}
-      className="inline-flex items-center gap-2.5 text-[15px]"
-    >
-      <span className="border-b border-on-dark-faint pb-[3px]">{email}</span>
-      {/* Sub-label tier -- see SkillsBand's "Core tools" label for what that
-          tier is and why Thai runs +1px. Peri is kept (not the tier's usual
-          on-dark-soft): this one is a state confirmation, not a field name,
-          and the accent is what makes it register at the edge of vision. */}
-      <span
-        aria-hidden="true"
-        className={`${
-          locale === 'th' ? 'text-[11.5px]' : 'text-[10.5px]'
-        } uppercase text-peri transition-opacity duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${eyebrowFont(
-          locale,
-          'tracking-[0.18em]',
-        )} ${done ? 'opacity-100' : 'opacity-0'}`}
-      >
-        {copiedLabel}
+    <span className="mail-row">
+      <span ref={addr} className="mail-addr">
+        {email}
       </span>
-      {/* sr-only: the actual announcement. Empty except in the brief window
-          after a successful copy, so it mutates (and therefore fires the
-          live region) exactly once per success and never on failure. */}
-      <span aria-live="polite" className="sr-only">
-        {done ? copiedLabel : ''}
+      <button type="button" className="copy-b" data-state={state} aria-label={t.copyEmailAction} onClick={copy}>
+        <span className="copy-box">
+          <svg
+            className="copy-clip"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <rect x="8" y="8" width="12" height="12" rx="2.5" />
+            <path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" />
+          </svg>
+          {/* Named exception (master R27): stroke-dashoffset draws this
+              path on success -- the one place on the page anything other
+              than transform/opacity animates. */}
+          <svg
+            className="copy-ok"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M5 12.5l4.5 4.5L19 7.5" />
+          </svg>
+        </span>
+      </button>
+      <span className="copy-l" aria-hidden="true">
+        {message}
       </span>
-    </button>
+      <span className="sr-only" aria-live="polite">
+        {message}
+      </span>
+    </span>
   );
 }

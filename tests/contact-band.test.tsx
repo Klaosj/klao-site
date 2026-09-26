@@ -27,6 +27,8 @@ const profile: Profile = {
   nameNative: null,
   prologue: null,
   closingLine: null,
+  basedIn: null,
+  workingIn: null,
 };
 
 describe('ContactBand', () => {

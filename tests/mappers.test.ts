@@ -423,6 +423,8 @@ describe('mapProfile', () => {
       nameNative: null,
       prologue: null,
       closingLine: null,
+      basedIn: null,
+      workingIn: null,
     });
   });
 

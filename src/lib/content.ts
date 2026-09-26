@@ -1,5 +1,5 @@
 import { cache } from 'react';
-import type { CareerEntry, OpenQuestion, Post, PostMeta, Profile, Project, ProjectStory, Skill, SkillTier, StoryChapter } from './models';
+import type { CareerEntry, FaqItem, OpenQuestion, Post, PostMeta, Profile, Project, ProjectStory, Skill, SkillTier, StoryChapter } from './models';
 import { SKILL_TIERS } from './models';
 import projectsFixture from '@/content/fixtures/projects.json';
 import postsFixture from '@/content/fixtures/posts.json';
@@ -8,6 +8,7 @@ import profileFixture from '@/content/fixtures/profile.json';
 import skillsFixture from '@/content/fixtures/skills.json';
 import questionsFixture from '@/content/fixtures/questions.json';
 import storyFixture from '@/content/fixtures/story.json';
+import faqFixture from '@/content/fixtures/faq.json';
 
 function isNotionConfigured(): boolean {
   return Boolean(process.env.NOTION_TOKEN);
@@ -181,4 +182,20 @@ const getStoryCached = cache(async (): Promise<StoryChapter[]> => {
 
 export async function getStory(): Promise<StoryChapter[]> {
   return getStoryCached();
+}
+
+// P4 (contract C5): the FAQ band, the ⌘K index (layout) and the Ask Preview
+// all read this in one render, hence cache(). Deliberately unlike Questions:
+// with NOTION_DB_FAQ unset this serves the fixtures — even when NOTION_TOKEN
+// is set — so the live page keeps its FAQ through the Notion migration
+// instead of losing the section until a Vercel env var is added.
+const getFaqCached = cache(async (): Promise<FaqItem[]> => {
+  const all = process.env.NOTION_DB_FAQ
+    ? await fromNotion((n) => n.fetchFaq(), faqFixture as FaqItem[])
+    : (faqFixture as FaqItem[]);
+  return [...all].sort((a, b) => a.order - b.order);
+});
+
+export async function getFaq(): Promise<FaqItem[]> {
+  return getFaqCached();
 }

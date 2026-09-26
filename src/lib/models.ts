@@ -181,6 +181,13 @@ export interface Profile {
   // migration: ByDay then drops the paragraph and closes on the headline.
   prologue: Localized | null;
   closingLine: Localized | null;
+  // P4 (spec §7, contract C5): the close band's "Based in" / "Working in"
+  // facts, moved out of the old ContactBand's hard-coded constants so Klao
+  // edits them in Notion. basedIn is Localized (the prototype reads
+  // "Bangkok, TH" / "กรุงเทพฯ"); workingIn is one locale-invariant string per
+  // C5. null = property missing or blank, and that fact simply doesn't render.
+  basedIn: Localized | null;
+  workingIn: string | null;
 }
 
 // "How real is it" -- a Skill's visual prominence on SkillsBand (the
@@ -252,5 +259,21 @@ export interface StoryChapter {
   rule: Localized;
   icon: string;
   sketch: string;
+  order: number;
+}
+
+// P4 (spec §7, contract C5): the FAQ DB. `target` follows the one link
+// grammar in src/lib/link-target.ts ('work', 'career:<key>',
+// 'work/<projectKey>', 'toolbox', 'contact', an https URL, …).
+export interface FaqLink {
+  label: Localized;
+  target: string;
+}
+
+export interface FaqItem {
+  id: string;
+  question: Localized;
+  answer: Localized;
+  links: FaqLink[];
   order: number;
 }

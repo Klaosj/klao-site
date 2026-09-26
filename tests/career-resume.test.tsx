@@ -23,6 +23,8 @@ const nonNullProfile: Profile = {
   nameNative: null,
   prologue: null,
   closingLine: null,
+  basedIn: null,
+  workingIn: null,
 };
 const nullProfile: Profile = { ...nonNullProfile, resumeUrl: null };
 

@@ -19,6 +19,8 @@ const testProfile: Profile = {
   nameNative: null,
   prologue: null,
   closingLine: null,
+  basedIn: null,
+  workingIn: null,
 };
 
 // Mutable, reset in beforeEach: Task 5's freshness-line tests override these

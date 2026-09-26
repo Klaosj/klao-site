@@ -1,0 +1,78 @@
+[
+  {
+    "id": "fx-faq-day",
+    "question": {
+      "en": "What does Klao do day to day?",
+      "th": "Klao ทำงานอะไรในแต่ละวัน?"
+    },
+    "answer": {
+      "en": "Senior Business Development at Actmedia since March 2026: opening new retail channels with Modern Trade retailers, project-managing live in-store rollouts, and building the financial models behind each partnership deal.",
+      "th": "เป็น Senior Business Development ที่ Actmedia ตั้งแต่ มี.ค. 2026 หาช่องทางใหม่กับค้าปลีก Modern Trade คุมโปรเจกต์ติดตั้งสื่อในร้านที่รันอยู่ และทำโมเดลการเงินก่อนเข้าดีลพาร์ตเนอร์แต่ละครั้ง"
+    },
+    "links": [
+      { "label": { "en": "Career · Actmedia", "th": "Career · Actmedia" }, "target": "career:actmedia" }
+    ],
+    "order": 1
+  },
+  {
+    "id": "fx-faq-build",
+    "question": {
+      "en": "Does he actually build the apps himself?",
+      "th": "สร้างแอปเองจริงไหม?"
+    },
+    "answer": {
+      "en": "Yes, on nights and weekends, with AI-assisted development (Claude). GoNai is live, Aje is a working prototype, and this site is edited in Notion.",
+      "th": "จริงครับ ทำนอกเวลางานด้วย AI-assisted development (Claude) GoNai เปิดใช้งานแล้ว Aje เป็น prototype ที่ใช้งานได้ และเว็บนี้แก้เนื้อหาผ่าน Notion"
+    },
+    "links": [
+      { "label": { "en": "Projects", "th": "Projects" }, "target": "work" },
+      { "label": { "en": "Toolbox", "th": "Toolbox" }, "target": "toolbox" }
+    ],
+    "order": 2
+  },
+  {
+    "id": "fx-faq-business",
+    "question": {
+      "en": "Has he run a business?",
+      "th": "เคยทำธุรกิจเองไหม?"
+    },
+    "answer": {
+      "en": "He founded A Bun Dance, a craft-burger shop, and ran it for 20 months with 6–8 part-time staff, holding gross profit at about 35% per unit.",
+      "th": "เคยก่อตั้งร้าน A Bun Dance เบอร์เกอร์คราฟต์ ทำอยู่ 20 เดือน ดูแลพนักงานพาร์ทไทม์ 6–8 คน และคุมกำไรขั้นต้นได้ราว 35% ต่อชิ้น"
+    },
+    "links": [
+      { "label": { "en": "Career · A Bun Dance", "th": "Career · A Bun Dance" }, "target": "career:a-bun-dance" }
+    ],
+    "order": 3
+  },
+  {
+    "id": "fx-faq-languages",
+    "question": {
+      "en": "Which languages does he work in?",
+      "th": "ทำงานได้กี่ภาษา?"
+    },
+    "answer": {
+      "en": "Thai, and English at a conversational level. This site and his projects ship in both.",
+      "th": "ภาษาไทย และภาษาอังกฤษระดับสนทนา เว็บนี้และโปรเจกต์ของเขาทำครบทั้งสองภาษา"
+    },
+    "links": [
+      { "label": { "en": "Toolbox · Languages", "th": "Toolbox · ภาษา" }, "target": "toolbox" }
+    ],
+    "order": 4
+  },
+  {
+    "id": "fx-faq-contact",
+    "question": {
+      "en": "How do I reach him?",
+      "th": "ติดต่อยังไง?"
+    },
+    "answer": {
+      "en": "Email suvichuk.j@gmail.com, or use Start a conversation at the end of this page.",
+      "th": "อีเมล suvichuk.j@gmail.com หรือกด \"เริ่มคุยกัน\" ท้ายหน้านี้"
+    },
+    "links": [
+      { "label": { "en": "Contact", "th": "Contact" }, "target": "contact" }
+    ],
+    "order": 5
+  }
+]

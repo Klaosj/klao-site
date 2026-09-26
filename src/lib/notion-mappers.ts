@@ -1,6 +1,7 @@
-import type { CareerEntry, ContentBlock, Localized, OpenQuestion, PostMeta, Profile, Project, QuestionStatus, RichSpan, Skill, SkillTier, StoryChapter } from './models';
+import type { CareerEntry, ContentBlock, FaqItem, FaqLink, Localized, OpenQuestion, PostMeta, Profile, Project, QuestionStatus, RichSpan, Skill, SkillTier, StoryChapter } from './models';
 import { PROJECT_MEDIA, PROJECT_STATUS_KEYS, PROJECT_WASHES, QUESTION_STATUSES, SKILL_TIERS } from './models';
 import { slugKey } from './format';
+import { isLinkTarget } from './link-target';
 
 export type NotionPage = { id: string; created_time?: string; properties: Record<string, unknown> };
 
@@ -166,6 +167,12 @@ export function mapProfile(page: NotionPage): Profile | null {
     closingLine: text(page.properties.ClosingLineEN)
       ? localized(text(page.properties.ClosingLineEN), text(page.properties.ClosingLineTH))
       : null,
+    // P4, additive like NameNative: a Profile database without these
+    // properties maps to null and the close band leaves the fact out.
+    basedIn: text(page.properties.BasedInEN)
+      ? localized(text(page.properties.BasedInEN), text(page.properties.BasedInTH))
+      : null,
+    workingIn: text(page.properties.WorkingIn) || null,
   };
 }
 
@@ -245,6 +252,39 @@ export function mapStoryChapter(page: NotionPage): StoryChapter | null {
     rule: localized(text(page.properties.RuleEN), text(page.properties.RuleTH)),
     icon: selectOf(page.properties.Icon) ?? '',
     sketch: selectOf(page.properties.Sketch) ?? '',
+    order: num(page.properties.Order),
+  };
+}
+
+// FAQ `Links` (contract C5): one link per line, `LabelEN|LabelTH|target`.
+// Spec §7 documents the shorter `Label|target`, so a two-part line reads as
+// one label for both languages. Anything else — wrong part count, a blank
+// label, a target outside link-target.ts's grammar — drops that line only,
+// so one typo in Notion never takes a whole answer's links down.
+export function parseFaqLinks(raw: string): FaqLink[] {
+  return lines(raw).flatMap((line) => {
+    const parts = line.split('|').map((p) => p.trim());
+    if (parts.length !== 2 && parts.length !== 3) return [];
+    const [en, th, target] = parts.length === 3 ? parts : [parts[0], '', parts[1]];
+    if (!en || !target || !isLinkTarget(target)) return [];
+    return [{ label: localized(en, th), target }];
+  });
+}
+
+// QuestionEN is the FAQ DB's title property; AnswerEN is required too, since
+// a question with no answer has nothing to show. Every other property is
+// optional (TH falls back to EN, Links to [], Order to 0) so a row created
+// before Klao fills in the rest still renders (Review Focus #1).
+export function mapFaqItem(page: NotionPage): FaqItem | null {
+  const questionEn = text(page.properties.QuestionEN);
+  if (!questionEn) return skip('FAQ', page, 'missing QuestionEN');
+  const answerEn = text(page.properties.AnswerEN);
+  if (!answerEn) return skip('FAQ', page, 'missing AnswerEN');
+  return {
+    id: page.id,
+    question: localized(questionEn, text(page.properties.QuestionTH)),
+    answer: localized(answerEn, text(page.properties.AnswerTH)),
+    links: parseFaqLinks(text(page.properties.Links)),
     order: num(page.properties.Order),
   };
 }
