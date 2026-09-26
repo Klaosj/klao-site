@@ -65,6 +65,16 @@
      screenshots legible. */
   --glass-nav: rgb(255 255 255 / .78);
   --glass-pill: rgb(255 255 255 / .80);
+  /* Fix wave finding 11: glass-ctl repeats ctl's value here and in both dark
+     blocks below rather than becoming var(--ctl) once, on :root only.
+     Runtime-wise a :root-only version would still resolve correctly in
+     dark mode too (custom-property lookup follows the cascade, same as any
+     other property) -- but tests/theme.test.ts's "defines the same
+     variables in light and dark" check reads each block's raw CSS text and
+     requires the same variable names in every block, so a :root-only
+     version would go missing from both dark blocks' text and fail that
+     parity check. Left triplicated on purpose; change the value in all
+     three places together. */
   --glass-ctl: rgb(236 237 241 / .72);
   /* --ctl is the prototype's name for --glass-ctl; both stay, same value. */
   --ctl: rgb(236 237 241 / .72);
@@ -259,7 +269,6 @@
     letter-spacing: -.022em;
     font-synthesis-style: none;
     -webkit-font-smoothing: antialiased;
-    overflow-x: clip;
   }
   body:lang(th) {
     line-height: 1.65;
@@ -381,8 +390,14 @@
    stack above and below the base letter and need more leading than the old
    headings' tight `leading-[1.08]` utilities give (MaskedHeading headings in
    the dark-era sections). The White Edition type classes carry their own
-   Thai line-heights, so they are excluded. */
-:lang(th) :is(h1, h2, h3):not(.t-hero, .t-h2, .t-title, .t-panel, .t-faq) {
+   Thai line-heights, so they are excluded.
+   Fix wave finding 3: the `:not(...)` list above named only the five type
+   classes that existed when this rule was written, so any new heading --
+   P1-P4's own, none of them a MaskedHeading and none needing this leading
+   -- was caught the moment it used h1/h2/h3 at all. Scoped instead to what
+   the legacy headings actually share: the same tight arbitrary Tailwind
+   utility this rule exists to loosen. */
+:lang(th) :is(h1, h2, h3)[class*="leading-["] {
   line-height: 1.5;
 }
 
@@ -613,6 +628,12 @@
     backdrop-filter: blur(20px) saturate(var(--sat));
     box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 -1px 0 var(--glass-edge), 0 0 0 1px var(--glass-rim), var(--e3);
   }
+  /* Trap (fix wave finding 13, doc only): this ::before is `position:
+     absolute`, so it needs a positioned ancestor to size against --
+     `.glass` itself must carry position: relative/sticky/fixed (never
+     static), or this sheen layer collapses to nothing / escapes the tile.
+     Every current consumer already positions itself for its own layout
+     reasons; nothing here does it FOR them. */
   .glass::before {
     content: "";
     position: absolute;
@@ -653,6 +674,11 @@
   @media (prefers-contrast: more) {
     .glass,
     .glass.glass-pill { background: var(--canvas); box-shadow: 0 0 0 2px var(--ink-1); }
+    /* Fix wave finding 9: .ctl (tour paddles, sheet close) is the same
+       Liquid Glass as .glass and had been left out of this block -- solid
+       the same way it already is under @supports-not and reduced
+       transparency, above. */
+    .ctl { background: var(--mist); }
   }
   @media (forced-colors: active) {
     .glass,
@@ -687,7 +713,11 @@
      button: --i (set inline by the component, to the checked option's
      index) drives `transform: translateX(...)`, so only transform ever
      animates. P1's LocaleToggle (A02) reuses this exact block with two
-     options via var(--n, 3)'s fallback. */
+     options via var(--n, 3)'s fallback -- its options are real navigation
+     `<a>` links (EN/ไทย are pages, not a client-only preference), so every
+     child selector below matches `:is(button, a)`, not `button` alone, and
+     "selected" is either radio's `aria-checked="true"` or a current-page
+     link's `aria-current="page"`. */
   .seg {
     position: relative;
     display: inline-grid;
@@ -712,7 +742,12 @@
     transition: transform 320ms var(--ease-settle);
     z-index: -1;
   }
-  .seg button {
+  /* Fix wave finding 1: before the component's mount-time sync has settled
+     (ThemeToggle sets `data-ready` one requestAnimationFrame after it), the
+     thumb must jump straight to the visitor's real theme instead of
+     sliding there from the server's Auto guess. */
+  .seg:not([data-ready]) .thumb { transition: none; }
+  .seg > :is(button, a) {
     font: inherit;
     font-size: 14px;
     line-height: 20px;
@@ -728,7 +763,29 @@
     justify-content: center;
     white-space: nowrap;
   }
-  .seg button[aria-checked="true"] { color: var(--ink-1); font-weight: 600; }
+  /* Fix wave finding 6: the checked rule below bolds this text, which is
+     narrower at 400 than at 600 -- widening the button and nudging the
+     thumb and the label's own centring on every switch. `.seg-label`'s
+     ::after is a same-content, always-600 duplicate that never paints
+     (visibility: hidden, height: 0, so it adds no visible second line) but
+     still sets the label's own shrink-to-fit width (inline-block sizes to
+     the widest of its stacked block children), so the visible text's own
+     weight can change without the label -- or the button around it --
+     resizing. */
+  .seg > :is(button, a) .seg-label {
+    position: relative;
+    display: inline-block;
+  }
+  .seg > :is(button, a) .seg-label::after {
+    content: attr(data-label);
+    display: block;
+    height: 0;
+    overflow: hidden;
+    visibility: hidden;
+    font-weight: 600;
+  }
+  .seg > :is(button, a)[aria-checked="true"],
+  .seg > :is(button, a)[aria-current="page"] { color: var(--ink-1); font-weight: 600; }
 
   /* ---- appearance glyph (ThemeGlyph; amendment A01) --------------------
      Sun <-> moon eclipse next to the segmented control: a mask circle
@@ -745,6 +802,18 @@
   .seg-glyph.is-dark .core { transform: scale(1.5); }
   .seg-glyph.is-dark .cut { transform: translate(0, 0); }
   .seg-glyph.is-dark .rays { transform: rotate(-45deg) scale(.4); opacity: 0; }
+  /* Fix wave finding 1: same mount-time guard as .seg's thumb, above. */
+  .seg-glyph:not([data-ready]) * { transition: none; }
+
+  /* Fix wave finding 1: reduced motion turns off the thumb slide and the
+     eclipse alike -- the two other transition rules above only gate the
+     one mount-time sync, not every later click or arrow key. */
+  @media (prefers-reduced-motion: reduce) {
+    .seg .thumb,
+    .seg-glyph .core,
+    .seg-glyph .cut,
+    .seg-glyph .rays { transition: none; }
+  }
 
   /* ---- external link arrow nudge + press (amendment A06) --------------
      `(hover: hover)` only, so a touch tap never fakes a hover nudge; the

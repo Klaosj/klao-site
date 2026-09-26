@@ -17,6 +17,12 @@ import { keepRuns } from '@/lib/thai';
 export default function ThaiText({ text, display }: { text: string; display?: boolean }) {
   const runs = keepRuns(text, display ? { display: true } : undefined);
   const keepClass = display ? 'kt' : 'nw';
+  // Trap (fix wave finding 13, doc only): .nw/.kt are inline-block, which
+  // also means an ancestor <a>'s or .u-draw's underline stops at each
+  // keep-span's edge instead of drawing straight through it -- an
+  // inline-block always starts a new text-decoration run. Never observed
+  // on this site (no keep run sits inside an underlined link today), but a
+  // future one that does would show a broken underline, not a missing fix.
   return (
     <>
       {runs.map((run, i) =>

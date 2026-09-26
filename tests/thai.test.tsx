@@ -136,13 +136,42 @@ describe('keepRuns display option (master R25)', () => {
   it('leaves a non-Thai token between Thai tokens as plain text', () => {
     // The space either side of "CRM" is itself a plain run, so it merges
     // with "CRM" the same way adjacent plain runs always merge (D1's rule).
+    // Fix wave finding 4: the leading space (Thai token, then "CRM") is a
+    // no-break space -- Thai has none of its own, so a break right there
+    // would strand "เปิดดีล" from the token it belongs with. The trailing
+    // space ("CRM", then a Thai token) stays an ordinary breakable space,
+    // exactly as the prototype's disp() only glues in that one direction.
     const runs = keepRuns('เปิดดีล CRM ให้ทีม', { display: true });
     expect(runs).toEqual([
       { text: 'เปิดดีล', keep: true },
-      { text: ' CRM ', keep: false },
+      { text: '\u00A0CRM ', keep: false },
       { text: 'ให้ทีม', keep: true },
     ]);
-    expect(joined(runs)).toBe('เปิดดีล CRM ให้ทีม');
+    expect(joined(runs)).toBe('เปิดดีล\u00A0CRM ให้ทีม');
+  });
+
+  // Fix wave finding 4 (prototype disp() l.938): the glue only runs one
+  // direction -- a non-Thai token followed by a Thai one keeps its
+  // ordinary, breakable space.
+  it('keeps an ordinary space where a non-Thai token is followed by a Thai one', () => {
+    const runs = keepRuns('CRM เครื่องมือ', { display: true });
+    expect(runs).toEqual([
+      { text: 'CRM ', keep: false },
+      { text: 'เครื่องมือ', keep: true },
+    ]);
+    expect(joined(runs)).toBe('CRM เครื่องมือ');
+  });
+
+  // Fix wave finding 4: `|` inside a token with no Thai in it at all must
+  // also be stripped, not shown literally -- same as it already is for a
+  // Thai token's own `|`-split fragments, above.
+  it('strips `|` from a wholly non-Thai token instead of rendering it literally', () => {
+    const runs = keepRuns('CRM|Tool ทำงานได้ดี', { display: true });
+    expect(runs).toEqual([
+      { text: 'CRMTool ', keep: false },
+      { text: 'ทำงานได้ดี', keep: true },
+    ]);
+    expect(joined(runs)).toBe('CRMTool ทำงานได้ดี');
   });
 
   it('leaves non-Thai text untouched, same as the default mode', () => {
@@ -211,5 +240,14 @@ describe('<ThaiText>', () => {
   it('display: still puts a <wbr> between two `|`-split keep runs, using .kt', () => {
     const html = renderToStaticMarkup(<ThaiText text="ที่สร้างเครื่องมือ|ใช้เอง" display />);
     expect(html).toBe('<span class="kt">ที่สร้างเครื่องมือ</span><wbr/><span class="kt">ใช้เอง</span>');
+  });
+
+  // Fix wave finding 4: rendered, not just keepRuns() -- the space between a
+  // Thai token and a following non-Thai one comes out as an actual U+00A0,
+  // not the literal two characters "&nbsp;" (that's only how the ORIGINAL
+  // prototype's disp() spelled it, building raw HTML strings by hand).
+  it('display: joins a Thai token and a following non-Thai token with a no-break space', () => {
+    const html = renderToStaticMarkup(<ThaiText text="เปิดดีล CRM" display />);
+    expect(html).toBe('<span class="kt">เปิดดีล</span>\u00A0CRM');
   });
 });

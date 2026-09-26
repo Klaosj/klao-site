@@ -22,8 +22,14 @@
  *  additive option that instead ports the prototype's disp(): every
  *  space-delimited Thai token is kept whole (ignoring the keep list, dates
  *  and units), `|` still marks the one allowed break inside a token, and
- *  spaces between tokens are preserved as plain runs. No Intl.Segmenter: the
- *  reviewed prototype has none, and neither option uses one. */
+ *  spaces between tokens are preserved as plain runs -- except the one
+ *  right after a Thai token and before a non-Thai one, which becomes a
+ *  no-break space (fix wave finding 4), and `|` inside a non-Thai token is
+ *  removed rather than shown. No Intl.Segmenter: the reviewed prototype has
+ *  none, and neither option uses one. The prototype's disp() also gives
+ *  `\n` a desktop-only `<br>`; no copy this site renders needs a forced
+ *  line break, so that half of disp() has no port here (fix wave finding
+ *  4 -- doc only, not a gap to close). */
 
 export const THAI_RE = /[฀-๿]/;
 
@@ -59,6 +65,11 @@ const UNIT =
   '\\d[\\d.,]*(?:–\\d[\\d.,]*)? (?:ล้านบาท|พันบาท|พันคน|พัน|เดือน|ทีม|แบบ|ราย|คน|โปรเจกต์|ข้อ|บิล|ปี|มิติ|ใบ)';
 // Order matters where two could start at the same place: a date or a
 // number+unit ("3 โปรเจกต์") wins over the bare keep word inside it.
+// Trap (fix wave finding 13, doc only): this alternation has no word
+// boundary of its own -- Thai has none to anchor on -- so a keep-list word
+// that happens to be a substring of a longer, unrelated word still matches
+// and keeps that whole word. Ported from the prototype's KEEPRE as-is;
+// widening a match to a real boundary was never asked for.
 const KEEP_SOURCE = [DATE, UNIT, ...THAI_KEEP].join('|');
 // A run of non-space characters that contains at least one `|`.
 const PIPE_GROUP = '\\S*\\|\\S*';
@@ -105,21 +116,37 @@ function defaultRuns(text: string): Run[] {
 /** Display-mode runs (master R25, preflight A1) -- the prototype's disp():
  *  split on spaces, keep every Thai token whole (splitting further on `|`
  *  the same way the default mode does), leave non-Thai tokens as plain text,
- *  and keep the spaces between tokens as their own plain runs. */
+ *  and keep the spaces between tokens as their own plain runs -- except the
+ *  one space right after a Thai token and before a non-Thai one, which
+ *  becomes a no-break space (fix wave finding 4, prototype disp()): Thai
+ *  script has no spaces of its own, so a browser break right there would
+ *  visually strand the last Thai syllable from the Latin/number token it
+ *  belongs with. The reverse order (non-Thai, then Thai) keeps an ordinary
+ *  breakable space, exactly as the prototype does -- only that one
+ *  direction is amputating. */
 function displayRuns(text: string): Run[] {
   const runs: Run[] = [];
-  for (const piece of text.split(/( +)/)) {
-    if (piece === '') continue;
+  // Captured groups keep every space run as its own array entry, so a
+  // token's Thai-ness can be read from its neighbours below.
+  const tokens = text.split(/( +)/).filter((piece) => piece !== '');
+  tokens.forEach((piece, i) => {
     if (/^ +$/.test(piece)) {
-      pushRun(runs, piece, false);
-      continue;
+      const prev = tokens[i - 1];
+      const next = tokens[i + 1];
+      const glues = prev !== undefined && next !== undefined && THAI_RE.test(prev) && !THAI_RE.test(next);
+      pushRun(runs, glues ? piece.replace(/ /g, '\u00A0') : piece, false);
+      return;
     }
     // Fix round 1, finding 2: each `|`-split fragment is Thai-tested on its
     // own -- mirrors defaultRuns' per-fragment test above -- so a non-Thai
     // tail like "CRM" in "เครื่องมือ|CRM" is never marked keep just because
-    // the token it came from contained Thai somewhere else.
+    // the token it came from contained Thai somewhere else. This also
+    // covers fix wave finding 4's other half: a wholly non-Thai token's `|`
+    // is likewise never rendered literally -- split() already consumes the
+    // separator for either kind of fragment, and adjacent non-keep runs
+    // then merge back together (pushRun, above).
     for (const part of piece.split('|')) pushRun(runs, part, THAI_RE.test(part));
-  }
+  });
   return runs;
 }
 
