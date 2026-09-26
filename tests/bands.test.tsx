@@ -31,6 +31,8 @@ const profile: Profile = {
   resumeUrl: '',
   clients: [],
   nameNative: null,
+  basedIn: null,
+  workingIn: null,
 };
 
 describe('CraftBand', () => {

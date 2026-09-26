@@ -50,6 +50,8 @@ const profile: Profile = {
   resumeUrl: null,
   clients: [],
   nameNative: null,
+  basedIn: null,
+  workingIn: null,
 };
 
 describe('SiteNav', () => {

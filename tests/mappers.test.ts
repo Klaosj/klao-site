@@ -227,6 +227,8 @@ describe('mapProfile', () => {
       // above: this fixture page has no `NameNative` property, so an
       // existing Profile database maps to null rather than failing.
       nameNative: null,
+      basedIn: null,
+      workingIn: null,
     });
   });
 
