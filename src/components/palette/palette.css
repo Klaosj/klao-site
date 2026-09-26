@@ -1,7 +1,6 @@
 /* ⌘K palette + Ask Preview. Imported by CommandPalette, so it ships in the
    palette's lazy chunk, never the first load. Values: the prototype's
-   .cmdk / .ckrow / .cko / .ask block; --card stands in for the
-   prototype's --raised (not a C1 token). */
+   .cmdk / .ckrow / .cko / .ask block. */
 .ck {
   width: min(640px, 100% - 32px);
   max-width: none;
@@ -10,13 +9,33 @@
   padding: 0;
   border: 0;
   border-radius: 22px;
-  background: var(--card);
+  /* Fix round 1 #C7: this is --raised (one step above --card), matching the
+     prototype's .cmdk/.ask/.sheet/.menu -- not --card, which is one step
+     lower and only matches --raised by coincidence in light mode. */
+  background: var(--raised);
   color: var(--ink-1);
   box-shadow: 0 24px 64px -16px rgb(0 0 0 / 0.28), 0 0 0 1px var(--line);
   overflow: hidden;
 }
 .ck::backdrop {
   background: rgb(0 0 0 / 0.2);
+}
+/* Fix round 1 #5: the prototype's entrance for every dialog on the page
+   (.sheet[open]/.cmdk[open]/.ask[open]/.menu[open], sheetIn/fadein) -- P1's
+   nav-menu.css already ported the same pattern for .nm[open] as nm-in/
+   nm-fade, so this reuses those two keyframes by name (R19: define once)
+   rather than redeclaring an identical pair here. Transform + opacity only;
+   reduced motion swaps the slide for a 150 ms fade, never no motion at all
+   (nothing this animates is content -- the dialog is either open or not). */
+@media (prefers-reduced-motion: no-preference) {
+  .ck[open] {
+    animation: nm-in var(--dur-ui) var(--ease-settle);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ck[open] {
+    animation: nm-fade 150ms linear;
+  }
 }
 .ck-ic {
   flex: none;
@@ -86,6 +105,14 @@
 .ck-o[aria-selected='true'] {
   background: color-mix(in srgb, var(--ink-1) 7%, transparent);
 }
+/* Fix round 1 #11: color-mix() above disappears under a forced (high
+   contrast) colour scheme, which ignores authored colours -- precedent at
+   globals.css's own forced-colors block ("~648", .glass/.glass-pill). */
+@media (forced-colors: active) {
+  .ck-o[aria-selected='true'] {
+    outline: 2px solid Highlight;
+  }
+}
 .ck-o mark {
   background: none;
   color: inherit;
@@ -119,6 +146,20 @@
   max-height: min(76vh, 640px);
   padding: 28px;
   overflow: auto;
+}
+/* Fix round 1 #6: the prototype gives Ask its own dialog (index.html:719,
+   740) at a different size/position/shadow than the list view (.cmdk).
+   T13 renders both states inside one <dialog> (simpler focus/animation
+   handling than swapping elements) rather than two, so this restyles that
+   same box only while it holds the Ask section, via :has() -- the
+   prototype's numbers win either way (master R21). background stays
+   --raised (already set on .ck above) since the prototype's .ask uses the
+   same value. */
+.ck:has(> .ask) {
+  width: min(620px, 100% - 32px);
+  margin: 12vh auto auto;
+  border-radius: 28px;
+  box-shadow: var(--e4);
 }
 .ask-h {
   display: flex;
@@ -289,5 +330,10 @@
   .ask-a sup button,
   .ask-srcs button b {
     font-size: 14px;
+  }
+  /* Fix round 1 #6: the prototype's phone Ask is a bottom sheet -- rounded
+     top corners only, matching .sheet's own phone treatment. */
+  .ck:has(> .ask) {
+    border-radius: 24px 24px 0 0;
   }
 }

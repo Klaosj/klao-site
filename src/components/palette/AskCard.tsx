@@ -3,14 +3,18 @@
 import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { Icon } from '@/components/icons';
 import type { AskAnswer, AskSource } from '@/lib/ask';
+import { copyShortcutHint } from '@/lib/clipboard';
 import { dict } from '@/lib/dictionary';
 import { fill } from '@/lib/format';
 import { mailto } from '@/lib/link-target';
 import type { Locale } from '@/lib/models';
 
 // Subject line on the "Something wrong?" mail (prototype). This string
-// exists only here (preflight C14) -- ask.ts's own canned answers and
-// CloseBand's mail both use a different, shared subject (CONTACT_SUBJECT).
+// exists only here (preflight C14): ask.ts's canned answers carry no mail
+// subject at all (askPreview never builds a mailto -- fix round 1 #10,
+// correcting the earlier comment here), and CloseBand's own "Start a
+// conversation" mail uses a different, shared subject (CONTACT_SUBJECT,
+// src/lib/link-target.ts).
 const ASK_SUBJECT = 'Ask Klao preview';
 
 // The Ask Klao answer card, labelled Preview (spec §6): the question, the
@@ -21,6 +25,7 @@ export default function AskCard({
   answer,
   email,
   locale,
+  copyState,
   onBack,
   onGo,
   onCopyEmail,
@@ -28,6 +33,12 @@ export default function AskCard({
   answer: AskAnswer;
   email: string;
   locale: Locale;
+  // Fix round 1 #4: the caller (CommandPalette) owns the copyText() call and
+  // its result, so its outcome -- and the ~2 s auto-revert on success -- can
+  // be shared with the row-level "Copy email" hint elsewhere in the same
+  // palette; this button renders its own label from the outcome rather than
+  // taking a pre-rendered string, so it stays in the page's own locale.
+  copyState: 'idle' | 'ok' | 'fail';
   onBack: () => void;
   onGo: (target: string) => void;
   onCopyEmail: () => void;
@@ -55,14 +66,24 @@ export default function AskCard({
         </button>
       </div>
       <p className="ask-trust">{t.askTrust}</p>
-      <p className="ask-q">{answer.query}</p>
+      {/* Fix round 1 #9: the visitor's own question, shown verbatim, is in
+          whichever language they typed it in -- same reasoning as .ask-a/
+          .ask-decl's own lang below, just for the query instead of the
+          answer. */}
+      <p className="ask-q" lang={answer.lang}>
+        {answer.query}
+      </p>
       {answer.kind === 'decline' ? (
         <div className="ask-decl">
           <p lang={answer.lang}>{fill(a.askDeclined, { email })}</p>
           <p className="ask-decl-act">
             <button type="button" className="btn btn-out" onClick={onCopyEmail}>
-              {/* C1: reuses the existing copyEmail key instead of a duplicate palCopyEmail. */}
-              {t.copyEmail}
+              {/* C1: reuses the existing copyEmail key instead of a duplicate
+                  palCopyEmail. Fix round 1 #4: on a real outcome the label
+                  swaps to "Copied" (success, ~2 s) or the honest failure
+                  hint -- never staying "Copy email" as if nothing happened,
+                  and never claiming success it didn't have. */}
+              {copyState === 'ok' ? t.copied : copyState === 'fail' ? copyShortcutHint(t.closeCopyFail) : t.copyEmail}
             </button>
           </p>
         </div>

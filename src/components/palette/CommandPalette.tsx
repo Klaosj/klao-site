@@ -89,7 +89,18 @@ export default function CommandPalette({ entries, faq, email, locale, initialQue
   const [sel, setSel] = useState(0);
   const [answer, setAnswer] = useState<AskAnswer | null>(null);
   const [status, setStatus] = useState('');
-  const [copiedId, setCopiedId] = useState<string | null>(null);
+  // Fix round 1 #4: `ok` travels with the id now, so a failed copy can show
+  // its own honest hint on the row (or the Ask decline button) instead of
+  // only the sr-only status region -- id === null is the Ask decline's
+  // "Copy email" button (copy(null, email) below), never a real row id.
+  const [copyResult, setCopyResult] = useState<{ id: string | null; ok: boolean } | null>(null);
+  // Only the id === null (Ask decline) case reverts on its own after ~2 s,
+  // matching CopyEmail.tsx's (Task 8) identical button elsewhere on the
+  // page; a row's hint instead simply clears when the query next changes.
+  const emailCopyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (emailCopyTimer.current) clearTimeout(emailCopyTimer.current);
+  }, []);
 
   const raw = query.trim();
   const results = useMemo(() => searchPalette(entries, raw), [entries, raw]);
@@ -127,9 +138,14 @@ export default function CommandPalette({ entries, faq, email, locale, initialQue
   }, [answer]);
 
   // Keep the highlighted option on screen while arrowing through the list.
+  // Fix round 1 #8: `raw` is also a dependency -- typing resets `sel` to 0,
+  // but row 0's id string (`${uid}-o-0`) is the same before and after a
+  // keystroke even though it now names a completely different entry, so
+  // `activeId` alone never changes and this effect would otherwise not
+  // re-run to scroll a still-scrolled-down list back to the new row 0.
   useEffect(() => {
     if (activeId) document.getElementById(activeId)?.scrollIntoView?.({ block: 'nearest' });
-  }, [activeId]);
+  }, [activeId, raw]);
 
   // Result count for screen readers, debounced so typing isn't read out
   // letter by letter (prototype: 300 ms).
@@ -148,8 +164,16 @@ export default function CommandPalette({ entries, faq, email, locale, initialQue
 
   async function copy(entryId: string | null, text: string) {
     const ok = await copyText(text);
-    setCopiedId(ok ? entryId : null);
+    setCopyResult({ id: entryId, ok });
     setStatus(ok ? t.copied : copyShortcutHint(t.closeCopyFail));
+    if (emailCopyTimer.current) clearTimeout(emailCopyTimer.current);
+    // Fix round 1 #4: only the Ask decline's button times out on its own;
+    // a failed copy (there or on a row) stays visible until the next
+    // attempt or query change, so it is never silently swapped back to a
+    // false "all clear".
+    if (entryId === null && ok) {
+      emailCopyTimer.current = setTimeout(() => setCopyResult(null), 2000);
+    }
   }
 
   function run(row: Row | undefined) {
@@ -182,7 +206,13 @@ export default function CommandPalette({ entries, faq, email, locale, initialQue
           onClose();
           window.open(action.href, '_blank', 'noopener');
         } else {
-          onClose({ restoreFocus: false });
+          // Fix round 1 #3: restoreFocus:false is for a same-tab navigation
+          // that unloads this document (focus would be moot). A `mailto:`
+          // href never does that -- the page stays put and the mail client
+          // opens elsewhere -- so skipping the restore here was dropping
+          // focus to <body> instead of giving it back to whatever opened
+          // the palette.
+          onClose(action.href.startsWith('mailto:') ? undefined : { restoreFocus: false });
           window.location.href = action.href;
         }
         return;
@@ -226,6 +256,11 @@ export default function CommandPalette({ entries, faq, email, locale, initialQue
   }
 
   function onDialogKeyDown(e: ReactKeyboardEvent<HTMLDialogElement>) {
+    // Fix round 1 #2 (IME guard): an IME's own Escape (cancelling the
+    // composition, not the dialog) must not also close the palette. Safari
+    // reports a composing key's *own* keydown as keyCode 229 without
+    // isComposing; the flag alone misses that case.
+    if (e.nativeEvent.isComposing || e.keyCode === 229) return;
     if (e.key === 'Escape') {
       e.preventDefault();
       // Some browsers still raise `cancel` for this same key press; the flag
@@ -241,6 +276,14 @@ export default function CommandPalette({ entries, faq, email, locale, initialQue
   }
 
   function onInputKeyDown(e: ReactKeyboardEvent<HTMLInputElement>) {
+    // Fix round 1 #2 (IME guard): while an IME composition is open, Enter
+    // and the arrow keys pick a candidate, not a row -- without this, the
+    // reviewer found a composing Enter running the highlighted row
+    // (switching theme, closing the palette) and a composing Arrow moving
+    // the selection underneath the candidate list. Safari sends the
+    // committing Enter itself as keyCode 229 right after compositionend,
+    // when isComposing has already gone back to false, so both checks stay.
+    if (e.nativeEvent.isComposing || e.keyCode === 229) return;
     const n = rows.length;
     if (e.key === 'ArrowDown' && e.metaKey) {
       e.preventDefault();
@@ -268,9 +311,23 @@ export default function CommandPalette({ entries, faq, email, locale, initialQue
 
   function hintFor(entry: PaletteEntry): string {
     if (entry.action.type === 'theme') return entry.action.pref === theme ? '✓' : '';
-    if (entry.action.type === 'copy' && copiedId === entry.id) return t.copied;
+    // Fix round 1 #4: a failed copy now shows the same honest hint on the
+    // row that the sr-only status already carried, instead of silently
+    // falling back to the row's normal hint (the email address) as if
+    // nothing had gone wrong.
+    if (entry.action.type === 'copy' && copyResult?.id === entry.id) {
+      return copyResult.ok ? t.copied : copyShortcutHint(t.closeCopyFail);
+    }
     return entry.hint;
   }
+
+  // Fix round 1 #4: the Ask decline's "Copy email" button is the id === null
+  // case of the same copyResult state a row's hint reads above; AskCard
+  // renders its own label from this rather than from a pre-rendered string,
+  // so it stays in the page's own locale exactly like its other chrome
+  // (palCancel, copyEmail).
+  const emailCopyState: 'idle' | 'ok' | 'fail' =
+    copyResult?.id === null ? (copyResult.ok ? 'ok' : 'fail') : 'idle';
 
   // Consecutive rows of one group share a heading; searchPalette already
   // returns rows grouped in display order, and "Ask Klao" comes last.
@@ -302,6 +359,7 @@ export default function CommandPalette({ entries, faq, email, locale, initialQue
           answer={answer}
           email={email}
           locale={locale}
+          copyState={emailCopyState}
           onBack={backToList}
           onGo={leave}
           onCopyEmail={() => void copy(null, email)}
@@ -328,7 +386,7 @@ export default function CommandPalette({ entries, faq, email, locale, initialQue
               onChange={(e) => {
                 setQuery(e.target.value);
                 setSel(0);
-                setCopiedId(null);
+                setCopyResult(null);
               }}
               onKeyDown={onInputKeyDown}
             />
@@ -337,7 +395,11 @@ export default function CommandPalette({ entries, faq, email, locale, initialQue
             </button>
           </div>
           {raw && results.length === 0 && <p className="ck-empty">{fill(t.palNone, { q: raw })}</p>}
-          <div className="ck-list" id={`${uid}-list`} role="listbox" aria-labelledby={`${uid}-q`}>
+          {/* Fix round 1 #7: aria-label names the list "Results" directly --
+              aria-labelledby pointing at the search input named it after the
+              input's own accessible name (the placeholder text), not after
+              what the listbox actually is. */}
+          <div className="ck-list" id={`${uid}-list`} role="listbox" aria-label={t.palResults}>
             {blocks.map((block) => (
               <div key={block.key} role="group" aria-labelledby={`${uid}-g-${block.key}`}>
                 <div className="ck-g" id={`${uid}-g-${block.key}`}>

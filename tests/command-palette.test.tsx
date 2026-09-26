@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import CommandPalette from '@/components/palette/CommandPalette';
+import { copyShortcutHint } from '@/lib/clipboard';
 import { dict } from '@/lib/dictionary';
 import { fill } from '@/lib/format';
 import type { FaqItem } from '@/lib/models';
@@ -75,6 +76,9 @@ afterEach(() => {
   history.replaceState(null, '', '/');
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
+  // A couple of fix-round-1 tests below use fake timers (the Ask decline's
+  // 2 s copy revert); this returns every test after them to real ones.
+  vi.useRealTimers();
 });
 
 function open(locale: 'en' | 'th' = 'en', initialQuery = '') {
@@ -96,6 +100,13 @@ const settle = () =>
   act(async () => {
     await new Promise((r) => setTimeout(r, 0));
   });
+// copy() awaits copyText(), which awaits writeText(): a few microtask hops
+// before the state update. Same convention as tests/copy-email.test.tsx,
+// for the fake-timer tests below (settle()'s real setTimeout doesn't fire
+// under vi.useFakeTimers()).
+const flushMicrotasks = async () => {
+  for (let i = 0; i < 6; i++) await Promise.resolve();
+};
 
 describe('CommandPalette', () => {
   it('opens as a labelled dialog: a combobox driving a listbox, first option active, input focused', () => {
@@ -253,5 +264,115 @@ describe('CommandPalette', () => {
     for (const f of ['src/components/palette/CommandPalette.tsx', 'src/components/palette/AskCard.tsx']) {
       expect(readFileSync(f, 'utf8'), f).not.toMatch(/\bfetch\s*\(|XMLHttpRequest|sendBeacon|WebSocket|EventSource/);
     }
+  });
+
+  // --- Fix round 1 regressions -------------------------------------------
+
+  it('ignores a composing Enter (IME guard #2): no row runs', () => {
+    const box = open();
+    type(box, 'dark');
+    fireEvent.keyDown(box, { key: 'Enter', isComposing: true });
+    expect(document.documentElement.getAttribute('data-theme')).not.toBe('dark');
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('ignores the Safari post-composition Enter, sent as keyCode 229 (IME guard #2)', () => {
+    const box = open();
+    type(box, 'dark');
+    fireEvent.keyDown(box, { key: 'Enter', keyCode: 229 });
+    expect(document.documentElement.getAttribute('data-theme')).not.toBe('dark');
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('ignores a composing arrow key: the selection does not move (IME guard #2)', () => {
+    const box = open();
+    const options = screen.getAllByRole('option');
+    fireEvent.keyDown(box, { key: 'ArrowDown', isComposing: true });
+    expect(box.getAttribute('aria-activedescendant')).toBe(options[0].id);
+  });
+
+  it('ignores a composing Escape: the palette stays open with its query (IME guard #2)', () => {
+    const box = open('en', 'gonai');
+    fireEvent.keyDown(box, { key: 'Escape', isComposing: true });
+    expect(box.value).toBe('gonai');
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('closes with the default focus restore before a mailto href, not restoreFocus:false (fix #3)', () => {
+    // "conversation" matches only suggested:mail ("Start a conversation"),
+    // whose action is an internal (non-external) mailto: href.
+    const box = open();
+    type(box, 'conversation');
+    fireEvent.keyDown(box, { key: 'Enter' });
+    expect(onClose).toHaveBeenCalledWith(undefined);
+  });
+
+  it('closes normally (no restoreFocus override) before an external href, e.g. the résumé', () => {
+    const box = open();
+    type(box, 'resume');
+    fireEvent.keyDown(box, { key: 'Enter' });
+    expect(onClose).toHaveBeenCalledWith();
+  });
+
+  it('switches locale through switchLocaleHref and window.location.assign (C2 wiring)', () => {
+    const assign = vi.fn();
+    vi.stubGlobal('location', { assign, pathname: '/', href: '/' });
+    const box = open();
+    type(box, 'language');
+    fireEvent.keyDown(box, { key: 'Enter' });
+    expect(onClose).toHaveBeenCalledWith({ restoreFocus: false });
+    expect(assign).toHaveBeenCalledWith('/th');
+  });
+
+  it('closes on a backdrop click -- the dialog element itself, not its content', () => {
+    open();
+    fireEvent.click(screen.getByRole('dialog'));
+    expect(onClose).toHaveBeenCalledWith();
+  });
+
+  it('shows the honest failure hint on the row itself, never a false "Copied" (fix #4)', async () => {
+    vi.stubGlobal('navigator', {});
+    const box = open();
+    type(box, 'copy');
+    fireEvent.keyDown(box, { key: 'Enter' });
+    await settle();
+    const hint = screen.getAllByRole('option')[0].textContent ?? '';
+    expect(hint).toContain(copyShortcutHint(dict.en.closeCopyFail));
+    expect(hint).not.toContain(dict.en.copied);
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('swaps the Ask decline "Copy email" button to Copied, then reverts after ~2 s (fix #4)', async () => {
+    vi.useFakeTimers();
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal('navigator', { clipboard: { writeText } });
+    const box = open();
+    type(box, 'zzzq');
+    fireEvent.keyDown(box, { key: 'Enter' });
+    const card = screen.getByRole('region', { name: dict.en.askTitle });
+    await act(async () => {
+      fireEvent.click(within(card).getByRole('button', { name: dict.en.copyEmail }));
+      await flushMicrotasks();
+    });
+    expect(writeText).toHaveBeenCalledWith('real@example.com');
+    expect(within(card).getByRole('button', { name: dict.en.copied })).toBeTruthy();
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
+    expect(within(card).getByRole('button', { name: dict.en.copyEmail })).toBeTruthy();
+  });
+
+  it('shows the honest failure text on the Ask decline copy button, never a false Copied (fix #4)', async () => {
+    vi.stubGlobal('navigator', {});
+    const box = open();
+    type(box, 'zzzq');
+    fireEvent.keyDown(box, { key: 'Enter' });
+    const card = screen.getByRole('region', { name: dict.en.askTitle });
+    await act(async () => {
+      fireEvent.click(within(card).getByRole('button', { name: dict.en.copyEmail }));
+      await flushMicrotasks();
+    });
+    expect(within(card).getByRole('button', { name: copyShortcutHint(dict.en.closeCopyFail) })).toBeTruthy();
+    expect(card.textContent).not.toContain(dict.en.copied);
   });
 });
