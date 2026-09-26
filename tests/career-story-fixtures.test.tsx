@@ -4,7 +4,7 @@ import careerFixture from '@/content/fixtures/career.json';
 import profileFixture from '@/content/fixtures/profile.json';
 import storyFixture from '@/content/fixtures/story.json';
 import { Sketch } from '@/components/sketches';
-import { getCareer, getProfile } from '@/lib/content';
+import { getCareer, getProfile, getStory } from '@/lib/content';
 import { slugKey } from '@/lib/format';
 import { isStoryIcon, isStorySketch } from '@/lib/story';
 import type { CareerEntry, StoryChapter } from '@/lib/models';
@@ -102,5 +102,13 @@ describe('story fixture (prototype CH + RULES)', () => {
       if (!isStorySketch(c.sketch)) continue;
       expect(renderToStaticMarkup(<Sketch name={c.sketch} />)).toContain('<svg');
     }
+  });
+});
+
+describe('getStory (fixture mode)', () => {
+  it('returns the six fixture chapters sorted by order', async () => {
+    const story = await getStory();
+    expect(story.map((c) => c.order)).toEqual([1, 2, 3, 4, 5, 6]);
+    expect(story[0].title.en).toBe('Find the room.');
   });
 });

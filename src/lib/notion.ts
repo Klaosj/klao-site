@@ -1,5 +1,5 @@
 import { Client } from '@notionhq/client';
-import type { CareerEntry, OpenQuestion, Post, PostMeta, Profile, Project, ProjectStory, Skill } from './models';
+import type { CareerEntry, OpenQuestion, Post, PostMeta, Profile, Project, ProjectStory, Skill, StoryChapter } from './models';
 import {
   mapBlocks,
   mapCareerEntry,
@@ -8,6 +8,7 @@ import {
   mapProject,
   mapQuestion,
   mapSkill,
+  mapStoryChapter,
   splitBilingual,
   type NotionPage,
 } from './notion-mappers';
@@ -18,7 +19,7 @@ import {
 let cachedClient: Client | undefined;
 const client = (): Client => (cachedClient ??= new Client({ auth: process.env.NOTION_TOKEN }));
 
-const dbId = (name: 'PROJECTS' | 'POSTS' | 'CAREER' | 'PROFILE' | 'SKILLS' | 'QUESTIONS'): string => {
+const dbId = (name: 'PROJECTS' | 'POSTS' | 'CAREER' | 'PROFILE' | 'SKILLS' | 'QUESTIONS' | 'STORY'): string => {
   const id = process.env[`NOTION_DB_${name}`];
   if (!id) throw new Error(`Missing env NOTION_DB_${name}`);
   return id;
@@ -115,6 +116,12 @@ export async function fetchSkills(): Promise<Skill[]> {
 
 export async function fetchQuestions(): Promise<OpenQuestion[]> {
   return (await queryAll(dbId('QUESTIONS'), true)).map(mapQuestion).filter(nonNull);
+}
+
+// White Edition P3 (C5): the By day chapters. Sorting happens once, in
+// content.ts's getStory, so the fixture path and this path order the same way.
+export async function fetchStory(): Promise<StoryChapter[]> {
+  return (await queryAll(dbId('STORY'), true)).map(mapStoryChapter).filter(nonNull);
 }
 
 // Notion page/block ids are UUIDs: 32 hex chars, with or without dashes.
