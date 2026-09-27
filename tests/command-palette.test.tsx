@@ -330,15 +330,22 @@ describe('CommandPalette', () => {
     expect(onClose).toHaveBeenCalledWith();
   });
 
-  it('shows the honest failure hint on the row itself, never a false "Copied" (fix #4)', async () => {
+  it('keeps the row\'s own hint (the address) on a copy failure, never a false "Copied" (fix round 2 #2)', async () => {
+    // Fix round 2 #2: round 1's "Press ⌘C to copy" on the row was itself
+    // dishonest -- focus stays in the search input, so nothing is selected
+    // for ⌘C to act on. The row now simply keeps showing its own hint (the
+    // address, still readable and selectable by hand); the sr-only status
+    // region -- not the row -- carries the failure to screen readers.
     vi.stubGlobal('navigator', {});
     const box = open();
     type(box, 'copy');
     fireEvent.keyDown(box, { key: 'Enter' });
     await settle();
     const hint = screen.getAllByRole('option')[0].textContent ?? '';
-    expect(hint).toContain(copyShortcutHint(dict.en.closeCopyFail));
+    expect(hint).toContain('real@example.com');
     expect(hint).not.toContain(dict.en.copied);
+    expect(hint).not.toContain(copyShortcutHint(dict.en.closeCopyFail));
+    expect(screen.getByRole('status').textContent).toBe(copyShortcutHint(dict.en.closeCopyFail));
     expect(onClose).not.toHaveBeenCalled();
   });
 
@@ -362,7 +369,10 @@ describe('CommandPalette', () => {
     expect(within(card).getByRole('button', { name: dict.en.copyEmail })).toBeTruthy();
   });
 
-  it('shows the honest failure text on the Ask decline copy button, never a false Copied (fix #4)', async () => {
+  it('keeps the Ask decline "Copy email" label on a copy failure, never a false Copied (fix round 2 #2)', async () => {
+    // Same correction as the row above: the button's own label reverts to
+    // "Copy email" rather than an unmet ⌘C prompt (nothing is selected
+    // there either); the sr-only status still says so.
     vi.stubGlobal('navigator', {});
     const box = open();
     type(box, 'zzzq');
@@ -372,7 +382,53 @@ describe('CommandPalette', () => {
       fireEvent.click(within(card).getByRole('button', { name: dict.en.copyEmail }));
       await flushMicrotasks();
     });
-    expect(within(card).getByRole('button', { name: copyShortcutHint(dict.en.closeCopyFail) })).toBeTruthy();
+    expect(within(card).getByRole('button', { name: dict.en.copyEmail })).toBeTruthy();
     expect(card.textContent).not.toContain(dict.en.copied);
+    expect(screen.getByRole('status').textContent).toBe(copyShortcutHint(dict.en.closeCopyFail));
+  });
+
+  it('treats a composing Escape as handled if the browser also raises `cancel` for it (fix round 2 #3 nit)', () => {
+    // Fix round 2 #3: the composing early-return in onDialogKeyDown used to
+    // skip escHandled entirely, so a browser that still fires `cancel` for
+    // an IME-consumed Escape would close the palette anyway.
+    const box = open();
+    const dialog = screen.getByRole('dialog');
+    fireEvent.keyDown(box, { key: 'Escape', isComposing: true });
+    fireEvent(dialog, new Event('cancel', { cancelable: true }));
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('phone Ask is a bottom sheet: full width, content-height capped, safe-area padding (fix round 2 #1)', () => {
+    // Regression guard for the phone cut-off bug: the desktop
+    // .ck:has(> .ask) rule (0,2,0 specificity) used to keep winning over
+    // the phone-only .ck rule (0,1,0), leaving the mobile Ask view at
+    // width:min(620px,...) + margin:12vh auto auto stacked on height:
+    // 100dvh -- pushing its bottom 12vh below the viewport. This reads the
+    // published CSS (not jsdom, which applies no layout) to lock the phone
+    // override in place.
+    const css = readFileSync('src/components/palette/palette.css', 'utf8');
+    const start = css.indexOf('@media (max-width: 734px)');
+    expect(start, 'the phone media block').toBeGreaterThan(-1);
+    let depth = 0;
+    let end = -1;
+    for (let i = css.indexOf('{', start); i < css.length; i++) {
+      if (css[i] === '{') depth++;
+      else if (css[i] === '}') {
+        depth--;
+        if (depth === 0) {
+          end = i + 1;
+          break;
+        }
+      }
+    }
+    expect(end, 'unbalanced @media (max-width: 734px) block').toBeGreaterThan(-1);
+    const phone = css.slice(start, end);
+    const askOverride = /\.ck:has\(>\s*\.ask\)\s*\{([^}]*)\}/.exec(phone)?.[1] ?? '';
+    expect(askOverride, 'the phone .ck:has(> .ask) override').toContain('width: 100%');
+    expect(askOverride).toContain('height: auto');
+    expect(askOverride).toContain('max-height: calc(100dvh - 24px)');
+    expect(askOverride).toContain('margin: auto 0 0');
+    expect(askOverride).toContain('border-radius: 24px 24px 0 0');
+    expect(phone).toMatch(/\.ask\s*\{[^}]*padding-bottom:\s*calc\(28px \+ env\(safe-area-inset-bottom\)\)/);
   });
 });

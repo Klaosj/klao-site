@@ -331,9 +331,29 @@
   .ask-srcs button b {
     font-size: 14px;
   }
-  /* Fix round 1 #6: the prototype's phone Ask is a bottom sheet -- rounded
-     top corners only, matching .sheet's own phone treatment. */
+  /* Fix round 2 #1 (Important): the desktop .ck:has(> .ask) rule above has
+     higher specificity (0,2,0) than the plain .ck rule at the top of this
+     block (0,1,0), so on phones it was still winning with width: min(620px,
+     ...) and margin: 12vh auto auto -- stacked on this block's own
+     height: 100dvh, that put the box's bottom 12vh below the viewport's
+     bottom edge (measured at 390x844: top 101, bottom 945), cutting off the
+     last line and sources with no way to scroll them into view. This
+     phone-scoped override (same 0,2,0 specificity, later in the
+     stylesheet, so it wins) makes Ask a proper bottom sheet instead: full
+     width, sized to its own content up to a viewport-minus-gutter cap, and
+     bottom-anchored (margin: auto 0 0 lets the fixed-inset dialog's auto
+     top margin absorb the remaining space, matching .sheet's own phone
+     anchoring). Replaces the older, narrower border-radius-only override. */
   .ck:has(> .ask) {
+    width: 100%;
+    height: auto;
+    max-height: calc(100dvh - 24px);
+    margin: auto 0 0;
     border-radius: 24px 24px 0 0;
+  }
+  /* The iPhone home-indicator gutter would otherwise sit under the last
+     source/line, matching .sheet's own safe-area handling. */
+  .ask {
+    padding-bottom: calc(28px + env(safe-area-inset-bottom));
   }
 }

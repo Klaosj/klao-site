@@ -255,20 +255,30 @@ export default function CommandPalette({ entries, faq, email, locale, initialQue
     }
   }
 
+  // Some browsers still raise `cancel` for the same key press as a real,
+  // handled Escape; the flag stops onCancel from treating it as a second
+  // one. Fix round 2 #3 (nit): also used for a composing Escape below --
+  // a browser can raise `cancel` for that too, even though the IME (not
+  // the dialog) consumed the keypress.
+  function markEscHandled() {
+    escHandled.current = true;
+    setTimeout(() => {
+      escHandled.current = false;
+    }, 0);
+  }
+
   function onDialogKeyDown(e: ReactKeyboardEvent<HTMLDialogElement>) {
     // Fix round 1 #2 (IME guard): an IME's own Escape (cancelling the
     // composition, not the dialog) must not also close the palette. Safari
     // reports a composing key's *own* keydown as keyCode 229 without
     // isComposing; the flag alone misses that case.
-    if (e.nativeEvent.isComposing || e.keyCode === 229) return;
+    if (e.nativeEvent.isComposing || e.keyCode === 229) {
+      if (e.key === 'Escape') markEscHandled();
+      return;
+    }
     if (e.key === 'Escape') {
       e.preventDefault();
-      // Some browsers still raise `cancel` for this same key press; the flag
-      // stops onCancel from treating it as a second Escape.
-      escHandled.current = true;
-      setTimeout(() => {
-        escHandled.current = false;
-      }, 0);
+      markEscHandled();
       onEscape();
       return;
     }
@@ -311,12 +321,16 @@ export default function CommandPalette({ entries, faq, email, locale, initialQue
 
   function hintFor(entry: PaletteEntry): string {
     if (entry.action.type === 'theme') return entry.action.pref === theme ? '✓' : '';
-    // Fix round 1 #4: a failed copy now shows the same honest hint on the
-    // row that the sr-only status already carried, instead of silently
-    // falling back to the row's normal hint (the email address) as if
-    // nothing had gone wrong.
-    if (entry.action.type === 'copy' && copyResult?.id === entry.id) {
-      return copyResult.ok ? t.copied : copyShortcutHint(t.closeCopyFail);
+    // Fix round 2 #2: round 1 swapped a failed copy's hint for
+    // copyShortcutHint(t.closeCopyFail) ("Press ⌘C to copy"), but focus
+    // stays in the search input, so nothing is selected there for ⌘C to
+    // act on -- that message was dishonest in a different way than a false
+    // "Copied" is. On failure the row now simply keeps its own hint (the
+    // address, still visible and selectable by hand); the sr-only status
+    // region (set in copy() below either way) carries the failure to
+    // screen readers instead.
+    if (entry.action.type === 'copy' && copyResult?.id === entry.id && copyResult.ok) {
+      return t.copied;
     }
     return entry.hint;
   }

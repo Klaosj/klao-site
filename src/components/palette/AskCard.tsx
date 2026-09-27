@@ -3,7 +3,6 @@
 import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { Icon } from '@/components/icons';
 import type { AskAnswer, AskSource } from '@/lib/ask';
-import { copyShortcutHint } from '@/lib/clipboard';
 import { dict } from '@/lib/dictionary';
 import { fill } from '@/lib/format';
 import { mailto } from '@/lib/link-target';
@@ -79,11 +78,14 @@ export default function AskCard({
           <p className="ask-decl-act">
             <button type="button" className="btn btn-out" onClick={onCopyEmail}>
               {/* C1: reuses the existing copyEmail key instead of a duplicate
-                  palCopyEmail. Fix round 1 #4: on a real outcome the label
-                  swaps to "Copied" (success, ~2 s) or the honest failure
-                  hint -- never staying "Copy email" as if nothing happened,
-                  and never claiming success it didn't have. */}
-              {copyState === 'ok' ? t.copied : copyState === 'fail' ? copyShortcutHint(t.closeCopyFail) : t.copyEmail}
+                  palCopyEmail. Fix round 1 #4: on success the label swaps to
+                  "Copied" for ~2 s rather than staying "Copy email" as if
+                  nothing happened. Fix round 2 #2: on failure it reverts to
+                  "Copy email" instead of round 1's "Press ⌘C to copy" --
+                  focus never left the search input, so nothing was
+                  selected for ⌘C to act on; the sr-only status (onCopyEmail
+                  -> copy() in CommandPalette) still tells screen readers. */}
+              {copyState === 'ok' ? t.copied : t.copyEmail}
             </button>
           </p>
         </div>
