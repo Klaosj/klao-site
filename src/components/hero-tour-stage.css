@@ -96,6 +96,19 @@
     border-radius: 28px; text-align: left;
   }
   .ht-pill.glass:not(:has(.ht-play)) { padding-left: 18px; }
+  /* Fix round 2 (#2): `:has()` still sees a `.ht-play` node that CSS alone
+     made invisible (html:not(.js), or reduced motion before the
+     component's own post-mount effect has removed it) -- so the rule
+     above never fires while the button is only hidden, not actually gone,
+     and the caption sits 8px from the pill's rounded edge (10px on phone)
+     instead of 18px, then jumps once React really removes the node. This
+     forces the same 18px the whole time the button exists but is
+     CSS-hidden by html:not(.js) (unconditionally: without JS the button
+     stays in the DOM forever). Specificity: (0,3,1) -- three classes
+     (.ht-pill, .glass, :not(.js)) plus the `html` element -- beats the
+     phone `.ht-pill.glass` rule's (0,2,0) on any viewport, matching how
+     the :not(:has()) rule above (0,3,0) already overrides it. */
+  html:not(.js) .ht-pill.glass { padding-left: 18px; }
 
   /* The Pause/Play control uses P0's shared small glass control (.ctl) the
      same way the paddles do; only position and size are local. */
@@ -145,6 +158,12 @@
   /* Progress dots. The selected dot's width changes instantly; only its fill
      animates (transform). */
   .ht-dots { flex: none; display: flex; align-items: center; contain: layout paint; }
+  /* Fix round 2 (#3): without JS these buttons have no click handler and
+     drive nothing -- html:not(.js) means a no-JS visitor sees the row as a
+     progress picture (the fill bars still say how the tour was going to
+     divide up), not a set of dead tab buttons with a pointer cursor and
+     hover feedback promising something that never happens on click. */
+  html:not(.js) .ht-dots { pointer-events: none; }
   .ht-dot { display: grid; place-items: center; width: 24px; height: 24px; padding: 0; border: 0; background: none; cursor: pointer; }
   /* Fix round 1 (Important #2): the global focus ring (globals.css) draws
      2px outside the element with a 2px offset, but `.ht-dots`' own paint
@@ -184,6 +203,14 @@
        own effect detects this, but that effect runs after mount; this
        hides the button from the first paint, before that effect can run. */
     .ht-play { display: none; }
+    /* Fix round 2 (#2): mirrors the html:not(.js) rule above, but for
+       reduced motion instead -- before the component's effect removes
+       `.ht-play` from the DOM, it is only CSS-hidden (the rule right
+       above), so `:has(.ht-play)` is still true and this fires 18px;
+       after the effect removes the node, `:has(.ht-play)` turns false and
+       the earlier `.ht-pill.glass:not(:has(.ht-play))` rule (same 0,3,0
+       specificity) takes over with the same 18px -- no jump either way. */
+    .ht-pill.glass:has(.ht-play) { padding-left: 18px; }
   }
 
   /* Phone: 6:5 stage, full-bleed picture, the pill below the stage (spec §6). */
@@ -203,6 +230,21 @@
     .ht-vt { margin-bottom: 4px; font-size: 14px; }
     .ht-vrow { grid-template-columns: 76px 1fr; padding: 6px 0; }
     .ht-vrow b { font-size: 14px; }
+    /* Fix round 2 (#4): at 390px the row value ("Business developer who
+       builds his own tools." and its Thai counterpart) wraps to 2 lines in
+       the narrow 1fr column, ballooning .ht-vig-n's height (this row's
+       real fixed-content sizing, unlike .ht-vig-h's flexible 1fr) until
+       the vignette headline below it is pushed past the stage's fixed
+       aspect-ratio height and clipped (confirmed: the prototype has the
+       same overflow at the same width, same content -- this predates P1).
+       .ht-vig is aria-hidden -- the caption pill below carries the real
+       meaning -- so truncating this decorative preview row to one line,
+       the way an actual Notion column truncates an overflowing cell, is
+       in character for the mockup and frees the space the heading needs.
+       min-width: 0 lets the grid column actually shrink to fit; without
+       it, a `1fr` track's content-based minimum would just make the row
+       (and .ht-vig-n) as wide as the unwrapped text instead. */
+    .ht-vrow span { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .ht-ul { left: 88px; }
     .ht-vh1 { font-size: 20px; }
     .ht-vig-h small { font-size: 14px; }

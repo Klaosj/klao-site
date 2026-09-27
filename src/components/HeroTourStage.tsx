@@ -365,8 +365,18 @@ function Vignette({ vignette, beat }: { vignette: TourVignette; beat: VignetteBe
         </div>
         <div className="ht-vrow" data-row="th">
           <b>Title TH</b>
+          {/* Fix round 2 (#4): this row is forced to one line on phone
+              (nowrap + ellipsis, hero-tour-stage.css) to leave room for the
+              headline below -- the `|` only ever marked where THAT text is
+              allowed to wrap, which no longer applies once it never wraps
+              here. Left in, it would still make ThaiText emit two adjacent
+              keep-runs with a <wbr> between them, an explicit break
+              opportunity `white-space: nowrap` does not suppress (it only
+              disables ordinary space-based wrapping) -- so the row would
+              still take two lines despite nowrap. Stripped, keepRuns sees
+              one Thai token instead of two, so no <wbr> and no forced break. */}
           <span lang="th">
-            <ThaiText text={vignette.titleTh} display />
+            <ThaiText text={vignette.titleTh.replace(/\|/g, '')} display />
           </span>
           <i className="ht-ul" />
         </div>

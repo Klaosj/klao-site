@@ -366,6 +366,33 @@ describe('HeroTourStage', () => {
     expect(vig.querySelector('img')?.getAttribute('alt')).toBe('');
   });
 
+  // Fix round 2 (#4): the small "Title TH" preview row is forced to one
+  // line on phone (nowrap + ellipsis, hero-tour-stage.css) to leave room
+  // for the headline below it, which was getting clipped by the stage's
+  // fixed aspect-ratio height (confirmed against the prototype: same
+  // content, same overflow -- this predates P1). `white-space: nowrap`
+  // only suppresses ordinary space-based wrapping; a `|`-split Thai string
+  // renders as two ADJACENT keep-run spans with an explicit <wbr> between
+  // them (ThaiText.tsx), and that break opportunity survives nowrap -- so
+  // this row must never split the Thai text into two keep-runs, only one.
+  it('keeps the Title TH preview row free of <wbr>, so nowrap can hold it to one line on phone (fix round 2 #4)', () => {
+    renderStage();
+    const row = tour().querySelector('.ht-vrow[data-row="th"]') as HTMLElement;
+    // "นัก" is its own keep-run (a separate space-delimited Thai token) and
+    // stays one either way -- what matters is that it is never ADJACENT to
+    // another keep-run (only adjacency gets a <wbr> between them,
+    // ThaiText.tsx), which stripping the `|` here prevents.
+    expect(row.querySelector('wbr')).toBeNull();
+    expect(row.textContent).not.toContain('|');
+    // The big headline (.ht-vh1) is untouched: it still carries the `|`,
+    // so its last two keep-runs ("ที่สร้างเครื่องมือ", "ใช้เอง") stay
+    // adjacent and keep their <wbr> -- it deliberately wraps to two lines,
+    // and the `|` controls where that happens.
+    const heading = tour().querySelector('.ht-vh1[data-v="th"]') as HTMLElement;
+    expect(heading.querySelector('wbr')).not.toBeNull();
+    expect(heading.textContent).not.toContain('|');
+  });
+
   it('plays the vignette beat (EN, then TH) only while the tour runs, and rests on TH otherwise', () => {
     renderStage();
     const beat = () => tour().querySelector('.ht-vig')!.getAttribute('data-beat');
@@ -457,6 +484,23 @@ describe('hero-tour-stage.css (polish A04 + A08 exceptions)', () => {
   }
   const keyframeNames = (css: string): string[] => [...css.matchAll(/@keyframes\s+([\w-]+)\s*\{/g)].map((m) => m[1]);
 
+  // Extracts one `@media (prelude) { ... }` block by balanced braces (same
+  // technique as keyframeBlock above) -- needed to prove a rule sits INSIDE
+  // a specific media query, not just somewhere in the file.
+  function mediaBlock(css: string, prelude: string): string {
+    const start = css.indexOf(`@media ${prelude} {`);
+    if (start < 0) throw new Error(`missing @media ${prelude}`);
+    let depth = 0;
+    for (let i = css.indexOf('{', start); i < css.length; i++) {
+      if (css[i] === '{') depth++;
+      else if (css[i] === '}') {
+        depth--;
+        if (depth === 0) return css.slice(start, i + 1);
+      }
+    }
+    throw new Error(`unbalanced @media ${prelude}`);
+  }
+
   it("animates only transform/opacity via transition, except the Pause/Play glyph's clip-path", () => {
     let sawException = false;
     for (const rule of CSS.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
@@ -493,18 +537,29 @@ describe('hero-tour-stage.css (polish A04 + A08 exceptions)', () => {
     }
   });
 
-  it('fades only the screenshot frame into the page, never the vignette or the pill (polish A08)', () => {
-    const maskStart = CSS.indexOf('.ht-card:has(> .ht-cam) {');
-    expect(maskStart, 'no .ht-card:has(> .ht-cam) rule').toBeGreaterThan(-1);
-    const maskRule = CSS.slice(maskStart, CSS.indexOf('}', maskStart));
-    expect(maskRule).toContain('-webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent 98%);');
-    expect(maskRule).toContain('mask-image: linear-gradient(to bottom, #000 55%, transparent 98%);');
-    // Fix round 1 (Important #1): the mask must never reach the card that
-    // does NOT hold a screenshot (the klao-site Notion vignette), the
-    // caption pill, or the .ht-vig element itself.
-    expect(CSS).not.toMatch(/\.ht-card:not\(:has\(> \.ht-cam\)\)[^{]*\{[^}]*mask-image/);
-    expect(CSS).not.toMatch(/\.ht-vig[^{]*\{[^}]*mask-image/);
-    expect(CSS).not.toMatch(/\.ht-pill[^{]*\{[^}]*mask-image/);
+  // Fix round 2 (#1): the round-1 version of this test only checked that
+  // SOME rule with the exact literal selector ".ht-card:has(> .ht-cam) {"
+  // carried the mask, plus a few negative regexes for specific OTHER
+  // selectors. Both known mutations slip past that: adding mask-image back
+  // to the plain, unscoped `.ht-card {}` rule (no negative regex named it),
+  // or widening the masked rule's selector list to
+  // ".ht-card, .ht-card:has(> .ht-cam) {" (the literal substring the old
+  // test looked for is still present, and no negative regex named a
+  // selector starting with ".ht-card," either). This version instead scans
+  // every rule in the file and requires that ANY one carrying mask-image
+  // has EXACTLY the selector `.ht-card:has(> .ht-cam)` -- nothing more,
+  // nothing less -- which both mutations fail.
+  it('mask-image appears on exactly one rule, whose selector is exactly .ht-card:has(> .ht-cam) (polish A08)', () => {
+    let sawRule = false;
+    for (const rule of CSS.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+      if (!/mask-image/.test(rule[2])) continue;
+      const selector = rule[1].trim();
+      expect(selector, `mask-image on an unexpected selector: "${selector}"`).toBe('.ht-card:has(> .ht-cam)');
+      expect(rule[2]).toContain('-webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent 98%);');
+      expect(rule[2]).toContain('mask-image: linear-gradient(to bottom, #000 55%, transparent 98%);');
+      sawRule = true;
+    }
+    expect(sawRule).toBe(true); // the scan itself works
   });
 
   // Fix round 1 (Important #3): a masked card's outer box-shadow paints
@@ -519,5 +574,36 @@ describe('hero-tour-stage.css (polish A04 + A08 exceptions)', () => {
   // ring must not be clipped by `.ht-dots`' paint containment.
   it("keeps the tab dots' focus ring inside the containing box (WCAG 2.4.7)", () => {
     expect(CSS).toContain('.ht-dot:focus-visible { outline-offset: -2px; }');
+  });
+
+  // Fix round 2 (#2): `:has()` can't tell "gone" from "CSS-hidden", so the
+  // caption's padding-left must be forced to 18px (the "no Play button"
+  // value) in both cases where the button is only invisible: no JS ever,
+  // and reduced motion before the component's own effect removes it.
+  it('keeps the pill padding at 18px while .ht-play is only CSS-hidden, not gone (fix round 2 #2)', () => {
+    expect(CSS).toContain('html:not(.js) .ht-pill.glass { padding-left: 18px; }');
+    const reducedBlock = mediaBlock(CSS, '(prefers-reduced-motion: reduce)');
+    expect(reducedBlock).toContain('.ht-pill.glass:has(.ht-play) { padding-left: 18px; }');
+  });
+
+  // Fix round 2 (#3): without JS, the dots have no click handler and read
+  // as a progress picture, not a set of dead tab buttons.
+  it('makes the tab dots visually inert before JS runs (fix round 2 #3)', () => {
+    expect(CSS).toContain('html:not(.js) .ht-dots { pointer-events: none; }');
+  });
+
+  // Fix round 2 (#4): truncates the decorative preview rows to one line on
+  // phone, freeing the room the headline below needs. Scoped to the phone
+  // media query only -- desktop's .ht-vrow has plenty of width and never
+  // wraps this content in the first place (checked live at 1440px, with
+  // and without this rule: identical row heights either way).
+  it("truncates the vignette's preview-row values to one line on phone only (fix round 2 #4)", () => {
+    const rule = '.ht-vrow span { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }';
+    const phoneBlock = mediaBlock(CSS, '(max-width: 734px)');
+    expect(phoneBlock).toContain(rule);
+    // Exactly one occurrence in the whole file (inside that block, just
+    // shown) rules out a duplicate sneaking in outside the media query --
+    // i.e. onto desktop.
+    expect(CSS.split(rule).length - 1).toBe(1);
   });
 });
