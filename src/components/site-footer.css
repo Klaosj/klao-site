@@ -94,5 +94,16 @@
       flex-direction: column;
       align-items: start;
     }
+    /* I-2 (fix wave finding 3): at 320px the label + control row overflowed
+       by 1px and "การแสดงผล" wrapped mid-word -- the prototype (R21) stacks
+       each pref's label above its control instead of beside it. */
+    .foot-pref {
+      flex-direction: column;
+      align-items: start;
+      gap: 6px;
+    }
+    .foot-pref-label {
+      white-space: nowrap;
+    }
   }
 }

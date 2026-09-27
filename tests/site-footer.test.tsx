@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { readFileSync } from 'node:fs';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import careerFixture from '@/content/fixtures/career.json';
@@ -167,5 +168,18 @@ describe('SiteFooter', () => {
   it('never renders href="#"', async () => {
     const { container } = await renderFooter();
     for (const a of Array.from(container.querySelectorAll('a'))) expect(a.getAttribute('href')).not.toBe('#');
+  });
+});
+
+// I-2 (fix wave finding 3): at 320px "การแสดงผล" (Appearance) wrapped and the
+// row overflowed by 1px. The prototype (R21) stacks a pref's label above its
+// control instead of beside it -- read as text (jsdom computes no layout).
+describe('site-footer.css (I-2: stacked pref label under 734px)', () => {
+  const CSS = readFileSync('src/components/site-footer.css', 'utf8');
+  const mobile = CSS.slice(CSS.indexOf('@media (max-width: 734px)'));
+
+  it('stacks each .foot-pref label above its control, and keeps the label on one line', () => {
+    expect(mobile).toMatch(/\.foot-pref\s*\{[^}]*flex-direction:\s*column;[^}]*align-items:\s*start;/s);
+    expect(mobile).toMatch(/\.foot-pref-label\s*\{[^}]*white-space:\s*nowrap;/s);
   });
 });
