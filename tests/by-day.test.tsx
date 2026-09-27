@@ -216,4 +216,14 @@ describe('ByDay', () => {
       Object.defineProperty(window, 'localStorage', realStorage);
     }
   });
+
+  // Fix wave finding 6: without JS the control's buttons do nothing (its
+  // clicks are wired up client-side), yet the server HTML shows it as if it
+  // worked. `html:not(.js)` is the same gate globals.css already uses for
+  // Reveal/copy-email/hero-tour-stage -- true only when the pre-paint
+  // script never ran, i.e. JS is genuinely off, not just "before hydration".
+  it('hides the Short/Full control when JS never runs, via html:not(.js) (fix wave finding 6)', () => {
+    const css = readFileSync(join(process.cwd(), 'src/components/by-day.css'), 'utf8');
+    expect(css).toMatch(/html:not\(\.js\)\s*\.bd-seg\s*\{[^}]*display:\s*none/);
+  });
 });

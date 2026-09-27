@@ -23,6 +23,14 @@
      list used to open with, so the chapters list itself now opens with a
      small, fixed gap under the control instead (below). */
   .bd-seg { margin: 72px 0 0; }
+  /* Fix wave finding 6: the control's clicks are wired up client-side
+     (StoryDetail's `choose`), so without JS it renders but does nothing --
+     misleading, since the server HTML already reads Full (every chapter's
+     body and sketch shown, global constraint: nothing is ever missing).
+     html:not(.js) is only true once the pre-paint script's `html.js` never
+     ran at all (JS genuinely off), not merely "before hydration" -- same
+     gate globals.css already uses for Reveal/copy-email/hero-tour-stage. */
+  html:not(.js) .bd-seg { display: none; }
 
   .bd-chapters { position: relative; margin: 24px 0 0; padding: 0; list-style: none; }
   .bd-chapters::before { content: ""; position: absolute; left: 8px; top: 8px; bottom: -8px; width: 1px; background: var(--spine); }
