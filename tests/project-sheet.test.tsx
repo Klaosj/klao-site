@@ -7,6 +7,7 @@ import ProjectSheet from '@/components/ProjectSheet';
 import { dict } from '@/lib/dictionary';
 import { projectKey, sheetHash } from '@/lib/sheet-url';
 import { stubDialog } from './helpers/dialog';
+import { installFakeIO } from './helpers/io';
 import { makeProject } from './helpers/project';
 import { LINEUP } from './helpers/lineup';
 import { stubViewTransition } from './helpers/view-transition';
@@ -14,9 +15,14 @@ import { stubViewTransition } from './helpers/view-transition';
 let showModal: MockInstance<HTMLDialogElement['showModal']>;
 let close: MockInstance<HTMLDialogElement['close']>;
 
+// Fix round 1 (Minor: "stub reuse" / "shared helper"): the motion-allowed matchMedia stub every
+// View Transition test below needs (the default, set in beforeEach, always reports reduced
+// motion) -- factored out once instead of pasted at each call site.
+const allowMotion = () => vi.stubGlobal('matchMedia', (q: string) => ({ matches: q.includes('no-preference'), addEventListener() {}, removeEventListener() {} }));
+
 beforeEach(() => {
   vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
-  vi.stubGlobal('IntersectionObserver', class { observe() {} unobserve() {} disconnect() {} });
+  installFakeIO(); // D-3: P1's shared FakeIO, not a third re-inlined IntersectionObserver stub
   // D-3: jsdom's <dialog> has no showModal()/close() -- P1's stand-ins (not a third
   // re-inlined copy), wrapped in spies so tests can also assert call counts.
   stubDialog();
@@ -76,6 +82,14 @@ function PageWithThumbs() {
 const dialogOf = (c: HTMLElement) => c.querySelector('dialog.sheet') as HTMLDialogElement;
 const row = (name: string) => screen.getByText(name, { selector: 'a' });
 const closeButton = () => screen.getByRole('button', { name: dict.en.sheetClose });
+
+// Fix round 1 (Important #4): jsdom never lays anything out, so getBoundingClientRect() is
+// zero for every element unless a test says otherwise. Gives the dialog a plausible on-screen
+// box so a click's clientX/clientY can be genuinely inside or outside it, the way the fixed
+// backdrop check reads them.
+function stubSheetRect(dialog: HTMLDialogElement, rect: { left: number; top: number; right: number; bottom: number }) {
+  dialog.getBoundingClientRect = () => ({ ...rect, width: rect.right - rect.left, height: rect.bottom - rect.top, x: rect.left, y: rect.top, toJSON() {} }) as DOMRect;
+}
 
 describe('ProjectSheet: opening (Review Focus #3)', () => {
   it('a row click pushes #work/<key>, opens the dialog and focuses its heading', () => {
@@ -217,16 +231,33 @@ describe('ProjectSheet: closing (Review Focus #3)', () => {
     expect(document.activeElement).toBe(row('Talatify'));
   });
 
-  it('a click on the backdrop (the dialog itself) closes it', () => {
+  it('a click genuinely outside the sheet’s own rendered box (the backdrop) closes it', () => {
     const { container } = render(<Page />);
     fireEvent.click(row('Tripedia'));
-    fireEvent.click(dialogOf(container));
+    const dialog = dialogOf(container);
+    stubSheetRect(dialog, { left: 0, top: 0, right: 600, bottom: 600 });
+    fireEvent.click(dialog, { clientX: 700, clientY: 700 }); // outside the box
     expect(dialogOf(container).open).toBe(false);
     expect(window.location.hash).toBe('');
   });
 
+  it('a click that lands on the dialog element but inside its own rendered box does not close it (Important #4)', () => {
+    // The reviewer found this at 390px: a short sheet on a narrow phone leaves blank space below
+    // its content, still visually inside the card. e.target === e.currentTarget alone can't
+    // tell that apart from a genuine backdrop click, since both report the dialog as the target
+    // (there's no more specific element under the pointer either way).
+    const { container } = render(<Page />);
+    fireEvent.click(row('Tripedia'));
+    const dialog = dialogOf(container);
+    stubSheetRect(dialog, { left: 0, top: 0, right: 390, bottom: 800 });
+    fireEvent.click(dialog, { clientX: 195, clientY: 700 }); // inside the box, on blank space
+    expect(dialog.open).toBe(true);
+    fireEvent.click(dialog, { clientX: 195, clientY: 900 }); // below the box -- the real backdrop
+    expect(dialog.open).toBe(false);
+  });
+
   it('with motion allowed, waits for the exit animation before closing', () => {
-    vi.stubGlobal('matchMedia', (q: string) => ({ matches: q.includes('no-preference'), addEventListener() {}, removeEventListener() {} }));
+    allowMotion();
     vi.useFakeTimers();
     try {
       const { container } = render(<Page />);
@@ -261,26 +292,39 @@ describe('ProjectSheet: shared-element View Transition (polish A07)', () => {
     expect(document.activeElement).toBe(link);
   });
 
-  it('runs a View Transition on open and clears the row thumbnail’s name once it settles', async () => {
-    // Like the plain exit-animation test above: the default beforeEach matchMedia stub always
-    // reports reduced motion, so the transition path needs the same explicit opt-in.
-    vi.stubGlobal('matchMedia', (q: string) => ({ matches: q.includes('no-preference'), addEventListener() {}, removeEventListener() {} }));
-    const start = stubViewTransition();
+  it('runs a View Transition on open: names the row thumbnail before starting, and names (then clears, only once settled) the sheet media', async () => {
+    // Fix round 1 (Important #2): the reviewer deleted `viewTransitionName = 'shot'` and the
+    // `finished.finally` clear and still got 28/28, because the old version of this test only
+    // ever checked the row thumbnail -- which self-clears synchronously inside runShotTransition
+    // regardless of whether either of those lines exist, so it can't witness their removal. This
+    // version checks the state a mutation would actually change: the name at the instant
+    // startViewTransition is called (onStart, before update() runs), and the sheet media's name
+    // (the "after" side, set inside update() and only cleared once `finished` settles -- held
+    // open here via controlFinish so "only once settled" is provable, not incidental).
+    allowMotion();
     const { container } = render(<PageWithThumbs />);
     const link = row('GoNai');
     const thumb = link.querySelector('img') as HTMLImageElement;
+    let nameAtStart: string | null = null;
+    const start = stubViewTransition({ onStart: () => (nameAtStart = thumb.style.viewTransitionName), controlFinish: true });
     fireEvent.click(link);
     expect(start).toHaveBeenCalledTimes(1);
-    expect(dialogOf(container).open).toBe(true); // the update ran inside the (stubbed) transition
-    await waitFor(() => expect(thumb.style.viewTransitionName).toBe(''));
+    expect(nameAtStart).toBe('shot'); // named before startViewTransition was even called
+    const dialog = dialogOf(container);
+    expect(dialog.open).toBe(true); // the update ran inside the (stubbed) transition
+    const media = dialog.querySelector<HTMLElement>('[data-vt="shot"]')!; // T10's sheet media
+    expect(media.style.viewTransitionName).toBe('shot'); // named as the "after" side, post-mutation
+    expect(thumb.style.viewTransitionName).toBe(''); // the "before" side clears synchronously either way
+    start.resolveFinished();
+    await waitFor(() => expect(media.style.viewTransitionName).toBe('')); // ...but the "after" side only once finished settles
   });
 
-  it('closing reverses into the sheet’s own [data-vt="shot"] media, now that T10 renders one', async () => {
-    vi.stubGlobal('matchMedia', (q: string) => ({ matches: q.includes('no-preference'), addEventListener() {}, removeEventListener() {} }));
-    const start = stubViewTransition();
+  it('closing: names the sheet media before starting, names (then clears, only once settled) the row thumbnail', async () => {
+    allowMotion();
     const { container } = render(<PageWithThumbs />);
     const link = row('GoNai');
     const thumb = link.querySelector('img') as HTMLImageElement;
+    stubViewTransition(); // the open: plain auto-settling stub, not what this test is about
     fireEvent.click(link);
     await waitFor(() => expect(thumb.style.viewTransitionName).toBe(''));
     const dialog = dialogOf(container);
@@ -288,21 +332,103 @@ describe('ProjectSheet: shared-element View Transition (polish A07)', () => {
     // for the full content contract) -- hide() now finds it at shotIn(dialog) as the "old" side,
     // so a second call to start reverses the same morph, with no CSS fallback animation.
     const media = dialog.querySelector<HTMLElement>('[data-vt="shot"]')!;
+    let nameAtStart: string | null = null;
+    const close = stubViewTransition({ onStart: () => (nameAtStart = media.style.viewTransitionName), controlFinish: true });
     fireEvent.click(closeButton());
-    expect(start).toHaveBeenCalledTimes(2);
-    expect(dialog.classList.contains('closing')).toBe(false);
+    expect(close).toHaveBeenCalledTimes(1);
+    expect(nameAtStart).toBe('shot'); // named before startViewTransition was even called
+    expect(dialog.classList.contains('closing')).toBe(false); // the transition is the exit animation, not the CSS fallback
     expect(dialog.open).toBe(false);
-    expect(media.style.viewTransitionName).toBe(''); // cleared as soon as the transition's callback ran
-    await waitFor(() => expect(thumb.style.viewTransitionName).toBe('')); // cleared once it settles
+    expect(media.style.viewTransitionName).toBe(''); // the "before" side clears synchronously either way
+    expect(thumb.style.viewTransitionName).toBe('shot'); // named as the "after" side, post-mutation
+    close.resolveFinished();
+    await waitFor(() => expect(thumb.style.viewTransitionName).toBe('')); // ...but only once finished settles
     expect(document.activeElement).toBe(link);
   });
 
   it('a row with no thumbnail opens with no transition attempt at all', () => {
-    vi.stubGlobal('matchMedia', (q: string) => ({ matches: q.includes('no-preference'), addEventListener() {}, removeEventListener() {} }));
+    allowMotion();
     const start = stubViewTransition();
     render(<Page />); // Page's rows carry no [data-vt="shot"]
     fireEvent.click(row('GoNai'));
     expect(start).not.toHaveBeenCalled();
+  });
+
+  it('under reduced motion (the default), a row click never attempts a View Transition', () => {
+    // Fix round 1 (Important #2): removing the motionAllowed() gate also gave 28/28, because no
+    // test exercised a thumbnailed row under the *default* (reduced-motion) matchMedia stub --
+    // every other test in this block opts into allowMotion() first. beforeEach's default is
+    // reduced motion, unmodified here on purpose.
+    const start = stubViewTransition();
+    const { container } = render(<PageWithThumbs />);
+    fireEvent.click(row('GoNai'));
+    expect(start).not.toHaveBeenCalled();
+    expect(dialogOf(container).open).toBe(true); // still opens, just with no transition
+  });
+
+  it('two sync() calls landing together (Back fires popstate then hashchange) start exactly one View Transition for the close (Important #1)', async () => {
+    // A real startViewTransition doesn't hand control back to hide()'s own close/settle until
+    // it has captured a snapshot -- at least one microtask away, long enough for the second of
+    // the two events Back fires to land while the first's DOM update hasn't run yet, so
+    // `dialogRef.current.open` is still true when the second sync() checks it. deferUpdate
+    // reproduces that window; the default (synchronous) stub can't -- see its own comment.
+    allowMotion();
+    stubViewTransition(); // the open: plain, settles immediately, not what this test is about
+    const { container } = render(<PageWithThumbs />);
+    const link = row('GoNai');
+    fireEvent.click(link);
+    expect(dialogOf(container).open).toBe(true);
+    const closeStart = stubViewTransition({ deferUpdate: true });
+    act(() => {
+      // The hash Back leaves behind, plus the two events a real Back fires for it (jsdom fires
+      // both for a real history.back() too, just asynchronously -- dispatching them directly
+      // here pins the exact race instead of depending on that timing).
+      window.history.replaceState(null, '', '/en');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
+    });
+    // Before the fix, the second call found `dialogRef.current.open` still true (the first
+    // close's deferred update hadn't landed) and started its own startViewTransition, aborting
+    // the first with "AbortError: Transition was skipped".
+    expect(closeStart).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(dialogOf(container).open).toBe(false)); // once the deferred update lands
+    expect(document.activeElement).toBe(link);
+  });
+
+  it('a skipped transition (rejected ready/finished, as a real aborted one is) never surfaces as an unhandled rejection', async () => {
+    allowMotion();
+    stubViewTransition({ reject: true });
+    const { container } = render(<PageWithThumbs />);
+    fireEvent.click(row('GoNai'));
+    expect(dialogOf(container).open).toBe(true); // update() still ran -- only the animation is "skipped"
+    await new Promise((r) => setTimeout(r, 0)); // give the rejection (and runShotTransition's own .catch()) a tick to settle
+  });
+
+  it('reopening (via hash) while a close is still pending leaves it open, not undone by the stale close (Minor 1)', async () => {
+    allowMotion();
+    stubViewTransition(); // the open
+    const { container } = render(<PageWithThumbs />);
+    fireEvent.click(row('GoNai'));
+    const dialog = dialogOf(container);
+    expect(dialog.open).toBe(true);
+    stubViewTransition({ deferUpdate: true }); // the close: its update()/settle() hasn't run yet
+    fireEvent.click(closeButton()); // starts closing GoNai
+    act(() => {
+      window.location.hash = '#work/aje'; // a reopen that lands before that deferred update runs
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
+    });
+    // The reopen has no origin element (a hash-driven open never does -- see show()), so it ran
+    // its own change() synchronously, unaffected by whatever the still-pending close eventually
+    // does: `openKey` never actually became null in between.
+    expect(dialog.open).toBe(true);
+    expect(dialog.querySelector('h2')?.textContent).toBe('Aje');
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0)); // let the stale close's deferred update() run too
+    });
+    // Without the generation check, that update's settle() would have called finish() and
+    // closed the (now Aje) sheet the moment it finally ran.
+    expect(dialog.open).toBe(true);
+    expect(dialog.querySelector('h2')?.textContent).toBe('Aje');
   });
 });
 
@@ -344,5 +470,11 @@ describe('ProjectSheet: CSS rulings C-5 and C-9', () => {
   it('C-9: the Thai heading is one size step smaller, at specificity (0,3,0)', () => {
     expect(css).toContain('.sheet .sheet-name:lang(th) { font-size: 36px; line-height: 47px; }');
     expect(css).toContain('.sheet .sheet-name:lang(th) { font-size: 28px; line-height: 38px; }');
+  });
+
+  it('fix round 1 (Minor: transition timing): the shot group’s morph is timed exactly as lab §07, ungated by reduced motion (motionAllowed() already gates it in JS)', () => {
+    expect(css).toContain('::view-transition-group(shot) { animation-duration: 460ms; animation-timing-function: cubic-bezier(.32, .72, 0, 1); }');
+    const reducedMotionBlock = css.match(/@media \(prefers-reduced-motion: no-preference\) \{[\s\S]*?\n\}/)?.[0] ?? '';
+    expect(reducedMotionBlock).not.toContain('view-transition-group'); // the lab doesn't gate it either -- see its own §07
   });
 });

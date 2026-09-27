@@ -18,6 +18,11 @@ html.sheet-open { overflow: hidden; }
 @keyframes sheet-out {
   to { opacity: 0; transform: translateY(16px); }
 }
+/* Fix round 1: the shared-element morph's own timing (lab §07), matched exactly, not left to
+   the UA default. Ungated by prefers-reduced-motion here, same as the lab -- the JS-level
+   motionAllowed() check in ProjectSheet.tsx already stops document.startViewTransition from
+   ever being called under reduced motion, so this pseudo-element never exists to animate then. */
+::view-transition-group(shot) { animation-duration: 460ms; animation-timing-function: cubic-bezier(.32, .72, 0, 1); }
 /* Ruling C-5: reuses P0's .ctl (globals.css, "Small glass controls (tour paddles, sheet
    close)") for the blur/fill/fallbacks -- this rule only adds the close button's position and
    size, not its surface. */

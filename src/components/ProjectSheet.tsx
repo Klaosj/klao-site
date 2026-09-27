@@ -78,12 +78,20 @@ function runShotTransition(before: HTMLElement | null, change: () => void, findA
     after = findAfter();
     if (after) after.style.viewTransitionName = 'shot';
   });
+  // Fix round 1 (Important #1): a second startViewTransition call while this one is still
+  // pending (Back fires popstate then hashchange, both landing on hide() -- see the caller's own
+  // in-flight guard) skips the first with "AbortError: Transition was skipped". That's expected,
+  // not a bug -- both `ready` and `finished` reject for it, and nothing else here awaits them,
+  // so an un-.catch()ed rejection would otherwise surface as an unhandled rejection.
+  transition.ready.catch(() => {});
   // A07: "clear the names after each transition" -- belt-and-braces since the callback above
   // already clears `before`, but `after` (set inside the callback) only gets cleared here.
-  transition.finished.finally(() => {
-    before.style.viewTransitionName = '';
-    if (after) after.style.viewTransitionName = '';
-  });
+  transition.finished
+    .finally(() => {
+      before.style.viewTransitionName = '';
+      if (after) after.style.viewTransitionName = '';
+    })
+    .catch(() => {});
   return true;
 }
 
@@ -100,6 +108,16 @@ export default function ProjectSheet({ projects, locale }: { projects: Project[]
   const headingRef = useRef<HTMLHeadingElement>(null);
   const triggerRef = useRef<HTMLElement | null>(null);
   const exitTimer = useRef(0);
+  // Fix round 1 (Important #1 + Minor 1): Back fires popstate then hashchange, and both land on
+  // sync() -> hide(false). closePending guards the window between "a close has started" and
+  // "finish() actually ran" for BOTH close paths (the CSS timer already had its own `.closing`
+  // class check; the View Transition path had none, so a second hide() started a second
+  // startViewTransition, aborting the first). generation is bumped by every show()/hide() that
+  // commits to a real state change, so a close's deferred settle() can tell it has been
+  // superseded by a newer show() -- e.g. a hash-driven reopen that lands before the pending
+  // close's transition settles -- and skip calling finish(), instead of undoing the reopen.
+  const closePending = useRef(false);
+  const generation = useRef(0);
   const [openKey, setOpenKey] = useState<string | null>(null);
 
   const byKey = useMemo(() => new Map(projects.map((p) => [projectKey(p), p])), [projects]);
@@ -108,6 +126,8 @@ export default function ProjectSheet({ projects, locale }: { projects: Project[]
   const show = useCallback(
     (key: string, push: boolean, originEl?: Element | null) => {
       if (!byKey.has(key)) return; // "#work/unknown", or S-7's "": nothing to open
+      generation.current++; // supersede any pending close's settle() -- see closePending above
+      closePending.current = false; // a reopen is never blocked by a close still in flight
       window.clearTimeout(exitTimer.current);
       dialogRef.current?.classList.remove('closing');
       const change = () => {
@@ -149,19 +169,31 @@ export default function ProjectSheet({ projects, locale }: { projects: Project[]
         finish();
         return;
       }
-      if (d.classList.contains('closing')) return;
+      // Fix round 1 (Important #1): the single guard for both close paths -- see closePending's
+      // own comment above. `.closing` alone (the old guard) only covered the CSS-timer path.
+      if (closePending.current) return;
+      closePending.current = true;
+      const myGeneration = generation.current;
       // A07: the reverse of the open transition, keyed off whatever is inside the dialog today
       // (T10's media, once it exists) and the row that opened this sheet (still tracked in
       // triggerRef -- the same element `finish` focuses back to below).
       const trigger = triggerRef.current;
       const before = shotIn(d);
-      if (runShotTransition(before, finish, () => shotIn(trigger))) return; // the transition is the exit animation
-      if (!motionAllowed()) {
+      const settle = () => {
+        closePending.current = false;
+        // Minor 1: a show() that landed while this close was still pending (a hash-driven
+        // reopen, say) already bumped generation past myGeneration -- finish() would otherwise
+        // undo that reopen with a now-stale close.
+        if (generation.current !== myGeneration) return;
         finish();
+      };
+      if (runShotTransition(before, settle, () => shotIn(trigger))) return; // the transition is the exit animation
+      if (!motionAllowed()) {
+        settle();
         return;
       }
       d.classList.add('closing');
-      exitTimer.current = window.setTimeout(finish, EXIT_MS);
+      exitTimer.current = window.setTimeout(settle, EXIT_MS);
     },
     [finish],
   );
@@ -232,7 +264,15 @@ export default function ProjectSheet({ projects, locale }: { projects: Project[]
         finish();
       }}
       onClick={(e) => {
-        if (e.target === e.currentTarget) hide(true); // the backdrop
+        // Fix round 1: `e.target === e.currentTarget` alone also matches a click on blank space
+        // *inside* the dialog's own rendered box -- a short sheet on a narrow phone leaves room
+        // below its content, but that's still visually inside the card, not the dimmed
+        // ::backdrop outside it (the reviewer found this at 390px). Comparing the click's
+        // viewport coordinates against the dialog's own rect is what actually distinguishes
+        // "outside the sheet" from "inside it, on nothing in particular".
+        const r = e.currentTarget.getBoundingClientRect();
+        const outside = e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom;
+        if (outside) hide(true);
       }}
     >
       {current && <SheetBody project={current} projects={projects} locale={locale} headingRef={headingRef} onClose={() => hide(true)} />}
