@@ -108,6 +108,21 @@ describe('signature.css mirrors SIG in src/lib/signature.ts', () => {
     expect(frameRule).toContain('mask-image: linear-gradient(to bottom, #000 55%, transparent 98%);');
     expect(css).not.toMatch(/\.sig-cap[^{]*\{[^}]*mask-image/);
   });
+
+  // Fix wave finding 2: the bottom-fade mask clips everything painted for the element it's on
+  // (mask-clip's default border-box), so a box-shadow declared directly on `.sig-frame` never
+  // rendered -- the hairline has to live on `::after` instead, same as HeroTourStage's `.ht-card`.
+  it('declares the hairline on ::after, never a box-shadow that the mask would clip (fix wave finding 2)', () => {
+    const frameRule = css.slice(css.indexOf('.sig-frame {'), css.indexOf('.sig-frame::after'));
+    expect(frameRule).not.toMatch(/box-shadow/);
+    expect(css).toContain('.sig-frame::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 .5px rgb(0 0 0 / .14); pointer-events: none; }');
+  });
+
+  // Fix wave finding 2: GoNai's light-UI screenshot must dim in dark mode (ruling C6) so it
+  // never dissolves into the (also white) page background.
+  it("dims GoNai's screenshot in dark mode so it never dissolves into the page (fix wave finding 2)", () => {
+    expect(css).toContain('.sig-frame img { display: block; width: 100%; height: 100%; object-fit: cover; filter: var(--shot-dim); }');
+  });
 });
 
 describe('P2 CSS animates only transform and opacity', () => {

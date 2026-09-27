@@ -40,9 +40,18 @@
   .sig-app-face { position: absolute; inset: 0; display: grid; place-items: center; background: #1C7A57; color: #fff; opacity: 0; }
 
   /* GoNai's screenshot: a window keeps its hairline + soft shadow so a white UI shot never vanishes
-     on white. It fades into the page at its bottom edge, static and unconditional (polish A08). */
-  .sig-frame { position: relative; width: min(1040px, 100%); aspect-ratio: 16 / 9; overflow: hidden; border-radius: 14px; background: #fff; box-shadow: var(--e2); -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent 98%); mask-image: linear-gradient(to bottom, #000 55%, transparent 98%); }
-  .sig-frame img { display: block; width: 100%; height: 100%; object-fit: cover; }
+     on white. It fades into the page at its bottom edge, static and unconditional (polish A08).
+     Fix wave finding 2: the bottom-fade mask clips everything painted for the element it's on,
+     box-shadow included (mask-clip's default border-box) -- so `--e2` here rendered invisible
+     anyway, exactly like HeroTourStage's own screenshot card did (hero-tour-stage.css:44-45).
+     The hairline moves to `::after`, which paints on top of the masked content instead of being
+     clipped by it. */
+  .sig-frame { position: relative; width: min(1040px, 100%); aspect-ratio: 16 / 9; overflow: hidden; border-radius: 14px; background: #fff; -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent 98%); mask-image: linear-gradient(to bottom, #000 55%, transparent 98%); }
+  .sig-frame::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 .5px rgb(0 0 0 / .14); pointer-events: none; }
+  /* Fix wave finding 2: GoNai's screenshot is a light UI, so it dims a touch in dark mode
+     (ruling C6, --shot-dim) -- without it the white shot dissolved into the white page
+     background once the page itself went dark (spec §5.3), same as HeroTourStage's GoNai frame. */
+  .sig-frame img { display: block; width: 100%; height: 100%; object-fit: cover; filter: var(--shot-dim); }
 
   /* Glass captions. */
   .sig-cap { position: relative; width: min(600px, 100%); padding: 12px 22px; border-radius: 26px; text-align: left; }
