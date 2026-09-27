@@ -550,6 +550,39 @@ describe('ProjectSheet: shared-element View Transition (polish A07)', () => {
     close.resolveFinished();
     await waitFor(() => expect(thumb.style.viewTransitionName).toBe(''));
   });
+
+  it('closing one row, then opening a different one before that close settles, never leaves two elements named "shot" at once (fix round 3)', () => {
+    // The reviewer's exact keyboard scenario: open Aje, Esc (names the Aje row thumb as the
+    // close's "after"), then -- within the close's ~460ms morph -- Tab to GoNai's row and Enter.
+    // Round 2's latestTransition guard makes a superseded transition skip ALL of its own
+    // cleanup once superseded, including a name (here, the Aje thumb's) that the newer
+    // (GoNai) transition never touches -- left stuck forever, colliding with every later
+    // transition's own naming ("Unexpected duplicate view-transition-name: shot" in real Chrome).
+    allowMotion();
+    stubViewTransition(); // Aje's open: plain, settles immediately
+    const { container } = render(<PageWithThumbs />);
+    const ajeLink = row('Aje');
+    const ajeThumb = ajeLink.querySelector('img') as HTMLImageElement;
+    fireEvent.click(ajeLink);
+    const dialog = dialogOf(container);
+    expect(dialog.open).toBe(true);
+    // Esc's close: held open (controlFinish), so it's still pending -- unsettled -- when the
+    // GoNai open below starts, the exact window the reviewer's 460ms morph sits in.
+    stubViewTransition({ controlFinish: true });
+    fireEvent(dialog, new Event('cancel', { cancelable: true }));
+    expect(ajeThumb.style.viewTransitionName).toBe('shot'); // named as the close's "after", not yet cleared
+    const gonaiLink = row('GoNai');
+    let shotNames = -1;
+    stubViewTransition({
+      onStart: () => {
+        // data-vt="shot" is a static attribute marking every candidate, named or not; count how
+        // many currently carry the *dynamic* style -- Chrome requires exactly one at a time.
+        shotNames = [...document.querySelectorAll<HTMLElement>('[data-vt="shot"]')].filter((el) => el.style.viewTransitionName === 'shot').length;
+      },
+    });
+    fireEvent.click(gonaiLink);
+    expect(shotNames).toBe(1); // only GoNai's own thumb -- Aje's stray name was swept before this transition started
+  });
 });
 
 describe('ProjectSheet: page and accessibility', () => {

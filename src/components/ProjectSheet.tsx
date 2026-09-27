@@ -75,6 +75,18 @@ let latestTransition: ViewTransition | null = null;
  */
 function runShotTransition(before: HTMLElement | null, change: () => boolean, findAfter: () => HTMLElement | null): boolean {
   if (!before || typeof document.startViewTransition !== 'function' || !motionAllowed()) return false;
+  // Fix round 3 (Minor): round 2's `latestTransition` guard (below) makes a superseded
+  // transition skip ALL of its own cleanup -- including a name it gave an element this newer
+  // transition never touches. Esc's close names the row it's returning focus to as its "after";
+  // Tab to a *different* row and open it inside that close's ~460ms morph, and without this
+  // sweep, the closed row's stray "shot" would sit there forever once superseded, and every
+  // later open/close would then collide with it ("Unexpected duplicate view-transition-name:
+  // shot" -- Chrome requires the name to be unique document-wide). Clearing every OTHER
+  // `[data-vt="shot"]` element right before naming `before` guarantees this transition owns the
+  // name exclusively, regardless of how many earlier ones never got to clean up after themselves.
+  document.querySelectorAll<HTMLElement>('[data-vt="shot"]').forEach((el) => {
+    if (el !== before) el.style.viewTransitionName = '';
+  });
   before.style.viewTransitionName = 'shot';
   let after: HTMLElement | null = null;
   const transition = document.startViewTransition(() => {
@@ -102,8 +114,10 @@ function runShotTransition(before: HTMLElement | null, change: () => boolean, fi
   // Fix round 1 (Important #1): a second startViewTransition call while this one is still
   // pending (Back fires popstate then hashchange, both landing on hide() -- see the caller's own
   // in-flight guard) skips the first with "AbortError: Transition was skipped". That's expected,
-  // not a bug -- both `ready` and `finished` reject for it, and nothing else here awaits them,
-  // so an un-.catch()ed rejection would otherwise surface as an unhandled rejection.
+  // not a bug -- only `ready` rejects for it (only the animation is skipped, not the transition
+  // settling -- `finished` still resolves, fix round 2's tests/helpers/view-transition.ts split),
+  // and nothing else here awaits it, so an un-.catch()ed rejection would otherwise surface as an
+  // unhandled rejection.
   transition.ready.catch(() => {});
   // A07: "clear the names after each transition" -- belt-and-braces since the callback above
   // already clears `before`, but `after` (set inside the callback) only gets cleared here.
