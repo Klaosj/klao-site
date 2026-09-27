@@ -3,6 +3,7 @@ import { act, cleanup, fireEvent, render, screen, within } from '@testing-librar
 import { usePathname } from 'next/navigation';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import NavMenu from '@/components/NavMenu';
+import { copyShortcutHint } from '@/lib/clipboard';
 import { dict } from '@/lib/dictionary';
 import { PALETTE_EVENT } from '@/lib/deep-link';
 import type { Locale } from '@/lib/models';
@@ -76,6 +77,10 @@ describe('NavMenu', () => {
     const resume = within(dialog).getByRole('link', { name: dict.en.resumeShort });
     expect(resume.getAttribute('href')).toBe('/resume.pdf');
     expect(resume.getAttribute('target')).toBe('_blank');
+    // Wave-1 integration review: the repo's convention for target="_blank"
+    // is rel="noreferrer" (this dialog's own LinkedIn/GitHub links already
+    // use it, below).
+    expect(resume.getAttribute('rel')).toBe('noreferrer');
   });
 
   it('copies the email, confirms it on the button, and says so to screen readers', async () => {
@@ -91,15 +96,33 @@ describe('NavMenu', () => {
     expect(dialog.querySelector('[aria-live="polite"]')?.textContent).toBe(dict.en.copied);
   });
 
-  it('claims nothing when the clipboard refuses (non-secure context)', async () => {
+  // Wave-1 integration review carry-over (b): copy() now goes through the
+  // one shared copyText() (src/lib/clipboard.ts, also CopyEmail's path) and
+  // shows CopyEmail's own honest failure hint instead of the old silent
+  // no-op -- never a false "Copied" (see src/components/CopyEmail.tsx).
+  it('shows an honest failure hint, never a false "Copied", when the write is rejected (permission denied)', async () => {
     vi.stubGlobal('navigator', { clipboard: { writeText: vi.fn().mockRejectedValue(new Error('denied')) } });
     render(<NavMenu locale="en" profile={makeProfile()} active={null} />);
     const dialog = openMenu();
     await act(async () => {
       fireEvent.click(within(dialog).getByRole('button', { name: dict.en.copyEmail }));
     });
-    expect(within(dialog).getByRole('button', { name: dict.en.copyEmail })).toBeTruthy();
-    expect(dialog.querySelector('[aria-live="polite"]')?.textContent).toBe('');
+    const hint = copyShortcutHint(dict.en.closeCopyFail);
+    expect(within(dialog).getByRole('button', { name: hint })).toBeTruthy();
+    expect(dialog.querySelector('[aria-live="polite"]')?.textContent).toBe(hint);
+    expect(within(dialog).queryByRole('button', { name: dict.en.copied })).toBeNull();
+  });
+
+  it('shows the same honest failure hint when there is no clipboard at all (non-secure context)', async () => {
+    vi.stubGlobal('navigator', {});
+    render(<NavMenu locale="en" profile={makeProfile()} active={null} />);
+    const dialog = openMenu();
+    await act(async () => {
+      fireEvent.click(within(dialog).getByRole('button', { name: dict.en.copyEmail }));
+    });
+    const hint = copyShortcutHint(dict.en.closeCopyFail);
+    expect(within(dialog).getByRole('button', { name: hint })).toBeTruthy();
+    expect(dialog.querySelector('[aria-live="polite"]')?.textContent).toBe(hint);
   });
 
   it('leaves out every action and link it has no data for', () => {

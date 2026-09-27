@@ -125,8 +125,8 @@ describe('no dark-era surface survives', () => {
     expect(CSS).toMatch(/\.bg-light\.text-dark \{[^}]*background-color: var\(--kram\);[^}]*color: var\(--on-kram\);/);
   });
 
-  it('renames the hero annotation pills so the shared .pill chip is free', () => {
-    expect(CSS).toMatch(/\.hero-pill \{/);
+  it('removes the hero annotation pills entirely, leaving the shared .pill chip as the only name', () => {
+    expect(CODE).not.toMatch(/hero-pill/);
     expect(CODE).not.toMatch(/(^|[\s,}])\.pill-\d/m);
   });
 });

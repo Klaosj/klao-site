@@ -62,7 +62,7 @@ export default function ThumbBar({ locale, profile, heroGone }: { locale: Locale
         </a>
       )}
       {profile.resumeUrl && (
-        <a className="btn btn-out" href={profile.resumeUrl} target="_blank" rel="noopener">
+        <a className="btn btn-out" href={profile.resumeUrl} target="_blank" rel="noreferrer">
           {t.resumeShort}
         </a>
       )}

@@ -4,17 +4,16 @@ import type { Project } from '@/lib/models';
 
 type Props = {
   project: Project;
-  /** Window-chrome title. Cards pass none (the name is the visible h3 beside
-   *  them); the hero tour passes windowTitle(project). */
+  /** Window-chrome title (e.g. windowTitle(project) for a live app). Cards pass
+   *  none: the name is the visible h3 beside them. */
   title?: string;
-  /** First tour slide only: eager load so the LCP image isn't lazy. */
+  /** Load eagerly, for a frame that is above the fold. */
   priority?: boolean;
   className?: string;
 };
 
 // Server-safe (no hooks, no 'use client'): WorkDeck and ProjectCard are server
-// components and render this directly; ProjectTour renders it from a client
-// component, which is also fine.
+// components and render this directly.
 export default function ProjectFrame({ project, title, priority = false, className = '' }: Props) {
   // A frame is a window onto a real screen. A project with no screenshot shows
   // no image block at all (owner's call 2026-09-11) rather than a stand-in --
