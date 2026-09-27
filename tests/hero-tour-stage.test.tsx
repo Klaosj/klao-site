@@ -449,6 +449,8 @@ describe('HeroTourStage', () => {
     expect(text).toContain('นัก Business Development ที่สร้างเครื่องมือใช้เอง');
     expect(text).not.toContain('|');
     expect(vig.querySelector('img')?.getAttribute('alt')).toBe('');
+    // The hook hero-tour-stage.css hides below 380 px (P1 final review I-4).
+    expect(vig.querySelector('.ht-vrow[data-row="status"]')?.textContent).toBe('StatusPublished');
   });
 
   // Fix round 2 (#4): the small "Title TH" preview row is forced to one
@@ -690,6 +692,17 @@ describe('hero-tour-stage.css (polish A04 + A08 exceptions)', () => {
     // shown) rules out a duplicate sneaking in outside the media query --
     // i.e. onto desktop.
     expect(CSS.split(rule).length - 1).toBe(1);
+  });
+
+  // P1 final review I-4: the 6:5 stage shortens with the width and the
+  // vignette's rows don't. On phone the "klao-site · EN / TH" line always
+  // fell past the bottom edge (the pill below already names the site), and
+  // below 380 px the headline did too, until the Status row and avatar go.
+  it('drops the "klao-site · EN / TH" line on phone, and the Status row and avatar below 380 px', () => {
+    expect(mediaBlock(CSS, '(max-width: 734px)')).toContain('.ht-vig-h small { display: none; }');
+    expect(mediaBlock(CSS, '(max-width: 380px)')).toContain('.ht-vrow[data-row="status"], .ht-vig-h img { display: none; }');
+    // Phone only: desktop's vignette has room for all of it.
+    expect(CSS.split('.ht-vig-h small { display: none; }').length - 1).toBe(1);
   });
 
   // Fix round 3: the round-2 truncation rule used a DESCENDANT selector

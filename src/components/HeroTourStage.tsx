@@ -409,7 +409,7 @@ function Vignette({ vignette, beat }: { vignette: TourVignette; beat: VignetteBe
           </span>
           <i className="ht-ul" />
         </div>
-        <div className="ht-vrow">
+        <div className="ht-vrow" data-row="status">
           <b>Status</b>
           <span>Published</span>
         </div>
