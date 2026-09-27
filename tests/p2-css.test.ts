@@ -66,6 +66,12 @@ describe('signature.css mirrors SIG in src/lib/signature.ts', () => {
     expect(css).toContain('view-timeline: --sig block;');
   });
 
+  it('zeroes the view-timeline-inset so the CSS path starts at the same point as sigProgress (fix wave finding 1)', () => {
+    // Without this, the inferred inset (html's scroll-padding-top, 76px for the nav capsule)
+    // makes the CSS scroll-timeline run ahead of the JS fallback, which knows nothing about it.
+    expect(css).toContain('.sig.pin .sig-track { view-timeline: --sig block; view-timeline-inset: 0px; }');
+  });
+
   it('keeps every caption visible in the static stack (no hiding outside .pin)', () => {
     // Keyframe stops are only ever applied under `.sig.pin`, so they are judged by the
     // selectors that name them; everything else must not hide content outside `.pin`.

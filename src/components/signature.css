@@ -80,7 +80,12 @@
      `contain 100%` = its bottom at the viewport bottom: the same 0..1 as sigProgress(). */
   @supports (animation-timeline: view()) {
     @media (prefers-reduced-motion: no-preference) {
-      .sig.pin .sig-track { view-timeline: --sig block; }
+      /* Fix wave finding 1: `view-timeline-inset` defaults to the scroll-padding the browser
+         infers for the timeline subject, which here inherits `html`'s own `scroll-padding-top`
+         (76px, the nav capsule's clearance) -- so the CSS path started 76px of scroll ahead of
+         `sigProgress()`, which knows nothing about scroll-padding. Pinning it to 0 makes both
+         paths agree on what "the track's top meets the viewport's top" means. */
+      .sig.pin .sig-track { view-timeline: --sig block; view-timeline-inset: 0px; }
       .sig.pin :is(.sig-head-in, .sig-app, .sig-app-face, .sig-card, .sig-frame, .sig-tint, .sig-chip, .sig-cap-a, .sig-cap-b) {
         animation-duration: auto;
         animation-timing-function: linear;
