@@ -61,6 +61,11 @@
   .car-role:not(:lang(th)) { letter-spacing: .012em; }
   .car-dates { margin: 0; font-size: 14px; line-height: 20px; color: var(--ink-2); text-align: right; font-variant-numeric: tabular-nums; }
   .car-fig { margin: 28px 0 0; }
+  /* Fix wave finding 4 (R21): the shared .t-stat class (globals.css) is
+     48/48, sized for Signature's 30/500 -- the prototype's own Career
+     figure class (.lfig) was smaller, 40/44 desktop / 32/36 phone (below).
+     Two classes beats .t-stat's one regardless of file order. */
+  .car-fig.t-stat { font-size: 40px; line-height: 44px; }
   .car-fig .u { font-size: .45em; color: var(--ink-2); letter-spacing: 0; }
   .car-note { margin: 8px 0 0; font-size: 12px; line-height: 16px; color: var(--ink-2); }
   .car-cap { margin: 10px 0 0; font-size: 17px; line-height: 25px; }
@@ -106,7 +111,7 @@
     .car-pill[aria-selected="true"] { background: var(--kram); }
     .car-panel { min-height: 0; padding: 28px 22px; border-radius: 24px; }
     .car-dates { text-align: left; }
-    .car-fig.t-stat { font-size: 40px; line-height: 44px; }
+    .car-fig.t-stat { font-size: 32px; line-height: 36px; }
     .car-note { font-size: 14px; line-height: 20px; }
     .car-wins li { font-size: 16px; line-height: 25px; }
     .car-wins li:lang(th) { line-height: 27px; }

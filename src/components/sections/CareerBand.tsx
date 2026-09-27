@@ -68,8 +68,14 @@ export default function CareerBand({ entries, skills, locale, resumeUrl, now = c
                     <h4>
                       <ThaiText text={column.label} />
                     </h4>
+                    {/* Fix wave finding 5: a plain space before the dot
+                        lets a wrap start the next line with the dot alone.
+                        The source escape (never a raw byte) keeps the
+                        space before each dot a no-break space, so it stays
+                        glued to the word before it -- only the space
+                        after the dot may still break. */}
                     <p>
-                      <ThaiText text={column.items.join(' · ')} />
+                      <ThaiText text={column.items.join('\u00A0· ')} />
                     </p>
                   </div>
                 ))}

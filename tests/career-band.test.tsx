@@ -59,6 +59,33 @@ describe('CareerBand', () => {
     expect(norm(cells[2].querySelector('p')?.textContent)).toBe('Thai · English (conversational)');
   });
 
+  // Fix wave finding 5: a plain space before the dot lets a wrap start the
+  // next line with "·". The space before each dot must be a no-break space
+  // (U+00A0, the escape in source -- never a raw byte) so it stays glued to
+  // the word before it; only the space after the dot may still break.
+  it('joins toolbox items with a no-break space before the dot, not a plain one', () => {
+    const { container } = render(
+      <CareerBand entries={entries} skills={skills} locale="en" resumeUrl="/r.pdf" now="2026-09" />,
+    );
+    const stack = container.querySelector('#toolbox .car-tcell p') as HTMLElement;
+    const items = [
+      'Salesforce',
+      'Excel & Sheets modeling',
+      'Power BI',
+      'Python',
+      'SQL',
+      'Next.js',
+      'Supabase',
+      'Notion API',
+      'Vercel',
+      'Swift',
+    ];
+    // String.fromCharCode(160) is U+00A0, spelled that way so this test
+    // file never carries the invisible character as a raw byte, same as
+    // the production code must spell it as the JS escape, not paste it in.
+    expect(stack.textContent).toBe(items.join(`${String.fromCharCode(160)}· `));
+  });
+
   it('renders Thai headings, labels and the résumé link for locale th', () => {
     const { container } = render(
       <CareerBand entries={entries} skills={skills} locale="th" resumeUrl="/r.pdf" now="2026-09" />,
@@ -113,5 +140,16 @@ describe('CareerBand', () => {
     for (const value of transitions) {
       for (const part of value.split(',')) expect(['transform', 'opacity', 'none']).toContain(part.trim().split(/\s+/)[0]);
     }
+  });
+
+  // Fix wave finding 4: the shared .t-stat class (globals.css) is 48/48 --
+  // right for Signature's 30/500, too big for the Career panel figure,
+  // which the prototype's own .lfig set at 40/44 desktop, 32/36 phone (R21).
+  it('sizes the Career figure smaller than the shared .t-stat default (R21)', () => {
+    const css = readFileSync(join(process.cwd(), 'src/components/career.css'), 'utf8');
+    const outsidePhone = css.slice(0, css.indexOf('@media (max-width: 734px)'));
+    expect(outsidePhone).toMatch(/\.car-fig\.t-stat\s*\{[^}]*font-size:\s*40px;\s*line-height:\s*44px/);
+    const phone = css.slice(css.indexOf('@media (max-width: 734px)'));
+    expect(phone).toMatch(/\.car-fig\.t-stat\s*\{[^}]*font-size:\s*32px;\s*line-height:\s*36px/);
   });
 });
