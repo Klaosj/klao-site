@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import DeepLink from '@/components/DeepLink';
 import PaletteButton from '@/components/PaletteButton';
-import { CAREER_EVENT, PALETTE_EVENT, followTarget, openPalette } from '@/lib/deep-link';
+import { CAREER_EVENT, PALETTE_EVENT, followTarget, goToTarget, openPalette } from '@/lib/deep-link';
 
 beforeEach(() => {
   vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
@@ -106,6 +106,17 @@ describe('DeepLink', () => {
     render(<DeepLink target="javascript:alert(1)" locale="en">Nope</DeepLink>);
     expect(screen.queryByRole('link')).toBeNull();
     expect(screen.getByText('Nope')).toBeTruthy();
+  });
+});
+
+describe('goToTarget', () => {
+  // ⌘K rows and Ask sources have no <a> of their own, so an outside URL goes
+  // through window.open -- with the same "no opener, no referrer" as
+  // DeepLink's rel (wave-2 merge reconciliation d).
+  it('opens an external target in a new tab with noopener and noreferrer', () => {
+    const open = vi.spyOn(window, 'open').mockImplementation(() => null);
+    goToTarget('https://gonai-three.vercel.app', 'en');
+    expect(open).toHaveBeenCalledWith('https://gonai-three.vercel.app', '_blank', 'noopener,noreferrer');
   });
 });
 

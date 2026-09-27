@@ -60,6 +60,8 @@ export function goToTarget(raw: string, locale: Locale): void {
   if (followTarget(raw)) return;
   const href = targetHref(raw, locale);
   if (!href) return;
-  if (parseTarget(raw)?.kind === 'external') window.open(href, '_blank', 'noopener');
+  // 'noreferrer' as well: the same no-opener, no-referrer pair as DeepLink's
+  // rel for the <a> case.
+  if (parseTarget(raw)?.kind === 'external') window.open(href, '_blank', 'noopener,noreferrer');
   else window.location.assign(href);
 }
