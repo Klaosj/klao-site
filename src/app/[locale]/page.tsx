@@ -5,6 +5,7 @@ import CraftBand from '@/components/sections/CraftBand';
 import CvBand from '@/components/sections/CvBand';
 import HeroTour from '@/components/sections/HeroTour';
 import QuestionsBand from '@/components/sections/QuestionsBand';
+import Signature from '@/components/sections/Signature';
 import SkillsBand from '@/components/sections/SkillsBand';
 import WorkDeck from '@/components/sections/WorkDeck';
 import { getCareer, getFeaturedProjects, getProfile, getQuestions, getSkills } from '@/lib/content';
@@ -32,6 +33,10 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           ones; P2–P4 replace them in C7 order, so this list shrinks phase by
           phase. */}
       <HeroTour profile={profile} projects={projects} locale={locale} />
+      {/* 2022 → 2026, straight after the tour (contract C7): the tour shows the apps running,
+          this shows where one of them came from. The page's only scroll-linked scene; renders
+          nothing when no project carries a LineageOf. */}
+      <Signature projects={projects} locale={locale} />
       <AboutBand profile={profile} locale={locale} />
       <CraftBand locale={locale} />
       <WorkDeck projects={projects} locale={locale} />
