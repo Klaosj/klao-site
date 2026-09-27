@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { dict } from '@/lib/dictionary';
 import type { Locale } from '@/lib/models';
+import { isPlainClick } from '@/lib/nav';
 import './locale-toggle.css';
 
 /** The same page in the other language: swap the first path segment and keep
@@ -59,7 +60,17 @@ const ITEMS: readonly { locale: Locale; label: string }[] = [
 export default function LocaleToggle({ wide = false }: { wide?: boolean }) {
   const pathname = usePathname() ?? '/en';
   const current: Locale = pathname.split('/')[1] === 'th' ? 'th' : 'en';
-  const index = current === 'th' ? 1 : 0;
+  // P1 final review M-2 (A02): the thumb moves on the click itself. The
+  // switch is a route change with prefetch off, so waiting for the new
+  // pathname left the tap unanswered for ~0.4 s. The pick is kept with the
+  // pathname it was made on, so it lapses by itself once the route changes
+  // (or Back undoes it); aria-current stays with the page actually shown.
+  // Under reduced motion globals.css already turns the slide into a jump.
+  const [pending, setPending] = useState<{ from: string; index: number } | null>(null);
+  // Dropped (not just ignored) once the route moves on, so coming Back to
+  // the page it was made on can't bring an old pick back.
+  if (pending && pending.from !== pathname) setPending(null);
+  const index = pending?.from === pathname ? pending.index : current === 'th' ? 1 : 0;
   // See the doc comment above: this never corrects a mismatched guess (there
   // isn't one), it only lifts the fix wave's mount-time `:not([data-ready])`
   // transition guard so the thumb can animate on a later click.
@@ -80,7 +91,7 @@ export default function LocaleToggle({ wide = false }: { wide?: boolean }) {
       style={{ ['--n' as string]: '2', ['--i' as string]: String(index) }}
     >
       <span className="thumb" aria-hidden="true" />
-      {ITEMS.map(({ locale, label }) => (
+      {ITEMS.map(({ locale, label }, i) => (
         <Link
           key={locale}
           href={switchLocaleHref(pathname, locale)}
@@ -88,6 +99,9 @@ export default function LocaleToggle({ wide = false }: { wide?: boolean }) {
           lang={locale}
           hrefLang={locale}
           aria-current={current === locale ? 'page' : undefined}
+          onClick={(e) => {
+            if (locale !== current && isPlainClick(e)) setPending({ from: pathname, index: i });
+          }}
         >
           <span className="seg-label" data-label={label}>
             {label}

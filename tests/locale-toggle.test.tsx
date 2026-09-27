@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
-import { act, cleanup, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { usePathname } from 'next/navigation';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import LocaleToggle, { switchLocaleHref } from '@/components/LocaleToggle';
 import { dict } from '@/lib/dictionary';
 
@@ -12,8 +12,17 @@ vi.mock('next/navigation', () => ({ usePathname: vi.fn(() => '/en') }));
 // fake timer).
 const flushRaf = () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
 
+// jsdom can't load another document; a click that reached it would log
+// "Not implemented: navigation". This runs after the component's own handler
+// (window is the last stop on the way up) and stops the browser default only.
+const stayOnPage = (e: Event) => e.preventDefault();
+beforeEach(() => {
+  window.addEventListener('click', stayOnPage);
+});
+
 afterEach(() => {
   cleanup();
+  window.removeEventListener('click', stayOnPage);
   vi.mocked(usePathname).mockReturnValue('/en');
 });
 
@@ -101,6 +110,36 @@ describe('LocaleToggle', () => {
   // ThemeToggle's, would match this control FOREVER if it never set the
   // attribute (there is no server-guess-vs-real-preference sync to settle
   // here), permanently killing the thumb's slide on every later click.
+  // P1 final review M-2 (amendment A02): the thumb waited for the new route,
+  // and with prefetch off nothing answers the tap for ~0.4 s. It now moves on
+  // the click itself (globals.css turns the slide into a jump under reduced
+  // motion). aria-current stays with the page actually on screen.
+  it('slides the thumb to the chosen language on the click itself, before the new page arrives', () => {
+    const { rerender } = render(<LocaleToggle />);
+    const group = document.querySelector('.lt-seg') as HTMLElement;
+    const [en, th] = Array.from(group.querySelectorAll('a'));
+    fireEvent.click(th);
+    expect(group.style.getPropertyValue('--i')).toBe('1');
+    expect(en.getAttribute('aria-current')).toBe('page');
+    vi.mocked(usePathname).mockReturnValue('/th');
+    rerender(<LocaleToggle />);
+    expect(group.style.getPropertyValue('--i')).toBe('1');
+    // Back to /en: the pick belonged to the old page and has lapsed.
+    vi.mocked(usePathname).mockReturnValue('/en');
+    rerender(<LocaleToggle />);
+    expect(group.style.getPropertyValue('--i')).toBe('0');
+  });
+
+  it('leaves the thumb in place for a new-tab click, and for a click on the current language', () => {
+    render(<LocaleToggle />);
+    const group = document.querySelector('.lt-seg') as HTMLElement;
+    const [en, th] = Array.from(group.querySelectorAll('a'));
+    fireEvent.click(th, { metaKey: true });
+    expect(group.style.getPropertyValue('--i')).toBe('0');
+    fireEvent.click(en);
+    expect(group.style.getPropertyValue('--i')).toBe('0');
+  });
+
   it('marks data-ready one frame after mount, not on the initial render (fix wave finding 1)', async () => {
     render(<LocaleToggle />);
     const group = document.querySelector('.lt-seg') as HTMLElement;
