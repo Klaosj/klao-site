@@ -140,8 +140,12 @@ describe('ByDay', () => {
 
   it('keeps the spec §10 layout: two columns from 1068 px, 48 px between chapters on phone, no transitions', () => {
     const css = readFileSync(join(process.cwd(), 'src/components/by-day.css'), 'utf8');
-    const wide = css.slice(css.indexOf('@media (min-width: 1068px)'));
+    const wide = css.slice(css.indexOf('@media (min-width: 1068px)'), css.indexOf('@media (max-width: 734px)'));
     expect(wide).toContain('grid-template-columns: repeat(2, minmax(0, 1fr))');
+    // Fix wave finding 2: the last chapter row needs the same 72px row-gap
+    // rhythm below it, or the closing line crowds it (it had margin-bottom:
+    // 0 and nothing replaced the space row-gap gives every other row).
+    expect(wide).toMatch(/\.bd-chapters \{[^}]*margin-bottom: 72px/);
     const phone = css.slice(css.indexOf('@media (max-width: 734px)'));
     expect(phone).toMatch(/\.bd-ch \{[^}]*margin-bottom: 48px/);
     expect(css).not.toMatch(/transition:/);
@@ -156,7 +160,12 @@ describe('ByDay', () => {
     expect(within(group).getByRole('radio', { name: dict.en.storyFull }).getAttribute('aria-checked')).toBe('false');
     const items = [...container.querySelectorAll('ol.bd-chapters > li')];
     for (const li of items) expect((li.querySelector('.bd-body') as HTMLElement).hidden).toBe(true);
-    expect((items[0].querySelector('.bd-sk:not(.bd-sk-none)') as HTMLElement).hidden).toBe(true);
+    // Every `.bd-sk` -- a real sketch or, on a sketch-less chapter, the
+    // spacer that keeps its title level with its row partner (by-day.css
+    // ≥1068px) -- hides in Short: a chapter with no sketch must not stay
+    // taller than its row partner and push its own title down (fix wave
+    // finding 1). Covers any unknown-sketch chapter, not just chapter 6.
+    for (const li of items) expect((li.querySelector('.bd-sk') as HTMLElement).hidden).toBe(true);
     expect((items[5].querySelector('.bd-phases') as HTMLElement).hidden).toBe(true);
     expect((items[5].querySelector('.bd-legend') as HTMLElement).hidden).toBe(true);
     // Number, rule label and title are never hidden by Short.
@@ -168,11 +177,17 @@ describe('ByDay', () => {
   it('shows bodies and sketches again on Full, and hides them again back on Short', () => {
     const { container } = render(<ByDay profile={profile} chapters={chapters} locale="en" />);
     const body = () => container.querySelector('ol.bd-chapters > li .bd-body') as HTMLElement;
+    // Chapter 6 has no sketch, so this exercises the spacer's `hidden` too
+    // (fix wave finding 1): it must show again on Full, not stay hidden.
+    const spacer = () => container.querySelectorAll('ol.bd-chapters > li .bd-sk')[5] as HTMLElement;
     expect(body().hidden).toBe(true);
+    expect(spacer().hidden).toBe(true);
     fireEvent.click(screen.getByRole('radio', { name: dict.en.storyFull }));
     expect(body().hidden).toBe(false);
+    expect(spacer().hidden).toBe(false);
     fireEvent.click(screen.getByRole('radio', { name: dict.en.storyShort }));
     expect(body().hidden).toBe(true);
+    expect(spacer().hidden).toBe(true);
   });
 
   it('remembers a Full choice across a remount, via localStorage', () => {

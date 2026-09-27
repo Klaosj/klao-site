@@ -178,9 +178,14 @@ export default function StoryDetail({ chapters, locale, t }: Props) {
                 </span>
               ) : (
                 // Keeps a sketch-less chapter's title level with its row
-                // partner in the two-column layout (by-day.css). Never
-                // hidden: it carries no content, only spacing.
-                <span className="bd-sk bd-sk-none" aria-hidden="true" />
+                // partner in the two-column layout (by-day.css). Fix wave
+                // finding 1: it must follow Short/Full too -- a real sketch
+                // collapses to zero height in Short, so this spacer has to
+                // as well, or its chapter stays ~100px taller than its row
+                // partner and its title sits that far below (only its
+                // ≥1068px CSS box is decorative; visibility still tracks
+                // the choice like every other sketch).
+                <span className="bd-sk bd-sk-none" aria-hidden="true" hidden={short} />
               )}
             </div>
             <div className="bd-ch-r">

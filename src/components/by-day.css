@@ -55,7 +55,12 @@
   .bd-close a:hover { text-decoration: underline; }
 
   @media (min-width: 1068px) {
-    .bd-chapters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 64px; row-gap: 72px; }
+    /* Fix wave finding 2: every other row gets 72px from `row-gap`, but the
+       last row has no row below it to space against, so it needs its own
+       bottom margin or the closing line (bd-close, below `.bd-chapters` in
+       the DOM) crowds it -- `.bd-ch{margin-bottom:0}` below removes the
+       narrower layout's per-item spacing but replaces it with nothing. */
+    .bd-chapters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 64px; row-gap: 72px; margin-bottom: 72px; }
     .bd-chapters::before, .bd-dot, .bd-enddot { display: none; }
     .bd-ch { display: block; margin-bottom: 0; padding-left: 0; }
     .bd-ch-l { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 0 12px; }
