@@ -10,7 +10,7 @@ import ThumbBar from '@/components/ThumbBar';
 import { dict } from '@/lib/dictionary';
 import { openPalette } from '@/lib/deep-link';
 import type { Locale, Profile } from '@/lib/models';
-import { firstName, NAV_LABEL_KEY, NAV_SECTIONS, sectionHref, type NavSection } from '@/lib/nav';
+import { firstName, followSection, isPlainClick, NAV_LABEL_KEY, NAV_SECTIONS, sectionHref, type NavSection } from '@/lib/nav';
 import './site-nav.css';
 
 /** The line a section must cross to count as "the one you're reading": a thin
@@ -116,7 +116,16 @@ export default function SiteNav({ locale, profile }: { locale: Locale; profile: 
           <div className="sn-links" ref={linksRef}>
             <span className="sn-act" ref={pillRef} aria-hidden="true" />
             {NAV_SECTIONS.map((sec) => (
-              <Link key={sec} href={href(`#${sec}`)} data-sec={sec} aria-current={active === sec ? 'location' : undefined}>
+              <Link
+                key={sec}
+                href={href(`#${sec}`)}
+                data-sec={sec}
+                aria-current={active === sec ? 'location' : undefined}
+                // Link skips its own navigation once the default is prevented.
+                onClick={(e) => {
+                  if (isPlainClick(e) && followSection(sec)) e.preventDefault();
+                }}
+              >
                 {/* The current link is bold; `data-label` feeds the hidden
                     bold duplicate (globals.css `.seg-label::after`) that
                     reserves that width, so the row never shifts when the

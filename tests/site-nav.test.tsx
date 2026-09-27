@@ -33,7 +33,9 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
   vi.mocked(usePathname).mockReturnValue('/en');
+  history.replaceState(null, '', '/');
 });
 
 const profile = makeProfile();
@@ -268,6 +270,43 @@ describe('SiteNav', () => {
     expect(ctaGone).toHaveBeenCalled();
     // Nothing on /projects has those ids, so nothing new is watched either.
     expect(FakeIO.instances.some((o) => o.targets.length > 0)).toBe(false);
+  });
+
+  // P1 final review I-1: a section link used to scroll and leave focus in the
+  // capsule, so the next Tab started over from the top of the page. It now
+  // goes through P4's followTarget (76 px clearance, focus on the section's
+  // heading), the one in-page path every other deep link uses.
+  it('follows a section link in place: the heading takes focus and the URL keeps the hash', () => {
+    // jsdom has no layout; the spy records the jump instead.
+    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+    render(
+      <>
+        <section id="career">
+          <h2>Career heading</h2>
+        </section>
+        <SiteNav locale="en" profile={profile} />
+      </>,
+    );
+    // fireEvent returns false when the handler called preventDefault().
+    expect(fireEvent.click(sectionLinks()[1])).toBe(false);
+    expect(document.activeElement).toBe(screen.getByRole('heading', { name: 'Career heading' }));
+    expect(scrollTo).toHaveBeenCalledTimes(1);
+    expect(window.location.hash).toBe('#career');
+  });
+
+  it('leaves a new-tab click to the browser', () => {
+    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+    render(
+      <>
+        <section id="career">
+          <h2>Career heading</h2>
+        </section>
+        <SiteNav locale="en" profile={profile} />
+      </>,
+    );
+    fireEvent.click(sectionLinks()[1], { metaKey: true });
+    expect(scrollTo).not.toHaveBeenCalled();
+    expect(document.activeElement).not.toBe(screen.getByRole('heading', { name: 'Career heading' }));
   });
 
   it('server-renders every link, so the nav works before (and without) JavaScript (Review Focus #4)', () => {

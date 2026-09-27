@@ -26,7 +26,9 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
   vi.mocked(usePathname).mockReturnValue('/en');
+  history.replaceState(null, '', '/');
 });
 
 const menuButton = (locale: Locale = 'en') => screen.getByRole('button', { name: dict[locale].navMenu });
@@ -185,6 +187,52 @@ describe('NavMenu', () => {
     dialog = openMenu();
     fireEvent.click(dialog); // the target is the dialog itself = its backdrop
     expect(dialog.hasAttribute('open')).toBe(false);
+  });
+
+  // P1 final review I-1: a section link used to close the menu and hand
+  // focus back to Menu, leaving the reader's focus at the top of the page.
+  // It now follows the section in place (P4's followTarget) and the heading
+  // keeps focus.
+  const withFaq = () =>
+    render(
+      <>
+        <section id="faq">
+          <h2>FAQ heading</h2>
+        </section>
+        <NavMenu locale="en" profile={makeProfile()} active={null} />
+      </>,
+    );
+
+  it('follows a section link in place: the menu closes and focus lands on the section heading, not Menu', () => {
+    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+    withFaq();
+    const dialog = openMenu();
+    // fireEvent returns false when the handler called preventDefault().
+    expect(fireEvent.click(dialog.querySelector('a[data-sec="faq"]') as HTMLElement)).toBe(false);
+    expect(dialog.hasAttribute('open')).toBe(false);
+    expect(document.activeElement).toBe(screen.getByRole('heading', { name: 'FAQ heading' }));
+    expect(scrollTo).toHaveBeenCalledTimes(1);
+    expect(window.location.hash).toBe('#faq');
+    expect(menuButton().getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('keeps focus on the heading when the browser fires close from a later task, as real browsers do', async () => {
+    vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+    // The shared stub fires `close` synchronously; a real browser queues it,
+    // so it lands after the click handler has already moved focus.
+    HTMLDialogElement.prototype.close = function close(this: HTMLDialogElement) {
+      if (!this.hasAttribute('open')) return;
+      this.removeAttribute('open');
+      setTimeout(() => this.dispatchEvent(new Event('close')));
+    };
+    withFaq();
+    const dialog = openMenu();
+    fireEvent.click(dialog.querySelector('a[data-sec="faq"]') as HTMLElement);
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve));
+    });
+    expect(menuButton().getAttribute('aria-expanded')).toBe('false');
+    expect(document.activeElement).toBe(screen.getByRole('heading', { name: 'FAQ heading' }));
   });
 
   it('stays in sync when the browser closes it on Esc (the dialog fires close by itself)', () => {

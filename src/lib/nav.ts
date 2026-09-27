@@ -1,3 +1,4 @@
+import { followTarget } from './deep-link';
 import type { Locale, Profile } from './models';
 
 /**
@@ -25,6 +26,27 @@ export const NAV_LABEL_KEY = {
 export function sectionHref(hash: `#${string}`, pathname: string, locale: Locale): string {
   const home = pathname === `/${locale}` || pathname === `/${locale}/`;
   return home ? hash : `/${locale}${hash}`;
+}
+
+type ClickLike = { button: number; metaKey: boolean; ctrlKey: boolean; shiftKey: boolean; altKey: boolean };
+
+/** A plain left click. New-tab and new-window clicks belong to the browser
+ *  (the same rule as P4's DeepLink). */
+export const isPlainClick = (e: ClickLike): boolean => e.button === 0 && !(e.metaKey || e.ctrlKey || e.shiftKey || e.altKey);
+
+/**
+ * Follows a capsule or phone-menu section link in place (P1 final review I-1).
+ * The scroll and the focus move are P4's followTarget, the one in-page path
+ * every deep link takes: 76 px clearance, focus on the section's heading, so
+ * the reader's next Tab continues from there instead of from the nav.
+ * replaceState keeps the address in step without a history entry per click.
+ * Returns false when the section is not on this page (every route but home),
+ * and the link then navigates to `/{locale}#id` as before.
+ */
+export function followSection(sec: NavSection): boolean {
+  if (!followTarget(sec)) return false;
+  history.replaceState(null, '', `#${sec}`);
+  return true;
 }
 
 /**
