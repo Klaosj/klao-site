@@ -16,10 +16,10 @@ describe('THAI_RE / THAI_KEEP', () => {
     expect(THAI_RE.test('Thai 2026 – ok')).toBe(false);
   });
 
-  it('carries the prototype keep list verbatim', () => {
+  it('carries the prototype keep list verbatim, plus the fix wave 7 addition ("ตอนนี้")', () => {
     expect(THAI_KEEP).toEqual([
       'เบอร์เกอร์คราฟต์', 'พาร์ตเนอร์ชิป', 'ซัพพลายเออร์', 'นอกเวลางาน', 'กำไรขั้นต้น', 'สุดสัปดาห์',
-      'เครื่องมือ', 'งบประมาณ', 'สตาร์ทอัพ', 'โปรเจกต์', 'บาริสต้า', 'ค้าปลีก', 'ไอเดีย', 'ดีล',
+      'เครื่องมือ', 'งบประมาณ', 'สตาร์ทอัพ', 'โปรเจกต์', 'บาริสต้า', 'ค้าปลีก', 'ไอเดีย', 'ตอนนี้', 'ดีล',
     ]);
   });
 });
@@ -77,6 +77,13 @@ describe('keepRuns', () => {
     ]);
     expect(kept(keepRuns('ได้รูปแบบพาร์ตเนอร์ชิปกับค้าปลีก'))).toEqual(['พาร์ตเนอร์ชิป', 'ค้าปลีก']);
     expect(kept(keepRuns('ทำดีลให้คุ้มทั้งสองฝั่ง'))).toEqual(['ดีล']);
+  });
+
+  // Fix wave finding 7: "ตอนนี้" split as "ตอน / นี้" around 900px (Actmedia
+  // Thai win 1) -- it wasn't on the keep list. The string below is verbatim
+  // from src/content/fixtures/career.json's Actmedia body.
+  it('keeps "ตอนนี้" whole (fix wave finding 7)', () => {
+    expect(kept(keepRuns('ตอนนี้อยู่ระหว่างเจรจา'))).toEqual(['ตอนนี้']);
   });
 
   it('keeps Thai dates together, with or without the day', () => {

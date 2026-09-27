@@ -34,8 +34,10 @@
 export const THAI_RE = /[฀-๿]/;
 
 /** The prototype's KEEP array, verbatim and in its order (longest first, so
- *  the alternation below prefers the longer compound). Used by the default
- *  mode only -- display mode keeps every Thai token regardless of this list. */
+ *  the alternation below prefers the longer compound), plus one addition:
+ *  "ตอนนี้" (fix wave finding 7 -- it split as "ตอน / นี้" around 900px,
+ *  Actmedia's Thai body). Not in the prototype's own list, so it is placed
+ *  by length among the existing entries rather than appended at the end. */
 export const THAI_KEEP: readonly string[] = [
   'เบอร์เกอร์คราฟต์',
   'พาร์ตเนอร์ชิป',
@@ -50,6 +52,7 @@ export const THAI_KEEP: readonly string[] = [
   'บาริสต้า',
   'ค้าปลีก',
   'ไอเดีย',
+  'ตอนนี้',
   'ดีล',
 ];
 
