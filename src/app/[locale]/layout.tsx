@@ -1,11 +1,13 @@
 import '../globals.css';
 import type { Metadata } from 'next';
+import PaletteHost from '@/components/palette/PaletteHost';
 import SiteNav from '@/components/SiteNav';
 import SiteFooter from '@/components/SiteFooter';
-import { getProfile } from '@/lib/content';
+import { getCareer, getFaq, getFeaturedProjects, getProfile } from '@/lib/content';
 import { dict } from '@/lib/dictionary';
 import { assertLocale } from '@/lib/locale';
 import { LOCALES, type Locale } from '@/lib/models';
+import { buildPaletteIndex } from '@/lib/palette-index';
 import { SITE_URL } from '@/lib/site';
 import { THEME_PREPAINT_SCRIPT } from '@/lib/theme';
 
@@ -139,7 +141,17 @@ export default async function RootLayout({
   // cache()-wrapped (see src/lib/content.ts), so this doesn't double the
   // real fetch SiteFooter and the page itself also make within the same
   // request.
-  const profile = await getProfile();
+  // P4: the ⌘K index is built here, on the server, so the client receives
+  // plain localised rows; the palette's code loads only on first open
+  // (PaletteHost). Every getter is cache()-wrapped, so on the home route
+  // these reuse the page's own fetches.
+  const [profile, projects, career, faq] = await Promise.all([
+    getProfile(),
+    getFeaturedProjects(),
+    getCareer(),
+    getFaq(),
+  ]);
+  const paletteEntries = buildPaletteIndex({ profile, projects, career, faq }, l);
   return (
     // suppressHydrationWarning: THEME_PREPAINT_SCRIPT adds `js` and may set
     // `data-theme` on <html> before React hydrates, so the client DOM
@@ -180,6 +192,7 @@ export default async function RootLayout({
           {children}
         </main>
         <SiteFooter locale={l} />
+        <PaletteHost entries={paletteEntries} faq={faq} email={profile.email} locale={l} />
       </body>
     </html>
   );
