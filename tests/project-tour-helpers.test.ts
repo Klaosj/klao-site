@@ -4,7 +4,6 @@ import { IMAGE_ALT } from '@/lib/image-alt';
 import type { Project } from '@/lib/models';
 import {
   TH_DWELL_FACTOR,
-  TOUR_CAPTION_HREF,
   TOUR_DWELL_MS,
   toTourSlides,
   tourDwellMs,
@@ -131,7 +130,7 @@ describe('toTourSlides', () => {
       name: 'Aje',
       kicker: 'Aje · Working prototype',
       question: 'Is this idea worth a weekend, or a year?',
-      href: TOUR_CAPTION_HREF,
+      href: '#work/aje',
       media: 'img',
       src: '/api/img/page/aje/Screenshot',
       alt: IMAGE_ALT['/images/aje.jpg'],

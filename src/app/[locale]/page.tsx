@@ -4,10 +4,10 @@ import ContactBand from '@/components/sections/ContactBand';
 import CraftBand from '@/components/sections/CraftBand';
 import CvBand from '@/components/sections/CvBand';
 import HeroTour from '@/components/sections/HeroTour';
+import ProjectsIndex from '@/components/sections/ProjectsIndex';
 import QuestionsBand from '@/components/sections/QuestionsBand';
 import Signature from '@/components/sections/Signature';
 import SkillsBand from '@/components/sections/SkillsBand';
-import WorkDeck from '@/components/sections/WorkDeck';
 import { getCareer, getFeaturedProjects, getProfile, getQuestions, getSkills } from '@/lib/content';
 import { assertLocale } from '@/lib/locale';
 
@@ -37,9 +37,10 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           this shows where one of them came from. The page's only scroll-linked scene; renders
           nothing when no project carries a LineageOf. */}
       <Signature projects={projects} locale={locale} />
+      {/* Business plays, then builds; each row opens its sheet at #work/<key> (ProjectSheet). */}
+      <ProjectsIndex projects={projects} locale={locale} />
       <AboutBand profile={profile} locale={locale} />
       <CraftBand locale={locale} />
-      <WorkDeck projects={projects} locale={locale} />
       <QuestionsBand questions={questions} locale={locale} />
       <ClientsBand clients={profile.clients} locale={locale} />
       <SkillsBand skills={skills} locale={locale} />

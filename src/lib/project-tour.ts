@@ -1,5 +1,7 @@
 import { imageAlt } from './image-alt';
 import type { Locale, Project, ProjectWash } from './models';
+import { hostOf } from './project-view';
+import { projectKey, sheetHash } from './sheet-url';
 
 /** Dwell per frame in ms, by what the frame shows (prototype TOUR, 24 Sep): a
  *  dense app screen ('img', Aje) 6.0 s, a live landing page ('win', GoNai)
@@ -40,16 +42,10 @@ export function tourProjects(projects: Project[]): Project[] {
 }
 
 /** The window-chrome title: the live host when there is one (it reads as
- *  "this runs at …"), else the project name. */
+ *  "this runs at …"), else the project name. `hostOf` is the same host parse
+ *  the project sheet uses (ruling D-6, folded into C-1) — one rule, not two. */
 export function windowTitle(project: Project): string {
-  if (project.liveUrl) {
-    try {
-      return new URL(project.liveUrl).host;
-    } catch {
-      // fall through to the name
-    }
-  }
-  return project.name;
+  return hostOf(project.liveUrl) ?? project.name;
 }
 
 /**
@@ -73,10 +69,6 @@ export function tourKicker(p: Project, locale: Locale): string {
   }
   return parts.filter(Boolean).join(' · ');
 }
-
-/** Where a tour subtitle leads. P1: the projects index. P2 swaps this for the
- *  project's own sheet (`sheetHash(projectKey(p))`, contract C6). */
-export const TOUR_CAPTION_HREF = '#work';
 
 /** One tour frame, flattened on the server so the client stage receives plain
  *  serialisable data in the page's own language. */
@@ -110,7 +102,7 @@ export function toTourSlides(projects: Project[], locale: Locale): TourSlide[] {
       name: p.name,
       kicker: tourKicker(p, locale),
       question: (p.question ?? p.description)[locale],
-      href: TOUR_CAPTION_HREF,
+      href: sheetHash(projectKey(p)),
       media,
       src,
       alt: p.alt?.[locale] || (src ? imageAlt(src, p.name) : ''),
