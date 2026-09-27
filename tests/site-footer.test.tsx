@@ -96,6 +96,22 @@ describe('SiteFooter', () => {
     expect(screen.queryByText('No Key Co')).toBeNull();
   });
 
+  // Fix wave finding 1 (Important, gate item 1): a project with a Thai-only
+  // name and no Notion Slug gives projectKey('') -- sheetHash('') is the
+  // unparseable '#work/'. Dropped from the column instead of shown as a dead
+  // link, same S-7 treatment as the career row above.
+  it('skips a project with no slug and a Thai-only name (S-7) instead of a dead #work/ link', async () => {
+    const slugless: Project = { ...projects[0], id: 'fx-slugless', slug: null, name: 'ร้านขนมจีบ' };
+    const contentModule = await import('@/lib/content');
+    vi.spyOn(contentModule, 'getFeaturedProjects').mockResolvedValueOnce([...projects, slugless]);
+    await renderFooter();
+    expect(screen.queryByText('ร้านขนมจีบ')).toBeNull();
+    // Every other featured project still links normally.
+    for (const p of projects) {
+      expect(screen.getByRole('link', { name: p.name }).getAttribute('href')).toBe(`/en${sheetHash(projectKey(p))}`);
+    }
+  });
+
   it('opens LinkedIn, GitHub and the résumé in a new tab, and drops what is missing', async () => {
     await renderFooter();
     for (const [name, href] of [

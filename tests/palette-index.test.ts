@@ -108,6 +108,19 @@ describe('buildPaletteIndex', () => {
     expect(e.get(`project:${projectKey(input.projects[1])}`)?.icon).toBe('chart-line-up-duotone');
   });
 
+  // Fix wave finding 1 (Important, gate item 1): a project with a Thai-only
+  // name and no Notion Slug gives projectKey('') -- unlike the footer (which
+  // drops the row), a ⌘K row must stay findable and unique, so the id falls
+  // back to the project's own id and the target falls back to the 'work'
+  // section instead of the unparseable 'work/' sheet target.
+  it('keeps a slugless, Thai-only-named project findable, targeting the work section instead of a dead sheet (S-7)', () => {
+    const slugless = { ...input.projects[0], id: 'p-slugless', slug: null, name: 'ร้านขนมจีบ' };
+    const entries = buildPaletteIndex({ ...input, projects: [slugless] }, 'en');
+    const row = entries.find((e) => e.group === 'projects')!;
+    expect(row.id).toBe('project:p-slugless');
+    expect(row.action).toEqual({ type: 'target', target: 'work' });
+  });
+
   it('opens each Career pill and each FAQ answer', () => {
     const e = byId('th');
     expect(e.get('career:actmedia')?.action).toEqual({ type: 'target', target: 'career:actmedia' });

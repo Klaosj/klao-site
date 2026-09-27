@@ -131,7 +131,13 @@ export function buildPaletteIndex(input: PaletteInput, locale: Locale): PaletteE
   for (const p of input.projects) {
     const key = projectKey(p);
     entries.push({
-      id: `project:${key}`,
+      // S-7: a Thai-only-named project with no Notion Slug gives
+      // projectKey('') -- unlike the footer (SiteFooter.tsx drops the row),
+      // a ⌘K row stays findable, so the id falls back to the project's own
+      // (always-unique) id instead of colliding on 'project:' with any other
+      // slugless project, and the action below falls back to the 'work'
+      // section instead of the unparseable 'work/' sheet target.
+      id: `project:${key || p.id}`,
       group: 'projects',
       // p.name is the project's title, not Localized body copy, so it never
       // carries the '|' break mark and skips unbreak() (fix round 1, minor).
@@ -146,7 +152,7 @@ export function buildPaletteIndex(input: PaletteInput, locale: Locale): PaletteE
       // hand-kept alias list per project.
       keywords: unbreak(`${p.description.en} ${p.description.th}`),
       icon: p.type === 'business' ? 'chart-line-up-duotone' : 'code-duotone',
-      action: { type: 'target', target: `work/${key}` },
+      action: { type: 'target', target: key ? `work/${key}` : 'work' },
     });
   }
 
