@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { readFileSync } from 'node:fs';
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { usePathname } from 'next/navigation';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -233,6 +234,14 @@ describe('NavMenu', () => {
     });
     expect(menuButton().getAttribute('aria-expanded')).toBe('false');
     expect(document.activeElement).toBe(screen.getByRole('heading', { name: 'FAQ heading' }));
+  });
+
+  // P1 final review M-3: without JavaScript the Menu button opened nothing,
+  // a dead control in the capsule. It is hidden until the page's script has
+  // marked <html> with `.js` (the same hook the tour's Play button uses).
+  it('hides the Menu button until JavaScript is running', () => {
+    const css = readFileSync('src/components/nav-menu.css', 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    expect(css).toContain('html:not(.js) .nm-open { display: none; }');
   });
 
   it('stays in sync when the browser closes it on Esc (the dialog fires close by itself)', () => {
