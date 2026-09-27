@@ -171,9 +171,15 @@ describe('SiteFooter', () => {
   });
 });
 
-// I-2 (fix wave finding 3): at 320px "การแสดงผล" (Appearance) wrapped and the
-// row overflowed by 1px. The prototype (R21) stacks a pref's label above its
-// control instead of beside it -- read as text (jsdom computes no layout).
+// I-2 (fix wave finding 3): at 320px "การแสดงผล" (Appearance) wrapped on /th,
+// and on /en the longer "Appearance" label pushed the row half a pixel past
+// the viewport (P1 lane measurement: document.documentElement.scrollWidth >
+// 320 -- the page's one source of sideways scroll at that width). The
+// prototype (R21) stacks a pref's label above its control instead of beside
+// it -- read as text here (jsdom computes no layout); verified for real with
+// headless Chrome at 320/390px, /en and /th, light and dark (scrollWidth ===
+// clientWidth === 320 in every combination, screenshots in
+// /tmp/klao-qa/fx-p4/footer-*.png).
 describe('site-footer.css (I-2: stacked pref label under 734px)', () => {
   const CSS = readFileSync('src/components/site-footer.css', 'utf8');
   const mobile = CSS.slice(CSS.indexOf('@media (max-width: 734px)'));
