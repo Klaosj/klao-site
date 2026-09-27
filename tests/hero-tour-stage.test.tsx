@@ -271,6 +271,58 @@ describe('HeroTourStage', () => {
     expect(selected()).toBe(1);
   });
 
+  // P1 final review I-2: a caption click during autoplay opened the sheet
+  // while the tour kept playing behind it. Focus left for the sheet, the hold
+  // lifted, the frame moved on and the keyed caption <a> was recreated, so
+  // closing the sheet sent focus to <body> on a different frame. The caption
+  // is a visitor pick now (spec §6): it stops the tour where it is.
+  it('stops the tour when the caption is followed, so the same caption is still there to take focus back', () => {
+    renderStage();
+    inView();
+    tick(1000);
+    const link = tour().querySelector('a.ht-q') as HTMLAnchorElement;
+    link.focus();
+    fireEvent.click(link);
+    expect(playButton().getAttribute('aria-label')).toBe(dict.en.tourPlay);
+    // The sheet takes focus: focus leaves the tour, which no longer holds it.
+    const sheet = document.body.appendChild(document.createElement('button'));
+    act(() => {
+      sheet.focus();
+    });
+    tick(30000);
+    expect(selected()).toBe(0);
+    expect(tour().querySelector('a.ht-q')).toBe(link);
+    // Closing the sheet hands focus back to the caption it came from.
+    act(() => {
+      link.focus();
+    });
+    expect(document.activeElement).toBe(link);
+    sheet.remove();
+  });
+
+  // Same review, the cheap half: while any modal dialog (a sheet, ⌘K, the
+  // phone menu) is open, the tour holds instead of moving on behind it.
+  it('holds while a dialog is open over the page, and picks up where it left off', async () => {
+    renderStage();
+    inView();
+    tick(1000);
+    const dialog = document.body.appendChild(document.createElement('dialog'));
+    // The observer reports from a microtask; act() flushes it and the render.
+    await act(async () => {
+      dialog.setAttribute('open', '');
+    });
+    tick(20000);
+    expect(selected()).toBe(0);
+    await act(async () => {
+      dialog.removeAttribute('open');
+    });
+    tick(4999);
+    expect(selected()).toBe(0);
+    tick(1);
+    expect(selected()).toBe(1);
+    dialog.remove();
+  });
+
   it('lets the visitor pick a frame: the tour stops there, and Play carries on from it', () => {
     renderStage();
     inView();
