@@ -597,4 +597,22 @@ describe('ProjectSheet: CSS rulings C-5 and C-9', () => {
     const reducedMotionBlock = css.match(/@media \(prefers-reduced-motion: no-preference\) \{[\s\S]*?\n\}/)?.[0] ?? '';
     expect(reducedMotionBlock).not.toContain('view-transition-group'); // the lab doesn't gate it either -- see its own §07
   });
+
+  it('follow-up round: on phone, the Notion vignette sizes to its content instead of clipping, and its note flows below instead of overlapping', () => {
+    // Pins the fix so it can't silently regress: without these two rules the Notion sheet
+    // (klao-site) clips its Stack/Status rows and draws .sheet-note on top of whatever row
+    // landed at its old fixed `bottom` offset. Both lines are inside the existing 734px content
+    // breakpoint (asserted below), scoped to [data-media="notion"] only -- screenshot media
+    // ('img'/'win') keeps its fixed 1580x900-ratio box, on every width.
+    const notionRule = '.smedia[data-media="notion"] { aspect-ratio: auto; overflow: visible; padding-bottom: 16px; }';
+    const noteRule = '.smedia[data-media="notion"] .sheet-note { position: static; width: 100%; margin: 12px 0 0; }';
+    expect(css).toContain(notionRule);
+    expect(css).toContain(noteRule);
+    // Both rules sit after the phone breakpoint that already carries `.sheet-notion-row b` (the
+    // content block's own 734px query, not the outer dialog-shell one above it) and before that
+    // query's closing brace, i.e. inside it, not floating in a bare (desktop-reaching) rule.
+    const phoneContentBlock = css.slice(css.indexOf('.sheet-notion-row b { font-size: 14px; }'), css.lastIndexOf('}'));
+    expect(phoneContentBlock).toContain(notionRule);
+    expect(phoneContentBlock).toContain(noteRule);
+  });
 });

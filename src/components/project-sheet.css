@@ -94,4 +94,14 @@ html.sheet-open { overflow: hidden; }
   :lang(th) .sheet-q { line-height: 29px; }
   .lin { margin: 0 20px 24px; padding: 18px; }
   .lin table { font-size: 14px; }
+  /* Follow-up round: the Notion vignette's row count is content-driven, unlike a screenshot's
+     fixed 16:9 box -- forcing it into that box on a narrow phone clipped a row (Stack/Status)
+     and drew .sheet-note on top of whatever row landed at its fixed `bottom` offset. This is a
+     genuine defect baked into the prototype's own CSS too (design/white-edition/prototype/
+     index.html:633 `.smedia`, :661 `.dcap` -- neither gets a phone override there), not
+     something this fix ports from it. Screenshot media ('img'/'win') keep their fixed 1580x900
+     ratio untouched, on every width. Desktop (1440) already has room for all four rows plus the
+     note inside the wider aspect-ratio box, so it is untouched too -- notion-only, phone-only. */
+  .smedia[data-media="notion"] { aspect-ratio: auto; overflow: visible; padding-bottom: 16px; }
+  .smedia[data-media="notion"] .sheet-note { position: static; width: 100%; margin: 12px 0 0; }
 }
