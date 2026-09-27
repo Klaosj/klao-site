@@ -261,6 +261,22 @@ describe('CommandPalette', () => {
     expect(card.textContent).toContain(fill(dict.th.askDeclined, { email: 'real@example.com' }));
   });
 
+  // Fix wave finding 2 (Important, I-1): the Ask card's Thai body copy
+  // (withMarkers' plain segments, the decline line, source quotes, the
+  // trust line) rendered as bare strings, so the browser could break a
+  // keep-list compound mid-word. Every one of those spots now goes through
+  // ThaiText, same as the rest of the page's Thai body text.
+  it('renders the Ask answer’s Thai body copy with keep-run spans (fix wave finding 2)', () => {
+    const box = open('th');
+    type(box, 'เคยทำสตาร์ทอัพไหม');
+    fireEvent.keyDown(box, { key: 'Enter' });
+    const card = screen.getByRole('region', { name: dict.th.askTitle });
+    // 'โปรเจกต์' is on the Thai keep-list (src/lib/thai.ts THAI_KEEP) and
+    // appears inside the canned startup answer -- ThaiText renders it as an
+    // unbreakable '.nw' span so a browser line break can never split it.
+    expect(within(card).getByText('โปรเจกต์', { selector: '.nw' })).toBeTruthy();
+  });
+
   it('has no network API anywhere in the palette source', () => {
     for (const f of ['src/components/palette/CommandPalette.tsx', 'src/components/palette/AskCard.tsx']) {
       expect(readFileSync(f, 'utf8'), f).not.toMatch(/\bfetch\s*\(|XMLHttpRequest|sendBeacon|WebSocket|EventSource/);

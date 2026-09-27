@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { Icon } from '@/components/icons';
+import ThaiText from '@/components/ThaiText';
 import type { AskAnswer, AskSource } from '@/lib/ask';
 import { dict } from '@/lib/dictionary';
 import { fill } from '@/lib/format';
@@ -64,7 +65,9 @@ export default function AskCard({
           {t.palCancel}
         </button>
       </div>
-      <p className="ask-trust">{t.askTrust}</p>
+      <p className="ask-trust">
+        <ThaiText text={t.askTrust} />
+      </p>
       {/* Fix round 1 #9: the visitor's own question, shown verbatim, is in
           whichever language they typed it in -- same reasoning as .ask-a/
           .ask-decl's own lang below, just for the query instead of the
@@ -74,7 +77,9 @@ export default function AskCard({
       </p>
       {answer.kind === 'decline' ? (
         <div className="ask-decl">
-          <p lang={answer.lang}>{fill(a.askDeclined, { email })}</p>
+          <p lang={answer.lang}>
+            <ThaiText text={fill(a.askDeclined, { email })} />
+          </p>
           <p className="ask-decl-act">
             <button type="button" className="btn btn-out" onClick={onCopyEmail}>
               {/* C1: reuses the existing copyEmail key instead of a duplicate
@@ -103,7 +108,11 @@ export default function AskCard({
                     <b aria-hidden="true">{i + 1}</b>
                     <span>
                       <span>{s.label}</span>
-                      {s.quote && <em lang={answer.lang}>“{s.quote}”</em>}
+                      {s.quote && (
+                        <em lang={answer.lang}>
+                          “<ThaiText text={s.quote} />”
+                        </em>
+                      )}
                     </span>
                   </button>
                 </li>
@@ -128,7 +137,11 @@ function withMarkers(
   onGo: (target: string) => void,
 ): ReactNode[] {
   return text.split(/\[(\d+)\]/).map((part, i) => {
-    if (i % 2 === 0) return part;
+    // I-1 (fix wave finding 2): the plain-text segments between [n] markers
+    // are Thai answer copy and need the same keep-run treatment every other
+    // Thai body text on the page gets -- a bare string here let the browser
+    // break mid-word.
+    if (i % 2 === 0) return <ThaiText key={i} text={part} />;
     const n = Number(part);
     const src = sources[n - 1];
     if (!src) return null;
