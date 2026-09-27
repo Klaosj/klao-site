@@ -13,6 +13,9 @@ afterEach(cleanup);
 beforeEach(() => {
   stubMatchMedia();
   vi.stubGlobal('IntersectionObserver', class { observe() {} unobserve() {} disconnect() {} });
+  // Cleared before every test, not just the ones below that set it: a stray
+  // hash left over from one test must never leak into the next.
+  window.history.replaceState(null, '', '/en');
 });
 
 const items: FaqItem[] = [
@@ -115,6 +118,35 @@ describe('FaqBand', () => {
       });
     }
     expect(button.textContent).toBe(dict.en.faqCollapse);
+  });
+
+  // M2 (fix wave finding 5): a `#faq-…` URL scrolled to the right question
+  // but left the answer closed -- native fragment navigation doesn't always
+  // open a <details> its target sits inside. FaqExpandAll now opens it on
+  // mount and on hashchange (Back/Forward, a pasted link, another island
+  // assigning location.hash).
+  it('opens the FAQ item named by the URL hash on mount', () => {
+    window.history.replaceState(null, '', '/en#faq-fx-faq-build');
+    const { container } = render(<FaqBand items={items} locale="en" />);
+    const [, second] = detailsOf(container);
+    expect(second.open).toBe(true);
+    expect(detailsOf(container)[0].open).toBe(false);
+  });
+
+  it('opens the FAQ item named by the URL hash on a later hashchange too', () => {
+    const { container } = render(<FaqBand items={items} locale="en" />);
+    expect(detailsOf(container).some((d) => d.open)).toBe(false);
+    act(() => {
+      window.history.pushState(null, '', '/en#faq-fx-faq-business');
+      window.dispatchEvent(new Event('hashchange'));
+    });
+    expect(detailsOf(container)[0].open).toBe(true);
+  });
+
+  it('leaves every question closed when the hash names something else, or nothing', () => {
+    window.history.replaceState(null, '', '/en#career');
+    const { container } = render(<FaqBand items={items} locale="en" />);
+    expect(detailsOf(container).some((d) => d.open)).toBe(false);
   });
 
   it('offers ⌘K when an answer is missing', () => {

@@ -17,10 +17,32 @@ export default function FaqExpandAll({ expandLabel, collapseLabel }: { expandLab
     const section = button?.closest('section');
     if (!section) return;
     // `toggle` doesn't bubble, so one capture-phase listener on the section
-    // keeps the label honest when questions are opened one by one.
+    // keeps the label honest when questions are opened one by one -- this
+    // also covers the hash effect below, since setting `.open = true` there
+    // fires the same native `toggle` event as a click would.
     const sync = () => setAllOpen(detailsIn(button).every((d) => d.open));
     section.addEventListener('toggle', sync, true);
     return () => section.removeEventListener('toggle', sync, true);
+  }, []);
+
+  useEffect(() => {
+    // M2 (fix wave finding 5): a `#faq-…` URL scrolled to the right question
+    // but left it closed -- a fragment-navigation `id` target that sits
+    // inside a closed <details> is not opened by every browser on its own.
+    // Handled here (FaqBand's one client island for the section) rather
+    // than in deep-link.ts's followTarget, which only runs for an in-page
+    // click (⌘K, Ask, footer, FAQ source links) -- this also covers a
+    // pasted URL or the Back/Forward button, neither of which goes through
+    // followTarget at all.
+    const openFromHash = () => {
+      const id = window.location.hash.slice(1);
+      if (!id) return;
+      const details = document.getElementById(id);
+      if (details instanceof HTMLDetailsElement) details.open = true;
+    };
+    openFromHash();
+    window.addEventListener('hashchange', openFromHash);
+    return () => window.removeEventListener('hashchange', openFromHash);
   }, []);
 
   return (
