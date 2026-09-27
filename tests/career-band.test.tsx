@@ -9,11 +9,12 @@ import careerFixture from '@/content/fixtures/career.json';
 import skillsFixture from '@/content/fixtures/skills.json';
 import { dict } from '@/lib/dictionary';
 import type { CareerEntry, Skill } from '@/lib/models';
+import { stubMatchMedia } from './helpers/media';
 
 afterEach(cleanup);
 
 beforeEach(() => {
-  vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
+  stubMatchMedia();
   vi.stubGlobal('IntersectionObserver', class { observe() {} unobserve() {} disconnect() {} });
 });
 

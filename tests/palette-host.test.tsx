@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import PaletteHost from '@/components/palette/PaletteHost';
 import type { FaqItem } from '@/lib/models';
 import { buildPaletteIndex } from '@/lib/palette-index';
+import { stubMatchMedia } from './helpers/media';
 
 const loads = vi.hoisted(() => ({ count: 0 }));
 
@@ -37,7 +38,7 @@ const entries = buildPaletteIndex(
 );
 
 beforeEach(() => {
-  vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
+  stubMatchMedia();
   vi.stubGlobal('IntersectionObserver', class { observe() {} unobserve() {} disconnect() {} });
   HTMLDialogElement.prototype.showModal = function showModal(this: HTMLDialogElement) {
     this.setAttribute('open', '');

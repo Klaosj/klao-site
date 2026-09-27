@@ -7,15 +7,16 @@ import type { Locale, Project } from '@/lib/models';
 import { stubDialog } from './helpers/dialog';
 import { installFakeIO } from './helpers/io';
 import { AJE, GONAI, KLAO_SITE, LINEUP, TALATIFY, TRIPEDIA, makeProject } from './helpers/lineup';
+import { stubMatchMedia } from './helpers/media';
 import { stubViewTransition } from './helpers/view-transition';
 
 // Ruling C-11: every test file stubs matchMedia/IntersectionObserver in beforeEach, even one
 // that (like this file, mostly) doesn't touch either directly -- it's the repo convention (see
-// tests/hero.test.tsx). matchMedia stays inline (D-3/C-11: no shared tests/helpers/media.ts
-// exists in this worktree); the observer is P1's shared FakeIO. Dialog is P1's stand-in, not a
-// third re-inlined copy.
+// tests/hero.test.tsx). matchMedia is P1's shared stubMatchMedia (swapped in at the wave-2
+// merge, once tests/helpers/media.ts existed); the observer is P1's shared FakeIO. Dialog is
+// P1's stand-in, not a third re-inlined copy.
 beforeEach(() => {
-  vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
+  stubMatchMedia();
   installFakeIO();
   stubDialog();
 });
@@ -182,7 +183,7 @@ describe('ProjectSheet content', () => {
     // Complements the fallback-only case already covered in tests/project-sheet.test.tsx: with a
     // media block that carries [data-vt="shot"], the reverse transition fires (2 starts, not 1)
     // and clears both sides' names once it settles -- the carry-over this task closes out.
-    vi.stubGlobal('matchMedia', (q: string) => ({ matches: q.includes('no-preference'), addEventListener() {}, removeEventListener() {} }));
+    stubMatchMedia((q) => q.includes('no-preference'));
     const start = stubViewTransition();
     function PageWithThumbs() {
       return (

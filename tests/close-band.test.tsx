@@ -6,11 +6,12 @@ import profileFixture from '@/content/fixtures/profile.json';
 import CloseBand, { pickOpenQuestion } from '@/components/sections/CloseBand';
 import { dict } from '@/lib/dictionary';
 import type { OpenQuestion, Profile } from '@/lib/models';
+import { stubMatchMedia } from './helpers/media';
 
 afterEach(cleanup);
 
 beforeEach(() => {
-  vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
+  stubMatchMedia();
   vi.stubGlobal('IntersectionObserver', class { observe() {} unobserve() {} disconnect() {} });
 });
 

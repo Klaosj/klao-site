@@ -8,6 +8,7 @@ import { dict } from '@/lib/dictionary';
 import { projectKey, sheetHash } from '@/lib/sheet-url';
 import { stubDialog } from './helpers/dialog';
 import { installFakeIO } from './helpers/io';
+import { stubMatchMedia } from './helpers/media';
 import { makeProject } from './helpers/project';
 import { LINEUP } from './helpers/lineup';
 import { stubViewTransition } from './helpers/view-transition';
@@ -18,10 +19,10 @@ let close: MockInstance<HTMLDialogElement['close']>;
 // Fix round 1 (Minor: "stub reuse" / "shared helper"): the motion-allowed matchMedia stub every
 // View Transition test below needs (the default, set in beforeEach, always reports reduced
 // motion) -- factored out once instead of pasted at each call site.
-const allowMotion = () => vi.stubGlobal('matchMedia', (q: string) => ({ matches: q.includes('no-preference'), addEventListener() {}, removeEventListener() {} }));
+const allowMotion = () => stubMatchMedia((q) => q.includes('no-preference'));
 
 beforeEach(() => {
-  vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
+  stubMatchMedia();
   installFakeIO(); // D-3: P1's shared FakeIO, not a third re-inlined IntersectionObserver stub
   // D-3: jsdom's <dialog> has no showModal()/close() -- P1's stand-ins (not a third
   // re-inlined copy), wrapped in spies so tests can also assert call counts.

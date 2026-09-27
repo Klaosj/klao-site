@@ -4,6 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import SignatureScene, { type SignatureCopy } from '@/components/SignatureScene';
 import { FakeIO, installFakeIO } from './helpers/io';
+import { stubMatchMedia } from './helpers/media';
 
 const COPY: SignatureCopy = {
   eyebrow: '2022 → 2026',
@@ -36,12 +37,7 @@ afterEach(() => {
 beforeEach(() => {
   reduce = false;
   // "(prefers-reduced-motion: reduce)" follows `reduce`; "(… no-preference)" is its inverse.
-  vi.stubGlobal('matchMedia', (q: string) => ({
-    matches: q.includes(': reduce') ? reduce : q.includes('no-preference') ? !reduce : false,
-    media: q,
-    addEventListener() {},
-    removeEventListener() {},
-  }));
+  stubMatchMedia((q) => (q.includes(': reduce') ? reduce : q.includes('no-preference') ? !reduce : false));
   installFakeIO();
   vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
     cb(0);

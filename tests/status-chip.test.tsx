@@ -1,17 +1,18 @@
 // @vitest-environment jsdom
 import { cleanup, render } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import StatusChip from '@/components/StatusChip';
 import { installFakeIO } from './helpers/io';
+import { stubMatchMedia } from './helpers/media';
 
 afterEach(cleanup);
 
 // Ruling C-11: every test file stubs matchMedia/IntersectionObserver in beforeEach, even one
 // whose component never calls either (StatusChip is server-safe, no hooks) -- it's the repo
-// convention, not a per-test need (see tests/hero.test.tsx). The observer is P1's shared FakeIO;
-// matchMedia stays inline because no shared tests/helpers/media.ts exists.
+// convention, not a per-test need (see tests/hero.test.tsx). The observer is P1's shared FakeIO
+// and matchMedia P1's stubMatchMedia (tests/helpers/media.ts, swapped in at the wave-2 merge).
 beforeEach(() => {
-  vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
+  stubMatchMedia();
   installFakeIO();
 });
 

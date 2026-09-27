@@ -6,11 +6,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import FaqBand from '@/components/sections/FaqBand';
 import { dict } from '@/lib/dictionary';
 import type { FaqItem } from '@/lib/models';
+import { stubMatchMedia } from './helpers/media';
 
 afterEach(cleanup);
 
 beforeEach(() => {
-  vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
+  stubMatchMedia();
   vi.stubGlobal('IntersectionObserver', class { observe() {} unobserve() {} disconnect() {} });
 });
 

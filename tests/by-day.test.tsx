@@ -9,11 +9,12 @@ import profileFixture from '@/content/fixtures/profile.json';
 import storyFixture from '@/content/fixtures/story.json';
 import { dict } from '@/lib/dictionary';
 import type { Profile, StoryChapter } from '@/lib/models';
+import { stubMatchMedia } from './helpers/media';
 
 afterEach(cleanup);
 
 beforeEach(() => {
-  vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
+  stubMatchMedia();
   vi.stubGlobal('IntersectionObserver', class { observe() {} unobserve() {} disconnect() {} });
   // Amendment A10's remembered choice starts clean for every test -- a real
   // browser's storage otherwise leaks the previous test's click into this one.

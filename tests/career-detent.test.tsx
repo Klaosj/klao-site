@@ -1,16 +1,17 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import CareerDetent from '@/components/CareerDetent';
 import { CAREER_EVENT } from '@/lib/career';
 import type { CareerEntry } from '@/lib/models';
 import { installFakeIO } from './helpers/io';
+import { stubMatchMedia } from './helpers/media';
 
 // No RTL auto-cleanup in this project (see tests/hero.test.tsx).
 afterEach(cleanup);
 
 beforeEach(() => {
-  vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
+  stubMatchMedia();
   installFakeIO();
 });
 

@@ -6,12 +6,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import CopyEmail from '@/components/CopyEmail';
 import { copyShortcutHint, copyText } from '@/lib/clipboard';
 import { dict } from '@/lib/dictionary';
+import { stubMatchMedia } from './helpers/media';
 
 // Raw `act` from react needs this in Vitest (see the old version of this file).
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 
 beforeEach(() => {
-  vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
+  stubMatchMedia();
   vi.stubGlobal('IntersectionObserver', class { observe() {} unobserve() {} disconnect() {} });
 });
 

@@ -4,9 +4,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import DeepLink from '@/components/DeepLink';
 import PaletteButton from '@/components/PaletteButton';
 import { CAREER_EVENT, PALETTE_EVENT, followTarget, goToTarget, openPalette } from '@/lib/deep-link';
+import { stubMatchMedia } from './helpers/media';
 
 beforeEach(() => {
-  vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
+  stubMatchMedia();
   vi.stubGlobal('IntersectionObserver', class { observe() {} unobserve() {} disconnect() {} });
   // jsdom has no layout (window.scrollTo is "not implemented"); the spy
   // records the jump instead.

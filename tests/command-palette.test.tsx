@@ -8,6 +8,7 @@ import { dict } from '@/lib/dictionary';
 import { fill } from '@/lib/format';
 import type { FaqItem } from '@/lib/models';
 import { buildPaletteIndex, type PaletteInput } from '@/lib/palette-index';
+import { stubMatchMedia } from './helpers/media';
 
 const faq: FaqItem[] = [
   {
@@ -50,7 +51,7 @@ let fetchSpy: ReturnType<typeof vi.fn>;
 let onClose: ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
-  vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
+  stubMatchMedia();
   vi.stubGlobal('IntersectionObserver', class { observe() {} unobserve() {} disconnect() {} });
   // jsdom has no modal dialogs and no scrollIntoView; these stand in.
   HTMLDialogElement.prototype.showModal = function showModal(this: HTMLDialogElement) {

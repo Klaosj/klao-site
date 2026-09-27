@@ -7,6 +7,7 @@ import projectsFixture from '@/content/fixtures/projects.json';
 import { dict } from '@/lib/dictionary';
 import type { CareerEntry, OpenQuestion, PostMeta, Profile, Project } from '@/lib/models';
 import { projectKey, sheetHash } from '@/lib/sheet-url';
+import { stubMatchMedia } from './helpers/media';
 
 const projects = (projectsFixture as Project[]).filter((p) => p.featured).sort((a, b) => a.order - b.order);
 const career = careerFixture as CareerEntry[];
@@ -33,7 +34,7 @@ vi.mock('@/components/ThemeToggle', async () => {
 });
 
 beforeEach(() => {
-  vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
+  stubMatchMedia();
   vi.stubGlobal('IntersectionObserver', class { observe() {} unobserve() {} disconnect() {} });
   mockProfile = profileFixture as Profile;
   mockPosts = [];

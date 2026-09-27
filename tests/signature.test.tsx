@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import Signature from '@/components/sections/Signature';
 import { dict } from '@/lib/dictionary';
 import { GONAI, LINEUP, TRIPEDIA } from './helpers/lineup';
+import { stubMatchMedia } from './helpers/media';
 
 afterEach(() => {
   cleanup();
@@ -12,7 +13,7 @@ afterEach(() => {
 });
 
 beforeEach(() => {
-  vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
+  stubMatchMedia();
   vi.stubGlobal('IntersectionObserver', class { observe() {} unobserve() {} disconnect() {} });
 });
 

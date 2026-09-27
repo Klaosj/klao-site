@@ -9,12 +9,12 @@ import { projectKey } from '@/lib/sheet-url';
 import { stubDialog } from './helpers/dialog';
 import { installFakeIO } from './helpers/io';
 import { GONAI, LINEUP, TRIPEDIA, makeProject } from './helpers/lineup';
+import { stubMatchMedia } from './helpers/media';
 
-// D-3: P1's shared stand-ins, not a third re-inlined IntersectionObserver/dialog stub. matchMedia
-// stays inline (no shared tests/helpers/media.ts exists in this worktree -- same note as
-// tests/project-sheet-content.test.tsx).
+// D-3: P1's shared stand-ins, not a third re-inlined IntersectionObserver/dialog stub --
+// matchMedia included, via stubMatchMedia since the wave-2 merge.
 beforeEach(() => {
-  vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
+  stubMatchMedia();
   installFakeIO();
   stubDialog(); // A07: the row click opens ProjectSheet's real <dialog>, which jsdom can't drive without this
 });
