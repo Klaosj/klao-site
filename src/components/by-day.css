@@ -1,0 +1,90 @@
+/* By day (spec §6 "By day", §10 two-column trim). Ported from the approved
+   prototype's .prologue / .chapters / .ch / .rule / .sk / .phases / .legend /
+   .sclose with P3 names (bd-*). Eyebrow, headline, lead and chapter-title
+   sizes come from the C9 classes (.t-eyebrow / .t-h2 / .t-lead / .t-title).
+   Layout: 735–1067 px keeps the prototype's spine and two-part chapter;
+   ≥ 1068 px the six chapters sit in two columns (three rows, sketch above
+   the title), about 0.7 screen shorter; ≤ 734 px is one column with 48 px
+   between chapters (spec §10: 64 → 48). No transitions here: the fade-rise
+   is Reveal's (.rv, C9), and the amendment A10 Short/Full switch is an
+   instant show/hide via the native `hidden` attribute, not an animation. */
+
+.bd-prologue { display: grid; grid-template-columns: minmax(0, 1fr) 240px; gap: 56px; align-items: start; }
+.bd-prologue.bd-solo { grid-template-columns: minmax(0, 1fr); }
+.bd-about { max-width: 36em; margin: 22px 0 0; font-size: 19px; line-height: 28px; color: var(--ink-2); }
+.bd-about:not(:lang(th)) { letter-spacing: .012em; }
+.bd-about:lang(th) { line-height: 31px; }
+.bd-about strong, .bd-body strong { color: var(--ink-1); font-weight: 600; }
+.bd-portrait { width: 240px; height: 240px; border-radius: 28px; object-fit: cover; object-position: 50% 38%; }
+
+/* Amendment A10 (polish plan row A10): the Short/Full control above the
+   chapters. Reuses `.seg` as-is (globals.css, R19) -- this class only
+   positions that instance; it carries the 72/56 px top margin the chapters
+   list used to open with, so the chapters list itself now opens with a
+   small, fixed gap under the control instead (below). */
+.bd-seg { margin: 72px 0 0; }
+
+.bd-chapters { position: relative; margin: 24px 0 0; padding: 0; list-style: none; }
+.bd-chapters::before { content: ""; position: absolute; left: 8px; top: 8px; bottom: -8px; width: 1px; background: var(--spine); }
+.bd-ch { position: relative; display: grid; grid-template-columns: 208px minmax(0, 560px); column-gap: 40px; margin-bottom: 76px; padding-left: 32px; }
+.bd-dot { position: absolute; left: 4px; top: 12px; width: 9px; height: 9px; border-radius: 50%; background: var(--ink-1); }
+.bd-num { display: block; font-size: 13px; line-height: 16px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.bd-rule { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 15px; line-height: 20px; color: var(--ink-2); }
+.bd-rule:lang(th) { line-height: 24px; }
+.bd-rule svg { flex: none; width: 20px; height: 20px; }
+.bd-sk { display: block; margin-top: 16px; color: var(--ink-2); }
+.bd-sk svg { display: block; width: 160px; height: 64px; }
+.bd-sk-none { display: none; }
+.bd-ch h3 { margin: 0; text-wrap: balance; }
+.bd-body { margin: 12px 0 0; font-size: 17px; line-height: 26px; color: var(--ink-2); }
+.bd-body:lang(th) { line-height: 28px; }
+
+.bd-phases { position: relative; display: grid; grid-template-columns: repeat(5, 1fr); margin: 24px 0 0; padding: 0; list-style: none; }
+.bd-phases::before { content: ""; position: absolute; left: 10%; right: 10%; top: 5px; height: 1px; background: var(--spine); }
+.bd-phases li { position: relative; padding-top: 20px; text-align: center; font-size: 13px; line-height: 17px; color: var(--ink-2); }
+.bd-phases li:lang(th) { line-height: 20px; }
+.bd-phases li::before { content: ""; position: absolute; left: 50%; top: 0; width: 11px; height: 11px; margin-left: -5.5px; border-radius: 50%; background: var(--canvas); box-shadow: inset 0 0 0 1.5px var(--ink-1); }
+.bd-legend { display: flex; flex-wrap: wrap; gap: 20px; margin: 16px 0 0; padding: 0; list-style: none; font-size: 13px; color: var(--ink-2); }
+.bd-legend li { display: inline-flex; align-items: center; gap: 6px; }
+.bd-legend svg { width: 11px; height: 11px; }
+
+.bd-close { position: relative; padding-top: 8px; text-align: center; }
+.bd-enddot { position: absolute; left: 2px; top: -10px; width: 13px; height: 13px; border-radius: 50%; background: var(--ink-1); }
+.bd-closing { max-width: 14em; margin: 24px auto 0; }
+.bd-close a { display: inline-flex; align-items: center; min-height: 44px; margin-top: 12px; font-size: 14px; color: var(--link); text-decoration: none; }
+.bd-close a:hover { text-decoration: underline; }
+
+@media (min-width: 1068px) {
+  .bd-chapters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 64px; row-gap: 72px; }
+  .bd-chapters::before, .bd-dot, .bd-enddot { display: none; }
+  .bd-ch { display: block; margin-bottom: 0; padding-left: 0; }
+  .bd-ch-l { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 0 12px; }
+  .bd-rule { margin-top: 0; }
+  .bd-sk { grid-column: 1 / -1; margin: 16px 0 20px; }
+  .bd-sk-none { display: block; height: 64px; }
+}
+
+@media (max-width: 734px) {
+  .bd-prologue { grid-template-columns: 1fr; gap: 24px; }
+  .bd-portrait { order: -1; width: 160px; height: 160px; border-radius: 24px; }
+  .bd-about { font-size: 17px; line-height: 26px; }
+  .bd-about:lang(th) { line-height: 28px; }
+  .bd-seg { margin-top: 56px; }
+  .bd-chapters { margin-top: 20px; }
+  .bd-chapters::before { left: 6px; }
+  .bd-ch { display: block; margin-bottom: 48px; padding-left: 28px; }
+  .bd-dot { left: 2px; top: 5px; }
+  .bd-ch-l { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 0 10px; }
+  .bd-num { font-size: 14px; }
+  .bd-rule { margin-top: 0; font-size: 14px; }
+  .bd-rule svg { width: 16px; height: 16px; }
+  .bd-sk { grid-column: 1 / -1; margin: 8px 0 10px; }
+  .bd-body { font-size: 16px; line-height: 24px; }
+  .bd-body:lang(th) { line-height: 26px; }
+  .bd-phases { grid-template-columns: 1fr; gap: 12px; }
+  .bd-phases::before { left: 5px; right: auto; top: 6px; bottom: 6px; width: 1px; height: auto; }
+  .bd-phases li { padding: 0 0 0 24px; text-align: left; font-size: 14px; line-height: 20px; }
+  .bd-phases li::before { left: 0; top: 4px; margin-left: 0; }
+  .bd-legend { gap: 8px 16px; font-size: 14px; }
+  .bd-enddot { left: 0; }
+}

@@ -90,6 +90,21 @@ describe('CareerBand', () => {
     expect(container.querySelector('#toolbox')).not.toBeNull();
   });
 
+  // Carry-over from the wave-1 integration review: R25 ("every .t-h2 heading
+  // passes `display`") was missed for this heading, so Chrome's Thai
+  // word-breaking could split "เคยอยู่ที่ไหนมาบ้าง และได้อะไรกลับมา" mid-phrase
+  // inside the 13em cap. Display mode keeps each space-delimited Thai token
+  // whole in its own .kt span (src/lib/thai.ts's displayRuns) -- this pins
+  // that both tokens survive intact, not just that the plain text matches.
+  it('renders the Thai headline through ThaiText display mode, in whole-token .kt spans (R25 carry-over)', () => {
+    const { container } = render(
+      <CareerBand entries={entries} skills={skills} locale="th" resumeUrl="/r.pdf" now="2026-09" />,
+    );
+    const heading = container.querySelector('#career-h') as HTMLElement;
+    const keepSpans = [...heading.querySelectorAll('span.kt')];
+    expect(keepSpans.map((s) => s.textContent)).toEqual(['เคยอยู่ที่ไหนมาบ้าง', 'และได้อะไรกลับมา']);
+  });
+
   it('animates only transform and opacity (global constraint)', () => {
     const css = readFileSync(join(process.cwd(), 'src/components/career.css'), 'utf8');
     const transitions = [...css.matchAll(/transition:\s*([^;]+);/g)].map((m) => m[1]);

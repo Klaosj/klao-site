@@ -34,9 +34,12 @@ export default function CareerBand({ entries, skills, locale, resumeUrl, now = c
         {/* Ruling C-3 (P3 preflight): `big` -- the headline rises the
             prototype's 24 px, not P0 Reveal's 16 px default. */}
         <Reveal big className="car-h">
-          {/* cvHeading carries the prototype's career headline verbatim. */}
+          {/* cvHeading carries the prototype's career headline verbatim.
+              Ruling R25 (wave-1 review carry-over): every .t-h2 heading
+              passes `display` so Chrome's Thai word-breaking cannot split
+              the phrase mid-word inside the 13em cap. */}
           <h2 id="career-h" className="t-h2">
-            <ThaiText text={t.cvHeading} />
+            <ThaiText text={t.cvHeading} display />
           </h2>
           {resumeUrl && (
             <div className="car-res">

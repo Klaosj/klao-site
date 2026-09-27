@@ -89,7 +89,14 @@ describe('smoke: pages render in both locales (fixture mode)', () => {
       // MaskedHeading (see the collectText comment above for why that
       // matters here).
       expect(homeText).toContain(t.selectedProjects); // WorkDeck's eyebrow
-      expect(homeText).toContain(t.career); // CvBand's eyebrow
+      // CareerBand (P3): the section, its toolbox anchor and -- on /en --
+      // the headline (Thai headings go through ThaiText keep-spans, so only
+      // the Latin string is a contiguous substring of the HTML).
+      expect(homeText).toContain('id="career"');
+      expect(homeText).toContain('id="toolbox"');
+      if (locale === 'en') expect(homeText).toContain(t.cvHeading);
+      expect(homeText).toContain('id="story"'); // ByDay (P3)
+      if (locale === 'en') expect(homeText).toContain(t.storyLead);
       // Render only the active locale -- the other language's equivalent
       // eyebrow labels must be entirely absent from the assembled page.
       // Only the FAQ's own shared source-link labels are excluded (see
@@ -98,7 +105,7 @@ describe('smoke: pages render in both locales (fixture mode)', () => {
       // it (proven by the synthetic-fragment test below).
       const homeTextOutsideFaqSourceLabels = stripFaqSourceLabels(homeText);
       expect(homeTextOutsideFaqSourceLabels).not.toContain(other.selectedProjects);
-      expect(homeTextOutsideFaqSourceLabels).not.toContain(other.career);
+      expect(homeTextOutsideFaqSourceLabels).not.toContain(other.cvHeading);
 
       const projects = await ProjectsPage(p(locale));
       expect(collectText(projects)).toContain(t.projects);
@@ -318,19 +325,15 @@ describe('smoke: pages render in both locales (fixture mode)', () => {
     }
   });
 
-  // Lane note (merge notes in the P4 T9 report): the brief's version of this
-  // test also asserts `id="story"` sits before `id="faq"`. This lane (P4b)
-  // branched from the wave-2 base before P2/P3 merged in, so ByDay's #story
-  // section does not exist here yet -- only P4's own ordering (FAQ, then
-  // Close, last) is this task's to guard. The controller should restore the
-  // storyAt >  -1 / faqAt > storyAt assertions once P2/P3 land in this chain.
-  it('ends the home page with FAQ then Close, without the retired bands', async () => {
+  it('ends the home page with By day, FAQ then Close, without the retired bands', async () => {
     for (const locale of locales) {
       const html = renderToStaticMarkup(await HomePage(p(locale)));
       const text = html.replace(/<[^>]+>/g, '');
+      const storyAt = html.indexOf('id="story"');
       const faqAt = html.indexOf('id="faq"');
       const contactAt = html.indexOf('id="contact"');
-      expect(faqAt).toBeGreaterThan(-1);
+      expect(storyAt).toBeGreaterThan(-1);
+      expect(faqAt).toBeGreaterThan(storyAt);
       expect(contactAt).toBeGreaterThan(faqAt);
       expect(html).not.toContain('id="questions"');
       expect(html).not.toContain('id="clients"');

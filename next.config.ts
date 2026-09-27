@@ -8,7 +8,8 @@ const nextConfig: NextConfig = {
     // the blog-style project index the deck's "All projects" link targets,
     // so only '/career' still redirects.
     return [
-      { source: '/:locale(en|th)/career', destination: '/:locale#cv', permanent: false },
+      // White Edition P3 (C7): the career section's anchor is #career now.
+      { source: '/:locale(en|th)/career', destination: '/:locale#career', permanent: false },
     ];
   },
 };

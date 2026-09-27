@@ -40,44 +40,14 @@ const en = {
   deckSubtitleBuildOnly: 'Every project opens with the question it answers.',
   // Finding 17: /projects index gets its own one-line voice under the h1.
   projectsSubtitle: 'Every project, business and build — each opens with the question it answers.',
-  craft: [
-    'Scope it honestly.',
-    'Ship something that runs.',
-    'Write it in both languages.',
-    'Leave it maintainable.',
-    'Say the number out loud.',
-    'Then hand over the keys.',
-  ] as readonly string[],
-  // Distinct from `about`/`howIWork` above, which are the short eyebrow
-  // labels: these are the bigger thesis-statement headings (and, for About,
-  // its sub-head) that sit below each eyebrow. Ported verbatim from
-  // .superpowers/brainstorm/11719-1786211516/content/studio.html, which
-  // gives every band its own eyebrow/bigHead pair. Originally kept as
-  // component-local constants (T8 first pass); moved here on review because
-  // `craft` above is the same category of fixed, non-profile copy and
-  // already lives in the dictionary, and because a local constant sits
-  // outside both `th: typeof en`'s compile-time key check and this file's
-  // own empty-string/untranslated-string tests below -- exactly the kind of
-  // guard a translated <h2>/<h3> needs.
-  craftHeading: 'Six things I will not trade away.',
+  // By day's headline (ByDay, P3). Ported verbatim from the studio.html
+  // brainstorm and kept in the approved White Edition prototype.
   aboutHeading: 'I like building things that are simple, and that stay running.',
-  aboutSubhead: 'A short story about how I ended up on both sides of the table.',
   copied: 'Copied',
   startConversation: 'Start a conversation',
   basedIn: 'Based in',
   workingIn: 'Working in',
   photoPlaceholder: 'Photo',
-  careerUnpublished: 'Career data not yet published',
-  // T10: CvBand's stat grid is derived from the real `entries` array (role
-  // count, unique company count, wins shipped) plus LOCALES.length -- never
-  // fabricated numbers -- so only the four labels are fixed copy. Same
-  // rationale as craftHeading/aboutHeading above: this is fixed,
-  // non-profile UI copy, so it belongs in the dictionary, not a
-  // component-local constant.
-  statRoles: 'positions held',
-  statCompanies: 'companies worked with',
-  statWins: 'wins shipped, in both languages',
-  statLanguages: 'working languages, both first-class',
   // ContactBand's statement heading. Ported verbatim from
   // .superpowers/brainstorm/11719-1786211516/content/studio.html's #contact
   // bigHead, same as craftHeading/aboutHeading.
@@ -119,16 +89,6 @@ const en = {
   // profile field.
   identities: ['Business development.', 'Barista.', 'Builds his own tools.'] as readonly string[],
 
-  // About band's story beats. Every sentence is traceable to career.json:
-  // A Bun Dance (business owner), VELA Central World (senior barista),
-  // ActMedia (senior BD) + the projects in projects.json. Fixed copy, same
-  // category as `craft`, hence dictionary not profile.
-  aboutStory: [
-    'Started on the owner side of the table — ran A Bun Dance, a craft-burger shop, where menu R&D, pricing and gross margin were all mine to get right.',
-    'Learned service the honest way, behind the bar at VELA — one quality standard per cup, kept under pressure.',
-    'Now I sell for ActMedia by day and build my own tools at night. When I scope software for a business, I have already sat on both sides of the table.',
-  ] as readonly string[],
-
   // /writing rendered a bare empty <ul> with no message once the two
   // placeholder posts were pulled. Mirrors `careerUnpublished` above: say
   // the content is not there yet rather than showing an empty container the
@@ -147,36 +107,18 @@ const en = {
   // nights-and-weekends per profile.now) — personality, not fabrication.
   footerNote: 'Built at night, powered by good coffee.',
 
-  // SkillsBand ("Toolbox" band). Fixed, non-profile UI copy -- same
-  // category as craftHeading/aboutHeading/cvHeading above, hence dictionary
-  // entries rather than component-local constants. The four tier labels sit
-  // between `craftHeading` and dict-level eyebrow labels elsewhere: not the
-  // full-sentence claim a bigHead makes, but not a one-word nav label
-  // either -- they name the five-way honesty scale (top/daily/working/
-  // basic/learning, src/lib/models.ts's SkillTier) the band itself renders
-  // as size and brightness, in that same order.
+  // "Toolbox" band copy (CareerBand's #toolbox div, P3) -- fixed,
+  // non-profile UI copy, hence dictionary entries rather than
+  // component-local constants. The retired standalone SkillsBand rendered
+  // this as a five-way honesty scale; CareerBand instead groups it into
+  // three plain categories (Works in / Focus / Languages, CareerBand.tsx).
   toolbox: 'Toolbox',
   toolboxHeading: 'What I actually work with.',
-  tierDaily: 'Daily craft',
-  tierWorking: 'Working knowledge',
-  tierBasic: 'Familiar with',
-  tierLearning: 'Currently learning',
-  // Toolbox redesign, owner decision 2026-08-12: "too many chips reads as
-  // overclaiming" (his words, in Thai, on the live band). The band now
-  // renders only `top` + this one curated row of iconed tool badges +
-  // `learning` -- `tierDaily`/`tierWorking`/`tierBasic` above stay in this
-  // file (harmless, re-expansion later needs no schema work) but nothing
-  // in SkillsBand.tsx reads them anymore. `toolsLabel` is that row's own
-  // mono eyebrow, sized and cased like `tierDaily` et al. but naming a
-  // fixed, curated allowlist (SkillsBand's TOOLS_ALLOWLIST) rather than a
-  // whole honesty tier.
-  toolsLabel: 'Core tools',
   // Open-questions band (wave 2, spec 2026-08-13). The band's copy IS its
   // question list (owner-authored, from the Questions DB) -- these are just
   // the frame: the eyebrow, an optional bigger heading (openQuestionsHeading
   // is dormant until browser review decides the eyebrow alone reads too
-  // quiet -- same keep-the-key reasoning as tierDaily above), and the one
-  // status marker a `building` question carries.
+  // quiet), and the one status marker a `building` question carries.
   openQuestions: 'Open questions',
   openQuestionsHeading: 'Questions I have not answered yet.',
   statusBuilding: 'building',
@@ -262,6 +204,14 @@ const en = {
   ] as readonly string[],
   storyHealth: ['On track', 'At risk', 'Off track'] as readonly string[],
   backToTour: 'Aje · GoNai · klao-site ↑',
+  // Amendment A10 (polish plan): the Short/Full segmented control above the
+  // chapters. Not in the approved prototype (it predates the polish pass) --
+  // "Detail" as the group's aria-label and "Short"/"Full" as the two option
+  // labels are the polish lab's own reference copy (polish-lab/index.html
+  // §10, `#depthSeg`), carried over verbatim rather than invented here.
+  storyDetailLabel: 'Detail',
+  storyShort: 'Short',
+  storyFull: 'Full',
 
   // --- White Edition P4: FAQ, close band, footer, ⌘K + Ask Preview. -----
   // Every string is the approved prototype's (design/white-edition/
@@ -334,27 +284,12 @@ const th: typeof en = {
   deckSubtitle: 'ธุรกิจมาก่อน — ทุกโปรเจกต์เริ่มจากคำถามที่มันตอบ',
   deckSubtitleBuildOnly: 'ทุกโปรเจกต์เริ่มจากคำถามที่มันตอบ',
   projectsSubtitle: 'ทุกโปรเจกต์ทั้งฝั่งธุรกิจและฝั่งสร้าง — แต่ละอันเริ่มจากคำถามที่มันตอบ',
-  craft: [
-    'ประเมินตามจริง',
-    'ส่งของที่รันได้จริง',
-    'เขียนให้ครบสองภาษา',
-    'ทิ้งไว้ให้ดูแลต่อได้',
-    'พูดตัวเลขออกมาตรงๆ',
-    'แล้วส่งกุญแจให้',
-  ] as readonly string[],
-  craftHeading: 'หกข้อที่ผมไม่ยอมแลก',
   aboutHeading: 'ผมชอบสร้างของที่เรียบง่าย และยังทำงานอยู่ได้เอง',
-  aboutSubhead: 'เรื่องสั้นๆ ว่าทำไมผมถึงมายืนอยู่ทั้งสองฝั่งของโต๊ะ',
   copied: 'คัดลอกแล้ว',
   startConversation: 'เริ่มคุยกัน',
   basedIn: 'ประจำอยู่',
   workingIn: 'ทำงานเป็น',
   photoPlaceholder: 'รูป',
-  careerUnpublished: 'ยังไม่ได้เผยแพร่ประวัติการทำงาน',
-  statRoles: 'ตำแหน่งที่ผ่านมา',
-  statCompanies: 'บริษัทที่เคยร่วมงาน',
-  statWins: 'ผลงานที่ส่งมอบ ทั้งสองภาษา',
-  statLanguages: 'สองภาษาที่ใช้ทำงานได้เท่ากัน',
   contactHeading: 'มีของที่ควรมีอยู่จริง แต่ยังไม่มีใครทำ?',
 
   skipToContent: 'ข้ามไปยังเนื้อหาหลัก',
@@ -372,12 +307,6 @@ const th: typeof en = {
 
   identities: ['พัฒนาธุรกิจ', 'บาริสต้า', 'สร้างเครื่องมือใช้เอง'] as readonly string[],
 
-  aboutStory: [
-    'เริ่มจากฝั่งเจ้าของโต๊ะ — ทำร้าน A Bun Dance เบอร์เกอร์คราฟต์ ที่ทั้งคิดเมนู ตั้งราคา และคุมกำไรขั้นต้นเองทั้งหมด',
-    'เรียนรู้งานบริการแบบตรงไปตรงมาหลังบาร์ที่ VELA — มาตรฐานเดียวกันทุกแก้ว แม้หน้าร้านจะแน่นแค่ไหน',
-    'ตอนนี้ขายงานให้ ActMedia ตอนกลางวัน และสร้างเครื่องมือของตัวเองตอนกลางคืน เวลาคุยเรื่องระบบกับธุรกิจ ผมเลยนั่งมาแล้วทั้งสองฝั่งของโต๊ะ',
-  ] as readonly string[],
-
   writingUnpublished: 'ยังไม่ได้เผยแพร่บทความ',
 
   navMain: 'เมนูหลัก',
@@ -387,11 +316,6 @@ const th: typeof en = {
 
   toolbox: 'กล่องเครื่องมือ',
   toolboxHeading: 'ของจริงที่ผมใช้ทำงาน',
-  tierDaily: 'ใช้ประจำ',
-  tierWorking: 'ใช้เป็น',
-  tierBasic: 'รู้พื้นฐาน',
-  tierLearning: 'กำลังเรียน',
-  toolsLabel: 'เครื่องมือหลัก',
   openQuestions: 'คำถามที่ยังเปิดอยู่',
   openQuestionsHeading: 'คำถามที่ยังไม่มีคำตอบ',
   statusBuilding: 'กำลังสร้าง',
@@ -445,6 +369,13 @@ const th: typeof en = {
   storyPhases: ['เงื่อนไขการค้า', 'เตรียมจอ', 'ติดตั้ง', 'พร้อมขาย', 'ตรวจหลังเปิดใช้งาน'] as readonly string[],
   storyHealth: ['ตามแผน', 'มีความเสี่ยง', 'หลุดแผน'] as readonly string[],
   backToTour: 'Aje · GoNai · klao-site ↑',
+  // A10: the polish lab's reference implementation only gave this control
+  // English copy (Short/Full, aria-label "Detail") -- there is no Thai
+  // wording to carry over, so this is our own translation, ตาม amendment
+  // A10's own fallback instruction ("otherwise use สั้น / เต็ม").
+  storyDetailLabel: 'รายละเอียด',
+  storyShort: 'สั้น',
+  storyFull: 'เต็ม',
 
   faqTitle: 'คำถามที่เจอบ่อย',
   faqExpand: 'เปิดทั้งหมด',
