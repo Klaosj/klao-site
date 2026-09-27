@@ -1,0 +1,107 @@
+/* Project sheet (spec §4 row "#work/<slug>", §5.3 radii, §5.5 settle/exit; prototype `.sheet`).
+   A native modal <dialog>: the browser owns the top layer, the inert page and Esc. It enters on
+   the settle curve and leaves on exit; reduced motion gets neither. Only opacity/transform
+   animate. Phone: a full-height sheet with a grab handle.
+   Ruling C-5: the prototype's own sheet is `--raised`/`--e4` over a `--curtain` backdrop, not
+   `--card`/`--e3` over a `--mist` tint (those are the flatter surface a step down -- P0 added
+   the darker/deeper tokens for exactly this dialog, prototype lines 623-624). */
+html.sheet-open { overflow: hidden; }
+.sheet { width: min(1040px, 100% - 48px); max-width: none; max-height: calc(100vh - 80px); margin: 40px auto auto; padding: 0; overflow: auto; overscroll-behavior: contain; border: 0; border-radius: 28px; background: var(--raised); color: var(--ink-1); box-shadow: var(--e4); }
+.sheet::backdrop { background: var(--curtain); }
+@media (prefers-reduced-motion: no-preference) {
+  .sheet[open] { animation: sheet-in 500ms var(--ease-settle); }
+  .sheet.closing { animation: sheet-out 280ms var(--ease-exit) forwards; }
+}
+@keyframes sheet-in {
+  from { opacity: 0; transform: translateY(24px) scale(.985); }
+}
+@keyframes sheet-out {
+  to { opacity: 0; transform: translateY(16px); }
+}
+/* Fix round 1: the shared-element morph's own timing (lab §07), matched exactly, not left to
+   the UA default. Ungated by prefers-reduced-motion here, same as the lab -- the JS-level
+   motionAllowed() check in ProjectSheet.tsx already stops document.startViewTransition from
+   ever being called under reduced motion, so this pseudo-element never exists to animate then. */
+::view-transition-group(shot) { animation-duration: 460ms; animation-timing-function: cubic-bezier(.32, .72, 0, 1); }
+/* Ruling C-5: reuses P0's .ctl (globals.css, "Small glass controls (tour paddles, sheet
+   close)") for the blur/fill/fallbacks -- this rule only adds the close button's position and
+   size, not its surface. */
+.sheet-close { position: sticky; top: 16px; z-index: 5; float: right; display: grid; place-items: center; width: 36px; height: 36px; margin: 16px 16px 0 0; border-radius: 50%; font-size: 16px; }
+.sheet-close::after { content: ""; position: absolute; inset: -4px; }
+.sbody { display: grid; grid-template-columns: 7fr 5fr; gap: 40px; padding: 40px; }
+.sheet-name { margin: 6px 0 0; font-size: 40px; line-height: 44px; font-weight: 600; letter-spacing: 0; }
+/* Ruling C-9 (Global Constraint "Thai is one size step smaller than English everywhere"):
+   specificity (0,3,0) beats globals.css's legacy Thai heading rule (0,2,1), so this is the size
+   that actually renders, on desktop and (below) on phone. */
+.sheet .sheet-name:lang(th) { font-size: 36px; line-height: 47px; }
+/* Focus lands on the heading programmatically (tabindex -1); the ring is for keyboard stops. */
+.sheet-name:focus { outline: none; }
+@media (max-width: 734px) {
+  .sheet { width: 100%; max-width: 100%; height: calc(100dvh - 12px); max-height: none; margin: 12px 0 0; border-radius: 20px 20px 0 0; }
+  .sheet::before { content: ""; position: absolute; top: 6px; left: 50%; z-index: 6; width: 36px; height: 5px; margin-left: -18px; border-radius: 3px; background: var(--ink-3); }
+  .sheet-close { width: 44px; height: 44px; margin: 12px 12px 0 0; }
+  .sbody { grid-template-columns: 1fr; gap: 8px; padding: 24px 20px; }
+  .sheet-name { font-size: 32px; line-height: 36px; }
+  .sheet .sheet-name:lang(th) { font-size: 28px; line-height: 38px; }
+}
+
+/* Sheet content (media, facts, links, lineage card). */
+.smedia { position: relative; display: grid; place-items: center; aspect-ratio: 16 / 9; overflow: hidden; background: var(--wash, var(--mist)); }
+.sheet-win { align-self: start; width: 86%; margin-top: 6%; background: #fff; }
+.sheet-win img { display: block; width: 100%; height: auto; }
+/* A light window's chrome stays light in dark mode: it is a picture of a window. */
+.sheet-bar { display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; background: #f2f2f4; }
+.sheet-bar i { width: 8px; height: 8px; border-radius: 50%; background: #d4d4d8; }
+.sheet-bar span { margin: 0 auto; padding: 1px 12px; border-radius: 9px; background: #fff; color: #6e6e73; font-size: 11px; }
+.smedia-draw { display: grid; place-items: center; width: 100%; height: 100%; color: var(--ink-1); }
+.smedia-draw svg { width: 100%; height: 100%; }
+.sheet-notion { padding: 18px 22px; color: #1A1C20; }
+.sheet-notion-row { display: grid; grid-template-columns: 110px 1fr; gap: 12px; padding: 10px 0; border-bottom: 1px solid rgb(20 26 44 / .08); }
+.sheet-notion-row b { color: #666970; font-size: 13px; font-weight: 500; }
+.sheet-notion-row span { font-size: 14px; line-height: 20px; }
+.sheet-note { position: absolute; left: 0; right: 0; bottom: 14px; margin: 0; padding: 0 16px; color: var(--ink-2); font-size: 14px; text-align: center; }
+.sheet-kick { margin: 0; color: var(--ink-2); font-size: 14px; line-height: 20px; font-weight: 600; }
+.sheet-q { margin: 10px 0 0; color: var(--ink-2); font-size: 24px; line-height: 30px; letter-spacing: .009em; text-wrap: balance; }
+:lang(th) .sheet-q { line-height: 34px; letter-spacing: 0; }
+.sbody h3 { margin: 28px 0 8px; color: var(--ink-2); font-size: 14px; font-weight: 600; }
+.sheet-side > h3:first-child { margin-top: 6px; }
+.sheet-desc { margin: 0; font-size: 17px; line-height: 26px; }
+:lang(th) .sheet-desc { line-height: 28px; }
+.sheet-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.sheet-list li { position: relative; padding-left: 20px; font-size: 17px; line-height: 26px; }
+:lang(th) .sheet-list li { line-height: 28px; }
+.sheet-list li::before { content: ""; position: absolute; top: 11px; left: 2px; width: 5px; height: 5px; border-radius: 50%; background: var(--ink-3); }
+.sheet-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.sheet-chips span { padding: 4px 12px; border-radius: 14px; background: var(--mist); font-size: 14px; }
+.sheet .st-chip { font-size: 14px; }
+.sheet-links { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+/* GoNai's own green (spec §5.1: only in GoNai's frame, sheet and "Open app"); white on it in both themes. */
+.sheet-links .sheet-gonai, .sheet-links .sheet-gonai:hover { background: #1C7A57; color: #fff; }
+.sheet-story { display: inline-flex; align-items: center; min-height: 44px; margin-top: 12px; color: var(--link); font-size: 17px; text-decoration: none; }
+.sheet-story:hover { text-decoration: underline; }
+.lin { margin: 0 40px 32px; padding: 24px 28px; border-radius: 20px; background: var(--mist); }
+.lin h3 { margin: 0 0 12px; font-size: 21px; font-weight: 600; letter-spacing: .011em; }
+:lang(th) .lin h3 { letter-spacing: 0; }
+.lin table { width: 100%; border-collapse: collapse; font-size: 15px; line-height: 22px; }
+.lin :is(th, td) { padding: 10px 12px 10px 0; border-top: 1px solid var(--line); text-align: left; vertical-align: top; }
+.lin thead th { border-top: 0; color: var(--ink-2); font-size: 14px; }
+.lin tbody th { width: 22%; color: var(--ink-2); font-weight: 600; }
+@media (max-width: 734px) {
+  .sheet-win { width: 92%; }
+  .sheet-bar span { font-size: 14px; }
+  .sheet-notion-row b { font-size: 14px; }
+  .sheet-q { font-size: 19px; line-height: 26px; }
+  :lang(th) .sheet-q { line-height: 29px; }
+  .lin { margin: 0 20px 24px; padding: 18px; }
+  .lin table { font-size: 14px; }
+  /* Follow-up round: the Notion vignette's row count is content-driven, unlike a screenshot's
+     fixed 16:9 box -- forcing it into that box on a narrow phone clipped a row (Stack/Status)
+     and drew .sheet-note on top of whatever row landed at its fixed `bottom` offset. This is a
+     genuine defect baked into the prototype's own CSS too (design/white-edition/prototype/
+     index.html:633 `.smedia`, :661 `.dcap` -- neither gets a phone override there), not
+     something this fix ports from it. Screenshot media ('img'/'win') keep their fixed 1580x900
+     ratio untouched, on every width. Desktop (1440) already has room for all four rows plus the
+     note inside the wider aspect-ratio box, so it is untouched too -- notion-only, phone-only. */
+  .smedia[data-media="notion"] { aspect-ratio: auto; overflow: visible; padding-bottom: 16px; }
+  .smedia[data-media="notion"] .sheet-note { position: static; width: 100%; margin: 12px 0 0; }
+}

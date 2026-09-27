@@ -88,7 +88,7 @@ describe('smoke: pages render in both locales (fixture mode)', () => {
       // string per band composed in page.tsx, none of it routed through
       // MaskedHeading (see the collectText comment above for why that
       // matters here).
-      expect(homeText).toContain(t.selectedProjects); // WorkDeck's eyebrow
+      expect(homeText).toContain(t.workDoor); // ProjectsIndex's door: only the index renders it
       // CareerBand (P3): the section, its toolbox anchor and -- on /en --
       // the headline (Thai headings go through ThaiText keep-spans, so only
       // the Latin string is a contiguous substring of the HTML).
@@ -104,7 +104,7 @@ describe('smoke: pages render in both locales (fixture mode)', () => {
       // subject to this check, so a real leak inside one would still fail
       // it (proven by the synthetic-fragment test below).
       const homeTextOutsideFaqSourceLabels = stripFaqSourceLabels(homeText);
-      expect(homeTextOutsideFaqSourceLabels).not.toContain(other.selectedProjects);
+      expect(homeTextOutsideFaqSourceLabels).not.toContain(other.workDoor);
       expect(homeTextOutsideFaqSourceLabels).not.toContain(other.cvHeading);
 
       const projects = await ProjectsPage(p(locale));

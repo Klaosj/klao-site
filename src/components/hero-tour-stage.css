@@ -143,15 +143,18 @@
     font-size: 17px; line-height: 22px; font-weight: 600; color: var(--ink-1); text-decoration: none;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-  .ht-q:hover .ht-qt { text-decoration: underline; text-underline-offset: .15em; }
+  /* `a.ht-q`, not the bare class: fix round 1 adds a non-link `<span className="ht-q">` for a
+     slide with nowhere to open (S-7), and it must not look hoverable/clickable. */
+  a.ht-q:hover .ht-qt { text-decoration: underline; text-underline-offset: .15em; }
   /* Fix round 1 (Important #5): ThaiText's keep-runs (.nw/.kt) are
      inline-block, so an ancestor's text-decoration stops at each one's own
      edge instead of drawing through it (documented trap, ThaiText.tsx) --
      a Thai caption's hover underline needs the same declaration repeated
-     on the keep-run spans themselves to actually reach them. */
-  .ht-q:hover .ht-qt :is(.nw, .kt) { text-decoration: underline; text-underline-offset: .15em; }
+     on the keep-run spans themselves to actually reach them. Scoped to
+     `a.ht-q` for the same S-7 reason as the rule above. */
+  a.ht-q:hover .ht-qt :is(.nw, .kt) { text-decoration: underline; text-underline-offset: .15em; }
   .ht-chev { display: inline-block; margin-left: 4px; transition: transform 200ms var(--ease-settle); }
-  .ht-q:hover .ht-chev { transform: translateX(2px); }
+  a.ht-q:hover .ht-chev { transform: translateX(2px); }
   .ht-k { font-size: 13px; line-height: 18px; color: var(--ink-1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   :lang(th) .ht-k { line-height: 20px; }
 

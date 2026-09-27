@@ -255,6 +255,40 @@ const en = {
   askReady: 'Answer ready, {n} sources',
   askDeclined: 'That isn’t in Klao’s published content, so I won’t guess. You can ask him directly at {email}.',
   askWrong: 'Something wrong? Tell Klao',
+
+  // --- White Edition P2: the 2022 -> 2026 signature, projects index and sheet. -----------
+  // Copy from the approved prototype (design/white-edition/prototype/index.html, `UI.sigSub`,
+  // `UI.card`, `UI.pillA`, `UI.pillB`, `UI.door`, `UI.sheet`, `UI.lineage`). No `sigTitle` here
+  // (D-4 ruling): the scene's heading is literally the tour's closing line, so that copy lives
+  // once, as P1's `tourEndTitle`, not duplicated in this dictionary. Project facts the scene
+  // shows (the question, name, description, link, screenshot) come from the Project rows --
+  // these are the scene's own fixed words.
+  sigSub: 'Tripedia made the final 30 of 500 teams in 2022. Four years later, GoNai is that idea, built and live.',
+  sigCardKicker: '2022 · Tripedia · Co-founder',
+  sigCardLabel: 'final teams · KATALYST Startup Launchpad',
+  sigCaption: 'Four years. The idea stayed.',
+  sigCaptionSub: 'Same question, now with the tools to build the answer alone.',
+  sigLive: 'Live',
+  // Projects index and sheet.
+  workOpenApp: 'Open app',
+  workDoor: 'By day: one retail-media deal, from first meeting to a network that runs itself ›',
+  sheetWhat: 'What it is',
+  sheetOutcomes: 'What came of it',
+  sheetStack: 'Built with',
+  sheetStatus: 'Status',
+  sheetClose: 'Close',
+  // "within the hour", never "instantly": the site updates through ISR, about an hour.
+  sheetNotionNote: 'Edit this row in Notion, and this page follows within the hour.',
+  // C-6 ruling: Talatify's TAM/SAM/SOM rings sheet drawing gets its own caption (prototype
+  // line 1170), so the drawing never reads as a real proportion.
+  sheetRingsCaption: 'Method, not to scale.',
+  lineageTitle: 'Same idea, four years apart.',
+  lineageRowHead: 'Row',
+  lineageQuestion: 'Question',
+  // [row label, earlier project's cell, later project's cell] -- the lineage card's fixed rows.
+  lineageExisted: ['What existed', 'A business plan (market sizing, revenue model)', 'A live app'] as readonly string[],
+  lineageTeam: ['Team', 'Co-founders', 'Solo, with Claude'] as readonly string[],
+  lineageResult: ['Result', 'Final 30 of 500', 'Live since Aug 2026'] as readonly string[],
 };
 
 const th: typeof en = {
@@ -279,9 +313,9 @@ const th: typeof en = {
   about: 'เกี่ยวกับ',
   howIWork: 'วิธีทำงานของผม',
   workTypeBusiness: 'ธุรกิจ',
-  workTypeBuild: 'งานสร้างเอง',
+  workTypeBuild: 'สร้างเอง',
   deckHeading: 'เกมธุรกิจที่ผมเดิน และของที่ผมลงมือสร้าง',
-  deckSubtitle: 'ธุรกิจมาก่อน — ทุกโปรเจกต์เริ่มจากคำถามที่มันตอบ',
+  deckSubtitle: 'ธุรกิจมาก่อน ทุกโปรเจกต์เริ่มจากคำถามที่มันตอบ',
   deckSubtitleBuildOnly: 'ทุกโปรเจกต์เริ่มจากคำถามที่มันตอบ',
   projectsSubtitle: 'ทุกโปรเจกต์ทั้งฝั่งธุรกิจและฝั่งสร้าง — แต่ละอันเริ่มจากคำถามที่มันตอบ',
   aboutHeading: 'ผมชอบสร้างของที่เรียบง่าย และยังทำงานอยู่ได้เอง',
@@ -411,6 +445,28 @@ const th: typeof en = {
   askReady: 'ได้คำตอบแล้ว มีที่มา {n} แห่ง',
   askDeclined: 'เรื่องนี้ไม่มีในเนื้อหาที่ Klao เผยแพร่ไว้ เลยขอไม่เดาครับ ถาม Klao ตรงๆ ได้ที่ {email}',
   askWrong: 'ตอบผิด? บอก Klao',
+
+  sigSub: 'Tripedia เข้ารอบ 30 ทีมสุดท้ายจาก 500 ทีมในปี 2022 สี่ปีต่อมา GoNai คือไอเดียเดิมที่สร้างขึ้นจริงและเปิดใช้งานแล้ว',
+  sigCardKicker: '2022 · Tripedia · Co-founder',
+  sigCardLabel: 'ทีมสุดท้าย · KATALYST Startup Launchpad',
+  sigCaption: 'สี่ปีต่อมา ไอเดียยังอยู่',
+  sigCaptionSub: 'คำถามเดิม แต่ตอนนี้มีเครื่องมือที่สร้างคำตอบได้เองคนเดียว',
+  sigLive: 'เปิดใช้งานแล้ว',
+  workOpenApp: 'เปิดแอป',
+  workDoor: 'งานกลางวัน: ดีลสื่อในร้านหนึ่งดีล ตั้งแต่นัดแรกจนเครือข่ายเดินเองได้ ›',
+  sheetWhat: 'คืออะไร',
+  sheetOutcomes: 'ได้อะไรออกมา',
+  sheetStack: 'สร้างด้วย',
+  sheetStatus: 'สถานะ',
+  sheetClose: 'ปิด',
+  sheetNotionNote: 'แก้แถวนี้ใน Notion แล้วหน้านี้จะตามภายในหนึ่งชั่วโมง',
+  sheetRingsCaption: 'วิธีคิด ไม่ใช่สัดส่วนจริง',
+  lineageTitle: 'ไอเดียเดียวกัน ห่างกันสี่ปี',
+  lineageRowHead: 'หัวข้อ',
+  lineageQuestion: 'คำถาม',
+  lineageExisted: ['สิ่งที่มี', 'แผนธุรกิจ (ขนาดตลาด โมเดลรายได้)', 'แอปที่เปิดใช้ได้จริง'] as readonly string[],
+  lineageTeam: ['ทีม', 'Co-founder', 'ทำคนเดียวร่วมกับ Claude'] as readonly string[],
+  lineageResult: ['ผล', 'รอบ 30 ทีมสุดท้ายจาก 500', 'เปิดใช้งานตั้งแต่ ส.ค. 2026'] as readonly string[],
 };
 
 export type UiDict = typeof en;

@@ -4,7 +4,6 @@ import { IMAGE_ALT } from '@/lib/image-alt';
 import type { Project } from '@/lib/models';
 import {
   TH_DWELL_FACTOR,
-  TOUR_CAPTION_HREF,
   TOUR_DWELL_MS,
   toTourSlides,
   tourDwellMs,
@@ -131,7 +130,7 @@ describe('toTourSlides', () => {
       name: 'Aje',
       kicker: 'Aje · Working prototype',
       question: 'Is this idea worth a weekend, or a year?',
-      href: TOUR_CAPTION_HREF,
+      href: '#work/aje',
       media: 'img',
       src: '/api/img/page/aje/Screenshot',
       alt: IMAGE_ALT['/images/aje.jpg'],
@@ -154,6 +153,14 @@ describe('toTourSlides', () => {
   it('shows the Notion vignette for a media=notion project even when Notion also holds a screenshot for it', () => {
     const live = { ...site, imageSrc: '/api/img/page/site/Screenshot' };
     expect(toTourSlides([live], 'en')[0]).toMatchObject({ media: 'notion', src: null });
+  });
+
+  // Fix round 1 (Important): S-7 also reaches the tour, not just ProjectsIndex's Row. A
+  // Thai-only name with no Notion Slug gives projectKey('') -- sheetHash('') would be the
+  // unparseable '#work/', a caption link that changes the URL hash and opens nothing.
+  it('gives a Thai-only-named project with no Notion Slug a slide with no sheet href (S-7), not the unparseable "#work/"', () => {
+    const thaiOnly = makeProject({ id: 'thai-only', name: 'ไทยล้วน', order: 0, tour: true, tourOrder: 0, media: 'img', wash: 'none' });
+    expect(toTourSlides([thaiOnly], 'en')[0].href).toBeNull();
   });
 });
 

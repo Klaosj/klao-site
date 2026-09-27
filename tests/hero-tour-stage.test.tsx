@@ -88,6 +88,39 @@ describe('HeroTourStage', () => {
     expect(playButton().getAttribute('aria-label')).toBe(dict.en.tourPlay);
   });
 
+  it('links the caption to the slide’s own sheet when it has one', () => {
+    renderStage();
+    const link = tour().querySelector('a.ht-q') as HTMLAnchorElement | null;
+    expect(link).not.toBeNull();
+    expect(link!.getAttribute('href')).toBe(slides[0].href);
+  });
+
+  // Fix round 1 (Important): S-7 also reaches the tour. A slide whose project has no sheet to
+  // open (Thai-only name, no Notion Slug) gets `href: null` from toTourSlides -- the caption
+  // must read as plain text, not a link to the unparseable '#work/' (which would still push a
+  // hash onto the URL and open nothing, ProjectSheet's own parseSheetHash rejects it).
+  it('renders the caption as plain text, not a dead link, when the slide has no sheet to open (S-7)', () => {
+    const noHref: TourSlide[] = [{ ...slides[0], href: null }];
+    render(<HeroTourStage slides={noHref} vignette={vignette} locale="en" />);
+    const caption = tour().querySelector('.ht-q') as HTMLElement;
+    expect(caption.tagName).not.toBe('A');
+    expect(caption.querySelector('.ht-qt')!.textContent).toBe(noHref[0].question);
+    // No chevron either -- it would promise a click that does nothing (same rule as
+    // ProjectsIndex's Row).
+    expect(caption.querySelector('.ht-chev')).toBeNull();
+  });
+
+  // Wave-2 merge: l1's fix round 1 (#4, R25) put the Thai caption through display mode, and
+  // l4's S-7 branch arrived without it. The plain-text caption is the same .t-* display tier
+  // as the linked one, so its Thai tokens must stay whole keep-runs (.kt), not default .nw.
+  it('keeps the plain-text (S-7) caption in Thai display mode, like the linked caption', () => {
+    const thai: TourSlide[] = [{ ...slides[0], question: 'ไอเดียนี้คุ้มกับหนึ่งสุดสัปดาห์ หรือหนึ่งปี', href: null }];
+    render(<HeroTourStage slides={thai} vignette={vignette} locale="th" />);
+    const qt = tour().querySelector('span.ht-q .ht-qt') as HTMLElement;
+    expect(qt.querySelectorAll('.kt').length).toBeGreaterThan(0);
+    expect(qt.querySelector('.nw')).toBeNull();
+  });
+
   it('is a labelled carousel of slides, each tab pointing at its slide', () => {
     renderStage();
     expect(tour().getAttribute('aria-roledescription')).toBe('carousel');
@@ -615,6 +648,19 @@ describe('hero-tour-stage.css (polish A04 + A08 exceptions)', () => {
   // visibly higher than the plain text beside it. The fix is the `>` in
   // the rule above; this guards against either regressing that back to a
   // descendant selector, or reaching .nw/.kt from anywhere else.
+  // Wave-2 merge: l1's fix round 1 (#5) repeats the hover underline on the
+  // Thai keep-runs, and l4's S-7 fix rescoped the caption's hover rules to
+  // `a.ht-q` because the no-sheet caption is a plain <span class="ht-q">.
+  // Both land here: every caption hover rule -- the keep-run one included --
+  // must carry the `a`, or the plain-text caption would still underline.
+  it('scopes every caption hover rule, keep-run underline included, to the link a.ht-q (S-7 + fix round 1 #5)', () => {
+    expect(CSS).toContain('a.ht-q:hover .ht-qt { text-decoration: underline;');
+    expect(CSS).toContain('a.ht-q:hover .ht-qt :is(.nw, .kt) { text-decoration: underline;');
+    expect(CSS).toContain('a.ht-q:hover .ht-chev {');
+    // No hover selector on the bare class anywhere (preceded by anything but `a`).
+    expect(CSS).not.toMatch(/(^|[^a])\.ht-q:hover/m);
+  });
+
   it('never gives overflow other than visible to a nested keep-run span, or to any bare descendant span of .ht-vrow (fix round 3)', () => {
     for (const rule of CSS.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
       // (?<!-) excludes `text-overflow:`, a different property entirely.

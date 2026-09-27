@@ -3,7 +3,8 @@ import CareerBand from '@/components/sections/CareerBand';
 import CloseBand from '@/components/sections/CloseBand';
 import FaqBand from '@/components/sections/FaqBand';
 import HeroTour from '@/components/sections/HeroTour';
-import WorkDeck from '@/components/sections/WorkDeck';
+import ProjectsIndex from '@/components/sections/ProjectsIndex';
+import Signature from '@/components/sections/Signature';
 import {
   getCareer,
   getFaq,
@@ -37,7 +38,13 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           one section (#top with #tour inside). It replaces the old dark Hero
           and the separate tour band. */}
       <HeroTour profile={profile} projects={projects} locale={locale} />
-      <WorkDeck projects={projects} locale={locale} />
+      {/* 2022 → 2026, straight after the tour (contract C7): the tour shows the apps running,
+          this shows where one of them came from. The page's only scroll-linked scene; renders
+          nothing when no project carries a LineageOf. */}
+      <Signature projects={projects} locale={locale} />
+      {/* Business plays, then builds; each row opens its sheet at #work/<key> (ProjectSheet).
+          The page's one ProjectSheet dialog lives in here -- no other section mounts one. */}
+      <ProjectsIndex projects={projects} locale={locale} />
       {/* C7: what he shipped (#work), then where he has worked (#career).
           The toolbox lives inside the career band (#toolbox). */}
       <CareerBand entries={career} skills={skills} locale={locale} resumeUrl={profile.resumeUrl} />
