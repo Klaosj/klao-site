@@ -18,9 +18,11 @@
   .pi-thumb-media::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 1px var(--line); }
   .pi-thumb-media :is(img, svg) { display: block; width: 100%; height: 100%; object-fit: cover; }
   @media (hover: hover) and (pointer: fine) {
-    .pi-row:hover { background: var(--mist); }
-    .pi-row:hover .pi-thumb { transform: translateY(-3px); }
-    .pi-row:hover .pi-thumb::before { opacity: 1; }
+    /* `a.pi-row`, not the bare class: a row with no sheet to open (S-7) is a plain <div
+       class="pi-row"> and must not tint or lift as if it were clickable. */
+    a.pi-row:hover { background: var(--mist); }
+    a.pi-row:hover .pi-thumb { transform: translateY(-3px); }
+    a.pi-row:hover .pi-thumb::before { opacity: 1; }
   }
   @media (prefers-reduced-motion: reduce) {
     .pi-thumb, .pi-thumb::before { transition: none; }

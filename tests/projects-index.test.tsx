@@ -209,4 +209,16 @@ describe('ProjectsIndex: shared-element View Transition + hover lift (polish A07
     expect(css).toMatch(/\.pi-thumb::before\s*\{[^}]*box-shadow:\s*var\(--e2\);[^}]*\}/);
     expect(css).not.toMatch(/transition:\s*box-shadow/);
   });
+
+  // Wave-2 merge reconciliation (f), from the T11 review: a keyless row (S-7) renders as a plain
+  // <div class="pi-row">, so the hover tint, lift and shadow belong to link rows only -- a div
+  // that tints under the pointer reads as clickable and isn't.
+  it('keeps the hover tint, lift and shadow on link rows (a.pi-row) only', () => {
+    const css = readFileSync('src/components/projects-index.css', 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    const hoverBlock = mediaBlock(css, '@media (hover: hover)');
+    expect(hoverBlock).toContain('a.pi-row:hover { background: var(--mist); }');
+    expect(hoverBlock).toContain('a.pi-row:hover .pi-thumb { transform: translateY(-3px); }');
+    expect(hoverBlock).toContain('a.pi-row:hover .pi-thumb::before { opacity: 1; }');
+    expect(css).not.toMatch(/(^|[^a])\.pi-row:hover/m);
+  });
 });
