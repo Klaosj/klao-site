@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { readFileSync } from 'node:fs';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { usePathname } from 'next/navigation';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -75,6 +76,19 @@ describe('SiteNav', () => {
     expect(brand.getAttribute('href')).toBe('#top');
     expect(brand.querySelector('.sn-mono')?.textContent).toBe('S');
     expect(brand.querySelector('.sn-mono')?.nextElementSibling?.textContent).toBe('Suwichak');
+  });
+
+  // P1 final review M-1: at 320 px the capsule's row (mark + name, EN/ไทย,
+  // Menu) ran ~26 px past its right edge and the page scrolled sideways by
+  // 1 px (EN). Measured in Chrome, EN overflows from 346 px down and TH from
+  // 338 px, so below 350 px the first name goes: the mark stays, and the
+  // link keeps its full accessible name from aria-label.
+  it('drops the brand name below 350 px, keeping the mark and the accessible name', () => {
+    const css = readFileSync('src/components/site-nav.css', 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    expect(css).toMatch(/@media \(max-width: 349px\) \{\s*\.sn-name \{ display: none; \}\s*\}/);
+    render(<SiteNav locale="en" profile={profile} />);
+    const brand = within(nav()).getByRole('link', { name: 'Suwichak, back to top' });
+    expect(brand.querySelector('.sn-name')?.textContent).toBe('Suwichak');
   });
 
   it('derives the brand from profile.name, never a hardcoded string', () => {

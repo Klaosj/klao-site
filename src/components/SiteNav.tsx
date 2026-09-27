@@ -111,7 +111,9 @@ export default function SiteNav({ locale, profile }: { locale: Locale; profile: 
             <span className="sn-mono" aria-hidden="true">
               {first.charAt(0).toUpperCase()}
             </span>
-            <span>{first}</span>
+            {/* `.sn-name`: site-nav.css drops it below 350 px (P1 final
+                review M-1); the aria-label above still names him. */}
+            <span className="sn-name">{first}</span>
           </Link>
           <div className="sn-links" ref={linksRef}>
             <span className="sn-act" ref={pillRef} aria-hidden="true" />
