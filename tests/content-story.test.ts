@@ -29,6 +29,10 @@ describe('getStory (Notion mode)', () => {
     // Master Review Focus #1: Klao adds the Story DB and its env var after
     // this code ships. Until then the page keeps its six chapters -- unlike
     // Questions, which honestly goes empty.
+    // Stubbed empty rather than relying on its absence: a shell or CI that
+    // exports NOTION_DB_STORY would otherwise run this test in Notion mode
+    // (same as content-faq.test.ts with NOTION_DB_FAQ).
+    vi.stubEnv('NOTION_DB_STORY', '');
     const { getStory } = await import('@/lib/content');
     const story = await getStory();
     expect(story).toHaveLength(6);
