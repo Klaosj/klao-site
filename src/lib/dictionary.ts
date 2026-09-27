@@ -282,6 +282,11 @@ const en = {
   palFaq: 'FAQ',
   palLinks: 'Links',
   palPrefs: 'Preferences',
+  // Fix round 1 #7: names the ⌘K listbox on its own (aria-label) instead of
+  // aria-labelledby pointing at the search input -- the input's own label
+  // is its placeholder text, not "the results", so pointing the listbox at
+  // it named the wrong thing.
+  palResults: 'Results',
   palNone: 'No results for “{q}”',
   palAsk: 'Ask Klao: “{q}”',
   palCount: '{n} results',
@@ -456,6 +461,7 @@ const th: typeof en = {
   palFaq: 'คำถามที่เจอบ่อย',
   palLinks: 'ลิงก์',
   palPrefs: 'ตั้งค่า',
+  palResults: 'ผลลัพธ์',
   palNone: 'ไม่พบ “{q}”',
   palAsk: 'ถาม Klao: “{q}”',
   palCount: 'พบ {n} รายการ',

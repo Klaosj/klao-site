@@ -1,0 +1,221 @@
+import { dict } from './dictionary';
+import { faqAnchorId } from './link-target';
+import type { FaqItem, Locale } from './models';
+import { fold } from './palette-index';
+import { unbreak } from './project-view';
+import { THAI_RE } from './thai';
+
+// Ask Klao, Preview (spec §6): a reference desk, not a model. Every answer
+// is written in advance from this page's own content — Klao's FAQ (Notion)
+// and the small canned set below from the approved prototype — and names
+// the section it came from. Nothing here leaves the browser: no model call
+// and no request of any kind (Global Constraints). tests/ask.test.ts scans
+// this file to keep it that way.
+//
+// Answer text and source quotes are body-size copy, not a keep-run heading,
+// so `|` (the Thai break marker some Notion/FAQ copy carries, spec §5.2) is
+// simply dropped with unbreak() here — same treatment project-view.ts's
+// other body-text callers give it, and the way T11's palette-index.ts
+// already unbreak()s FAQ question text for the ⌘K row.
+
+export interface AskSource {
+  label: string;
+  quote: string; // '' = no quote line
+  target: string; // link-target grammar
+}
+
+export type AskAnswer =
+  | { kind: 'answer'; query: string; lang: Locale; text: string; sources: AskSource[] }
+  | { kind: 'decline'; query: string; lang: Locale };
+
+interface CannedSource {
+  label: string;
+  target: string;
+  quote: Record<Locale, string>;
+}
+
+type Canned =
+  | { match: RegExp; decline: true }
+  | { match: RegExp; decline?: false; answer: Record<Locale, string>; sources: CannedSource[] };
+
+const ACTMEDIA: CannedSource = {
+  label: 'Career · Actmedia',
+  target: 'career:actmedia',
+  quote: { en: 'Senior Business Development · Mar 2026 – Present', th: 'นักพัฒนาธุรกิจอาวุโส · มี.ค. 2026 – ปัจจุบัน' },
+};
+const GONAI: CannedSource = {
+  label: 'Projects · GoNai',
+  target: 'work/gonai',
+  quote: { en: 'Build · Live', th: 'สร้างเอง · เปิดใช้งานแล้ว' },
+};
+const AJE: CannedSource = {
+  label: 'Projects · Aje',
+  target: 'work/aje',
+  quote: { en: 'Build · Working prototype', th: 'สร้างเอง · Prototype ใช้งานได้' },
+};
+
+// The prototype's ASK array, in its order: first match wins. Pay and rates
+// are declined on purpose — not published, so never guessed.
+export const ASK_CANNED: readonly Canned[] = [
+  { match: /salary|pay |paid|rate card|price|เงินเดือน|ค่าจ้าง|ค่าตัว/i, decline: true },
+  {
+    match: /right now|working on|currently|these days|today|ตอนนี้|ทำอะไรอยู่|ช่วงนี้/i,
+    answer: {
+      en: 'Klao has been Senior Business Development at Actmedia since March 2026, opening new channels with Modern Trade retailers and project-managing live in-store rollouts; the largest is a nationwide in-store screen installation.[1] Outside work he builds AI tools: GoNai is live[2] and Aje is a working prototype.[3]',
+      th: 'ตั้งแต่ มี.ค. 2026 Klao เป็น Senior Business Development ที่ Actmedia หาช่องทางใหม่กับค้าปลีก Modern Trade และคุมโปรเจกต์ที่รันอยู่ โปรเจกต์ใหญ่สุดคือติดตั้งจอในร้านทั่วประเทศ[1] นอกเวลางานเขาสร้างเครื่องมือ AI เอง GoNai เปิดใช้งานแล้ว[2] และ Aje เป็น prototype ที่ใช้งานได้[3]',
+    },
+    sources: [ACTMEDIA, GONAI, AJE],
+  },
+  {
+    match: /startup|start-up|สตาร์ทอัพ|tripedia|talatify|pitch/i,
+    answer: {
+      en: 'Yes. He co-founded two. Tripedia, a trip-planning platform, made the final 30 of 500 teams at KATALYST Startup Launchpad 2022.[1] Talatify, a fresh-market delivery platform, was pitched at the TEP startup screening round in 2025, with SOM sized at THB 37M.[2]',
+      th: 'เคยครับ Klao เป็น Co-founder สองโปรเจกต์ Tripedia แพลตฟอร์มวางแผนทริป เข้ารอบ 30 ทีมสุดท้ายจาก 500 ทีมใน KATALYST Startup Launchpad 2022[1] และ Talatify แพลตฟอร์มส่งของสดจากตลาด ที่นำเสนอในรอบคัดเลือก TEP ปี 2025 และประเมิน SOM ไว้ 37 ล้านบาท[2]',
+    },
+    sources: [
+      {
+        label: 'Projects · Tripedia',
+        target: 'work/tripedia',
+        quote: { en: 'Final 30 of 500 teams', th: 'เข้ารอบ 30 ทีมสุดท้ายจาก 500 ทีม' },
+      },
+      {
+        label: 'Projects · Talatify',
+        target: 'work/talatify',
+        quote: { en: 'Market sized (TAM–SAM–SOM, SOM THB 37M)', th: 'ขนาดตลาด TAM–SAM–SOM (SOM 37 ล้านบาท)' },
+      },
+    ],
+  },
+  {
+    match: /business|own shop|burger|founder|restaurant|ธุรกิจ|ร้าน|เจ้าของ/i,
+    answer: {
+      en: 'Yes. He founded A Bun Dance, a craft-burger shop for students, and ran it for 20 months (May 2021 – Dec 2022): product, pricing, marketing and 6–8 part-time staff. He held gross profit at about 35% per unit.[1]',
+      th: 'เคยครับ Klao ก่อตั้งร้าน A Bun Dance เบอร์เกอร์คราฟต์สำหรับนักศึกษา ทำอยู่ 20 เดือน (พ.ค. 2021 – ธ.ค. 2022) ดูแลทั้งสินค้า ราคา การตลาด และพนักงานพาร์ทไทม์ 6–8 คน คุมกำไรขั้นต้นได้ราว 35% ต่อชิ้น[1]',
+    },
+    sources: [
+      {
+        label: 'Career · A Bun Dance',
+        target: 'career:a-bun-dance',
+        quote: { en: 'Held gross profit at ~35% per unit…', th: 'คุมกำไรขั้นต้นที่ ~35% ต่อชิ้น…' },
+      },
+    ],
+  },
+  {
+    match: /retail|in-store|shopper|media|สื่อ|ค้าปลีก|actmedia/i,
+    answer: {
+      en: 'Yes. At Actmedia he opens new retail channels and project-manages a nationwide in-store screen installation.[1] The day-side story shows how one deal runs, from the NDA to handover.[2] Retail media & shopper media is also on his Focus list.[3]',
+      th: 'ได้ครับ ที่ Actmedia เขาเปิดช่องทางค้าปลีกใหม่และคุมโปรเจกต์ติดตั้งจอในร้านทั่วประเทศ[1] ส่วน "ตอนกลางวัน" เล่าว่าดีลหนึ่งเดินอย่างไร ตั้งแต่ NDA จนส่งต่องาน[2] และ Retail media & shopper media อยู่ในรายการที่เขาถนัด[3]',
+    },
+    sources: [
+      ACTMEDIA,
+      {
+        label: 'By day · 01–06',
+        target: 'story',
+        quote: { en: 'One retail-media deal, start to finish…', th: 'ดีลสื่อในร้านค้าปลีกหนึ่งดีล ตั้งแต่ต้นจนจบ…' },
+      },
+      {
+        label: 'Toolbox · Focus',
+        target: 'toolbox',
+        quote: { en: 'Retail media & shopper media', th: 'Retail media & shopper media' },
+      },
+    ],
+  },
+  {
+    match: /language|english|thai|ภาษา|อังกฤษ/i,
+    answer: {
+      en: 'Thai, and English at a conversational level. This site and his projects ship in both.[1]',
+      th: 'ภาษาไทย และภาษาอังกฤษระดับสนทนา เว็บนี้และโปรเจกต์ของเขาทำครบทั้งสองภาษา[1]',
+    },
+    sources: [
+      {
+        label: 'Toolbox · Languages',
+        target: 'toolbox',
+        quote: { en: 'Thai · English (conversational)', th: 'ไทย · อังกฤษ (ระดับสนทนา)' },
+      },
+    ],
+  },
+  {
+    match: /build|code|app|develop|สร้าง|แอป|โค้ด/i,
+    answer: {
+      en: 'Yes, on nights and weekends, with AI-assisted development (Claude). GoNai is live[1], Aje is a working prototype[2], and this site is edited in Notion.[3]',
+      th: 'จริงครับ ทำนอกเวลางานด้วย AI-assisted development (Claude) GoNai เปิดใช้งานแล้ว[1] Aje เป็น prototype ที่ใช้งานได้[2] และเว็บนี้แก้เนื้อหาผ่าน Notion[3]',
+    },
+    sources: [
+      GONAI,
+      AJE,
+      {
+        label: 'Projects · klao-site',
+        target: 'work/klao-site',
+        quote: { en: 'Notion as the only CMS', th: 'Notion เป็น CMS เดียว' },
+      },
+    ],
+  },
+];
+
+// Words that carry no topic; dropping them keeps "how do I reach him"
+// matched on "reach", not on "how".
+const STOP = new Set([
+  'a', 'an', 'and', 'are', 'about', 'at', 'can', 'did', 'do', 'does', 'for', 'has', 'have', 'he', 'him',
+  'his', 'how', 'i', 'in', 'is', 'it', 'klao', 'of', 'on', 'the', 'to', 'what', 'which', 'who', 'with',
+  'you', 'your',
+]);
+
+// Letters + combining marks (Thai vowels and tone marks are marks, not
+// letters) + digits; everything else splits.
+const tokens = (q: string): string[] => [
+  ...new Set(fold(q).split(/[^\p{L}\p{M}\p{N}]+/u).filter((w) => w.length >= 2 && !STOP.has(w))),
+];
+
+// The FAQ item whose question + answer contains the most query words. A
+// one-word query needs that word; longer queries need two, so a single
+// common word can't drag in an unrelated answer. `faq` arrives sorted by
+// Order, so a tie goes to the question Klao put first.
+function bestFaq(query: string, faq: FaqItem[], lang: Locale): FaqItem | null {
+  const words = tokens(query);
+  if (words.length === 0) return null;
+  let best: FaqItem | null = null;
+  let bestScore = 0;
+  for (const item of faq) {
+    const hay = fold(`${item.question[lang]} ${item.answer[lang]}`);
+    const s = words.filter((w) => hay.includes(w)).length;
+    if (s > bestScore) {
+      best = item;
+      bestScore = s;
+    }
+  }
+  return bestScore >= Math.min(2, words.length) ? best : null;
+}
+
+export function askPreview(query: string, faq: FaqItem[], locale: Locale): AskAnswer {
+  const q = query.trim();
+  // Answer in the language of the question (prototype); a query with no
+  // letters at all falls back to the page's language.
+  const lang: Locale = THAI_RE.test(q) ? 'th' : /[a-z]/i.test(q) ? 'en' : locale;
+  const decline: AskAnswer = { kind: 'decline', query: q, lang };
+  if (!q) return decline;
+
+  for (const c of ASK_CANNED) {
+    if (!c.match.test(q)) continue;
+    if (c.decline) return decline;
+    return {
+      kind: 'answer',
+      query: q,
+      lang,
+      text: unbreak(c.answer[lang]),
+      sources: c.sources.map((s) => ({ label: s.label, quote: unbreak(s.quote[lang]), target: s.target })),
+    };
+  }
+
+  const item = bestFaq(q, faq, lang);
+  if (!item) return decline;
+  return {
+    kind: 'answer',
+    query: q,
+    lang,
+    // [1] = the FAQ entry itself, so the card always says where it came from.
+    text: `${unbreak(item.answer[lang])}[1]`,
+    sources: [
+      { label: dict[lang].palFaq, quote: unbreak(item.question[lang]), target: faqAnchorId(item.id) },
+      ...item.links.map((l) => ({ label: l.label[lang], quote: '', target: l.target })),
+    ],
+  };
+}
