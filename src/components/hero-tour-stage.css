@@ -243,8 +243,19 @@
        in character for the mockup and frees the space the heading needs.
        min-width: 0 lets the grid column actually shrink to fit; without
        it, a `1fr` track's content-based minimum would just make the row
-       (and .ht-vig-n) as wide as the unwrapped text instead. */
-    .ht-vrow span { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+       (and .ht-vig-n) as wide as the unwrapped text instead.
+       Fix round 3: `>` (direct child), not a descendant selector -- the
+       Thai row's value span nests ThaiText's keep-run spans (.nw/.kt,
+       inline-block) one level deeper. A descendant selector matched those
+       too, giving them `overflow: hidden`; an inline-block box with
+       non-visible overflow takes its baseline from its bottom MARGIN edge
+       instead of its text, not from the surrounding line's normal text
+       baseline (CSS2.1 §10.8.1), so "นัก" rendered visibly higher than the
+       plain-text "Business Development" beside it. The value span (the
+       row's only DIRECT <span> child; the keep-runs are its own children)
+       is the one thing meant to truncate -- the keep-runs must keep their
+       default `overflow: visible` and a normal text baseline. */
+    .ht-vrow > span { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .ht-ul { left: 88px; }
     .ht-vh1 { font-size: 20px; }
     .ht-vig-h small { font-size: 14px; }

@@ -598,12 +598,32 @@ describe('hero-tour-stage.css (polish A04 + A08 exceptions)', () => {
   // wraps this content in the first place (checked live at 1440px, with
   // and without this rule: identical row heights either way).
   it("truncates the vignette's preview-row values to one line on phone only (fix round 2 #4)", () => {
-    const rule = '.ht-vrow span { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }';
+    const rule = '.ht-vrow > span { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }';
     const phoneBlock = mediaBlock(CSS, '(max-width: 734px)');
     expect(phoneBlock).toContain(rule);
     // Exactly one occurrence in the whole file (inside that block, just
     // shown) rules out a duplicate sneaking in outside the media query --
     // i.e. onto desktop.
     expect(CSS.split(rule).length - 1).toBe(1);
+  });
+
+  // Fix round 3: the round-2 truncation rule used a DESCENDANT selector
+  // (`.ht-vrow span`), which also matched ThaiText's nested keep-run spans
+  // (.nw/.kt, one level deeper inside the value span) -- an inline-block
+  // given `overflow` other than `visible` takes its baseline from its
+  // bottom MARGIN edge, not its text (CSS2.1 10.8.1), so "นัก" rendered
+  // visibly higher than the plain text beside it. The fix is the `>` in
+  // the rule above; this guards against either regressing that back to a
+  // descendant selector, or reaching .nw/.kt from anywhere else.
+  it('never gives overflow other than visible to a nested keep-run span, or to any bare descendant span of .ht-vrow (fix round 3)', () => {
+    for (const rule of CSS.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+      // (?<!-) excludes `text-overflow:`, a different property entirely.
+      if (!/(?<!-)overflow\s*:\s*(?!visible\b)/.test(rule[2])) continue;
+      const selector = rule[1].trim();
+      expect(selector, `overflow reaches a keep-run span: "${selector}"`).not.toMatch(/\.nw\b|\.kt\b/);
+      expect(selector, `overflow reaches .ht-vrow's spans via a descendant (not child) selector: "${selector}"`).not.toMatch(
+        /\.ht-vrow\s+span\b/,
+      );
+    }
   });
 });
