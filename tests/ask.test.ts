@@ -89,6 +89,44 @@ describe('askPreview', () => {
   });
 });
 
+// I-3 (fix wave finding 4, Important): the prototype's canned matchers were
+// bare substrings, so a common English word inside an unrelated question
+// gave a confident wrong answer -- "app" matched inside "approach", bare
+// "media" matched "social media", "business" alone matched "business
+// development" (the founder/burger-shop entry, not the job-title one), and
+// the "pay " trailing-space hack still matched inside "repay". Every English
+// alternative is now \b-anchored and the retail entry is checked before the
+// business/founder one. This walks ASK_CANNED the same first-match-wins way
+// askPreview() does, without the bestFaq() fallback, so each row pins
+// exactly which entry (by name) a query lands on, or 'none'.
+describe('ASK_CANNED word-boundary matching (fix wave finding 4)', () => {
+  const ENTRY_NAME = ['decline-pay', 'right-now', 'startup', 'retail', 'business', 'language', 'build'] as const;
+  const matchedEntry = (q: string): string => {
+    const i = ASK_CANNED.findIndex((c) => c.match.test(q));
+    return i < 0 ? 'none' : ENTRY_NAME[i];
+  };
+
+  it.each([
+    ['What is his approach to enterprise deals?', 'none'],
+    ['Does he build apps himself?', 'build'],
+    ['What is his take on social media strategy?', 'none'],
+    ['Is he active on social media?', 'none'],
+    ['Tell me about his business development experience', 'retail'],
+    ['Has he run his own business?', 'business'],
+    ['Will he repay the investors?', 'none'],
+    ['How much does the role pay?', 'decline-pay'],
+    ['What is his salary?', 'decline-pay'],
+    ['Does he do retail media?', 'retail'],
+    ['เคยทำงานค้าปลีกไหม', 'retail'],
+    ['Has he pitched a startup?', 'startup'],
+    ['Which languages does he speak?', 'language'],
+    ['Does he code himself?', 'build'],
+    ['Is he a founder?', 'business'],
+  ])('%s -> %s', (query, expected) => {
+    expect(matchedEntry(query)).toBe(expected);
+  });
+});
+
 describe('Ask Preview stays offline and truthful', () => {
   it('has no network or model API in its source', () => {
     expect(readFileSync('src/lib/ask.ts', 'utf8')).not.toMatch(
