@@ -10,6 +10,7 @@ import {
   monthIndex,
   monthsBetween,
   pillYears,
+  railLabelOffset,
   railModel,
   splitFigureValue,
   toolboxColumns,
@@ -146,6 +147,43 @@ describe('railModel', () => {
     expect(labelAlign(5)).toBe('start');
     expect(labelAlign(50)).toBe('mid');
     expect(labelAlign(94.6)).toBe('end');
+  });
+});
+
+// Fix wave finding 3: labelAlign's fixed 12/88% thresholds still clipped
+// "A Bun Dance · 20 mo" on a narrow rail -- they know nothing about the
+// label's actual measured width. railLabelOffset replaces them for the
+// live (post-hydration) render with the prototype's own measured clamp
+// (index.html ~l.1326-1333): centered by default, pulled in just enough to
+// keep both edges inside the rail once the real widths are known.
+describe('railLabelOffset', () => {
+  it('centers the label on the marker when there is room on both sides', () => {
+    // x = 50% of 280 = 140; a 100px label centered there (90..190) clears
+    // both edges of a 280px rail, so the offset is untouched at -lw/2.
+    expect(railLabelOffset(50, 280, 100)).toBe(-50);
+  });
+
+  it('pulls the label right so its left edge never passes the rail start', () => {
+    // x = 5% of 280 = 14; centering a 100px label there would start at
+    // -36 (off the left edge), so it clamps to lx = -x instead.
+    expect(railLabelOffset(5, 280, 100)).toBe(-14);
+  });
+
+  it('pulls the label left so its right edge never passes the rail end', () => {
+    // x = 94.6% of 358 ≈ 338.7; centering a 140px label there would end at
+    // ≈408.7 (off the right edge of a 358px rail), so it clamps to
+    // lx = railWidth - x - labelWidth.
+    const x = (94.6 / 100) * 358;
+    expect(railLabelOffset(94.6, 358, 140)).toBeCloseTo(358 - x - 140, 10);
+  });
+
+  it('matches labelAlign at the exact thresholds it used to gate on', () => {
+    // A narrow-enough label at the old 12/88% boundary sees no clamping
+    // either way -- same output as the centered case, proving this isn't a
+    // regression for the common width, only for labels the old fixed
+    // thresholds under- or over-clamped.
+    expect(railLabelOffset(12, 1000, 40)).toBe(-20);
+    expect(railLabelOffset(88, 1000, 40)).toBe(-20);
   });
 });
 

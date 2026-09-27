@@ -9,6 +9,7 @@ import {
   labelAlign,
   monthsBetween,
   pillYears,
+  railLabelOffset,
   railModel,
   splitFigureValue,
 } from '@/lib/career';
@@ -37,12 +38,21 @@ export default function CareerDetent({ entries, locale, now }: Props) {
   const [swapped, setSwapped] = useState(false);
   const pills = useRef<(HTMLButtonElement | null)[]>([]);
   const detent = useRef<HTMLSpanElement | null>(null);
+  const railEl = useRef<HTMLDivElement | null>(null);
+  const rlabEl = useRef<HTMLSpanElement | null>(null);
 
   const select = useCallback((index: number, focus: boolean) => {
     setSelected(index);
     setSwapped(true);
     if (focus) pills.current[index]?.focus();
   }, []);
+
+  // Rail geometry for the selected role -- computed here, above the
+  // `entries.length === 0` early return below, so the rail-label effect
+  // (fix wave finding 3) can depend on `center` without breaking the rules
+  // of hooks (every hook must run before any early return).
+  const rail = railModel(entries, now);
+  const center = rail?.centers[selected] ?? null;
 
   useEffect(() => {
     const pill = pills.current[selected];
@@ -53,6 +63,29 @@ export default function CareerDetent({ entries, locale, now }: Props) {
     el.style.setProperty('--dy', `${pill.offsetTop}px`);
     el.style.height = `${pill.offsetHeight}px`;
   }, [selected]);
+
+  useEffect(() => {
+    // Fix wave finding 3: `labelAlign`'s fixed 12/88% thresholds (used for
+    // the CSS `data-align` fallback below) know nothing about the label's
+    // actual rendered width, so a long one ("A Bun Dance · 20 mo") could
+    // still clip at 390/360px. Once hydrated, measure the real rail and
+    // label widths and clamp the label's own offset instead. Re-runs on
+    // resize too, since the rail's width -- and so the clamp -- tracks the
+    // viewport; window is the right target for that, not an ancestor.
+    const update = () => {
+      const railNode = railEl.current;
+      const label = rlabEl.current;
+      // clientWidth is 0 without layout (jsdom, or the marker not rendered
+      // this selection): leave the CSS default (--lx unset -> -50%, same
+      // as the server HTML) rather than clamp against a width of 0.
+      if (!railNode || !label || center === null || railNode.clientWidth === 0) return;
+      const lx = railLabelOffset(center, railNode.clientWidth, label.offsetWidth);
+      label.style.setProperty('--lx', `${lx}px`);
+    };
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, [center]);
 
   useEffect(() => {
     // C8 (master plan): FAQ answers, ⌘K and the footer open a role by key. A
@@ -75,8 +108,6 @@ export default function CareerDetent({ entries, locale, now }: Props) {
 
   const current = entries[Math.min(selected, entries.length - 1)];
   const next = entries[selected + 1];
-  const rail = railModel(entries, now);
-  const center = rail?.centers[selected] ?? null;
   const dates = careerDates(current, now, {
     months: t.monthsShort,
     present: t.careerPresent,
@@ -102,7 +133,7 @@ export default function CareerDetent({ entries, locale, now }: Props) {
       {rail && (
         // Decorative: the pills below carry the same choice for keyboard and
         // screen readers.
-        <div className="car-rail" aria-hidden="true">
+        <div className="car-rail" aria-hidden="true" ref={railEl}>
           <span className="car-rtrack" />
           {rail.segments.map((segment) => (
             <span
@@ -115,7 +146,7 @@ export default function CareerDetent({ entries, locale, now }: Props) {
           {center !== null && current.start && (
             <span className="car-rmark" style={{ ['--mx' as string]: `${center}%` }}>
               <i />
-              <span className="car-rlab" data-align={labelAlign(center)}>
+              <span className="car-rlab" data-align={labelAlign(center)} ref={rlabEl}>
                 {`${current.company} · ${monthsBetween(current.start, current.end ?? now)} ${t.careerMonthsUnit}`}
               </span>
             </span>

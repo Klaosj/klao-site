@@ -125,9 +125,33 @@ export function railModel(entries: Pick<CareerEntry, 'start' | 'end'>[], now: st
   return { segments, ticks, centers };
 }
 
-/** Where the marker label sits relative to its dot, so it never runs off the rail. */
+/** Where the marker label sits relative to its dot, so it never runs off the
+ *  rail. Server/no-JS fallback only (fix wave finding 3): fixed 12/88%
+ *  thresholds know nothing about the label's actual rendered width, so on a
+ *  narrow rail they could still let a long label ("A Bun Dance · 20 mo")
+ *  clip at 390/360px. CareerDetent uses this for the `data-align` attribute
+ *  the CSS reads before JS runs (and if it never does); once hydrated,
+ *  `railLabelOffset` below takes over with the real measured widths. */
 export function labelAlign(center: number): 'start' | 'mid' | 'end' {
   return center < 12 ? 'start' : center > 88 ? 'end' : 'mid';
+}
+
+/** The rail label's clamped horizontal offset in pixels (fix wave finding
+ *  3), ported verbatim from the approved prototype's measured clamp
+ *  (design/white-edition/prototype/index.html ~l.1326-1333): centered on
+ *  the marker by default (`-labelWidth / 2`); pulled right just enough to
+ *  keep its left edge inside the rail, or left just enough to keep its
+ *  right edge inside it, whichever the marker's position needs. `center`
+ *  is railModel's percent-of-rail center; `railWidth`/`labelWidth` are real
+ *  measured pixels (Element.clientWidth / offsetWidth) -- this only runs
+ *  once those are known, so it needs no `|| 120` guess the way the
+ *  prototype's inline script did. */
+export function railLabelOffset(center: number, railWidth: number, labelWidth: number): number {
+  const x = (center / 100) * railWidth;
+  let lx = -labelWidth / 2;
+  if (x + lx < 0) lx = -x;
+  if (x + labelWidth / 2 > railWidth) lx = railWidth - x - labelWidth;
+  return lx;
 }
 
 const compact = (s: string): string => s.toLowerCase().replace(/[^a-z0-9]/g, '');

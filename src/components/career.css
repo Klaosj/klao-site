@@ -22,9 +22,18 @@
   .car-rseg[data-on="true"] { background: var(--ink-1); }
   .car-rmark { position: absolute; inset: 0; pointer-events: none; transform: translateX(var(--mx, 0%)); transition: transform var(--dur-ui) var(--ease-settle); }
   .car-rmark i { position: absolute; top: 28px; left: -4px; width: 8px; height: 8px; border-radius: 50%; background: var(--ink-1); box-shadow: 0 0 0 2px var(--mist); }
-  .car-rlab { position: absolute; top: 2px; left: 0; white-space: nowrap; font-size: 12px; line-height: 16px; font-weight: 600; transform: translateX(-50%); }
-  .car-rlab[data-align="start"] { transform: translateX(-8px); }
-  .car-rlab[data-align="end"] { transform: translateX(calc(-100% + 8px)); }
+  /* Fix wave finding 3: centered by default via --lx (CareerDetent's
+     [selected] effect measures the real rail and label widths and sets it,
+     clamping the label inside the rail at any width -- transform only).
+     --lx starts unset, so this is -50% for the server HTML and the frame
+     before hydration, same as before. The old fixed data-align thresholds
+     now apply only once JS never runs at all (html:not(.js), the same gate
+     globals.css already uses for Reveal/copy-email/hero-tour-stage) --
+     otherwise their fixed -8px/-100%+8px would always outrank --lx by CSS
+     specificity regardless of what the effect computes. */
+  .car-rlab { position: absolute; top: 2px; left: 0; white-space: nowrap; font-size: 12px; line-height: 16px; font-weight: 600; transform: translateX(var(--lx, -50%)); }
+  html:not(.js) .car-rlab[data-align="start"] { transform: translateX(-8px); }
+  html:not(.js) .car-rlab[data-align="end"] { transform: translateX(calc(-100% + 8px)); }
   .car-ryears { position: absolute; left: 0; right: 0; top: 44px; height: 16px; font-size: 12px; line-height: 16px; color: var(--ink-2); }
   .car-ryears span { position: absolute; transform: translateX(-50%); }
   .car-ryears span[data-first="true"] { transform: none; }

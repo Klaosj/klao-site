@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import CareerDetent from '@/components/CareerDetent';
-import { CAREER_EVENT } from '@/lib/career';
+import { CAREER_EVENT, railLabelOffset } from '@/lib/career';
 import type { CareerEntry } from '@/lib/models';
 import { installFakeIO } from './helpers/io';
 import { stubMatchMedia } from './helpers/media';
@@ -155,6 +155,46 @@ describe('CareerDetent', () => {
     fireEvent.click(tabs()[1]);
     expect(container.querySelector('.car-rlab')?.textContent).toBe('Casetify · 23 mo');
     expect(container.querySelector('.car-ryears [data-now="true"]')?.textContent).toBe('Now');
+  });
+
+  // Fix wave finding 3: jsdom has no layout (offsetWidth/clientWidth are
+  // always 0), so these are mocked per-element, the same way
+  // tests/signature-scene.test.tsx stubs offsetHeight. The clamp math
+  // itself (railLabelOffset) has its own unit tests in
+  // tests/career-lib.test.ts; this only checks CareerDetent wires the real
+  // measured widths into it and sets --lx, and cleans up its listener.
+  it('clamps the rail label with the measured rail and label widths, and cleans up the resize listener', () => {
+    const clientWidthSpy = vi
+      .spyOn(HTMLElement.prototype, 'clientWidth', 'get')
+      .mockImplementation(function (this: HTMLElement) {
+        return this.classList.contains('car-rail') ? 358 : 0;
+      });
+    const offsetWidthSpy = vi
+      .spyOn(HTMLElement.prototype, 'offsetWidth', 'get')
+      .mockImplementation(function (this: HTMLElement) {
+        return this.classList.contains('car-rlab') ? 140 : 0;
+      });
+    const addSpy = vi.spyOn(window, 'addEventListener');
+    const removeSpy = vi.spyOn(window, 'removeEventListener');
+    try {
+      const { container, unmount } = render(<CareerDetent entries={entries} locale="en" now="2026-09" />);
+      const label = container.querySelector('.car-rlab') as HTMLElement;
+      const centerPct = parseFloat(
+        (container.querySelector('.car-rmark') as HTMLElement).style.getPropertyValue('--mx'),
+      );
+      const expected = railLabelOffset(centerPct, 358, 140);
+      expect(parseFloat(label.style.getPropertyValue('--lx'))).toBeCloseTo(expected, 5);
+
+      const resizeCall = addSpy.mock.calls.find(([type]) => type === 'resize');
+      expect(resizeCall).toBeDefined();
+      unmount();
+      expect(removeSpy).toHaveBeenCalledWith('resize', resizeCall![1]);
+    } finally {
+      clientWidthSpy.mockRestore();
+      offsetWidthSpy.mockRestore();
+      addSpy.mockRestore();
+      removeSpy.mockRestore();
+    }
   });
 
   it('takes "now" from its prop, never the client clock', () => {
