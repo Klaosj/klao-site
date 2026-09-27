@@ -1,0 +1,96 @@
+/* SiteFooter -- the prototype's `footer` / `.fcols` / `.legal` / `.seg`,
+   with the fourth column (prefs) moved beside the legal line (spec §10).
+   C2: the Language pref reuses P1's LocaleToggle (its own .seg/.thumb, from
+   globals.css, R19), so this file carries no `.lang-links*` rules of its
+   own -- there would be nothing left in this file that used them. */
+.site-foot {
+  border-top: 1px solid var(--line);
+  padding: 44px 0 40px;
+}
+.foot-cols {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px 40px;
+}
+.foot-cols h3 {
+  margin: 0 0 6px;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  color: var(--ink-1);
+}
+.foot-cols ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.foot-cols a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 24px;
+  min-height: 32px;
+  font-size: 14px;
+  color: var(--ink-2);
+  text-decoration: none;
+}
+.foot-cols a svg {
+  width: 16px;
+  height: 16px;
+}
+.foot-cols a:hover {
+  color: var(--ink-1);
+  text-decoration: underline;
+}
+.foot-bottom {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: end;
+  gap: 16px 40px;
+  margin-top: 36px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+.foot-legal {
+  color: var(--ink-2);
+}
+.foot-legal p {
+  margin: 0;
+}
+.foot-last {
+  margin-top: 4px;
+  color: var(--ink-1);
+}
+.foot-prefs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 28px;
+}
+.foot-pref {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+.foot-pref-label {
+  font-weight: 600;
+}
+@media (max-width: 734px) {
+  .foot-cols {
+    grid-template-columns: 1fr 1fr;
+  }
+  .foot-cols a {
+    min-height: 44px;
+    font-size: 15px;
+  }
+  .foot-bottom {
+    flex-direction: column;
+    align-items: start;
+  }
+  .foot-prefs {
+    flex-direction: column;
+    align-items: start;
+  }
+}

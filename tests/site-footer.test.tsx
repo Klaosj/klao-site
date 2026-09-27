@@ -1,169 +1,154 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { OpenQuestion, PostMeta, Profile } from '@/lib/models';
+// @vitest-environment jsdom
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import careerFixture from '@/content/fixtures/career.json';
+import profileFixture from '@/content/fixtures/profile.json';
+import projectsFixture from '@/content/fixtures/projects.json';
+import { dict } from '@/lib/dictionary';
+import type { CareerEntry, OpenQuestion, PostMeta, Profile, Project } from '@/lib/models';
+import { projectKey, sheetHash } from '@/lib/sheet-url';
 
-// Mirrors tests/career-resume.test.tsx's pattern: getProfile is mocked so
-// this file doesn't depend on the real fixture's name string, and the
-// module is dynamically imported after the mock is registered so
-// SiteFooter's module graph always resolves the mocked version.
-const testProfile: Profile = {
-  name: 'Test Person',
-  headline: { en: 'Headline EN', th: 'Headline TH' },
-  byline: { en: 'Byline EN', th: 'Byline TH' },
-  now: { en: 'Now EN', th: 'Now TH' },
-  photoSrc: null,
-  linkedin: 'https://linkedin.example/test',
-  github: 'https://github.example/test',
-  email: 'test@example.com',
-  resumeUrl: null,
-  clients: [],
-  nameNative: null,
-  prologue: null,
-  closingLine: null,
-  basedIn: null,
-  workingIn: null,
-};
-
-// Mutable, reset in beforeEach: Task 5's freshness-line tests override these
-// per-test, while every pre-existing test in this file leaves them at their
-// [] default -- matching the real getPosts()/getQuestions()'s fixture-mode
-// [] return, so the footer's freshness line stays absent (line omitted) and
-// none of the tests above regress.
+const projects = (projectsFixture as Project[]).filter((p) => p.featured).sort((a, b) => a.order - b.order);
+const career = careerFixture as CareerEntry[];
+let mockProfile: Profile = profileFixture as Profile;
 let mockPosts: PostMeta[] = [];
 let mockQuestions: OpenQuestion[] = [];
-
-beforeEach(() => {
-  mockPosts = [];
-  mockQuestions = [];
-});
 
 vi.mock('@/lib/content', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/lib/content')>();
   return {
     ...actual,
-    getProfile: async () => testProfile,
+    getProfile: async () => mockProfile,
+    getFeaturedProjects: async () => projects,
+    getCareer: async () => career,
     getPosts: async () => mockPosts,
     getQuestions: async () => mockQuestions,
   };
 });
+vi.mock('next/navigation', () => ({ usePathname: () => '/en/projects' }));
+// P0 owns ThemeToggle and its tests; here it only has to be mounted.
+vi.mock('@/components/ThemeToggle', async () => {
+  const { createElement } = await import('react');
+  return { default: () => createElement('div', { 'data-testid': 'theme-toggle' }) };
+});
 
-type El = { type: unknown; props?: { children?: unknown; className?: unknown } };
-function isEl(x: unknown): x is El {
-  return typeof x === 'object' && x !== null && 'props' in x;
-}
-function collectText(node: unknown, acc: string[] = []): string[] {
-  if (node == null || typeof node === 'boolean') return acc;
-  if (typeof node === 'string' || typeof node === 'number') {
-    acc.push(String(node));
-    return acc;
-  }
-  if (Array.isArray(node)) {
-    for (const child of node) collectText(child, acc);
-    return acc;
-  }
-  if (isEl(node)) collectText(node.props?.children, acc);
-  return acc;
+beforeEach(() => {
+  vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
+  vi.stubGlobal('IntersectionObserver', class { observe() {} unobserve() {} disconnect() {} });
+  mockProfile = profileFixture as Profile;
+  mockPosts = [];
+  mockQuestions = [];
+});
+
+afterEach(() => {
+  cleanup();
+  document.body.innerHTML = '';
+  vi.unstubAllGlobals();
+});
+
+async function renderFooter(locale: 'en' | 'th' = 'en') {
+  const { default: SiteFooter } = await import('@/components/SiteFooter');
+  return render(await SiteFooter({ locale }));
 }
 
 describe('SiteFooter', () => {
-  it("renders the copyright line with the real profile name, not invented copy", async () => {
-    const { default: SiteFooter } = await import('@/components/SiteFooter');
-    const jsx = await SiteFooter();
-    const text = collectText(jsx).join(' ');
-    expect(text).toContain('Test Person');
-    expect(text).toContain(String(new Date().getFullYear()));
+  it('has three link columns — Projects, Career, Elsewhere — and nothing else as a column (spec §10)', async () => {
+    await renderFooter();
+    const headings = screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent);
+    // C1: footProjects/footCareer are duplicate keys of navWork/navCareer
+    // (dropped from the dictionary) -- footElsewhere has no such duplicate
+    // and keeps its own key.
+    expect(headings).toEqual([dict.en.navWork, dict.en.navCareer, dict.en.footElsewhere]);
   });
 
-  it('carries the dark treatment (bg-deep, a top hairline) and nothing else', async () => {
-    const { default: SiteFooter } = await import('@/components/SiteFooter');
-    const jsx = (await SiteFooter()) as El;
-    expect(jsx.props?.className).toContain('bg-deep');
-    expect(jsx.props?.className).toContain('border-t');
+  it('links to the full projects listing, then every featured project to its sheet with a plain hash URL', async () => {
+    await renderFooter();
+    // C12 ledger ruling: the footer links the standalone /projects page
+    // ("All projects") but not /writing (no posts yet) -- reusing the same
+    // allProjects key WorkDeck's own "All projects" CTA uses.
+    const all = screen.getByRole('link', { name: dict.en.allProjects });
+    expect(all.getAttribute('href')).toBe('/en/projects');
+    for (const p of projects) {
+      expect(screen.getByRole('link', { name: p.name }).getAttribute('href')).toBe(`/en${sheetHash(projectKey(p))}`);
+    }
   });
 
-  it('defaults to the English (font-mono) treatment when no locale is passed, so existing callers are unaffected', async () => {
-    const { default: SiteFooter } = await import('@/components/SiteFooter');
-    const jsx = (await SiteFooter()) as El;
-    // footerNote (T4) added a second <p> above the copyright line, and the
-    // freshness line (T5) added a third slot above that (null here, since
-    // mockPosts/mockQuestions default to [] -- still counted as a JSX child
-    // position). `children` is [freshness, footerNote, copyright].
-    const children = jsx.props?.children as El[];
-    const p = children[2];
-    expect(p.props?.className).toContain('font-mono');
-    expect(p.props?.className).not.toContain('font-thai');
+  it('links every employer to the Career band and opens that pill in place', async () => {
+    document.body.insertAdjacentHTML('beforeend', '<section id="career"><h2>Career</h2></section>');
+    vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+    const heard = vi.fn();
+    window.addEventListener('klao:career', heard);
+    await renderFooter();
+    for (const c of career) {
+      expect(screen.getByRole('link', { name: c.company }).getAttribute('href')).toBe('/en#career');
+    }
+    fireEvent.click(screen.getByRole('link', { name: career[0].company }));
+    expect((heard.mock.calls[0][0] as CustomEvent).detail).toEqual({ key: career[0].key });
+    window.removeEventListener('klao:career', heard);
   });
 
-  it('switches the copyright line to the Thai font stack with normal tracking when locale is th', async () => {
-    // Regression test: no monospace face carries Thai glyphs (whole-branch
-    // review finding). profile.name is a plain, locale-invariant string
-    // (always Latin today, per src/lib/models.ts), so this doesn't change
-    // what text renders -- only that the treatment now follows the same
-    // locale convention as every other eyebrow-style label in the
-    // redesign, via the same `eyebrowFont` helper.
-    const { default: SiteFooter } = await import('@/components/SiteFooter');
-    const jsx = (await SiteFooter({ locale: 'th' })) as El;
-    // See the English-default test above: children is [freshness, footerNote,
-    // copyright] since T5's freshness line took the leading slot.
-    const children = jsx.props?.children as El[];
-    const p = children[2];
-    expect(p.props?.className).not.toContain('font-mono');
-    expect(p.props?.className).not.toMatch(/tracking-\[/);
-    expect(p.props?.className).toContain('font-thai');
+  it('skips a career row with no key (P2 S-7 / ledger ruling) instead of rendering a dead link', async () => {
+    const keyless: CareerEntry = { ...career[0], id: 'fx-keyless', key: '', company: 'No Key Co' };
+    const contentModule = await import('@/lib/content');
+    vi.spyOn(contentModule, 'getCareer').mockResolvedValueOnce([...career, keyless]);
+    await renderFooter();
+    expect(screen.queryByText('No Key Co')).toBeNull();
   });
 
-  it('renders the footerNote human line', async () => {
-    // Query by the English string (the default locale) -- T4's SiteFooter's
-    // human micro-copy, personality traceable to profile.now (nights &
-    // weekends), not fabricated.
-    const { default: SiteFooter } = await import('@/components/SiteFooter');
-    const jsx = await SiteFooter();
-    const text = collectText(jsx).join(' ');
-    expect(text).toContain('Built at night, powered by good coffee.');
+  it('opens LinkedIn, GitHub and the résumé in a new tab, and drops what is missing', async () => {
+    await renderFooter();
+    for (const [name, href] of [
+      ['LinkedIn', mockProfile.linkedin],
+      ['GitHub', mockProfile.github],
+      [dict.en.resumeShort, mockProfile.resumeUrl],
+    ] as const) {
+      const link = screen.getByRole('link', { name });
+      expect(link.getAttribute('href')).toBe(href);
+      expect(link.getAttribute('target')).toBe('_blank');
+      expect(link.getAttribute('rel')).toContain('noreferrer');
+    }
+    cleanup();
+    mockProfile = { ...(profileFixture as Profile), resumeUrl: null };
+    await renderFooter();
+    expect(screen.queryByRole('link', { name: dict.en.resumeShort })).toBeNull();
   });
 
-  it('renders no links at all -- nothing to leak a dead href', async () => {
-    const { default: SiteFooter } = await import('@/components/SiteFooter');
-    const jsx = await SiteFooter();
-    const links: El[] = [];
-    const find = (node: unknown) => {
-      if (node == null || typeof node === 'boolean') return;
-      if (Array.isArray(node)) return node.forEach(find);
-      if (isEl(node)) {
-        if (node.type === 'a') links.push(node);
-        find(node.props?.children);
-      }
-    };
-    find(jsx);
-    expect(links).toHaveLength(0);
+  it('mounts Appearance (ThemeToggle) and Language (LocaleToggle), keeping the current page', async () => {
+    await renderFooter();
+    expect(screen.getByText(dict.en.appearance)).toBeTruthy();
+    expect(screen.getByTestId('theme-toggle')).toBeTruthy();
+    // C2: LocaleToggle derives its own group label from the mocked
+    // pathname's locale segment ('/en/projects' -> dict.en.navLanguage).
+    const lang = screen.getByRole('group', { name: dict.en.navLanguage });
+    expect(within(lang).getByRole('link', { name: 'EN' }).getAttribute('href')).toBe('/en/projects');
+    expect(within(lang).getByRole('link', { name: 'EN' }).getAttribute('aria-current')).toBe('page');
+    expect(within(lang).getByRole('link', { name: 'ไทย' }).getAttribute('href')).toBe('/th/projects');
   });
 
-  it('renders the freshness line from the newest of post/question dates', async () => {
+  it('carries the legal line: © year + name, then the human line', async () => {
+    const { container } = await renderFooter();
+    expect(container.textContent).toContain(`© ${new Date().getFullYear()} ${mockProfile.name}`);
+    expect(container.textContent).toContain('Built at night, powered by good coffee.');
+    cleanup();
+    const th = await renderFooter('th');
+    expect(th.container.textContent).toContain('สร้างตอนกลางคืน ด้วยกาแฟดีๆ');
+  });
+
+  it('adds the honest freshness date only when dated content exists', async () => {
+    const empty = await renderFooter();
+    expect(empty.container.textContent).not.toContain(dict.en.contentUpdated);
+    cleanup();
     mockPosts = [{ id: 'p1', slug: 's', title: { en: 'T', th: 'T' }, date: '2026-07-01', tags: [] }];
     mockQuestions = [
       { id: 'q1', question: { en: 'Q?', th: 'Q?' }, status: 'wondering', linkSlug: null, date: '2026-08-10' },
     ];
-    const { default: SiteFooter } = await import('@/components/SiteFooter');
-    const text = collectText(await SiteFooter({ locale: 'en' })).join(' ');
-    expect(text).toContain('Content last updated');
-    expect(text).toContain('Aug 10, 2026');
-    expect(text).not.toContain('Jul 1, 2026');
+    const dated = await renderFooter();
+    expect(dated.container.textContent).toContain(`${dict.en.contentUpdated} Aug 10, 2026`);
+    expect(dated.container.textContent).not.toContain('Jul 1, 2026');
   });
 
-  it('carries the Appearance toggle after the copyright line, in the page locale', async () => {
-    const { default: SiteFooter } = await import('@/components/SiteFooter');
-    const { default: ThemeToggle } = await import('@/components/ThemeToggle');
-    const jsx = (await SiteFooter({ locale: 'th' })) as El;
-    const children = jsx.props?.children as El[];
-    // [freshness, footerNote, copyright, toggle] -- the copyright keeps index 2.
-    expect(children[3].type).toBe(ThemeToggle);
-    expect((children[3].props as { locale?: string }).locale).toBe('th');
-  });
-
-  it('omits the freshness line entirely when no dated content exists', async () => {
-    mockPosts = [];
-    mockQuestions = [];
-    const { default: SiteFooter } = await import('@/components/SiteFooter');
-    const text = collectText(await SiteFooter()).join(' ');
-    expect(text).not.toContain('Content last updated');
+  it('never renders href="#"', async () => {
+    const { container } = await renderFooter();
+    for (const a of Array.from(container.querySelectorAll('a'))) expect(a.getAttribute('href')).not.toBe('#');
   });
 });

@@ -49,6 +49,18 @@ function collectText(node: ReactElement): string {
     .replace(/&amp;/g, '&');
 }
 
+// FaqBand's `.faq-src` line ("Source: …" / "ที่มา: …") renders a FaqLink
+// label that the fixture (and content.ts's contract) intentionally keeps
+// identical in both locales -- "Career · Actmedia", never translated, same
+// convention as ClientsBand's proper-noun names. That is the ONLY place on
+// the home page allowed to carry the other locale's UI word inside a live
+// render, so the cross-locale leak check below removes exactly this one
+// element (fix round 1, Important #1) -- not the whole #faq band, which
+// would also hide a real leak sitting in a FAQ question or answer. No
+// nested <p> ever appears inside `.faq-src` (see FaqBand.tsx), so the first
+// `</p>` after the opening tag is always this element's own close.
+const stripFaqSourceLabels = (html: string): string => html.replace(/<p class="faq-src">[\s\S]*?<\/p>/g, '');
+
 describe('smoke: pages render in both locales (fixture mode)', () => {
   it('renders the four static pages', async () => {
     for (const locale of locales) {
@@ -80,8 +92,13 @@ describe('smoke: pages render in both locales (fixture mode)', () => {
       expect(homeText).toContain(t.career); // CvBand's eyebrow
       // Render only the active locale -- the other language's equivalent
       // eyebrow labels must be entirely absent from the assembled page.
-      expect(homeText).not.toContain(other.selectedProjects);
-      expect(homeText).not.toContain(other.career);
+      // Only the FAQ's own shared source-link labels are excluded (see
+      // stripFaqSourceLabels above) -- every FAQ question and answer stays
+      // subject to this check, so a real leak inside one would still fail
+      // it (proven by the synthetic-fragment test below).
+      const homeTextOutsideFaqSourceLabels = stripFaqSourceLabels(homeText);
+      expect(homeTextOutsideFaqSourceLabels).not.toContain(other.selectedProjects);
+      expect(homeTextOutsideFaqSourceLabels).not.toContain(other.career);
 
       const projects = await ProjectsPage(p(locale));
       expect(collectText(projects)).toContain(t.projects);
@@ -92,6 +109,28 @@ describe('smoke: pages render in both locales (fixture mode)', () => {
       const career = await CareerPage(p(locale));
       expect(collectText(career)).toContain(t.career);
     }
+  });
+
+  // Fix round 1, Important #1: stripFaqSourceLabels must remove ONLY the
+  // shared "Source: …" line, never a FAQ question or answer -- otherwise a
+  // real English string leaking into a Thai answer would go undetected for
+  // the life of the band. A synthetic fragment proves both halves without
+  // depending on the real fixture ever staying leak-free.
+  it('the #faq source-label filter used above hides only "Source: …", never a question or answer', () => {
+    const fragment =
+      '<section id="faq"><div class="faq-list"><details class="faq-item">' +
+      '<summary class="t-faq"><span>คำถามภาษาไทย</span></summary>' +
+      '<div class="faq-a t-body"><p>Oops, an English leak sat right inside this Thai answer</p>' +
+      '<p class="faq-src">ที่มา: <span><a href="/th#career">Career · Actmedia</a></span></p>' +
+      '</div></details></div></section>';
+    const filtered = stripFaqSourceLabels(fragment);
+    // The intentionally shared source label is gone...
+    expect(filtered).not.toContain('faq-src');
+    expect(filtered).not.toContain('Career · Actmedia');
+    // ...but a real leak inside the question/answer text is left completely
+    // untouched -- exactly what the live check above relies on to catch one.
+    expect(filtered).toContain('คำถามภาษาไทย');
+    expect(filtered).toContain('Oops, an English leak sat right inside this Thai answer');
   });
 
   it('tells the visitor the writing index is empty instead of rendering a bare list', async () => {
@@ -276,6 +315,27 @@ describe('smoke: pages render in both locales (fixture mode)', () => {
       expect(html).not.toContain('id="hero"');
       expect(html).not.toContain('tour-band');
       expect(html.indexOf('id="top"')).toBeLessThan(html.indexOf('id="work"'));
+    }
+  });
+
+  // Lane note (merge notes in the P4 T9 report): the brief's version of this
+  // test also asserts `id="story"` sits before `id="faq"`. This lane (P4b)
+  // branched from the wave-2 base before P2/P3 merged in, so ByDay's #story
+  // section does not exist here yet -- only P4's own ordering (FAQ, then
+  // Close, last) is this task's to guard. The controller should restore the
+  // storyAt >  -1 / faqAt > storyAt assertions once P2/P3 land in this chain.
+  it('ends the home page with FAQ then Close, without the retired bands', async () => {
+    for (const locale of locales) {
+      const html = renderToStaticMarkup(await HomePage(p(locale)));
+      const text = html.replace(/<[^>]+>/g, '');
+      const faqAt = html.indexOf('id="faq"');
+      const contactAt = html.indexOf('id="contact"');
+      expect(faqAt).toBeGreaterThan(-1);
+      expect(contactAt).toBeGreaterThan(faqAt);
+      expect(html).not.toContain('id="questions"');
+      expect(html).not.toContain('id="clients"');
+      expect(text).toContain(dict[locale].faqTitle);
+      expect(text).toContain(dict[locale].contactHeading);
     }
   });
 });

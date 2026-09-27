@@ -108,9 +108,16 @@ export async function getPost(slug: string): Promise<Post | null> {
   return getPostCached(slug);
 }
 
-export async function getCareer(): Promise<CareerEntry[]> {
+// cache()-wrapped since P4: the page's CareerBand, the footer's Career
+// column and the ⌘K index (layout) all ask for it within one render — one
+// Notion round trip instead of three.
+const getCareerCached = cache(async (): Promise<CareerEntry[]> => {
   const all = await fromNotion((n) => n.fetchCareer(), careerFixture as CareerEntry[]);
   return [...all].sort((a, b) => a.order - b.order);
+});
+
+export async function getCareer(): Promise<CareerEntry[]> {
+  return getCareerCached();
 }
 
 const getProfileCached = cache(async (): Promise<Profile> => {
