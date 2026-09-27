@@ -1,47 +1,49 @@
 /* ProjectFrame — a quiet window around a real screenshot (spec 2026-09-10 §5).
    Colors are the site's dark tokens from globals.css @theme. */
-.pframe {
-  border: 1px solid var(--color-on-dark-faint);
-  border-radius: 12px;
-  overflow: hidden;
-  background: var(--color-deep);
-}
-.pframe-chrome {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  height: 30px;
-  padding: 0 12px;
-  background: rgba(202, 208, 234, 0.06);
-  border-bottom: 1px solid var(--color-on-dark-faint);
-}
-.pframe-chrome > i {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: var(--color-on-dark-mid);
-}
-.pframe-title {
-  margin-left: 8px;
-  min-width: 0;
-  font-family: var(--font-display);
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  color: var(--color-on-dark-soft);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.pframe-screen {
-  aspect-ratio: 16 / 9;
-  background: #0c0c0f;
-  display: grid;
-}
-.pframe-screen > img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  /* Tall captures keep their header and crop at the bottom. */
-  object-position: top;
+@layer components {
+  .pframe {
+    border: 1px solid var(--color-on-dark-faint);
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--color-deep);
+  }
+  .pframe-chrome {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 30px;
+    padding: 0 12px;
+    background: rgba(202, 208, 234, 0.06);
+    border-bottom: 1px solid var(--color-on-dark-faint);
+  }
+  .pframe-chrome > i {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--color-on-dark-mid);
+  }
+  .pframe-title {
+    margin-left: 8px;
+    min-width: 0;
+    font-family: var(--font-display);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    color: var(--color-on-dark-soft);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .pframe-screen {
+    aspect-ratio: 16 / 9;
+    background: #0c0c0f;
+    display: grid;
+  }
+  .pframe-screen > img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* Tall captures keep their header and crop at the bottom. */
+    object-position: top;
+  }
 }

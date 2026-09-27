@@ -1,78 +1,80 @@
 /* CloseBand — the prototype's `.close` block with the Apple calibration
    (close 160/144 desktop, 112/96 phone; spec §5.3). */
-.close-band {
-  padding: 160px 0 144px;
-  text-align: center;
-}
-.close-h {
-  max-width: 12em;
-  margin-inline: auto;
-}
-.close-ctas {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: center;
-  gap: 22px;
-  margin-top: 28px;
-}
-.close-lnk {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  font-size: 17px;
-  color: var(--link);
-  text-decoration: none;
-}
-.close-lnk:hover {
-  text-decoration: underline;
-}
-.close-facts {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 12px 40px;
-  margin: 36px 0 0;
-  padding: 0;
-  list-style: none;
-  font-size: 14px;
-  line-height: 20px;
-  color: var(--ink-2);
-}
-.close-facts b {
-  display: block;
-  font-size: 17px;
-  line-height: 25px;
-  font-weight: 500;
-  color: var(--ink-1);
-}
-.close-openq {
-  max-width: 36em;
-  margin: 40px auto 0;
-  color: var(--ink-2);
-}
-.close-openq a {
-  white-space: nowrap;
-  color: var(--link);
-  text-decoration: none;
-}
-.close-openq a:hover {
-  text-decoration: underline;
-}
-@media (max-width: 734px) {
+@layer components {
   .close-band {
-    padding: 112px 0 96px;
+    padding: 160px 0 144px;
+    text-align: center;
+  }
+  .close-h {
+    max-width: 12em;
+    margin-inline: auto;
   }
   .close-ctas {
-    gap: 12px 18px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 22px;
+    margin-top: 28px;
   }
-  .close-ctas .btn {
-    width: 100%;
+  .close-lnk {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    font-size: 17px;
+    color: var(--link);
+    text-decoration: none;
+  }
+  .close-lnk:hover {
+    text-decoration: underline;
   }
   .close-facts {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    justify-content: start;
-    text-align: left;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px 40px;
+    margin: 36px 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--ink-2);
+  }
+  .close-facts b {
+    display: block;
+    font-size: 17px;
+    line-height: 25px;
+    font-weight: 500;
+    color: var(--ink-1);
+  }
+  .close-openq {
+    max-width: 36em;
+    margin: 40px auto 0;
+    color: var(--ink-2);
+  }
+  .close-openq a {
+    white-space: nowrap;
+    color: var(--link);
+    text-decoration: none;
+  }
+  .close-openq a:hover {
+    text-decoration: underline;
+  }
+  @media (max-width: 734px) {
+    .close-band {
+      padding: 112px 0 96px;
+    }
+    .close-ctas {
+      gap: 12px 18px;
+    }
+    .close-ctas .btn {
+      width: 100%;
+    }
+    .close-facts {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      justify-content: start;
+      text-align: left;
+    }
   }
 }
