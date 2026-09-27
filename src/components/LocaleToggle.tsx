@@ -3,18 +3,22 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useActiveSection } from '@/lib/active-section';
 import { dict } from '@/lib/dictionary';
 import type { Locale } from '@/lib/models';
-import { isPlainClick } from '@/lib/nav';
+import { isPlainClick, type NavSection } from '@/lib/nav';
 import './locale-toggle.css';
 
 /** The same page in the other language: swap the first path segment and keep
- *  the rest (the logic the old toggle had). The hash is not carried: section
- *  ids exist on both locales' home pages, and a sheet or palette state isn't
- *  worth restoring across a language switch. */
-export function switchLocaleHref(pathname: string, target: Locale): string {
+ *  the rest (the logic the old toggle had). On the home page it also carries
+ *  the section being read (Klao decision (a), 2026-09-28): section ids are the
+ *  same in both locales, and it is the section itself, never the URL's hash,
+ *  so a stale `#work`, an open sheet's `#work/<key>` or a `#faq-…` answer is
+ *  never carried. No other page has those sections: /en/projects goes to
+ *  /th/projects and nothing more. */
+export function switchLocaleHref(pathname: string, target: Locale, section: NavSection | null = null): string {
   const rest = pathname.split('/').slice(2).filter(Boolean).join('/');
-  return `/${target}${rest ? `/${rest}` : ''}`;
+  return `/${target}${rest ? `/${rest}` : section ? `#${section}` : ''}`;
 }
 
 const ITEMS: readonly { locale: Locale; label: string }[] = [
@@ -60,6 +64,10 @@ const ITEMS: readonly { locale: Locale; label: string }[] = [
 export default function LocaleToggle({ wide = false }: { wide?: boolean }) {
   const pathname = usePathname() ?? '/en';
   const current: Locale = pathname.split('/')[1] === 'th' ? 'th' : 'en';
+  // The section the capsule marks as being read. Arriving at /th#career is a
+  // jump (the site sets no smooth scrolling), so reduced motion needs no
+  // branch; html's scroll-padding-top (site-nav.css) clears the capsule.
+  const section = useActiveSection();
   // P1 final review M-2 (A02): the thumb moves on the click itself. The
   // switch is a route change with prefetch off, so waiting for the new
   // pathname left the tap unanswered for ~0.4 s. The pick is kept with the
@@ -94,7 +102,9 @@ export default function LocaleToggle({ wide = false }: { wide?: boolean }) {
       {ITEMS.map(({ locale, label }, i) => (
         <Link
           key={locale}
-          href={switchLocaleHref(pathname, locale)}
+          // The current language keeps no hash: following it would only
+          // jump the page to the top of the section already being read.
+          href={switchLocaleHref(pathname, locale, locale === current ? null : section)}
           prefetch={false}
           lang={locale}
           hrefLang={locale}

@@ -7,6 +7,7 @@ import { Icon } from '@/components/icons';
 import LocaleToggle from '@/components/LocaleToggle';
 import NavMenu from '@/components/NavMenu';
 import ThumbBar from '@/components/ThumbBar';
+import { setActiveSection } from '@/lib/active-section';
 import { dict } from '@/lib/dictionary';
 import { openPalette } from '@/lib/deep-link';
 import type { Locale, Profile } from '@/lib/models';
@@ -61,6 +62,12 @@ export default function SiteNav({ locale, profile }: { locale: Locale; profile: 
     for (const el of sections) io.observe(el);
     return () => io.disconnect();
   }, [pathname]);
+
+  // Klao decision (a): every EN/ไทย toggle (this capsule's, the phone
+  // menu's, the footer's) carries the section being read across a switch.
+  // Cleared on unmount so nothing outlives the nav.
+  useEffect(() => setActiveSection(active), [active]);
+  useEffect(() => () => setActiveSection(null), []);
 
   // The hero's buttons have left the viewport upwards. A row still below the
   // fold (top > 0) doesn't count: the visitor hasn't passed it yet. One

@@ -3,6 +3,7 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { usePathname } from 'next/navigation';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import LocaleToggle, { switchLocaleHref } from '@/components/LocaleToggle';
+import { setActiveSection } from '@/lib/active-section';
 import { dict } from '@/lib/dictionary';
 
 vi.mock('next/navigation', () => ({ usePathname: vi.fn(() => '/en') }));
@@ -22,6 +23,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+  setActiveSection(null);
   window.removeEventListener('click', stayOnPage);
   vi.mocked(usePathname).mockReturnValue('/en');
 });
@@ -32,6 +34,17 @@ describe('switchLocaleHref', () => {
     expect(switchLocaleHref('/en/', 'th')).toBe('/th');
     expect(switchLocaleHref('/th/writing/some-post', 'en')).toBe('/en/writing/some-post');
     expect(switchLocaleHref('/en/projects', 'en')).toBe('/en/projects');
+  });
+
+  // Klao decision (a), 2026-09-28: a switch keeps the reading position, as
+  // the prototype's setLang did. Section ids are the same in both locales;
+  // no other page has them, so nothing is carried off the home page.
+  it('carries the section being read across a home-page switch, and nothing from any other page', () => {
+    expect(switchLocaleHref('/en', 'th', 'career')).toBe('/th#career');
+    expect(switchLocaleHref('/th/', 'en', 'faq')).toBe('/en#faq');
+    expect(switchLocaleHref('/en', 'th', null)).toBe('/th');
+    expect(switchLocaleHref('/en/projects', 'th', 'career')).toBe('/th/projects');
+    expect(switchLocaleHref('/th/writing/some-post', 'en', 'story')).toBe('/en/writing/some-post');
   });
 });
 
@@ -138,6 +151,20 @@ describe('LocaleToggle', () => {
     expect(group.style.getPropertyValue('--i')).toBe('0');
     fireEvent.click(en);
     expect(group.style.getPropertyValue('--i')).toBe('0');
+  });
+
+  // Klao decision (a): every toggle (capsule, phone menu, the footer's)
+  // reads the section the capsule marks as being read. The current
+  // language's link keeps no hash: following it would only jump the page.
+  it('points the other language at the section being read, live, and never the current one', () => {
+    render(<LocaleToggle />);
+    const [en, th] = Array.from(document.querySelectorAll('.lt-seg a'));
+    expect(th.getAttribute('href')).toBe('/th');
+    act(() => setActiveSection('story'));
+    expect(th.getAttribute('href')).toBe('/th#story');
+    expect(en.getAttribute('href')).toBe('/en');
+    act(() => setActiveSection(null));
+    expect(th.getAttribute('href')).toBe('/th');
   });
 
   it('marks data-ready one frame after mount, not on the initial render (fix wave finding 1)', async () => {

@@ -323,6 +323,32 @@ describe('SiteNav', () => {
     expect(document.activeElement).not.toBe(screen.getByRole('heading', { name: 'Career heading' }));
   });
 
+  // Klao decision (a), 2026-09-28: switching language mid-page keeps the
+  // reader on the section the capsule marks, not a stale hash in the URL.
+  const otherLanguage = () => nav().querySelector<HTMLAnchorElement>('.lt-seg a[hreflang="th"]')!;
+
+  it('switches language onto the section being read on the home page', () => {
+    history.replaceState(null, '', '/en#work'); // stale: the reader has moved on
+    render(
+      <>
+        <HomeHooks />
+        <SiteNav locale="en" profile={profile} />
+      </>,
+    );
+    const career = document.getElementById('career')!;
+    expect(otherLanguage().getAttribute('href')).toBe('/th');
+    FakeIO.watching(career).fire([{ target: career, isIntersecting: true }]);
+    expect(otherLanguage().getAttribute('href')).toBe('/th#career');
+    FakeIO.watching(career).fire([{ target: career, isIntersecting: false }]);
+    expect(otherLanguage().getAttribute('href')).toBe('/th');
+  });
+
+  it('keeps no hash on the projects page', () => {
+    vi.mocked(usePathname).mockReturnValue('/en/projects');
+    render(<SiteNav locale="en" profile={profile} />);
+    expect(otherLanguage().getAttribute('href')).toBe('/th/projects');
+  });
+
   it('server-renders every link, so the nav works before (and without) JavaScript (Review Focus #4)', () => {
     const html = renderToStaticMarkup(<SiteNav locale="en" profile={profile} />);
     for (const href of ['#top', '#work', '#career', '#story', '#faq', '#contact', '/th']) {
