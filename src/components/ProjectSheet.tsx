@@ -485,19 +485,27 @@ function SheetBody({ project, projects, locale, headingRef, onClose }: SheetBody
               <ThaiText text={question} />
             </p>
           )}
-          <h3>{t.sheetWhat}</h3>
+          {/* The four body headings take ThaiText like the lineage card's h3, so a keep-list
+              word or a `|` break mark in a Thai label is handled the same way everywhere. */}
+          <h3>
+            <ThaiText text={t.sheetWhat} />
+          </h3>
           <p className="sheet-desc">{project.description[locale]}</p>
         </div>
         <div className="sheet-side">
           {project.status && (
             <>
-              <h3>{t.sheetStatus}</h3>
+              <h3>
+                <ThaiText text={t.sheetStatus} />
+              </h3>
               <StatusChip project={project} locale={locale} />
             </>
           )}
           {outcomes.length > 0 && (
             <>
-              <h3>{t.sheetOutcomes}</h3>
+              <h3>
+                <ThaiText text={t.sheetOutcomes} />
+              </h3>
               <ul className="sheet-list">
                 {outcomes.map((o) => (
                   <li key={o}>{o}</li>
@@ -507,7 +515,9 @@ function SheetBody({ project, projects, locale, headingRef, onClose }: SheetBody
           )}
           {project.stack.length > 0 && (
             <>
-              <h3>{t.sheetStack}</h3>
+              <h3>
+                <ThaiText text={t.sheetStack} />
+              </h3>
               <div className="sheet-chips">
                 {project.stack.map((s) => (
                   <span key={s}>{s}</span>

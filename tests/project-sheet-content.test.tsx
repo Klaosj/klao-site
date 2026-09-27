@@ -141,6 +141,32 @@ describe('ProjectSheet content', () => {
     expect(dialog.textContent).not.toContain(dict.en.sheetWhat);
   });
 
+  // Wave-2 merge reconciliation (e): the four .sbody h3 headings go through ThaiText like the
+  // lineage card's h3, so a keep-list word stays whole and a `|` break mark is consumed. Today's
+  // Thai labels happen to hold neither, so the copy is swapped for one that does (and restored).
+  it('renders the .sbody h3 headings through ThaiText keep-runs on /th', () => {
+    const saved = { ...dict.th };
+    const labels = ['sheetWhat', 'sheetStatus', 'sheetOutcomes', 'sheetStack'] as const;
+    try {
+      for (const k of labels) dict.th[k] = `${saved[k]}|เครื่องมือ`;
+      const dialog = openAt('tripedia', 'th');
+      const heads = Array.from(dialog.querySelectorAll('.sbody h3'));
+      // Tripedia has a status and outcomes but no stack, so three of the four render.
+      expect(heads.map((h) => h.textContent)).toEqual([
+        `${saved.sheetWhat}เครื่องมือ`,
+        `${saved.sheetStatus}เครื่องมือ`,
+        `${saved.sheetOutcomes}เครื่องมือ`,
+      ]);
+      // `|` keeps the text on each side whole: two keep-runs per heading, a <wbr> between them.
+      heads.forEach((h, i) => {
+        expect(texts(h, '.nw')).toEqual([saved[labels[i]], 'เครื่องมือ']);
+        expect(h.querySelector('wbr')).not.toBeNull();
+      });
+    } finally {
+      Object.assign(dict.th, saved);
+    }
+  });
+
   it('a pre-migration row (no kicker, status, outcomes or screenshot) still opens whole', () => {
     const bare = makeProject({ id: 'fx-bare', name: 'Bare', imageSrc: null, media: 'win', description: { en: 'Only the old fields.', th: 'มีแค่ฟิลด์เดิม' } });
     const dialog = openAt('bare', 'en', [bare]);
