@@ -88,6 +88,28 @@ describe('HeroTourStage', () => {
     expect(playButton().getAttribute('aria-label')).toBe(dict.en.tourPlay);
   });
 
+  it('links the caption to the slide’s own sheet when it has one', () => {
+    renderStage();
+    const link = tour().querySelector('a.ht-q') as HTMLAnchorElement | null;
+    expect(link).not.toBeNull();
+    expect(link!.getAttribute('href')).toBe(slides[0].href);
+  });
+
+  // Fix round 1 (Important): S-7 also reaches the tour. A slide whose project has no sheet to
+  // open (Thai-only name, no Notion Slug) gets `href: null` from toTourSlides -- the caption
+  // must read as plain text, not a link to the unparseable '#work/' (which would still push a
+  // hash onto the URL and open nothing, ProjectSheet's own parseSheetHash rejects it).
+  it('renders the caption as plain text, not a dead link, when the slide has no sheet to open (S-7)', () => {
+    const noHref: TourSlide[] = [{ ...slides[0], href: null }];
+    render(<HeroTourStage slides={noHref} vignette={vignette} locale="en" />);
+    const caption = tour().querySelector('.ht-q') as HTMLElement;
+    expect(caption.tagName).not.toBe('A');
+    expect(caption.querySelector('.ht-qt')!.textContent).toBe(noHref[0].question);
+    // No chevron either -- it would promise a click that does nothing (same rule as
+    // ProjectsIndex's Row).
+    expect(caption.querySelector('.ht-chev')).toBeNull();
+  });
+
   it('is a labelled carousel of slides, each tab pointing at its slide', () => {
     renderStage();
     expect(tour().getAttribute('aria-roledescription')).toBe('carousel');

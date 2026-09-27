@@ -154,6 +154,14 @@ describe('toTourSlides', () => {
     const live = { ...site, imageSrc: '/api/img/page/site/Screenshot' };
     expect(toTourSlides([live], 'en')[0]).toMatchObject({ media: 'notion', src: null });
   });
+
+  // Fix round 1 (Important): S-7 also reaches the tour, not just ProjectsIndex's Row. A
+  // Thai-only name with no Notion Slug gives projectKey('') -- sheetHash('') would be the
+  // unparseable '#work/', a caption link that changes the URL hash and opens nothing.
+  it('gives a Thai-only-named project with no Notion Slug a slide with no sheet href (S-7), not the unparseable "#work/"', () => {
+    const thaiOnly = makeProject({ id: 'thai-only', name: 'ไทยล้วน', order: 0, tour: true, tourOrder: 0, media: 'img', wash: 'none' });
+    expect(toTourSlides([thaiOnly], 'en')[0].href).toBeNull();
+  });
 });
 
 describe('windowTitle', () => {

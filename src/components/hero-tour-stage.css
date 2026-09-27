@@ -109,9 +109,11 @@
     font-size: 17px; line-height: 22px; font-weight: 600; color: var(--ink-1); text-decoration: none;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-  .ht-q:hover .ht-qt { text-decoration: underline; text-underline-offset: .15em; }
+  /* `a.ht-q`, not the bare class: fix round 1 adds a non-link `<span className="ht-q">` for a
+     slide with nowhere to open (S-7), and it must not look hoverable/clickable. */
+  a.ht-q:hover .ht-qt { text-decoration: underline; text-underline-offset: .15em; }
   .ht-chev { display: inline-block; margin-left: 4px; transition: transform 200ms var(--ease-settle); }
-  .ht-q:hover .ht-chev { transform: translateX(2px); }
+  a.ht-q:hover .ht-chev { transform: translateX(2px); }
   .ht-k { font-size: 13px; line-height: 18px; color: var(--ink-1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   :lang(th) .ht-k { line-height: 20px; }
 

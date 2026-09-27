@@ -71,13 +71,18 @@ export function tourKicker(p: Project, locale: Locale): string {
 }
 
 /** One tour frame, flattened on the server so the client stage receives plain
- *  serialisable data in the page's own language. */
+ *  serialisable data in the page's own language. `href` is null for a project
+ *  with no sheet to open at all -- S-7: a Thai-only name with no Notion Slug
+ *  gives `projectKey` `''`, which `sheetHash` would turn into the unparseable
+ *  `'#work/'` (ProjectsIndex's Row hits the same case and guards it the same
+ *  way, C6-level). The stage renders that slide's caption as plain text
+ *  instead of a link to nowhere. */
 export interface TourSlide {
   id: string;
   name: string;
   kicker: string;
   question: string;
-  href: string;
+  href: string | null;
   media: 'img' | 'notion';
   src: string | null;
   alt: string;
@@ -97,12 +102,13 @@ export function toTourSlides(projects: Project[], locale: Locale): TourSlide[] {
   return tourProjects(projects).map((p) => {
     const media = p.media === 'notion' ? 'notion' : 'img';
     const src = media === 'img' ? p.imageSrc : null;
+    const key = projectKey(p);
     return {
       id: p.id,
       name: p.name,
       kicker: tourKicker(p, locale),
       question: (p.question ?? p.description)[locale],
-      href: sheetHash(projectKey(p)),
+      href: key ? sheetHash(key) : null,
       media,
       src,
       alt: p.alt?.[locale] || (src ? imageAlt(src, p.name) : ''),

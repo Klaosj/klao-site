@@ -287,7 +287,7 @@ export default function HeroTourStage({ slides, vignette, locale }: Props) {
                   <ThaiText text={t.tourEndTitle} />
                 </span>
               </a>
-            ) : (
+            ) : current.href ? (
               <a className="ht-q" href={current.href}>
                 <span className="ht-qt">
                   <ThaiText text={current.question} />
@@ -296,6 +296,16 @@ export default function HeroTourStage({ slides, vignette, locale }: Props) {
                   ›
                 </span>
               </a>
+            ) : (
+              // S-7 (carried from ProjectsIndex's Row): a project with no sheet to open
+              // (Thai-only name, no Notion Slug) gets `href: null` from toTourSlides, not the
+              // unparseable '#work/'. Plain text, not a link to nowhere -- and no chevron,
+              // which would promise a click that does nothing.
+              <span className="ht-q">
+                <span className="ht-qt">
+                  <ThaiText text={current.question} />
+                </span>
+              </span>
             )}
             <span className="ht-k">{ended ? t.tourEndKicker : current.kicker}</span>
           </div>
