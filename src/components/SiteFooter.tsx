@@ -47,6 +47,7 @@ export default async function SiteFooter({ locale = 'en' }: { locale?: Locale } 
     <footer className="site-foot">
       <div className="wrap">
         <div className="foot-cols">
+          {/* No length guard here, unlike Career and Elsewhere: "All projects" is always present (C12), so this column always renders. */}
           <div>
             <h3>{t.navWork}</h3>
             <ul>
