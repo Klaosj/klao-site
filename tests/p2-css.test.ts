@@ -137,6 +137,18 @@ describe('project-sheet.css', () => {
     expect(css).toContain('.sheet-close { width: 44px; height: 44px; margin: 12px 12px -56px auto; }');
     expect(css).not.toMatch(/\.sheet-close\s*\{[^}]*float:\s*right/);
   });
+
+  // Fix wave finding 4 (I1): `.smedia-draw` was a content-sized grid row, so its SVG (and the
+  // caption drawn near the bottom of its viewBox) never filled -- let alone reached the bottom
+  // of -- `.smedia`'s own aspect-ratio box. Taking it out of grid flow with `inset: 0` sizes it
+  // directly against `.smedia` instead.
+  it('sizes the drawing against .smedia directly, not a content-sized grid row (fix wave finding 4)', () => {
+    expect(css).toContain('.smedia-draw { position: absolute; inset: 0; display: grid; place-items: center; color: var(--ink-1); }');
+  });
+
+  it('gives the rings drawing a shorter box on phone so its caption has room (fix wave finding 4)', () => {
+    expect(css).toContain('.smedia[data-media="rings"] { aspect-ratio: 4 / 3; }');
+  });
 });
 
 describe('P2 CSS animates only transform and opacity', () => {
