@@ -53,18 +53,27 @@ function shotIn(scope: ParentNode | null | undefined): HTMLElement | null {
   return scope?.querySelector<HTMLElement>('[data-vt="shot"]') ?? null;
 }
 
+// Fix round 2 (Minor): the most recent transition only -- see its own comment below. Module-
+// level, not per-component-instance state, because exactly one <ProjectSheet> (one dialog) is
+// ever on the page, so there is only ever one shot-transition in flight at a time regardless of
+// which component instance started it.
+let latestTransition: ViewTransition | null = null;
+
 /**
  * Runs `change` inside `document.startViewTransition` when the API exists, motion is allowed,
  * and there is a `before` element to name -- exactly A07's "opening from an index row runs a
  * View Transition" (and its reverse on close). `findAfter` is called only once the transition's
  * callback has committed `change`'s DOM update, so it can look for an element `change` itself
- * creates (e.g. the sheet's media, once Task 10 renders one).
+ * creates (e.g. the sheet's media, once Task 10 renders one) -- but only when `change` reports
+ * it actually applied (returns `true`); a stale `change` (e.g. hide()'s settle(), superseded by
+ * a reopen that landed first -- round 1's Minor 1) has nothing to reverse into, so there is
+ * nothing to name on the other side either (fix round 2, Minor).
  *
  * Returns whether it ran the transition, so the caller knows whether it still owns its own
  * fallback animation (the plain CSS open/close in project-sheet.css) or the View Transition
  * already is the animation for this open/close.
  */
-function runShotTransition(before: HTMLElement | null, change: () => void, findAfter: () => HTMLElement | null): boolean {
+function runShotTransition(before: HTMLElement | null, change: () => boolean, findAfter: () => HTMLElement | null): boolean {
   if (!before || typeof document.startViewTransition !== 'function' || !motionAllowed()) return false;
   before.style.viewTransitionName = 'shot';
   let after: HTMLElement | null = null;
@@ -74,10 +83,22 @@ function runShotTransition(before: HTMLElement | null, change: () => void, findA
     // even if `before` is also `change`'s target for removal, the name never collides with
     // whatever `findAfter` returns.
     before.style.viewTransitionName = '';
-    flushSync(change);
-    after = findAfter();
-    if (after) after.style.viewTransitionName = 'shot';
+    let applied = false;
+    flushSync(() => {
+      applied = change();
+    });
+    if (applied) {
+      after = findAfter();
+      if (after) after.style.viewTransitionName = 'shot';
+    }
   });
+  // Fix round 2 (Minor): starting THIS transition supersedes whatever was latest before it (a
+  // close started while an open's transition is still animating, say) -- that older one's own
+  // `finished.finally` below, once it (belatedly) settles, must find it is no longer the latest
+  // and skip clearing, or it would wipe the name *this* transition just gave `before`/`after` a
+  // few microtasks after giving it to them (real Chrome: the reviewer found the reverse morph
+  // lost this way when closing during the open's own morph).
+  latestTransition = transition;
   // Fix round 1 (Important #1): a second startViewTransition call while this one is still
   // pending (Back fires popstate then hashchange, both landing on hide() -- see the caller's own
   // in-flight guard) skips the first with "AbortError: Transition was skipped". That's expected,
@@ -88,6 +109,7 @@ function runShotTransition(before: HTMLElement | null, change: () => void, findA
   // already clears `before`, but `after` (set inside the callback) only gets cleared here.
   transition.finished
     .finally(() => {
+      if (latestTransition !== transition) return; // superseded -- see the comment above
       before.style.viewTransitionName = '';
       if (after) after.style.viewTransitionName = '';
     })
@@ -130,9 +152,10 @@ export default function ProjectSheet({ projects, locale }: { projects: Project[]
       closePending.current = false; // a reopen is never blocked by a close still in flight
       window.clearTimeout(exitTimer.current);
       dialogRef.current?.classList.remove('closing');
-      const change = () => {
+      const change = (): boolean => {
         if (push && window.location.hash !== sheetHash(key)) window.history.pushState(null, '', sheetHash(key));
         setOpenKey(key);
+        return true; // an open never has its own staleness check today; always applies
       };
       // A07: only a genuine row click carries an origin element; a hashchange/deep-link open
       // (originEl omitted) has no row on screen to morph from, so it just runs `change`.
@@ -179,13 +202,16 @@ export default function ProjectSheet({ projects, locale }: { projects: Project[]
       // triggerRef -- the same element `finish` focuses back to below).
       const trigger = triggerRef.current;
       const before = shotIn(d);
-      const settle = () => {
+      const settle = (): boolean => {
         closePending.current = false;
         // Minor 1: a show() that landed while this close was still pending (a hash-driven
         // reopen, say) already bumped generation past myGeneration -- finish() would otherwise
-        // undo that reopen with a now-stale close.
-        if (generation.current !== myGeneration) return;
+        // undo that reopen with a now-stale close. Returning false here (fix round 2, Minor)
+        // also tells runShotTransition's callback there is nothing to reverse into: the sheet
+        // never actually closed, so the row thumbnail must not be named either.
+        if (generation.current !== myGeneration) return false;
         finish();
+        return true;
       };
       if (runShotTransition(before, settle, () => shotIn(trigger))) return; // the transition is the exit animation
       if (!motionAllowed()) {
@@ -264,12 +290,16 @@ export default function ProjectSheet({ projects, locale }: { projects: Project[]
         finish();
       }}
       onClick={(e) => {
-        // Fix round 1: `e.target === e.currentTarget` alone also matches a click on blank space
-        // *inside* the dialog's own rendered box -- a short sheet on a narrow phone leaves room
-        // below its content, but that's still visually inside the card, not the dimmed
-        // ::backdrop outside it (the reviewer found this at 390px). Comparing the click's
-        // viewport coordinates against the dialog's own rect is what actually distinguishes
-        // "outside the sheet" from "inside it, on nothing in particular".
+        // Fix round 2 (Important): round 1's rect check REPLACED this instead of adding to it --
+        // a keyboard Enter/Space on an inner control (e.g. "Read the story") also fires `click`
+        // with clientX/clientY 0,0, which sits outside the sheet's own box just as reliably as a
+        // real backdrop click, closing the sheet out from under the very control being
+        // activated. `e.target !== e.currentTarget` alone stays first and is enough to rule out
+        // every click that landed on an inner element (keyboard-fired or not); the rect check
+        // below is only reached for a click that landed on the dialog element itself, and still
+        // distinguishes a genuine backdrop click from one on blank space inside the sheet's own
+        // box (round 1's fix, still needed on its own -- see that comment in the round 1 report).
+        if (e.target !== e.currentTarget) return;
         const r = e.currentTarget.getBoundingClientRect();
         const outside = e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom;
         if (outside) hide(true);

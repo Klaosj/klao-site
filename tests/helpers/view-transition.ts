@@ -29,11 +29,11 @@ export interface StubViewTransitionOptions {
    *  (synchronous) stub can't reproduce that window: production code's own `finish()` would
    *  already be done by the time the second event arrives. Fix round 1, Important #1. */
   deferUpdate?: boolean;
-  /** `ready`/`finished` reject (an `AbortError`, as a real skipped transition's do) instead of
-   *  resolving -- `update` still runs, exactly like a real skip (only the animation is
-   *  skipped; the DOM update it wraps is not). For proving `runShotTransition`'s own `.catch()`s
-   *  keep a skipped transition from surfacing as an unhandled rejection. Fix round 1,
-   *  Important #1. */
+  /** `ready` rejects (an `AbortError`, as a real skipped transition's does); `finished` still
+   *  resolves, matching a real skip (only the animation is skipped -- `update` still runs, and
+   *  the transition still settles). For proving `runShotTransition`'s own `ready.catch()` (not
+   *  `finished`'s) keeps a skipped transition from surfacing as an unhandled rejection. Fix
+   *  round 1, Important #1; the two-promise split is fix round 2, Minor. */
   reject?: boolean;
 }
 
@@ -47,16 +47,23 @@ export interface StubViewTransitionOptions {
  */
 export function stubViewTransition(options: StubViewTransitionOptions = {}): ViewTransitionStub {
   let resolve = () => {};
-  const settled = options.reject
+  const ready = options.reject
     ? Promise.reject(new DOMException('Transition was skipped', 'AbortError'))
     : options.controlFinish
       ? new Promise<void>((res) => (resolve = res))
       : Promise.resolve();
+  // Fix round 2 (Minor, tests): a real skipped transition's `ready` rejects but its `finished`
+  // still resolves (only the animation is skipped, not the transition settling) -- sharing one
+  // promise for both meant a test removing only `transition.ready.catch(...)` in
+  // ProjectSheet.tsx still passed, since `finished` (the one every test actually awaits) never
+  // rejected either way. `controlFinish` still gates `finished` the same as before `reject`
+  // existed; the two options aren't combined by any test today.
+  const finished = options.reject ? Promise.resolve() : ready;
   const start = vi.fn((update: () => void) => {
     options.onStart?.();
     if (options.deferUpdate) queueMicrotask(update);
     else update();
-    return { ready: settled, finished: settled, updateCallbackDone: settled, types: new Set(), skipTransition() {} };
+    return { ready, finished, updateCallbackDone: finished, types: new Set(), skipTransition() {} };
   }) as ViewTransitionStub;
   start.resolveFinished = resolve;
   (document as unknown as { startViewTransition: typeof start }).startViewTransition = start;

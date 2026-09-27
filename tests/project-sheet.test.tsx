@@ -79,6 +79,26 @@ function PageWithThumbs() {
   );
 }
 
+// Fix round 2 (Important #1): a project with both a live URL and a story slug, so "Open app"
+// and "Read the story" are both present to click -- LINEUP's own GoNai has no story slug.
+const STORIED = LINEUP.map((p) => (p.name === 'GoNai' ? { ...p, slug: 'gonai-story' } : p));
+function StoriedPage() {
+  return (
+    <>
+      <ul>
+        {STORIED.map((p) => (
+          <li key={p.id}>
+            <a href={sheetHash(projectKey(p))} data-sheet={projectKey(p)}>
+              {p.name}
+            </a>
+          </li>
+        ))}
+      </ul>
+      <ProjectSheet projects={STORIED} locale="en" />
+    </>
+  );
+}
+
 const dialogOf = (c: HTMLElement) => c.querySelector('dialog.sheet') as HTMLDialogElement;
 const row = (name: string) => screen.getByText(name, { selector: 'a' });
 const closeButton = () => screen.getByRole('button', { name: dict.en.sheetClose });
@@ -256,6 +276,50 @@ describe('ProjectSheet: closing (Review Focus #3)', () => {
     expect(dialog.open).toBe(false);
   });
 
+  it('a click on an inner control does not close the sheet, even one fired at clientX/clientY 0,0 (Important, fix round 2)', () => {
+    // A keyboard Enter/Space on a focused inner control (not the close button) fires `click`
+    // with clientX/clientY 0,0 -- exactly the coordinates round 1's rect check alone treats as
+    // "outside the sheet", because round 1 REPLACED e.target === e.currentTarget with the rect
+    // check instead of adding to it. "Open app" closing the sheet under a keyboard activation
+    // was the reviewer's real-Chrome finding.
+    const { container } = render(<StoriedPage />);
+    fireEvent.click(row('GoNai'));
+    const dialog = dialogOf(container);
+    // A real sheet is never positioned at the viewport's origin -- pin a rect that doesn't
+    // contain (0,0), or the rect check alone (jsdom's unmocked default is an all-zero rect)
+    // would coincidentally call this "inside" regardless of whether the target guard exists.
+    stubSheetRect(dialog, { left: 100, top: 50, right: 900, bottom: 700 });
+    const openApp = dialog.querySelector('a.btn-fill') as HTMLAnchorElement;
+    fireEvent.click(openApp, { clientX: 0, clientY: 0, detail: 0 });
+    expect(dialog.open).toBe(true);
+  });
+
+  it('activating "Read the story" does not call clearSheetHash/replaceState, which would cancel its Next navigation', () => {
+    // Next 15.5 turns a history.replaceState mid-navigation into ACTION_RESTORE and drops the
+    // pending navigation -- clearSheetHash() must never run for a click on this link at all.
+    const replace = vi.spyOn(window.history, 'replaceState');
+    const { container } = render(<StoriedPage />);
+    fireEvent.click(row('GoNai'));
+    replace.mockClear(); // isolate this assertion to the click below, not whatever opening did
+    const dialog = dialogOf(container);
+    stubSheetRect(dialog, { left: 100, top: 50, right: 900, bottom: 700 }); // see the previous test's own comment
+    const readStory = dialog.querySelector('a.sheet-story') as HTMLAnchorElement;
+    // next/link has no router context in this isolated test, so jsdom would otherwise attempt
+    // (and loudly no-op) a real navigation on click -- irrelevant to what this test checks
+    // (whether our own dialog-level click handler, not Next's, ran). Same pattern as "leaves
+    // modified clicks... to the browser" above, scoped to just this one click.
+    const stopNavigation = (e: Event) => e.preventDefault();
+    window.addEventListener('click', stopNavigation, { capture: true });
+    try {
+      fireEvent.click(readStory, { clientX: 0, clientY: 0, detail: 0 });
+    } finally {
+      window.removeEventListener('click', stopNavigation, { capture: true });
+    }
+    expect(replace).not.toHaveBeenCalled();
+    expect(dialog.open).toBe(true);
+    expect(window.location.hash).toBe('#work/gonai-story');
+  });
+
   it('with motion allowed, waits for the exit animation before closing', () => {
     allowMotion();
     vi.useFakeTimers();
@@ -408,10 +472,16 @@ describe('ProjectSheet: shared-element View Transition (polish A07)', () => {
     allowMotion();
     stubViewTransition(); // the open
     const { container } = render(<PageWithThumbs />);
-    fireEvent.click(row('GoNai'));
+    const link = row('GoNai');
+    const thumb = link.querySelector('img') as HTMLImageElement;
+    fireEvent.click(link);
     const dialog = dialogOf(container);
     expect(dialog.open).toBe(true);
-    stubViewTransition({ deferUpdate: true }); // the close: its update()/settle() hasn't run yet
+    // deferUpdate: the close's own update()/settle() hasn't run yet when the reopen below
+    // lands. controlFinish too: its own (non-stale, legitimate) finally would otherwise clear
+    // whatever gets named moments later in the same microtask flush, masking whether the
+    // "applied" gate below ever named anything in the first place.
+    const close = stubViewTransition({ deferUpdate: true, controlFinish: true });
     fireEvent.click(closeButton()); // starts closing GoNai
     act(() => {
       window.location.hash = '#work/aje'; // a reopen that lands before that deferred update runs
@@ -429,6 +499,56 @@ describe('ProjectSheet: shared-element View Transition (polish A07)', () => {
     // closed the (now Aje) sheet the moment it finally ran.
     expect(dialog.open).toBe(true);
     expect(dialog.querySelector('h2')?.textContent).toBe('Aje');
+    // Fix round 2 (Minor): the stale settle() returns false (nothing applied -- the sheet never
+    // closed), so runShotTransition's callback never even looked for the "after" side to name.
+    // GoNai's own row thumbnail -- the stale close's would-be "after" -- was never touched, even
+    // before its own finally (still held open by controlFinish) gets a chance to clear anything.
+    expect(thumb.style.viewTransitionName).toBe('');
+    close.resolveFinished();
+    await waitFor(() => expect(thumb.style.viewTransitionName).toBe(''));
+  });
+
+  it('closing during the open morph still gets its reverse morph, not clobbered by the superseded open settling a few microtasks later (Minor 2)', async () => {
+    // Real Chrome: the reviewer found the row thumbnail's freshly-set name wiped out by the
+    // *open* transition's own finished.finally, which fires shortly after -- for whichever
+    // element it captured as ITS "after" (the sheet media) or "before" (the row thumbnail),
+    // regardless of what a newer transition has since done with that same element.
+    allowMotion();
+    const open = stubViewTransition({ controlFinish: true }); // its own update() runs now; finished stays open
+    const { container } = render(<PageWithThumbs />);
+    const link = row('GoNai');
+    const thumb = link.querySelector('img') as HTMLImageElement;
+    fireEvent.click(link); // the open's update() runs synchronously; its `finished` is still pending
+    const dialog = dialogOf(container);
+    expect(dialog.open).toBe(true);
+    const media = dialog.querySelector<HTMLElement>('[data-vt="shot"]')!;
+    expect(media.style.viewTransitionName).toBe('shot'); // named as the open's "after", not yet cleared
+    // Close now, before the open ever settles. Both deferUpdate (reproduces the real window
+    // between naming `before` and the browser invoking the close's own update() -- round 1,
+    // Important #1's own reasoning) and controlFinish (holds the close's *own* finally open too,
+    // so it can't mask the bug by legitimately clearing the same name moments later): without
+    // pinning both, the close's own settling arrives so quickly behind its own naming that it's
+    // indistinguishable from the stale open's finally getting there first.
+    const close = stubViewTransition({ deferUpdate: true, controlFinish: true });
+    fireEvent.click(closeButton());
+    // The close named `media` as ITS OWN "before" (synchronously, before its deferred update()
+    // has even run) -- this is the exact instant real Chrome's race window sits in.
+    expect(media.style.viewTransitionName).toBe('shot');
+    // The open's `finished` settles now, "later" than the close naming `media` -- exactly the
+    // ordering the reviewer described. Without the `latest` token, this stale finally would
+    // clear `media` (its own "after") right out from under the close.
+    open.resolveFinished();
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0)); // flush the close's deferred update() and the open's now-resolved (stale) finally, in that queued order
+    });
+    expect(dialog.open).toBe(false); // the close's own (deferred) update() did run
+    // Named by the close's own update() as ITS "after" -- survived the stale open's finally,
+    // which ran right after but (with the fix) recognized it was no longer the latest transition
+    // and skipped clearing anything.
+    expect(thumb.style.viewTransitionName).toBe('shot');
+    // The close's own (non-stale) finally still clears it normally, once it settles for real.
+    close.resolveFinished();
+    await waitFor(() => expect(thumb.style.viewTransitionName).toBe(''));
   });
 });
 
