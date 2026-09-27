@@ -23,7 +23,13 @@
   /* Ruling C-5: reuses P0's .ctl (globals.css, "Small glass controls (tour paddles, sheet
      close)") for the blur/fill/fallbacks -- this rule only adds the close button's position and
      size, not its surface. */
-  .sheet-close { position: sticky; top: 16px; z-index: 5; float: right; display: grid; place-items: center; width: 36px; height: 36px; margin: 16px 16px 0 0; border-radius: 50%; font-size: 16px; }
+  /* Fix wave finding 3 (gate 5): `float: right` put the button in its own box, which forces
+     `.smedia` -- a BFC (it's `display: grid`) -- to shrink its content-box around the float
+     for the float's own height (52px: 16px margin-top + 36px), so the media was 52/56px short
+     on the right for that band. `float: none` + `margin-left: auto` right-aligns the button
+     without creating that box; the negative bottom margin collapses the 52/56px of flow height
+     the button would otherwise now take, so `.smedia` still starts exactly where it did before. */
+  .sheet-close { position: sticky; top: 16px; z-index: 5; float: none; display: grid; place-items: center; width: 36px; height: 36px; margin: 16px 16px -52px auto; border-radius: 50%; font-size: 16px; }
   .sheet-close::after { content: ""; position: absolute; inset: -4px; }
   .sbody { display: grid; grid-template-columns: 7fr 5fr; gap: 40px; padding: 40px; }
   .sheet-name { margin: 6px 0 0; font-size: 40px; line-height: 44px; font-weight: 600; letter-spacing: 0; }
@@ -36,7 +42,7 @@
   @media (max-width: 734px) {
     .sheet { width: 100%; max-width: 100%; height: calc(100dvh - 12px); max-height: none; margin: 12px 0 0; border-radius: 20px 20px 0 0; }
     .sheet::before { content: ""; position: absolute; top: 6px; left: 50%; z-index: 6; width: 36px; height: 5px; margin-left: -18px; border-radius: 3px; background: var(--ink-3); }
-    .sheet-close { width: 44px; height: 44px; margin: 12px 12px 0 0; }
+    .sheet-close { width: 44px; height: 44px; margin: 12px 12px -56px auto; }
     .sbody { grid-template-columns: 1fr; gap: 8px; padding: 24px 20px; }
     .sheet-name { font-size: 32px; line-height: 36px; }
     .sheet .sheet-name:lang(th) { font-size: 28px; line-height: 38px; }

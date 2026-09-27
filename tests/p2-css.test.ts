@@ -125,6 +125,20 @@ describe('signature.css mirrors SIG in src/lib/signature.ts', () => {
   });
 });
 
+describe('project-sheet.css', () => {
+  const css = readFileSync('src/components/project-sheet.css', 'utf8');
+
+  // Fix wave finding 3 (gate 5): `float: right` forced `.smedia` (a BFC, `display: grid`) to
+  // shrink around the float for its own height, leaving the media 52/56px short on the right.
+  // `float: none` + `margin-left: auto` right-aligns the button without creating that box; the
+  // negative bottom margin keeps it from otherwise pushing `.smedia` down by its own height.
+  it('right-aligns the close button without floating it, so .smedia never shrinks around it (fix wave finding 3)', () => {
+    expect(css).toContain('.sheet-close { position: sticky; top: 16px; z-index: 5; float: none; display: grid; place-items: center; width: 36px; height: 36px; margin: 16px 16px -52px auto; border-radius: 50%; font-size: 16px; }');
+    expect(css).toContain('.sheet-close { width: 44px; height: 44px; margin: 12px 12px -56px auto; }');
+    expect(css).not.toMatch(/\.sheet-close\s*\{[^}]*float:\s*right/);
+  });
+});
+
 describe('P2 CSS animates only transform and opacity', () => {
   it.each(P2_CSS)('%s', (file) => {
     const css = readFileSync(file, 'utf8');
