@@ -333,7 +333,8 @@ can't contain commas, so e.g. "MMB Technology Co., Ltd" has to be entered
 without its comma.)
 
 `PrologueEN/TH` is the owner-side story at the start of "By day"
-(`#story`), and `ClosingLineEN/TH` the line that closes it ("Business
+(`#story`); make its one key clause bold in Notion (⌘B or type `**…**`;
+both work). `ClosingLineEN/TH` is the line that closes it ("Business
 developer who builds his own tools."). `BasedInEN/TH` and `WorkingInEN/TH`
 fill the Based in / Working in facts in the closing Contact block
 (`Bangkok, TH` · `TH / EN`). Leave `WorkingInTH` empty and the English line
@@ -375,8 +376,9 @@ The six "By day" chapters (`#story`), one row each. New in September 2026.
 | Order | Number | |
 | Published | Checkbox | (see above) |
 
-`BodyEN/TH` is one short paragraph; wrap the one clause that should be bold
-in `**double asterisks**`. `RuleEN/TH` is the short rule beside the icon
+`BodyEN/TH` is one short paragraph; make the one clause bold in Notion
+(⌘B or type `**…**`; both work). Bold in any other property shows as
+plain text. `RuleEN/TH` is the short rule beside the icon
 (`Scope it honestly.` / `ประเมินตามจริง`). `Icon` and `Sketch` pick the
 chapter's icon and line drawing — spell the option exactly as listed. The
 last chapter has no `Sketch` — leave it blank; the site shows the five
