@@ -121,7 +121,15 @@ export const ASK_CANNED: readonly Canned[] = [
   // entry, whose bare สื่อ would otherwise answer them as retail media;
   // ออกสื่อโฆษณา / ออกสื่อในร้าน mean running ads or in-store media, so
   // those still fall through to retail.
-  { match: /\bbusiness models?\b|\bfeatured (in|on|by)\b|ออกสื่อ(?!โฆษณา|ในร้าน)|ให้สัมภาษณ์|ลงข่าว/i, decline: true },
+  // Lane C review I3: the English and mixed press questions too ("been in
+  // the media", "media coverage", "interview"), which the retail entry's
+  // bare "media" answered with a confident "Yes." -- except "in the media
+  // industry / business / sales", which is a job question and stays retail.
+  {
+    match:
+      /\bbusiness models?\b|\bfeatured (in|on|by)\b|\b(?:been|appeared?) in the (?:media|news|press)\b(?!\s+(?:industry|business|sales))|\b(?:media|press) (?:coverage|mentions?)\b|\binterview(?:s|ed)?\b|ออกสื่อ(?!โฆษณา|ในร้าน)|ให้สัมภาษณ์|ลงข่าว/i,
+    decline: true,
+  },
   // Lane C review I1: who founded a company, and when, isn't published
   // either -- "When was Actmedia founded?" read as a startup question. His
   // own ventures are left out (their answers carry the dates), and any

@@ -259,10 +259,39 @@ describe('askPreview pinned question table (fix wave finding 4, re-review Import
     ['Has he built up sales before?', 'en', 'decline', 'I2 guard: sales'],
     ['Has he built a deal pipeline?', 'en', 'decline', 'I2 guard: pipeline'],
     ['Has he built a team before?', 'en', 'decline', 'I2 guard: team'],
+    // Lane C review I3: English and mixed press questions decline like their
+    // Thai twin (T18-b2). A question about working in media is still the
+    // retail answer.
+    ['Has he been in the media?', 'en', 'decline', 'review #1, I3'],
+    ['Any media coverage of GoNai?', 'en', 'decline', 'review #2, I3'],
+    ['Has he given media interviews?', 'en', 'decline', 'review #3, I3'],
+    ['Was GoNai featured on TV?', 'en', 'decline', 'review #4'],
+    ['Has he been in the news?', 'en', 'decline', 'review #5'],
+    ['Did the press write about Aje?', 'en', 'decline', 'review #6'],
+    ['Does he sell in-store media to brands?', 'en', 'retail', 'review #7'],
+    ['How does in-store screen advertising work at his job?', 'en', 'retail', 'review #8'],
+    ['Has he worked in the media industry?', 'en', 'retail', 'review #9, I3: media as a job stays retail'],
+    ['มี media coverage ไหม', 'th', 'decline', 'review #35, I3'],
+    ['เคยให้ interview สื่อไหม', 'th', 'decline', 'review #38, I3'],
+    ['ทำ in-store media ที่ Actmedia ใช่ไหม', 'th', 'retail', 'review #39'],
+    ['เคยถูก featured in magazine ไหม', 'th', 'decline', 'review #40'],
+    ['Has he appeared in the media?', 'en', 'decline', 'I3: appeared in the media'],
+    ['Has he been in the news for his retail work?', 'en', 'decline', 'I3: in the news'],
+    ['Has his in-store work appeared in the press?', 'en', 'decline', 'I3: in the press'],
+    ['Any media mentions of his retail work?', 'en', 'decline', 'I3: media mentions'],
+    ['Any press coverage of his in-store work?', 'en', 'decline', 'I3: press coverage'],
+    ['Was he interviewed about retail media?', 'en', 'decline', 'I3: interviewed'],
+    ['Has he been in the media industry?', 'en', 'retail', 'I3 lookahead: media industry is a job'],
+    ['Has he been in the media business?', 'en', 'retail', 'I3 lookahead: media business is a job'],
+    ['Has he been in the media sales side?', 'en', 'retail', 'I3 lookahead: media sales is a job'],
+    // Review m5 (MD): "featured on/by" -- each with a retail word, so only
+    // the decline stands between it and the retail answer.
+    ['Was his retail media work featured on TV?', 'en', 'decline', 'm5: featured on'],
+    ['Was his in-store work featured by a magazine?', 'en', 'decline', 'm5: featured by'],
   ];
 
   it('covers every pinned question', () => {
-    expect(ROWS).toHaveLength(102);
+    expect(ROWS).toHaveLength(126);
   });
 
   it.each(ROWS)('%s (%s) -> %s [%s]', (query, locale, expected) => {
