@@ -107,7 +107,7 @@ export default async function ProjectsPage({ params }: { params: Promise<{ local
       <h1 className="font-display text-[clamp(30px,4vw,46px)] font-bold tracking-[-0.03em]">
         {t.projects}
       </h1>
-      <p className="mt-3 max-w-[60ch] text-[14.5px] text-soft">{t.projectsSubtitle}</p>
+      <p className="mt-3 max-w-[60ch] text-[14.5px] text-ink-2">{t.projectsSubtitle}</p>
       {groups.map((g) => (
         <section key={g.type} className="mt-8">
           <SectionLabel as="h2" text={g.label} locale={locale} />

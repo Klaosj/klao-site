@@ -66,21 +66,18 @@ export default function RootNotFound() {
   ];
 
   return (
-    <section className="flex min-h-[70vh] flex-col items-center justify-center bg-deep px-6 py-[16vh] text-center">
+    <section className="flex min-h-[70vh] flex-col items-center justify-center bg-canvas px-6 py-[16vh] text-center">
       <title>{`${t.notFoundTitle} · Klao`}</title>
 
-      <p className={`mb-5 text-[9.5px] uppercase text-on-dark-soft ${eyebrowFont(locale, 'tracking-[0.24em]')}`}>
+      <p className={`mb-5 text-[9.5px] uppercase text-ink-2 ${eyebrowFont(locale, 'tracking-[0.24em]')}`}>
         404
       </p>
-      <h1 className="max-w-[20ch] text-[clamp(28px,4.6vw,52px)] font-bold leading-[1.15] tracking-[-0.025em] text-on-dark">
+      <h1 className="max-w-[20ch] text-[clamp(28px,4.6vw,52px)] font-bold leading-[1.15] tracking-[-0.025em] text-ink-1">
         {t.notFoundTitle}
       </h1>
-      <p className="mt-5 max-w-[46ch] text-[14.5px] leading-[1.7] text-on-dark-soft">{t.notFoundBody}</p>
+      <p className="mt-5 max-w-[46ch] text-[14.5px] leading-[1.7] text-ink-2">{t.notFoundBody}</p>
 
-      <Link
-        href={`/${locale}`}
-        className="btn mt-10 inline-flex items-center gap-3 rounded-full bg-light px-8 py-4 text-[13.5px] font-semibold text-dark"
-      >
+      <Link href={`/${locale}`} className="btn btn-fill mt-10 inline-flex items-center gap-3">
         {t.backHome} <span aria-hidden="true">→</span>
       </Link>
 
@@ -89,7 +86,7 @@ export default function RootNotFound() {
           <Link
             key={l.href}
             href={l.href}
-            className="text-on-dark-soft underline underline-offset-4 transition-colors hover:text-on-dark"
+            className="text-ink-2 underline underline-offset-4 transition-colors hover:text-ink-1"
           >
             {l.label}
           </Link>

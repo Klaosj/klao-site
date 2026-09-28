@@ -134,12 +134,12 @@ export default async function PostPage({
     // reading-width column and top padding now.
     <article className="mx-auto w-full max-w-3xl px-6 pb-16 pt-28">
       <p className="text-sm">
-        <Link href={`/${locale}/writing`} className="text-soft hover:text-ink">
+        <Link href={`/${locale}/writing`} className="text-ink-2 hover:text-ink-1">
           ← {dict[locale].back}
         </Link>
       </p>
       <h1 className="mt-4 font-display text-3xl">{post.title[locale]}</h1>
-      <p className="mt-2 text-xs text-soft">{formatDate(post.date, locale)}</p>
+      <p className="mt-2 text-xs text-ink-2">{formatDate(post.date, locale)}</p>
       <div className="mt-8">
         <PostBody blocks={body} />
       </div>
