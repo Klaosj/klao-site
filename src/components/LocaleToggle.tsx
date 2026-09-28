@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useActiveSection } from '@/lib/active-section';
 import { dict } from '@/lib/dictionary';
@@ -42,12 +41,15 @@ const ITEMS: readonly { locale: Locale; label: string }[] = [
  *
  * These stay real links, not radio buttons: each language is its own route
  * (/en, /th) with its own hreflang, so the switch works without JavaScript
- * and search engines see both. `aria-current="page"` marks the one you're
+ * and search engines see both. Plain <a>, not next/link (P1 final fix wave,
+ * finding 9): crossing locale re-renders the root [locale] layout, and a
+ * client-side navigation there let React 19 reset <html>'s attributes -- the
+ * pre-paint script's `js` class and a pinned theme -- until a reload. A full
+ * page load runs that script again, so every crossing is one. `aria-current="page"` marks the one you're
  * already on -- the same attribute any other current-page nav link in this
  * codebase uses, and exactly what `.seg > :is(button, a)[aria-current="page"]`
  * keys its bold/current styling on -- and it still drives the thumb, because
- * `current` (read from the pathname on every render, including right after a
- * same-tree client navigation lands) is what sets `--i`. Unlike ThemeToggle,
+ * `current` (read from the pathname on every render) is what sets `--i`. Unlike ThemeToggle,
  * there is no stored-preference sync to settle after mount -- `usePathname`
  * already gives the right locale on the very first render, server and
  * client alike -- but `data-ready` still has a job: without it,
@@ -68,16 +70,25 @@ export default function LocaleToggle({ wide = false }: { wide?: boolean }) {
   // jump (the site sets no smooth scrolling), so reduced motion needs no
   // branch; html's scroll-padding-top (site-nav.css) clears the capsule.
   const section = useActiveSection();
-  // P1 final review M-2 (A02): the thumb moves on the click itself. The
-  // switch is a route change with prefetch off, so waiting for the new
-  // pathname left the tap unanswered for ~0.4 s. The pick is kept with the
-  // pathname it was made on, so it lapses by itself once the route changes
-  // (or Back undoes it); aria-current stays with the page actually shown.
-  // Under reduced motion globals.css already turns the slide into a jump.
+  // P1 final review M-2 (A02): the thumb moves on the click itself, while
+  // the next page loads, instead of leaving the tap unanswered. The pick is
+  // kept with the pathname it was made on, so it lapses once the route
+  // changes; aria-current stays with the page actually shown. Under reduced
+  // motion globals.css already turns the slide into a jump.
   const [pending, setPending] = useState<{ from: string; index: number } | null>(null);
   // Dropped (not just ignored) once the route moves on, so coming Back to
   // the page it was made on can't bring an old pick back.
   if (pending && pending.from !== pathname) setPending(null);
+  // A full load (finding 9) means Back can restore this page from the
+  // back-forward cache exactly as it was left, thumb moved and pathname
+  // unchanged; put it back on the page's own language.
+  useEffect(() => {
+    const onShow = (e: PageTransitionEvent) => {
+      if (e.persisted) setPending(null);
+    };
+    window.addEventListener('pageshow', onShow);
+    return () => window.removeEventListener('pageshow', onShow);
+  }, []);
   const index = pending?.from === pathname ? pending.index : current === 'th' ? 1 : 0;
   // See the doc comment above: this never corrects a mismatched guess (there
   // isn't one), it only lifts the fix wave's mount-time `:not([data-ready])`
@@ -100,12 +111,11 @@ export default function LocaleToggle({ wide = false }: { wide?: boolean }) {
     >
       <span className="thumb" aria-hidden="true" />
       {ITEMS.map(({ locale, label }, i) => (
-        <Link
+        <a
           key={locale}
           // The current language keeps no hash: following it would only
           // jump the page to the top of the section already being read.
           href={switchLocaleHref(pathname, locale, locale === current ? null : section)}
-          prefetch={false}
           lang={locale}
           hrefLang={locale}
           aria-current={current === locale ? 'page' : undefined}
@@ -116,7 +126,7 @@ export default function LocaleToggle({ wide = false }: { wide?: boolean }) {
           <span className="seg-label" data-label={label}>
             {label}
           </span>
-        </Link>
+        </a>
       ))}
     </div>
   );

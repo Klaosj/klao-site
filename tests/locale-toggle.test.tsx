@@ -6,7 +6,14 @@ import LocaleToggle, { switchLocaleHref } from '@/components/LocaleToggle';
 import { setActiveSection } from '@/lib/active-section';
 import { dict } from '@/lib/dictionary';
 
-vi.mock('next/navigation', () => ({ usePathname: vi.fn(() => '/en') }));
+// A router spy and a marked next/link, so a test can prove the switch never
+// goes through either (P1 final fix wave, finding 9).
+const router = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn(), prefetch: vi.fn() }));
+vi.mock('next/navigation', () => ({ usePathname: vi.fn(() => '/en'), useRouter: () => router }));
+vi.mock('next/link', async () => {
+  const { createElement } = await import('react');
+  return { default: (props: Record<string, unknown>) => createElement('a', { ...props, prefetch: undefined, 'data-next-link': '' }) };
+});
 
 // Same helper as tests/theme-toggle.test.tsx: a real requestAnimationFrame
 // tick, since that's what the component's mount effect actually uses (not a
@@ -165,6 +172,48 @@ describe('LocaleToggle', () => {
     expect(en.getAttribute('href')).toBe('/en');
     act(() => setActiveSection(null));
     expect(th.getAttribute('href')).toBe('/th');
+  });
+
+  // P1 final fix wave, finding 9: a client-side switch re-rendered the root
+  // [locale] layout, and React 19 reset <html>'s attributes -- the `js` class
+  // (every no-JS fallback came back: the phone Menu, FAQ expand-all, the
+  // Short/Full control) and a pinned theme -- until a reload. Crossing locale
+  // is a full page load now: a plain <a> the browser follows, never next/link
+  // or the router, still carrying the section being read (finding 8).
+  it('is a plain link the browser follows, a full page load that keeps the section', () => {
+    render(<LocaleToggle />);
+    act(() => setActiveSection('career'));
+    const th = document.querySelector('.lt-seg a[hreflang="th"]') as HTMLAnchorElement;
+    expect(document.querySelector('.lt-seg [data-next-link]')).toBeNull();
+    expect(th.getAttribute('href')).toBe('/th#career');
+    // Read on the way up, after the component's handler and before the
+    // test's own stayOnPage: nothing of ours cancelled the browser's load.
+    let prevented: boolean | null = null;
+    const seen = (e: Event) => {
+      prevented = e.defaultPrevented;
+    };
+    document.addEventListener('click', seen);
+    fireEvent.click(th);
+    document.removeEventListener('click', seen);
+    expect(prevented).toBe(false);
+    expect(router.push).not.toHaveBeenCalled();
+    expect(router.replace).not.toHaveBeenCalled();
+  });
+
+  // With a full load, Back can restore this page from the back-forward cache
+  // as it was left: the thumb moved (finding 6) on the same pathname. It goes
+  // back to the page's own language.
+  it('puts the thumb back when Back restores the page from the back-forward cache', () => {
+    render(<LocaleToggle />);
+    const group = document.querySelector('.lt-seg') as HTMLElement;
+    fireEvent.click(group.querySelector('a[hreflang="th"]') as HTMLElement);
+    expect(group.style.getPropertyValue('--i')).toBe('1');
+    const restored = new Event('pageshow');
+    Object.defineProperty(restored, 'persisted', { value: true });
+    act(() => {
+      window.dispatchEvent(restored);
+    });
+    expect(group.style.getPropertyValue('--i')).toBe('0');
   });
 
   it('marks data-ready one frame after mount, not on the initial render (fix wave finding 1)', async () => {
