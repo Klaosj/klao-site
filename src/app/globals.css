@@ -760,6 +760,14 @@
      unlike .nw -- a whole heading token can be too long to force nowrap.
      Matches the reviewed prototype's own .kt rule verbatim (l.97). */
   .kt { display: inline-block; max-width: 100%; }
+  /* Re-review N1 (regression from P2 fix wave findings 5/6): .nw/.kt are inline-block (the
+     documented trap, ThaiText.tsx), so an ancestor link's hover underline stops at each keep-
+     run's own edge instead of drawing through it -- on /th the By-day door's underline broke
+     under "ดีล" (twice) and "เครือข่าย". `inherit` is low specificity (0,1,1: `a` + :is()'s most
+     specific class), so a more specific override still wins where one already exists -- e.g.
+     hero-tour-stage.css's `a.ht-q:hover .ht-qt :is(.nw, .kt)` (0,4,1) -- there is exactly one
+     winning declaration either way, never two underlines drawn on top of each other. */
+  a :is(.nw, .kt) { text-decoration: inherit; }
 }
 
 /* ---- reveal (C9) -----------------------------------------------------
