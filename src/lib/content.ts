@@ -144,7 +144,13 @@ export const TIER_ORDER: Record<SkillTier, number> = Object.fromEntries(
 // same shape as getCareer just above, which has never needed the dedupe
 // either.
 export async function getSkills(): Promise<Skill[]> {
-  const all = await fromNotion((n) => n.fetchSkills(), skillsFixture as Skill[]);
+  // Same divergence as getQuestions below: NOTION_DB_SKILLS unset in Notion
+  // mode means "not configured", so serve the bundled toolbox instead of
+  // letting dbId() throw on every ISR revalidate (production ran without it).
+  const all =
+    process.env.NOTION_TOKEN && !process.env.NOTION_DB_SKILLS
+      ? (skillsFixture as Skill[])
+      : await fromNotion((n) => n.fetchSkills(), skillsFixture as Skill[]);
   return [...all].sort((a, b) => TIER_ORDER[a.tier] - TIER_ORDER[b.tier] || a.order - b.order);
 }
 
