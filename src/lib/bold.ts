@@ -4,7 +4,8 @@ export interface BoldSegment {
 }
 
 // Notion copy marks its one key clause with **…** (spec §7: Story BodyEN/TH,
-// Profile PrologueEN/TH). A pair needs at least one character between the
+// Profile PrologueEN/TH). In Notion the clause is bold formatting;
+// notion-mappers.ts's boldText turns it back into the markers. A pair needs at least one character between the
 // markers; an unclosed or empty pair stays literal, so a half-typed edit in
 // Notion shows up as-is on the page (and gets noticed) instead of bolding the
 // rest of the paragraph.
