@@ -186,6 +186,21 @@ describe('ProjectSheet content', () => {
     expect(texts(dialog, '.lin td .nw')).toContain('ส.ค. 2026');
   });
 
+  // Re-review N4: the assertion above only exercised the later (b) column. dict.th.lineageResult
+  // has both dictionary and fixture-free -- "รอบ 30 ทีมสุดท้ายจาก 500" (the earlier/Tripedia
+  // value) already carries "30 ทีม" (digit + the "ทีม" unit word), so the earlier <td> gets its
+  // own real keep-run match without needing to inject fixture copy.
+  it('routes the earlier lineage column through ThaiText too, not just the later one (re-review N4)', () => {
+    const dialog = openAt('gonai', 'th');
+    const resultRow = Array.from(dialog.querySelectorAll('.lin tbody tr')).find((tr) => tr.querySelector('th')?.textContent === dict.th.lineageResult[0])!;
+    expect(resultRow).toBeTruthy();
+    // The row's <th> is its own first child, so the two <td>s are indexed directly rather than
+    // via :first-child/:last-child (which would match neither -- the <th> holds that place).
+    const [earlierCell, laterCell] = Array.from(resultRow.querySelectorAll('td'));
+    expect(texts(earlierCell, '.nw')).toContain('30 ทีม'); // earlier (Tripedia)
+    expect(texts(laterCell, '.nw')).toContain('ส.ค. 2026'); // later (GoNai)
+  });
+
   it('a pre-migration row (no kicker, status, outcomes or screenshot) still opens whole', () => {
     const bare = makeProject({ id: 'fx-bare', name: 'Bare', imageSrc: null, media: 'win', description: { en: 'Only the old fields.', th: 'มีแค่ฟิลด์เดิม' } });
     const dialog = openAt('bare', 'en', [bare]);

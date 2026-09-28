@@ -3,8 +3,18 @@ import { act, cleanup, render } from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import SignatureScene, { type SignatureCopy } from '@/components/SignatureScene';
+import { sigGeometry } from '@/lib/signature';
 import { FakeIO, installFakeIO } from './helpers/io';
 import { stubMatchMedia } from './helpers/media';
+
+// Re-review N4: sigGeometry wrapped as a spy that still calls through to the real
+// implementation, so every other test in this file (all of which call it indirectly via
+// SignatureScene, never assert on it) behaves exactly as before -- only the call-site wiring
+// test below reads `.mock.calls`.
+vi.mock('@/lib/signature', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/signature')>();
+  return { ...actual, sigGeometry: vi.fn(actual.sigGeometry) };
+});
 
 const COPY: SignatureCopy = {
   eyebrow: '2022 → 2026',
@@ -238,6 +248,32 @@ describe('SignatureScene routes captions through ThaiText keep-runs (fix wave fi
     const html = renderToStaticMarkup(<SignatureScene copy={{ ...COPY, cardQuestion: 'ทำไมต้องรอ', capTitle: 'สี่ปีต่อมา' }} />);
     expect(html).toContain('class="kt">ทำไมต้องรอ</span>');
     expect(html).toContain('class="kt">สี่ปีต่อมา</span>');
+  });
+});
+
+// Re-review N4: the call site (SignatureScene.tsx layout()) passes `phone:
+// matchMedia('(max-width: 734px)').matches` into sigGeometry -- untested until now (deleting
+// that line kept every other test green, since sigGeometry's own width-only default still
+// produces a plausible geometry). This proves the wiring itself, not just sigGeometry's own
+// override logic (already covered by signature-math.test.ts).
+describe('SignatureScene wires the phone media query into sigGeometry (re-review N4)', () => {
+  it('passes phone: false from the media query even when the measured stage width alone would say phone', () => {
+    vi.mocked(sigGeometry).mockClear();
+    // jsdom never lays elements out, so stage.clientWidth (sigGeometry's `width`) is always 0 in
+    // this harness -- sigGeometry's own width-only default (`width <= 734`) would read that as
+    // "phone" every time. Forcing the media query false is the only way the geometry can still
+    // come out "desktop": if SignatureScene stopped passing `phone` (the mutation this closes),
+    // the override would vanish and `call.phone` would fall back to `true`, failing this test.
+    stubMatchMedia((q) => {
+      if (q.includes('max-width: 734px')) return false; // force "desktop" via the media query
+      if (q.includes(': reduce')) return false; // motion allowed, so the scene actually pins
+      return q.includes('no-preference'); // its inverse
+    });
+    render(<SignatureScene copy={COPY} />);
+    expect(sigGeometry).toHaveBeenCalled();
+    const call = vi.mocked(sigGeometry).mock.calls.at(-1)![0];
+    expect(call.width).toBeLessThanOrEqual(734); // the measured stage width really would say "phone"
+    expect(call.phone).toBe(false); // but the wired-in media query still won
   });
 });
 
