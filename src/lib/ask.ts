@@ -99,7 +99,8 @@ const BUILD_SOURCES: CannedSource[] = [
 // T18-b (CO-10, ruling PR5) -- the prototype's own wrong answers (P4
 // review Minor F), pinned in tests/ask.test.ts's 47 + 20 rows:
 //  - "business model" and "featured in/on/by" (press) decline: neither is
-//    published content (rows 25 and "featured in the media").
+//    published content (rows 25 and "featured in the media"). T18-b2 adds
+//    the Thai press words (ออกสื่อ, ให้สัมภาษณ์, ลงข่าว).
 //  - bare "today" left the right-now entry: "Can I call him today?" is not
 //    a current-work question (row 26); it now declines.
 //  - "founded"/"founder" answer with the startups (row 14), "built" with
@@ -114,7 +115,12 @@ export const ASK_CANNED: readonly Canned[] = [
   // otherwise read "social media"/"สื่อโซเชียล" as a retail-media question).
   { match: /\bsocial media\b|โซเชียล/i, decline: true },
   // T18-b: not published either -- a project's business model, press.
-  { match: /\bbusiness models?\b|\bfeatured (in|on|by)\b/i, decline: true },
+  // T18-b2: the Thai press words too (ออกสื่อ "in the media", ให้สัมภาษณ์
+  // "gave an interview", ลงข่าว "in the news"). Checked before the retail
+  // entry, whose bare สื่อ would otherwise answer them as retail media;
+  // ออกสื่อโฆษณา / ออกสื่อในร้าน mean running ads or in-store media, so
+  // those still fall through to retail.
+  { match: /\bbusiness models?\b|\bfeatured (in|on|by)\b|ออกสื่อ(?!โฆษณา|ในร้าน)|ให้สัมภาษณ์|ลงข่าว/i, decline: true },
   {
     match: /\bright now\b|\bworking on\b|\bcurrently\b|\bthese days\b|ตอนนี้|ทำอะไรอยู่|ช่วงนี้/i,
     answer: {

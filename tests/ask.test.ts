@@ -112,7 +112,7 @@ describe('askPreview', () => {
 // reviewer's 20 re-check questions (66793b1) follow the 47 -- one of them,
 // "featured in the media", was a confident retail answer and now declines.
 // Every other row keeps its earlier outcome: 0 regressions across all 67.
-describe('askPreview 47 + 20 question table (fix wave finding 4, re-review Important A, T18-b)', () => {
+describe('askPreview 47 + 20 + 7 question table (fix wave finding 4, re-review Important A, T18-b, T18-b2)', () => {
   // One name per ASK_CANNED index. 'build' appears twice: PR5's "code in /
   // โค้ด" check runs ahead of the language entry and gives the build answer.
   const ENTRY_NAME = [
@@ -209,10 +209,20 @@ describe('askPreview 47 + 20 question table (fix wave finding 4, re-review Impor
     ['เคยพัฒนาแอปเองไหม', 'th', 'build', 'TH develop app'],
     ['ธุรกิจที่เคยทำมีอะไรบ้าง', 'th', 'business', 'TH business'],
     ['ทำ media มาก่อนไหม', 'th', 'retail', 'mixed media'],
+    // T18-b2 (controller ruling): the Thai press questions decline like
+    // "featured in the media" -- while สื่อ in the retail-media sense
+    // (in-store media, running ads in a store) still gets the retail answer.
+    ['เคยออกสื่อไหม', 'th', 'decline', 'TH press: ออกสื่อ (T18-b2)'],
+    ['มีผลงานออกสื่อบ้างไหม', 'th', 'decline', 'TH press: ออกสื่อ (T18-b2)'],
+    ['เคยให้สัมภาษณ์สื่อไหม', 'th', 'decline', 'TH press: ให้สัมภาษณ์ (T18-b2)'],
+    ['เคยลงข่าวเรื่องงานสื่อไหม', 'th', 'decline', 'TH press: ลงข่าว (T18-b2)'],
+    ['ทำสื่อในร้านค้าปลีกไหม', 'th', 'retail', 'TH in-store media stays retail (T18-b2)'],
+    ['ช่วยออกสื่อโฆษณาในร้านได้ไหม', 'th', 'retail', 'ออกสื่อโฆษณา = running ads, not press (T18-b2)'],
+    ['เคยทำ retail media ในร้านไหม', 'th', 'retail', 'mixed retail media stays retail (T18-b2)'],
   ];
 
-  it('covers all 67 questions', () => {
-    expect(ROWS).toHaveLength(67);
+  it('covers all 74 questions', () => {
+    expect(ROWS).toHaveLength(74);
   });
 
   it.each(ROWS)('%s (%s) -> %s [%s]', (query, locale, expected) => {
