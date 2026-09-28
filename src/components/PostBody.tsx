@@ -11,7 +11,7 @@ function Spans({ spans }: { spans: RichSpan[] }) {
         if (s.italic) node = <em>{node}</em>;
         if (s.href)
           node = (
-            <a href={s.href} className="underline hover:text-soft" target="_blank" rel="noreferrer">
+            <a href={s.href} className="underline hover:text-ink-2" target="_blank" rel="noreferrer">
               {node}
             </a>
           );
@@ -104,13 +104,13 @@ export default function PostBody({ blocks }: { blocks: ContentBlock[] }) {
             );
           case 'quote':
             return (
-              <blockquote key={i} className="border-l-2 border-ink pl-4 italic text-soft">
+              <blockquote key={i} className="border-l-2 border-ink-3 pl-4 italic text-ink-2">
                 <Spans spans={block.spans} />
               </blockquote>
             );
           case 'code':
             return (
-              <pre key={i} className="overflow-x-auto rounded bg-ink p-4 text-sm text-paper">
+              <pre key={i} className="overflow-x-auto rounded bg-mist p-4 text-sm text-ink-1">
                 <code className={`language-${block.language}`}>{block.code}</code>
               </pre>
             );
@@ -122,7 +122,7 @@ export default function PostBody({ blocks }: { blocks: ContentBlock[] }) {
                     screen reader anyway. The caption below is the accessible
                     description; an uncaptioned image is presentation-only. */}
                 <img src={block.src} alt="" loading="lazy" className="w-full rounded" />
-                {block.caption && <figcaption className="mt-1 text-xs text-soft">{block.caption}</figcaption>}
+                {block.caption && <figcaption className="mt-1 text-xs text-ink-2">{block.caption}</figcaption>}
               </figure>
             );
           default: {

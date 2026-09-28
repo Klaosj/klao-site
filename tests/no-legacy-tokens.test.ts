@@ -22,7 +22,7 @@ const CSS_VAR = new RegExp(`--color-(?:${LEGACY})(?![\\w-])`, 'g');
 
 // Widened task by task in P5: routes (Task 5) → components and lib (Task 6)
 // → all of src/, globals.css included (Task 7).
-const SCAN = ['src/app/[locale]', 'src/app/not-found.tsx'];
+const SCAN = ['src/app/[locale]', 'src/app/not-found.tsx', 'src/components', 'src/lib'];
 
 function files(p: string): string[] {
   if (!statSync(p).isDirectory()) return [p];
