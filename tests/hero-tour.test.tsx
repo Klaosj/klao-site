@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
+import { readFileSync, statSync } from 'node:fs';
 import { cleanup, render, screen } from '@testing-library/react';
-import { renderToStaticMarkup } from 'react-dom/server';
+import { renderToStaticMarkup, renderToString } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import HeroTour from '@/components/sections/HeroTour';
 import projectsFixture from '@/content/fixtures/projects.json';
@@ -106,6 +107,38 @@ describe('HeroTour', () => {
     render(<HeroTour profile={profile} projects={projects.filter((p) => p.type === 'business')} locale="en" />);
     expect(document.getElementById('tour')).toBeNull();
     expect(h1()).toBeTruthy();
+  });
+
+  // P1 final review I-3: React preloads every eager <img> it server-renders
+  // (Next sends it as a `Link: rel=preload` header), so the 640 px, 95 KB
+  // portrait went out at high priority ahead of the tour's first frame, the
+  // LCP image. The avatar is low priority now, which React skips, and 128 px,
+  // the prototype's size (2x the 64 px chip).
+  it('never preloads the portrait, and gives both avatars the 128 px copy', () => {
+    const html = renderToString(<HeroTour profile={profile} projects={projects} locale="en" />);
+    // The probe sees preloads at all: the first frame's is still there.
+    expect(html).toMatch(/<link[^>]*rel="preload"[^>]*aje\.jpg/);
+    expect(html).not.toMatch(/<link[^>]*portrait/);
+    render(<HeroTour profile={profile} projects={projects} locale="en" />);
+    const chip = top().querySelector('.ht-hi img')!;
+    expect(chip.getAttribute('src')).toBe('/images/portrait-128.jpg');
+    expect(chip.getAttribute('fetchpriority')).toBe('low');
+    expect(top().querySelector('.ht-vig-h img')!.getAttribute('src')).toBe('/images/portrait-128.jpg');
+  });
+
+  it('passes a Notion photo through unchanged: only the bundled portrait has a 128 px copy', () => {
+    render(<HeroTour profile={makeProfile({ photoSrc: '/api/img/page/abc/Photo' })} projects={projects} locale="en" />);
+    expect(top().querySelector('.ht-hi img')!.getAttribute('src')).toBe('/api/img/page/abc/Photo');
+    expect(top().querySelector('.ht-vig-h img')!.getAttribute('src')).toBe('/api/img/page/abc/Photo');
+  });
+
+  it('ships the 128 px portrait next to the full one', () => {
+    const jpg = readFileSync('public/images/portrait-128.jpg');
+    // The first SOF0/SOF2 frame header carries height then width (big-endian).
+    let at = 2;
+    while (jpg[at] === 0xff && jpg[at + 1] !== 0xc0 && jpg[at + 1] !== 0xc2) at += 2 + jpg.readUInt16BE(at + 2);
+    expect([jpg.readUInt16BE(at + 7), jpg.readUInt16BE(at + 5)]).toEqual([128, 128]);
+    expect(statSync('public/images/portrait-128.jpg').size).toBeLessThan(16 * 1024);
   });
 
   it('server HTML already shows the headline, both actions and the first frame with its subtitle, nothing parked at opacity 0 (Review Focus #4)', () => {

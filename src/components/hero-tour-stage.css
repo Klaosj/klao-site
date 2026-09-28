@@ -261,7 +261,11 @@
     .ht-vrow > span { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .ht-ul { left: 88px; }
     .ht-vh1 { font-size: 20px; }
-    .ht-vig-h small { font-size: 14px; }
+    /* P1 final review I-4: the "klao-site · EN / TH" line fell below the
+       stage's bottom edge at every phone width up to ~420 px (22 px under at
+       390), so it was only ever seen cut in half. The pill right under the
+       stage already says "klao-site · This site", so on phone it goes. */
+    .ht-vig-h small { display: none; }
     .ht-paddle { display: none; }
     .ht-pill.glass {
       position: relative; bottom: auto;
@@ -274,6 +278,14 @@
     .ht-dots { width: 100%; justify-content: center; }
     .ht-dot { width: 44px; height: 32px; }
     .ht-dot[aria-selected="true"] { width: 56px; }
+  }
+  /* P1 final review I-4: the 6:5 stage gets shorter with the width while the
+     vignette's rows don't, so below ~380 px the headline ran past the bottom
+     edge (12 px at 360, 45 px at 320). The Status row and the avatar are the
+     two things the mockup can lose; together they free ~79 px, which keeps
+     the headline whole down to 320 with room to spare at 375. */
+  @media (max-width: 380px) {
+    .ht-vrow[data-row="status"], .ht-vig-h img { display: none; }
   }
 
   @keyframes ht-in { from { opacity: 0; } to { opacity: 1; } }

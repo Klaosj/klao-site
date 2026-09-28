@@ -19,6 +19,10 @@
     }
     .nm-open::after { content: ""; position: absolute; inset: -6px -2px; }
   }
+  /* P1 final review M-3: the button only opens the dialog through script, so
+     without JavaScript it was a dead control. The page still reads top to
+     bottom without it. */
+  html:not(.js) .nm-open { display: none; }
 
   .nm {
     width: min(358px, 100% - 32px); max-width: none; max-height: calc(100svh - 16px);

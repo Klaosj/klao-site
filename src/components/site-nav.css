@@ -82,6 +82,13 @@
     .sn-cap.glass { padding: 0 8px 0 10px; border-radius: 16px; }
     .sn-brand { font-size: 15px; }
   }
+  /* P1 final review M-1: the row (mark + name, EN/ไทย, Menu) no longer fits
+     the capsule below ~347 px in EN (26 px over at 320, and a 1 px sideways
+     page scroll) or ~338 px in TH. The first name goes; the mark stays and
+     the link's aria-label keeps the full name. */
+  @media (max-width: 349px) {
+    .sn-name { display: none; }
+  }
   @media (prefers-reduced-motion: reduce) {
     .sn-act { transition: opacity 200ms linear; }
   }

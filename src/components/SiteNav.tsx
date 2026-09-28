@@ -7,15 +7,27 @@ import { Icon } from '@/components/icons';
 import LocaleToggle from '@/components/LocaleToggle';
 import NavMenu from '@/components/NavMenu';
 import ThumbBar from '@/components/ThumbBar';
+import { setReadingAnchor } from '@/lib/active-section';
 import { dict } from '@/lib/dictionary';
 import { openPalette } from '@/lib/deep-link';
 import type { Locale, Profile } from '@/lib/models';
-import { firstName, NAV_LABEL_KEY, NAV_SECTIONS, sectionHref, type NavSection } from '@/lib/nav';
+import {
+  firstName,
+  followSection,
+  isPlainClick,
+  NAV_LABEL_KEY,
+  NAV_SECTIONS,
+  READING_ANCHORS,
+  sectionHref,
+  type NavSection,
+  type ReadingAnchor,
+} from '@/lib/nav';
 import './site-nav.css';
 
 /** The line a section must cross to count as "the one you're reading": a thin
  *  band 45 % of the way down the viewport (prototype syncActive). */
 const ACTIVE_BAND = '-45% 0px -54% 0px';
+const READING_LINE = 0.45;
 
 /**
  * The floating capsule (spec §5.4, §6; prototype .cap-nav). Always visible:
@@ -45,21 +57,57 @@ export default function SiteNav({ locale, profile }: { locale: Locale; profile: 
   // Which section is being read. Re-run per route: the layout, and so this
   // nav, outlives a client-side navigation, and other routes have none of
   // these ids (nothing is observed there).
+  //
+  // The same band also feeds the reading anchor (src/lib/active-section.ts),
+  // which every EN/ไทย toggle carries across a switch (Klao decision (a)).
+  // It is wider than the pill (P1 re-review Important 1): Signature, Contact
+  // and the footer count, a gap between two bands keeps the last one, and
+  // only the hero clears it.
   useEffect(() => {
     setActive(null);
+    setReadingAnchor(null);
     if (typeof IntersectionObserver === 'undefined') return;
     const sections = NAV_SECTIONS.map((id) => document.getElementById(id)).filter((el): el is HTMLElement => el !== null);
     if (sections.length === 0) return;
-    const inBand = new Map<string, boolean>();
+    // Page order: at a boundary the band can touch two neighbours, and the
+    // upper one wins, as it does for the pill.
+    const anchors = new Map<Element, ReadingAnchor | null>();
+    const top = document.getElementById('top');
+    if (top) anchors.set(top, null);
+    for (const id of READING_ANCHORS) {
+      const el = document.getElementById(id);
+      if (el) anchors.set(el, id);
+    }
+    const footer = document.querySelector('footer.site-foot');
+    if (footer) anchors.set(footer, 'contact');
+    // A jump (an anchor link, a reload that restores the scroll) can land
+    // in a gap before the band has passed anything: then the band above the
+    // reading line, the one just read, stands in for the last one.
+    const bandAbove = () => {
+      const line = window.innerHeight * READING_LINE;
+      let above: ReadingAnchor | null = null;
+      for (const [el, anchor] of anchors) if (el.getBoundingClientRect().top < line) above = anchor;
+      return above;
+    };
+    let last: ReadingAnchor | null = null;
+    const inBand = new Map<Element, boolean>();
     const io = new IntersectionObserver(
       (entries) => {
-        for (const e of entries) inBand.set(e.target.id, e.isIntersecting);
-        setActive(NAV_SECTIONS.find((id) => inBand.get(id)) ?? null);
+        for (const e of entries) inBand.set(e.target, e.isIntersecting);
+        const sec = sections.find((el) => inBand.get(el));
+        setActive(sec ? (sec.id as NavSection) : null);
+        const hit = Array.from(anchors).find(([el]) => inBand.get(el));
+        if (hit) last = hit[1];
+        else if (last === null) last = bandAbove();
+        setReadingAnchor(last);
       },
       { rootMargin: ACTIVE_BAND },
     );
-    for (const el of sections) io.observe(el);
-    return () => io.disconnect();
+    for (const el of anchors.keys()) io.observe(el);
+    return () => {
+      io.disconnect();
+      setReadingAnchor(null);
+    };
   }, [pathname]);
 
   // The hero's buttons have left the viewport upwards. A row still below the
@@ -111,12 +159,23 @@ export default function SiteNav({ locale, profile }: { locale: Locale; profile: 
             <span className="sn-mono" aria-hidden="true">
               {first.charAt(0).toUpperCase()}
             </span>
-            <span>{first}</span>
+            {/* `.sn-name`: site-nav.css drops it below 350 px (P1 final
+                review M-1); the aria-label above still names him. */}
+            <span className="sn-name">{first}</span>
           </Link>
           <div className="sn-links" ref={linksRef}>
             <span className="sn-act" ref={pillRef} aria-hidden="true" />
             {NAV_SECTIONS.map((sec) => (
-              <Link key={sec} href={href(`#${sec}`)} data-sec={sec} aria-current={active === sec ? 'location' : undefined}>
+              <Link
+                key={sec}
+                href={href(`#${sec}`)}
+                data-sec={sec}
+                aria-current={active === sec ? 'location' : undefined}
+                // Link skips its own navigation once the default is prevented.
+                onClick={(e) => {
+                  if (isPlainClick(e) && followSection(sec)) e.preventDefault();
+                }}
+              >
                 {/* The current link is bold; `data-label` feeds the hidden
                     bold duplicate (globals.css `.seg-label::after`) that
                     reserves that width, so the row never shifts when the

@@ -271,6 +271,58 @@ describe('HeroTourStage', () => {
     expect(selected()).toBe(1);
   });
 
+  // P1 final review I-2: a caption click during autoplay opened the sheet
+  // while the tour kept playing behind it. Focus left for the sheet, the hold
+  // lifted, the frame moved on and the keyed caption <a> was recreated, so
+  // closing the sheet sent focus to <body> on a different frame. The caption
+  // is a visitor pick now (spec §6): it stops the tour where it is.
+  it('stops the tour when the caption is followed, so the same caption is still there to take focus back', () => {
+    renderStage();
+    inView();
+    tick(1000);
+    const link = tour().querySelector('a.ht-q') as HTMLAnchorElement;
+    link.focus();
+    fireEvent.click(link);
+    expect(playButton().getAttribute('aria-label')).toBe(dict.en.tourPlay);
+    // The sheet takes focus: focus leaves the tour, which no longer holds it.
+    const sheet = document.body.appendChild(document.createElement('button'));
+    act(() => {
+      sheet.focus();
+    });
+    tick(30000);
+    expect(selected()).toBe(0);
+    expect(tour().querySelector('a.ht-q')).toBe(link);
+    // Closing the sheet hands focus back to the caption it came from.
+    act(() => {
+      link.focus();
+    });
+    expect(document.activeElement).toBe(link);
+    sheet.remove();
+  });
+
+  // Same review, the cheap half: while any modal dialog (a sheet, ⌘K, the
+  // phone menu) is open, the tour holds instead of moving on behind it.
+  it('holds while a dialog is open over the page, and picks up where it left off', async () => {
+    renderStage();
+    inView();
+    tick(1000);
+    const dialog = document.body.appendChild(document.createElement('dialog'));
+    // The observer reports from a microtask; act() flushes it and the render.
+    await act(async () => {
+      dialog.setAttribute('open', '');
+    });
+    tick(20000);
+    expect(selected()).toBe(0);
+    await act(async () => {
+      dialog.removeAttribute('open');
+    });
+    tick(4999);
+    expect(selected()).toBe(0);
+    tick(1);
+    expect(selected()).toBe(1);
+    dialog.remove();
+  });
+
   it('lets the visitor pick a frame: the tour stops there, and Play carries on from it', () => {
     renderStage();
     inView();
@@ -397,6 +449,8 @@ describe('HeroTourStage', () => {
     expect(text).toContain('นัก Business Development ที่สร้างเครื่องมือใช้เอง');
     expect(text).not.toContain('|');
     expect(vig.querySelector('img')?.getAttribute('alt')).toBe('');
+    // The hook hero-tour-stage.css hides below 380 px (P1 final review I-4).
+    expect(vig.querySelector('.ht-vrow[data-row="status"]')?.textContent).toBe('StatusPublished');
   });
 
   // Fix round 2 (#4): the small "Title TH" preview row is forced to one
@@ -638,6 +692,17 @@ describe('hero-tour-stage.css (polish A04 + A08 exceptions)', () => {
     // shown) rules out a duplicate sneaking in outside the media query --
     // i.e. onto desktop.
     expect(CSS.split(rule).length - 1).toBe(1);
+  });
+
+  // P1 final review I-4: the 6:5 stage shortens with the width and the
+  // vignette's rows don't. On phone the "klao-site · EN / TH" line always
+  // fell past the bottom edge (the pill below already names the site), and
+  // below 380 px the headline did too, until the Status row and avatar go.
+  it('drops the "klao-site · EN / TH" line on phone, and the Status row and avatar below 380 px', () => {
+    expect(mediaBlock(CSS, '(max-width: 734px)')).toContain('.ht-vig-h small { display: none; }');
+    expect(mediaBlock(CSS, '(max-width: 380px)')).toContain('.ht-vrow[data-row="status"], .ht-vig-h img { display: none; }');
+    // Phone only: desktop's vignette has room for all of it.
+    expect(CSS.split('.ht-vig-h small { display: none; }').length - 1).toBe(1);
   });
 
   // Fix round 3: the round-2 truncation rule used a DESCENDANT selector

@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { readFileSync } from 'node:fs';
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { usePathname } from 'next/navigation';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -26,7 +27,9 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
   vi.mocked(usePathname).mockReturnValue('/en');
+  history.replaceState(null, '', '/');
 });
 
 const menuButton = (locale: Locale = 'en') => screen.getByRole('button', { name: dict[locale].navMenu });
@@ -185,6 +188,86 @@ describe('NavMenu', () => {
     dialog = openMenu();
     fireEvent.click(dialog); // the target is the dialog itself = its backdrop
     expect(dialog.hasAttribute('open')).toBe(false);
+  });
+
+  // P1 final review I-1: a section link used to close the menu and hand
+  // focus back to Menu, leaving the reader's focus at the top of the page.
+  // It now follows the section in place (P4's followTarget) and the heading
+  // keeps focus.
+  const withFaq = () =>
+    render(
+      <>
+        <section id="faq">
+          <h2>FAQ heading</h2>
+        </section>
+        <NavMenu locale="en" profile={makeProfile()} active={null} />
+      </>,
+    );
+
+  it('follows a section link in place: the menu closes and focus lands on the section heading, not Menu', () => {
+    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+    withFaq();
+    const dialog = openMenu();
+    // fireEvent returns false when the handler called preventDefault().
+    expect(fireEvent.click(dialog.querySelector('a[data-sec="faq"]') as HTMLElement)).toBe(false);
+    expect(dialog.hasAttribute('open')).toBe(false);
+    expect(document.activeElement).toBe(screen.getByRole('heading', { name: 'FAQ heading' }));
+    expect(scrollTo).toHaveBeenCalledTimes(1);
+    expect(window.location.hash).toBe('#faq');
+    expect(menuButton().getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('keeps focus on the heading when the browser fires close from a later task, as real browsers do', async () => {
+    vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+    // The shared stub fires `close` synchronously; a real browser queues it,
+    // so it lands after the click handler has already moved focus.
+    HTMLDialogElement.prototype.close = function close(this: HTMLDialogElement) {
+      if (!this.hasAttribute('open')) return;
+      this.removeAttribute('open');
+      setTimeout(() => this.dispatchEvent(new Event('close')));
+    };
+    withFaq();
+    const dialog = openMenu();
+    fireEvent.click(dialog.querySelector('a[data-sec="faq"]') as HTMLElement);
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve));
+    });
+    expect(menuButton().getAttribute('aria-expanded')).toBe('false');
+    expect(document.activeElement).toBe(screen.getByRole('heading', { name: 'FAQ heading' }));
+  });
+
+  // P1 final review M-3: without JavaScript the Menu button opened nothing,
+  // a dead control in the capsule. It is hidden until the page's script has
+  // marked <html> with `.js` (the same hook the tour's Play button uses).
+  it('hides the Menu button until JavaScript is running', () => {
+    const css = readFileSync('src/components/nav-menu.css', 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    expect(css).toContain('html:not(.js) .nm-open { display: none; }');
+  });
+
+  // P1 re-review Minor 1: a language switch from the menu is a full page
+  // load (finding 9), so Back can restore this page from the back-forward
+  // cache frozen as it was left, menu open. It closes, and focus goes back to
+  // Menu as on any close.
+  it('closes when Back restores the page from the back-forward cache', () => {
+    render(<NavMenu locale="en" profile={makeProfile()} active={null} />);
+    const dialog = openMenu();
+    const restored = new Event('pageshow');
+    Object.defineProperty(restored, 'persisted', { value: true });
+    act(() => {
+      window.dispatchEvent(restored);
+    });
+    expect(dialog.hasAttribute('open')).toBe(false);
+    expect(menuButton().getAttribute('aria-expanded')).toBe('false');
+    expect(document.activeElement).toBe(menuButton());
+  });
+
+  it('stays open on an ordinary page show (not a restore)', () => {
+    render(<NavMenu locale="en" profile={makeProfile()} active={null} />);
+    const dialog = openMenu();
+    act(() => {
+      window.dispatchEvent(new Event('pageshow'));
+    });
+    expect(dialog.hasAttribute('open')).toBe(true);
   });
 
   it('stays in sync when the browser closes it on Esc (the dialog fires close by itself)', () => {

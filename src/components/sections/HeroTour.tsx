@@ -7,6 +7,12 @@ import { firstName } from '@/lib/nav';
 import { toTourSlides } from '@/lib/project-tour';
 import './hero-tour.css';
 
+// The hero chip (64 px) and the vignette (36 px) are small circles, and the
+// bundled portrait is 640 px and 95 KB, so they take the prototype's 128 px
+// copy (P1 final review I-3). Only the bundled file has one: a Notion photo
+// (/api/img/...) passes through unchanged.
+const SMALL_PHOTO: Record<string, string> = { '/images/portrait.jpg': '/images/portrait-128.jpg' };
+
 /**
  * The first screen (spec §4 row 1): who he is, in one headline, the two things
  * to do next, and the tour of what he has built (C7: `#top` with `#tour`
@@ -30,13 +36,17 @@ export default function HeroTour({ profile, projects, locale }: { profile: Profi
   const now = profile.now[locale];
   const slides = toTourSlides(projects, locale);
   const hasActions = Boolean(profile.email || profile.resumeUrl);
+  const photo = profile.photoSrc ? (SMALL_PHOTO[profile.photoSrc] ?? profile.photoSrc) : null;
 
   return (
     <section id="top" className="ht-hero" aria-labelledby="hero-title">
       <div className="wrap ht-copy">
         <p className="ht-hi ht-in-a">
-          {/* Decorative: the greeting beside it already names him. */}
-          {profile.photoSrc && <img src={profile.photoSrc} alt="" width={64} height={64} />}
+          {/* Decorative: the greeting beside it already names him. Low
+              priority, which also stops React preloading it (Next sends that
+              preload as a Link header, ahead of the tour's first frame, the
+              LCP image). */}
+          {photo && <img src={photo} alt="" width={64} height={64} fetchPriority="low" />}
           <span>
             <ThaiText text={`${t.greeting} ${first}`} />
           </span>
@@ -78,7 +88,7 @@ export default function HeroTour({ profile, projects, locale }: { profile: Profi
       {slides.length > 0 && (
         <HeroTourStage
           slides={slides}
-          vignette={{ titleEn: profile.headline.en, titleTh: profile.headline.th, photoSrc: profile.photoSrc || null }}
+          vignette={{ titleEn: profile.headline.en, titleTh: profile.headline.th, photoSrc: photo }}
           locale={locale}
         />
       )}

@@ -11,7 +11,7 @@ import { dict } from '@/lib/dictionary';
 import { openPalette } from '@/lib/deep-link';
 import { mailtoHref } from '@/lib/format';
 import type { Locale, Profile } from '@/lib/models';
-import { firstName, NAV_LABEL_KEY, NAV_SECTIONS, sectionHref, type NavSection } from '@/lib/nav';
+import { firstName, followSection, isPlainClick, NAV_LABEL_KEY, NAV_SECTIONS, sectionHref, type NavSection } from '@/lib/nav';
 import './nav-menu.css';
 
 const COPIED_MS = 2000;
@@ -30,7 +30,8 @@ const COPY_FAILED_MS = 3000;
  * inert, and closes it on Esc, so none of that is hand-rolled here (the old
  * overlay did all three by hand). Every way out (close button, a link, the
  * backdrop, Esc) ends in the dialog's `close` event, and onClose is the one
- * place that syncs state and hands focus back to Menu.
+ * place that syncs state and hands focus back to Menu (except after a section
+ * link, whose heading keeps it).
  */
 export default function NavMenu({ locale, profile, active }: { locale: Locale; profile: Profile; active: NavSection | null }) {
   const t = dict[locale];
@@ -41,6 +42,11 @@ export default function NavMenu({ locale, profile, active }: { locale: Locale; p
   const dialogRef = useRef<HTMLDialogElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Set while a section link is being followed in place: the heading it
+  // focuses keeps focus, and onClose skips handing it back to Menu. A real
+  // browser fires `close` from a queued task, after the click handler has
+  // already moved focus, so this has to outlive the handler.
+  const keepFocus = useRef(false);
   const [open, setOpen] = useState(false);
   // Wave-1 integration review carry-over (b): 'fail' is the honest third
   // state CopyEmail already has (src/components/CopyEmail.tsx) -- a plain
@@ -55,6 +61,18 @@ export default function NavMenu({ locale, profile, active }: { locale: Locale; p
     [],
   );
 
+  // P1 re-review Minor 1: a language switch from here is a full page load
+  // (LocaleToggle, finding 9), so Back can restore this page from the
+  // back-forward cache frozen with the menu open. Close it then; onClose
+  // hands focus back to Menu as on any other close.
+  useEffect(() => {
+    const onShow = (e: PageTransitionEvent) => {
+      if (e.persisted) dialogRef.current?.close();
+    };
+    window.addEventListener('pageshow', onShow);
+    return () => window.removeEventListener('pageshow', onShow);
+  }, []);
+
   const show = () => {
     dialogRef.current?.showModal();
     setOpen(true);
@@ -62,7 +80,18 @@ export default function NavMenu({ locale, profile, active }: { locale: Locale; p
   const hide = () => dialogRef.current?.close();
   const onClose = () => {
     setOpen(false);
-    buttonRef.current?.focus();
+    if (keepFocus.current) keepFocus.current = false;
+    else buttonRef.current?.focus();
+  };
+  // P1 final review I-1: close first -- while the modal is open the page
+  // behind it is inert, and an inert heading cannot take focus -- then follow
+  // the section in place (followSection -> P4's followTarget).
+  const follow = (e: MouseEvent<HTMLAnchorElement>, sec: NavSection) => {
+    const inPlace = isPlainClick(e);
+    keepFocus.current = inPlace;
+    hide();
+    if (inPlace && followSection(sec)) e.preventDefault();
+    else keepFocus.current = false;
   };
   // A click whose target is the <dialog> itself landed on its ::backdrop.
   const onBackdrop = (e: MouseEvent<HTMLDialogElement>) => {
@@ -127,7 +156,7 @@ export default function NavMenu({ locale, profile, active }: { locale: Locale; p
               href={href(`#${sec}`)}
               data-sec={sec}
               aria-current={active === sec ? 'location' : undefined}
-              onClick={hide}
+              onClick={(e) => follow(e, sec)}
             >
               {t[NAV_LABEL_KEY[sec]]}
             </Link>

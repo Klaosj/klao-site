@@ -42,7 +42,8 @@ type Props = { slides: TourSlide[]; vignette: TourVignette; locale: Locale };
  * subtitle that leads into the Signature scene. Kept from the old tour: pause
  * on hover, focus, a hidden tab or out of view; reduced motion synced after
  * mount. Changed: no loop, a top-layer crossfade only, a slow 1.00 → 1.03
- * camera push, and Pause first in the tab order.
+ * camera push, Pause first in the tab order, and a hold while a dialog is
+ * open over the page.
  *
  * Timing: one JS clock (a setTimeout per frame, with the remaining time kept
  * across pauses) decides when frames change. Everything visual is a CSS
@@ -63,6 +64,7 @@ export default function HeroTourStage({ slides, vignette, locale }: Props) {
   const [focusInside, setFocusInside] = useState(false);
   const [inView, setInView] = useState(false);
   const [pageHidden, setPageHidden] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const stageRef = useRef<HTMLDivElement>(null);
   const playRef = useRef<HTMLButtonElement>(null);
   const dotRefs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -71,7 +73,7 @@ export default function HeroTourStage({ slides, vignette, locale }: Props) {
 
   const autoplay = s.phase === 'playing' || s.phase === 'paused';
   const ended = s.phase === 'done';
-  const held = hovering || focusInside || !inView || pageHidden;
+  const held = hovering || focusInside || !inView || pageHidden || dialogOpen;
   const running = s.phase === 'playing' && !held;
 
   // Media preferences are read after mount, so the server HTML and the first
@@ -111,6 +113,18 @@ export default function HeroTourStage({ slides, vignette, locale }: Props) {
     sync();
     document.addEventListener('visibilitychange', sync);
     return () => document.removeEventListener('visibilitychange', sync);
+  }, []);
+
+  // P1 final review I-2: hold while a modal dialog (a project sheet, ⌘K, the
+  // phone menu) covers the page, so the tour doesn't move on behind it. All
+  // three open with the `open` attribute, which is the one change watched;
+  // <details> toggles it too, hence the check for a dialog.
+  useEffect(() => {
+    const sync = () => setDialogOpen(document.querySelector('dialog[open]') !== null);
+    sync();
+    const mo = new MutationObserver(sync);
+    mo.observe(document.body, { subtree: true, attributes: true, attributeFilter: ['open'] });
+    return () => mo.disconnect();
   }, []);
 
   // Plays once: the only automatic start is from 'idle', the first time at
@@ -299,7 +313,12 @@ export default function HeroTourStage({ slides, vignette, locale }: Props) {
                 </span>
               </a>
             ) : current.href ? (
-              <a className="ht-q" href={current.href}>
+              // P1 final review I-2: following the caption is a visitor pick
+              // (spec §6), so it stops the tour on this frame. Played on, the
+              // frame would change behind the sheet and this keyed <a> would
+              // be recreated, leaving the sheet's close nothing to hand focus
+              // back to.
+              <a className="ht-q" href={current.href} onClick={() => dispatch({ type: 'stop' })}>
                 <span className="ht-qt">
                   <ThaiText text={current.question} display />
                 </span>
@@ -390,7 +409,7 @@ function Vignette({ vignette, beat }: { vignette: TourVignette; beat: VignetteBe
           </span>
           <i className="ht-ul" />
         </div>
-        <div className="ht-vrow">
+        <div className="ht-vrow" data-row="status">
           <b>Status</b>
           <span>Published</span>
         </div>

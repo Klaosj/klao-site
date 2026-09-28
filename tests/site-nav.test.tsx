@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { readFileSync } from 'node:fs';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { usePathname } from 'next/navigation';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -33,7 +34,9 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
   vi.mocked(usePathname).mockReturnValue('/en');
+  history.replaceState(null, '', '/');
 });
 
 const profile = makeProfile();
@@ -73,6 +76,19 @@ describe('SiteNav', () => {
     expect(brand.getAttribute('href')).toBe('#top');
     expect(brand.querySelector('.sn-mono')?.textContent).toBe('S');
     expect(brand.querySelector('.sn-mono')?.nextElementSibling?.textContent).toBe('Suwichak');
+  });
+
+  // P1 final review M-1: at 320 px the capsule's row (mark + name, EN/ไทย,
+  // Menu) ran ~26 px past its right edge and the page scrolled sideways by
+  // 1 px (EN). Measured in Chrome, EN overflows from 346 px down and TH from
+  // 338 px, so below 350 px the first name goes: the mark stays, and the
+  // link keeps its full accessible name from aria-label.
+  it('drops the brand name below 350 px, keeping the mark and the accessible name', () => {
+    const css = readFileSync('src/components/site-nav.css', 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    expect(css).toMatch(/@media \(max-width: 349px\) \{\s*\.sn-name \{ display: none; \}\s*\}/);
+    render(<SiteNav locale="en" profile={profile} />);
+    const brand = within(nav()).getByRole('link', { name: 'Suwichak, back to top' });
+    expect(brand.querySelector('.sn-name')?.textContent).toBe('Suwichak');
   });
 
   it('derives the brand from profile.name, never a hardcoded string', () => {
@@ -268,6 +284,151 @@ describe('SiteNav', () => {
     expect(ctaGone).toHaveBeenCalled();
     // Nothing on /projects has those ids, so nothing new is watched either.
     expect(FakeIO.instances.some((o) => o.targets.length > 0)).toBe(false);
+  });
+
+  // P1 final review I-1: a section link used to scroll and leave focus in the
+  // capsule, so the next Tab started over from the top of the page. It now
+  // goes through P4's followTarget (76 px clearance, focus on the section's
+  // heading), the one in-page path every other deep link uses.
+  it('follows a section link in place: the heading takes focus and the URL keeps the hash', () => {
+    // jsdom has no layout; the spy records the jump instead.
+    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+    render(
+      <>
+        <section id="career">
+          <h2>Career heading</h2>
+        </section>
+        <SiteNav locale="en" profile={profile} />
+      </>,
+    );
+    // fireEvent returns false when the handler called preventDefault().
+    expect(fireEvent.click(sectionLinks()[1])).toBe(false);
+    expect(document.activeElement).toBe(screen.getByRole('heading', { name: 'Career heading' }));
+    expect(scrollTo).toHaveBeenCalledTimes(1);
+    expect(window.location.hash).toBe('#career');
+  });
+
+  it('leaves a new-tab click to the browser', () => {
+    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+    render(
+      <>
+        <section id="career">
+          <h2>Career heading</h2>
+        </section>
+        <SiteNav locale="en" profile={profile} />
+      </>,
+    );
+    fireEvent.click(sectionLinks()[1], { metaKey: true });
+    expect(scrollTo).not.toHaveBeenCalled();
+    expect(document.activeElement).not.toBe(screen.getByRole('heading', { name: 'Career heading' }));
+  });
+
+  // Klao decision (a), 2026-09-28: switching language mid-page keeps the
+  // reader on the section the capsule marks, not a stale hash in the URL.
+  const otherLanguage = () => nav().querySelector<HTMLAnchorElement>('.lt-seg a[hreflang="th"]')!;
+
+  it('switches language onto the section being read on the home page', () => {
+    history.replaceState(null, '', '/en#work'); // stale: the reader has moved on
+    render(
+      <>
+        <HomeHooks />
+        <SiteNav locale="en" profile={profile} />
+      </>,
+    );
+    const career = document.getElementById('career')!;
+    expect(otherLanguage().getAttribute('href')).toBe('/th');
+    FakeIO.watching(career).fire([{ target: career, isIntersecting: true }]);
+    expect(otherLanguage().getAttribute('href')).toBe('/th#career');
+  });
+
+  // P1 re-review Important 1: the switch kept only the four nav sections,
+  // so from Signature, the Contact band, the footer or a gap between bands
+  // it landed on the hero. The reading anchor (the prototype's anchor():
+  // every band plus the footer) is separate from the pill, which stays
+  // nav-only.
+  function WholePage() {
+    return (
+      <>
+        {['top', 'signature', 'work', 'career', 'story', 'faq', 'contact'].map((id) => (
+          <section key={id} id={id} />
+        ))}
+        <footer className="site-foot" />
+      </>
+    );
+  }
+  const band = (el: Element, on: boolean) => FakeIO.watching(el).fire([{ target: el, isIntersecting: on }]);
+  const byId = (id: string) => document.getElementById(id)!;
+  const pillOn = () => sectionLinks().some((a) => a.hasAttribute('aria-current'));
+
+  it('carries Signature, the Contact band and the footer (as #contact) across a switch; the pill stays nav-only', () => {
+    render(
+      <>
+        <WholePage />
+        <SiteNav locale="en" profile={profile} />
+      </>,
+    );
+    band(byId('signature'), true);
+    expect(otherLanguage().getAttribute('href')).toBe('/th#signature');
+    expect(pillOn()).toBe(false);
+    band(byId('signature'), false);
+    band(byId('contact'), true);
+    expect(otherLanguage().getAttribute('href')).toBe('/th#contact');
+    expect(pillOn()).toBe(false);
+    band(byId('contact'), false);
+    band(document.querySelector('footer')!, true);
+    expect(otherLanguage().getAttribute('href')).toBe('/th#contact');
+  });
+
+  it('keeps the last section while the reading band sits in the gap between two', () => {
+    render(
+      <>
+        <WholePage />
+        <SiteNav locale="en" profile={profile} />
+      </>,
+    );
+    band(byId('work'), true);
+    band(byId('work'), false); // the gap between #work and #career
+    expect(otherLanguage().getAttribute('href')).toBe('/th#work');
+    expect(pillOn()).toBe(false);
+    band(byId('career'), true);
+    expect(otherLanguage().getAttribute('href')).toBe('/th#career');
+  });
+
+  // A jump (an anchor link, a reload that restores the scroll) can land in a
+  // gap before the observer has seen any band: the band above the reading
+  // line, the one just read, stands in for "the last one".
+  it('takes the band above the reading line when a jump lands in a gap with nothing passed yet', () => {
+    render(
+      <>
+        <WholePage />
+        <SiteNav locale="en" profile={profile} />
+      </>,
+    );
+    // jsdom has no layout: place the bands around the reading line (45 %).
+    const tops: Record<string, number> = { top: -3000, signature: -2000, work: -900, career: 600, story: 1800, faq: 3000, contact: 4000 };
+    for (const [id, top] of Object.entries(tops)) vi.spyOn(byId(id), 'getBoundingClientRect').mockReturnValue({ top } as DOMRect);
+    vi.spyOn(document.querySelector('footer')!, 'getBoundingClientRect').mockReturnValue({ top: 5000 } as DOMRect);
+    band(byId('top'), false);
+    expect(otherLanguage().getAttribute('href')).toBe('/th#work');
+  });
+
+  it('carries nothing from the hero', () => {
+    render(
+      <>
+        <WholePage />
+        <SiteNav locale="en" profile={profile} />
+      </>,
+    );
+    band(byId('signature'), true);
+    band(byId('signature'), false);
+    band(byId('top'), true);
+    expect(otherLanguage().getAttribute('href')).toBe('/th');
+  });
+
+  it('keeps no hash on the projects page', () => {
+    vi.mocked(usePathname).mockReturnValue('/en/projects');
+    render(<SiteNav locale="en" profile={profile} />);
+    expect(otherLanguage().getAttribute('href')).toBe('/th/projects');
   });
 
   it('server-renders every link, so the nav works before (and without) JavaScript (Review Focus #4)', () => {

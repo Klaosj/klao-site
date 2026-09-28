@@ -1,19 +1,37 @@
 // @vitest-environment jsdom
-import { act, cleanup, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { usePathname } from 'next/navigation';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import LocaleToggle, { switchLocaleHref } from '@/components/LocaleToggle';
+import { setReadingAnchor } from '@/lib/active-section';
 import { dict } from '@/lib/dictionary';
 
-vi.mock('next/navigation', () => ({ usePathname: vi.fn(() => '/en') }));
+// A router spy and a marked next/link, so a test can prove the switch never
+// goes through either (P1 final fix wave, finding 9).
+const router = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn(), prefetch: vi.fn() }));
+vi.mock('next/navigation', () => ({ usePathname: vi.fn(() => '/en'), useRouter: () => router }));
+vi.mock('next/link', async () => {
+  const { createElement } = await import('react');
+  return { default: (props: Record<string, unknown>) => createElement('a', { ...props, prefetch: undefined, 'data-next-link': '' }) };
+});
 
 // Same helper as tests/theme-toggle.test.tsx: a real requestAnimationFrame
 // tick, since that's what the component's mount effect actually uses (not a
 // fake timer).
 const flushRaf = () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
 
+// jsdom can't load another document; a click that reached it would log
+// "Not implemented: navigation". This runs after the component's own handler
+// (window is the last stop on the way up) and stops the browser default only.
+const stayOnPage = (e: Event) => e.preventDefault();
+beforeEach(() => {
+  window.addEventListener('click', stayOnPage);
+});
+
 afterEach(() => {
   cleanup();
+  setReadingAnchor(null);
+  window.removeEventListener('click', stayOnPage);
   vi.mocked(usePathname).mockReturnValue('/en');
 });
 
@@ -23,6 +41,21 @@ describe('switchLocaleHref', () => {
     expect(switchLocaleHref('/en/', 'th')).toBe('/th');
     expect(switchLocaleHref('/th/writing/some-post', 'en')).toBe('/en/writing/some-post');
     expect(switchLocaleHref('/en/projects', 'en')).toBe('/en/projects');
+  });
+
+  // Klao decision (a), 2026-09-28: a switch keeps the reading position, as
+  // the prototype's setLang did. Section ids are the same in both locales;
+  // no other page has them, so nothing is carried off the home page.
+  it('carries the section being read across a home-page switch, and nothing from any other page', () => {
+    expect(switchLocaleHref('/en', 'th', 'career')).toBe('/th#career');
+    expect(switchLocaleHref('/th/', 'en', 'faq')).toBe('/en#faq');
+    expect(switchLocaleHref('/en', 'th', null)).toBe('/th');
+    // P1 re-review Important 1: the bands outside the nav count too.
+    expect(switchLocaleHref('/en', 'th', 'signature')).toBe('/th#signature');
+    expect(switchLocaleHref('/th', 'en', 'contact')).toBe('/en#contact');
+    expect(switchLocaleHref('/en/projects', 'th', 'contact')).toBe('/th/projects');
+    expect(switchLocaleHref('/en/projects', 'th', 'career')).toBe('/th/projects');
+    expect(switchLocaleHref('/th/writing/some-post', 'en', 'story')).toBe('/en/writing/some-post');
   });
 });
 
@@ -101,6 +134,92 @@ describe('LocaleToggle', () => {
   // ThemeToggle's, would match this control FOREVER if it never set the
   // attribute (there is no server-guess-vs-real-preference sync to settle
   // here), permanently killing the thumb's slide on every later click.
+  // P1 final review M-2 (amendment A02): the thumb waited for the new route,
+  // and with prefetch off nothing answers the tap for ~0.4 s. It now moves on
+  // the click itself (globals.css turns the slide into a jump under reduced
+  // motion). aria-current stays with the page actually on screen.
+  it('slides the thumb to the chosen language on the click itself, before the new page arrives', () => {
+    const { rerender } = render(<LocaleToggle />);
+    const group = document.querySelector('.lt-seg') as HTMLElement;
+    const [en, th] = Array.from(group.querySelectorAll('a'));
+    fireEvent.click(th);
+    expect(group.style.getPropertyValue('--i')).toBe('1');
+    expect(en.getAttribute('aria-current')).toBe('page');
+    vi.mocked(usePathname).mockReturnValue('/th');
+    rerender(<LocaleToggle />);
+    expect(group.style.getPropertyValue('--i')).toBe('1');
+    // Back to /en: the pick belonged to the old page and has lapsed.
+    vi.mocked(usePathname).mockReturnValue('/en');
+    rerender(<LocaleToggle />);
+    expect(group.style.getPropertyValue('--i')).toBe('0');
+  });
+
+  it('leaves the thumb in place for a new-tab click, and for a click on the current language', () => {
+    render(<LocaleToggle />);
+    const group = document.querySelector('.lt-seg') as HTMLElement;
+    const [en, th] = Array.from(group.querySelectorAll('a'));
+    fireEvent.click(th, { metaKey: true });
+    expect(group.style.getPropertyValue('--i')).toBe('0');
+    fireEvent.click(en);
+    expect(group.style.getPropertyValue('--i')).toBe('0');
+  });
+
+  // Klao decision (a): every toggle (capsule, phone menu, the footer's)
+  // reads the section the capsule marks as being read. The current
+  // language's link keeps no hash: following it would only jump the page.
+  it('points the other language at the section being read, live, and never the current one', () => {
+    render(<LocaleToggle />);
+    const [en, th] = Array.from(document.querySelectorAll('.lt-seg a'));
+    expect(th.getAttribute('href')).toBe('/th');
+    act(() => setReadingAnchor('story'));
+    expect(th.getAttribute('href')).toBe('/th#story');
+    expect(en.getAttribute('href')).toBe('/en');
+    act(() => setReadingAnchor(null));
+    expect(th.getAttribute('href')).toBe('/th');
+  });
+
+  // P1 final fix wave, finding 9: a client-side switch re-rendered the root
+  // [locale] layout, and React 19 reset <html>'s attributes -- the `js` class
+  // (every no-JS fallback came back: the phone Menu, FAQ expand-all, the
+  // Short/Full control) and a pinned theme -- until a reload. Crossing locale
+  // is a full page load now: a plain <a> the browser follows, never next/link
+  // or the router, still carrying the section being read (finding 8).
+  it('is a plain link the browser follows, a full page load that keeps the section', () => {
+    render(<LocaleToggle />);
+    act(() => setReadingAnchor('career'));
+    const th = document.querySelector('.lt-seg a[hreflang="th"]') as HTMLAnchorElement;
+    expect(document.querySelector('.lt-seg [data-next-link]')).toBeNull();
+    expect(th.getAttribute('href')).toBe('/th#career');
+    // Read on the way up, after the component's handler and before the
+    // test's own stayOnPage: nothing of ours cancelled the browser's load.
+    let prevented: boolean | null = null;
+    const seen = (e: Event) => {
+      prevented = e.defaultPrevented;
+    };
+    document.addEventListener('click', seen);
+    fireEvent.click(th);
+    document.removeEventListener('click', seen);
+    expect(prevented).toBe(false);
+    expect(router.push).not.toHaveBeenCalled();
+    expect(router.replace).not.toHaveBeenCalled();
+  });
+
+  // With a full load, Back can restore this page from the back-forward cache
+  // as it was left: the thumb moved (finding 6) on the same pathname. It goes
+  // back to the page's own language.
+  it('puts the thumb back when Back restores the page from the back-forward cache', () => {
+    render(<LocaleToggle />);
+    const group = document.querySelector('.lt-seg') as HTMLElement;
+    fireEvent.click(group.querySelector('a[hreflang="th"]') as HTMLElement);
+    expect(group.style.getPropertyValue('--i')).toBe('1');
+    const restored = new Event('pageshow');
+    Object.defineProperty(restored, 'persisted', { value: true });
+    act(() => {
+      window.dispatchEvent(restored);
+    });
+    expect(group.style.getPropertyValue('--i')).toBe('0');
+  });
+
   it('marks data-ready one frame after mount, not on the initial render (fix wave finding 1)', async () => {
     render(<LocaleToggle />);
     const group = document.querySelector('.lt-seg') as HTMLElement;
