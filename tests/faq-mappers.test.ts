@@ -99,18 +99,47 @@ describe('mapProfile · BasedIn / WorkingIn', () => {
     expect(p.workingIn).toBeNull();
   });
 
-  it('maps BasedInEN/TH and WorkingIn', () => {
+  // T18-d (ruling PR1, master R29): WorkingIn became WorkingInEN +
+  // WorkingInTH, the same pair as BasedIn, so the Thai page can say
+  // "ไทย / อังกฤษ" (Klao decision 3) instead of "TH / EN".
+  it('maps BasedInEN/TH and WorkingInEN/TH', () => {
     const p = mapProfile({
       ...base,
       properties: {
         ...base.properties,
         BasedInEN: rich('Bangkok, TH'),
         BasedInTH: rich('กรุงเทพฯ'),
-        WorkingIn: rich('TH / EN'),
+        WorkingInEN: rich('TH / EN'),
+        WorkingInTH: rich('ไทย / อังกฤษ'),
       },
     })!;
     expect(p.basedIn).toEqual({ en: 'Bangkok, TH', th: 'กรุงเทพฯ' });
-    expect(p.workingIn).toBe('TH / EN');
+    expect(p.workingIn).toEqual({ en: 'TH / EN', th: 'ไทย / อังกฤษ' });
+  });
+
+  // A row set up under the pre-R29 name keeps working: a bare WorkingIn is
+  // the English value, and Thai falls back to it until WorkingInTH is added.
+  it('reads a bare WorkingIn (the pre-R29 name) as the English value', () => {
+    const old = mapProfile({ ...base, properties: { ...base.properties, WorkingIn: rich('TH / EN') } })!;
+    expect(old.workingIn).toEqual({ en: 'TH / EN', th: 'TH / EN' });
+    const halfMigrated = mapProfile({
+      ...base,
+      properties: { ...base.properties, WorkingIn: rich('TH / EN'), WorkingInTH: rich('ไทย / อังกฤษ') },
+    })!;
+    expect(halfMigrated.workingIn).toEqual({ en: 'TH / EN', th: 'ไทย / อังกฤษ' });
+  });
+
+  it('prefers WorkingInEN over a leftover bare WorkingIn', () => {
+    const p = mapProfile({
+      ...base,
+      properties: { ...base.properties, WorkingIn: rich('old'), WorkingInEN: rich('TH / EN') },
+    })!;
+    expect(p.workingIn).toEqual({ en: 'TH / EN', th: 'TH / EN' });
+  });
+
+  it('maps WorkingIn to null without an English value, like BasedIn', () => {
+    const p = mapProfile({ ...base, properties: { ...base.properties, WorkingInTH: rich('ไทย / อังกฤษ') } })!;
+    expect(p.workingIn).toBeNull();
   });
 
   it('falls back TH -> EN for BasedIn', () => {

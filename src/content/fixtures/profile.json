@@ -25,7 +25,7 @@
   "github": "https://github.com/Klaosj",
   "email": "suvichuk.j@gmail.com",
   "basedIn": { "en": "Bangkok, TH", "th": "กรุงเทพฯ" },
-  "workingIn": "TH / EN",
+  "workingIn": { "en": "TH / EN", "th": "ไทย / อังกฤษ" },
   "resumeUrl": "/suwichak-jarunopratamp-resume.pdf",
   "prologue": {
     "en": "I started on the owner side of the table, running A Bun Dance, a craft-burger shop where menu R&D, pricing and gross margin were all mine to get right. I learned service the honest way, behind the bar at VELA. **Now I do business development at Actmedia by day, and build my own tools at night.** When I scope software for a business, I have already sat on both sides of the table.",

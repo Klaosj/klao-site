@@ -182,12 +182,12 @@ export interface Profile {
   prologue: Localized | null;
   closingLine: Localized | null;
   // P4 (spec §7, contract C5): the close band's "Based in" / "Working in"
-  // facts, moved out of the old ContactBand's hard-coded constants so Klao
-  // edits them in Notion. basedIn is Localized (the prototype reads
-  // "Bangkok, TH" / "กรุงเทพฯ"); workingIn is one locale-invariant string per
-  // C5. null = property missing or blank, and that fact simply doesn't render.
+  // facts (CloseBand), which Klao edits in Notion. Both are Localized: the
+  // prototype reads "Bangkok, TH" / "กรุงเทพฯ" and "TH / EN" / "ไทย / อังกฤษ"
+  // (workingIn was one locale-invariant string until master R29, P5 T18-d).
+  // null = no English value in Notion, and that fact simply doesn't render.
   basedIn: Localized | null;
-  workingIn: string | null;
+  workingIn: Localized | null;
 }
 
 // "How real is it" -- a Skill's visual prominence on SkillsBand (the

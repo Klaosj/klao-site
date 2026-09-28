@@ -172,7 +172,15 @@ export function mapProfile(page: NotionPage): Profile | null {
     basedIn: text(page.properties.BasedInEN)
       ? localized(text(page.properties.BasedInEN), text(page.properties.BasedInTH))
       : null,
-    workingIn: text(page.properties.WorkingIn) || null,
+    // Master R29 (P5 T18-d): WorkingInEN + WorkingInTH, the same pair and
+    // the same rules as BasedIn. A bare `WorkingIn` -- the property's name
+    // before R29 -- still counts as the English value, so a row set up
+    // under the old name keeps rendering, with Thai falling back to it
+    // until WorkingInTH is added.
+    workingIn: optLocalized(
+      text(page.properties.WorkingInEN) || text(page.properties.WorkingIn),
+      text(page.properties.WorkingInTH),
+    ),
   };
 }
 

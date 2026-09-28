@@ -21,7 +21,7 @@ const profile: Profile = {
   email: 'real@example.com',
   resumeUrl: '/resume.pdf',
   basedIn: { en: 'Bangkok, TH', th: 'กรุงเทพฯ' },
-  workingIn: 'TH / EN',
+  workingIn: { en: 'TH / EN', th: 'ไทย / อังกฤษ' },
 };
 
 const q = (id: string, date: string, status: OpenQuestion['status']): OpenQuestion => ({
@@ -98,6 +98,19 @@ describe('CloseBand', () => {
     expect(screen.getByText(dict.th.basedIn).closest('li')?.textContent).toContain('กรุงเทพฯ');
   });
 
+  // T18-d (ruling PR1, master R29; Klao decision 3): Working in is
+  // localized too, and the bundled profile says it in Thai on /th.
+  it('says Working in in the page language, from the bundled profile too', () => {
+    const fixture = profileFixture as Profile;
+    render(<CloseBand profile={{ ...fixture, email: 'real@example.com' }} questions={[]} locale="th" />);
+    expect(screen.getByText(dict.th.workingIn).closest('li')?.textContent).toContain('ไทย / อังกฤษ');
+    cleanup();
+    render(<CloseBand profile={{ ...fixture, email: 'real@example.com' }} questions={[]} locale="en" />);
+    const working = screen.getByText(dict.en.workingIn).closest('li');
+    expect(working?.textContent).toContain('TH / EN');
+    expect(working?.textContent).not.toContain('ไทย');
+  });
+
   it('leaves out a fact with no value, and the whole list when both are missing', () => {
     render(<CloseBand profile={{ ...profile, workingIn: null }} questions={[]} locale="en" />);
     expect(screen.queryByText(dict.en.workingIn)).toBeNull();
@@ -125,6 +138,9 @@ describe('CloseBand', () => {
     expect(container.querySelector('.close-openq')).toBeNull();
   });
 
+  // T18-d (CO-03, P4 T9 minor): the open question's own `&& profile.email`
+  // guard was redundant -- `open` is already null without an email -- so
+  // it went, and this test is now what holds that rule.
   it('drops every mail affordance when the profile has no email', () => {
     const { container } = render(
       <CloseBand profile={{ ...profile, email: '' }} questions={[q('w', '2026-09-10', 'wondering')]} locale="en" />,

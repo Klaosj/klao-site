@@ -28,10 +28,12 @@ export default function CloseBand({
   locale: Locale;
 }) {
   const t = dict[locale];
+  // The open question's only action is a reply by email, so without an
+  // address there is no question either -- the one guard it needs.
   const open = profile.email ? pickOpenQuestion(questions) : null;
   const facts = [
     profile.basedIn ? { label: t.basedIn, value: profile.basedIn[locale] } : null,
-    profile.workingIn ? { label: t.workingIn, value: profile.workingIn } : null,
+    profile.workingIn ? { label: t.workingIn, value: profile.workingIn[locale] } : null,
   ].filter((f): f is { label: string; value: string } => f !== null);
 
   return (
@@ -73,7 +75,7 @@ export default function CloseBand({
             ))}
           </ul>
         )}
-        {open && profile.email && (
+        {open && (
           <p className="close-openq t-body">
             <ThaiText text={`${t.closeOpenQ} ${open.question[locale]}`} />{' '}
             <a href={mailto(profile.email, t.closeOpenQSubject)}>{t.closeTellMe}</a>
