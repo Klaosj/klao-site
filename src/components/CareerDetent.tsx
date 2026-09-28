@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, useCallback, useEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react';
 import ThaiText from '@/components/ThaiText';
 import {
   CAREER_EVENT,
@@ -64,14 +64,17 @@ export default function CareerDetent({ entries, locale, now }: Props) {
     el.style.height = `${pill.offsetHeight}px`;
   }, [selected]);
 
-  useEffect(() => {
-    // Fix wave finding 3: `labelAlign`'s fixed 12/88% thresholds (used for
-    // the CSS `data-align` fallback below) know nothing about the label's
-    // actual rendered width, so a long one ("A Bun Dance · 20 mo") could
-    // still clip at 390/360px. Once hydrated, measure the real rail and
-    // label widths and clamp the label's own offset instead. Re-runs on
-    // resize too, since the rail's width -- and so the clamp -- tracks the
-    // viewport; window is the right target for that, not an ancestor.
+  useLayoutEffect(() => {
+    // Fix wave finding 3: `labelAlign`'s fixed 12/88% thresholds (used as
+    // this rule's own CSS fallback, career.css) know nothing about the
+    // label's actual rendered width, so a long one ("A Bun Dance · 20 mo")
+    // could still clip at 390/360px. Once hydrated, measure the real rail
+    // and label widths and clamp the label's own offset instead. Re-runs
+    // on resize too, since the rail's width -- and so the clamp -- tracks
+    // the viewport; window is the right target for that, not an ancestor.
+    // useLayoutEffect (re-review Minor 2), not useEffect: a selection from
+    // `klao:career` or the keyboard would otherwise paint once with the
+    // previous (or unset) --lx before this ran.
     const update = () => {
       const railNode = railEl.current;
       const label = rlabEl.current;
@@ -79,7 +82,11 @@ export default function CareerDetent({ entries, locale, now }: Props) {
       // this selection): leave the CSS default (--lx unset -> -50%, same
       // as the server HTML) rather than clamp against a width of 0.
       if (!railNode || !label || center === null || railNode.clientWidth === 0) return;
-      const lx = railLabelOffset(center, railNode.clientWidth, label.offsetWidth);
+      // getBoundingClientRect().width (re-review Minor 3), not offsetWidth:
+      // offsetWidth rounds to an integer, which let the label overhang the
+      // rail edge by a sub-pixel amount (0.19px measured, Thai last-employer
+      // label).
+      const lx = railLabelOffset(center, railNode.clientWidth, label.getBoundingClientRect().width);
       label.style.setProperty('--lx', `${lx}px`);
     };
     update();

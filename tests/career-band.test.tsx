@@ -152,4 +152,26 @@ describe('CareerBand', () => {
     const phone = css.slice(css.indexOf('@media (max-width: 734px)'));
     expect(phone).toMatch(/\.car-fig\.t-stat\s*\{[^}]*font-size:\s*32px;\s*line-height:\s*36px/);
   });
+
+  // Re-review finding, Important A: the item-3 CSS gated the data-align
+  // fixed positions behind html:not(.js), so once the pre-paint script set
+  // `js` (before hydration even starts) the label fell back straight to
+  // -50%, clipping the default-selected role's rail label in that frame.
+  // All three rules -- base, [data-align=start], [data-align=end] -- must
+  // read var(--lx) with their old fixed value as the *fallback*, un-gated,
+  // so --lx wins once CareerDetent's effect sets it (any html.js state) and
+  // the fixed positions still apply correctly before that (server HTML,
+  // pre-hydration, and no-JS alike -- one fallback covers all three).
+  it('lets --lx win over the fixed data-align fallback in every JS state (re-review Important A)', () => {
+    const css = readFileSync(join(process.cwd(), 'src/components/career.css'), 'utf8');
+    // Not gated behind html:not(.js) (or any other prefix) any more.
+    expect(css).not.toMatch(/html:not\(\.js\)\s*\.car-rlab/);
+    expect(css).toMatch(/^\s*\.car-rlab\s*\{[^}]*transform:\s*translateX\(var\(--lx,\s*-50%\)\)/m);
+    expect(css).toMatch(
+      /^\s*\.car-rlab\[data-align="start"\]\s*\{[^}]*transform:\s*translateX\(var\(--lx,\s*-8px\)\)/m,
+    );
+    expect(css).toMatch(
+      /^\s*\.car-rlab\[data-align="end"\]\s*\{[^}]*transform:\s*translateX\(var\(--lx,\s*calc\(-100% \+ 8px\)\)\)/m,
+    );
+  });
 });

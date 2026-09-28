@@ -157,33 +157,51 @@ describe('CareerDetent', () => {
     expect(container.querySelector('.car-ryears [data-now="true"]')?.textContent).toBe('Now');
   });
 
-  // Fix wave finding 3: jsdom has no layout (offsetWidth/clientWidth are
-  // always 0), so these are mocked per-element, the same way
-  // tests/signature-scene.test.tsx stubs offsetHeight. The clamp math
-  // itself (railLabelOffset) has its own unit tests in
+  // Fix wave finding 3: jsdom has no layout (offsetWidth/clientWidth/
+  // getBoundingClientRect are always 0), so these are mocked per-element,
+  // the same way tests/signature-scene.test.tsx stubs offsetHeight. The
+  // clamp math itself (railLabelOffset) has its own unit tests in
   // tests/career-lib.test.ts; this only checks CareerDetent wires the real
-  // measured widths into it and sets --lx, and cleans up its listener.
-  it('clamps the rail label with the measured rail and label widths, and cleans up the resize listener', () => {
+  // measured widths into it and sets --lx, re-clamps after a new role is
+  // picked (re-review Minor 1 -- the effect's `[center]` dep must actually
+  // fire again, not just on first mount), and cleans up its listener. The
+  // label width is fractional (re-review Minor 3), not a whole pixel, to
+  // pin that the sub-pixel width is what actually reaches railLabelOffset
+  // -- offsetWidth would round it and silently pass a mutated width.
+  it('clamps the rail label with the measured rail and label widths, re-clamps on a new selection, and cleans up the resize listener', () => {
+    const LABEL_WIDTH = 140.19;
     const clientWidthSpy = vi
       .spyOn(HTMLElement.prototype, 'clientWidth', 'get')
       .mockImplementation(function (this: HTMLElement) {
         return this.classList.contains('car-rail') ? 358 : 0;
       });
-    const offsetWidthSpy = vi
-      .spyOn(HTMLElement.prototype, 'offsetWidth', 'get')
+    const rectSpy = vi
+      .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
       .mockImplementation(function (this: HTMLElement) {
-        return this.classList.contains('car-rlab') ? 140 : 0;
+        const width = this.classList.contains('car-rlab') ? LABEL_WIDTH : 0;
+        return { width, height: 0, top: 0, left: 0, right: width, bottom: 0, x: 0, y: 0, toJSON() {} } as DOMRect;
       });
     const addSpy = vi.spyOn(window, 'addEventListener');
     const removeSpy = vi.spyOn(window, 'removeEventListener');
     try {
       const { container, unmount } = render(<CareerDetent entries={entries} locale="en" now="2026-09" />);
-      const label = container.querySelector('.car-rlab') as HTMLElement;
-      const centerPct = parseFloat(
-        (container.querySelector('.car-rmark') as HTMLElement).style.getPropertyValue('--mx'),
-      );
-      const expected = railLabelOffset(centerPct, 358, 140);
-      expect(parseFloat(label.style.getPropertyValue('--lx'))).toBeCloseTo(expected, 5);
+      const label = () => container.querySelector('.car-rlab') as HTMLElement;
+      const centerPct = () =>
+        parseFloat((container.querySelector('.car-rmark') as HTMLElement).style.getPropertyValue('--mx'));
+
+      const firstCenter = centerPct();
+      const firstExpected = railLabelOffset(firstCenter, 358, LABEL_WIDTH);
+      expect(parseFloat(label().style.getPropertyValue('--lx'))).toBeCloseTo(firstExpected, 5);
+
+      // A Bun Dance (index 2): the earliest role, near the rail's other
+      // edge -- a materially different center, so a stale --lx (the
+      // mutation this guards against: effect deps `[center]` -> `[]`)
+      // would read as the *first* role's offset, not this one's.
+      fireEvent.click(tabs()[2]);
+      const laterCenter = centerPct();
+      expect(laterCenter).not.toBeCloseTo(firstCenter, 1);
+      const laterExpected = railLabelOffset(laterCenter, 358, LABEL_WIDTH);
+      expect(parseFloat(label().style.getPropertyValue('--lx'))).toBeCloseTo(laterExpected, 5);
 
       const resizeCall = addSpy.mock.calls.find(([type]) => type === 'resize');
       expect(resizeCall).toBeDefined();
@@ -191,7 +209,7 @@ describe('CareerDetent', () => {
       expect(removeSpy).toHaveBeenCalledWith('resize', resizeCall![1]);
     } finally {
       clientWidthSpy.mockRestore();
-      offsetWidthSpy.mockRestore();
+      rectSpy.mockRestore();
       addSpy.mockRestore();
       removeSpy.mockRestore();
     }
