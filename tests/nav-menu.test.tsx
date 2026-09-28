@@ -244,6 +244,32 @@ describe('NavMenu', () => {
     expect(css).toContain('html:not(.js) .nm-open { display: none; }');
   });
 
+  // P1 re-review Minor 1: a language switch from the menu is a full page
+  // load (finding 9), so Back can restore this page from the back-forward
+  // cache frozen as it was left, menu open. It closes, and focus goes back to
+  // Menu as on any close.
+  it('closes when Back restores the page from the back-forward cache', () => {
+    render(<NavMenu locale="en" profile={makeProfile()} active={null} />);
+    const dialog = openMenu();
+    const restored = new Event('pageshow');
+    Object.defineProperty(restored, 'persisted', { value: true });
+    act(() => {
+      window.dispatchEvent(restored);
+    });
+    expect(dialog.hasAttribute('open')).toBe(false);
+    expect(menuButton().getAttribute('aria-expanded')).toBe('false');
+    expect(document.activeElement).toBe(menuButton());
+  });
+
+  it('stays open on an ordinary page show (not a restore)', () => {
+    render(<NavMenu locale="en" profile={makeProfile()} active={null} />);
+    const dialog = openMenu();
+    act(() => {
+      window.dispatchEvent(new Event('pageshow'));
+    });
+    expect(dialog.hasAttribute('open')).toBe(true);
+  });
+
   it('stays in sync when the browser closes it on Esc (the dialog fires close by itself)', () => {
     render(<NavMenu locale="en" profile={makeProfile()} active={null} />);
     const dialog = openMenu();

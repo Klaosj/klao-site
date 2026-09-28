@@ -61,6 +61,18 @@ export default function NavMenu({ locale, profile, active }: { locale: Locale; p
     [],
   );
 
+  // P1 re-review Minor 1: a language switch from here is a full page load
+  // (LocaleToggle, finding 9), so Back can restore this page from the
+  // back-forward cache frozen with the menu open. Close it then; onClose
+  // hands focus back to Menu as on any other close.
+  useEffect(() => {
+    const onShow = (e: PageTransitionEvent) => {
+      if (e.persisted) dialogRef.current?.close();
+    };
+    window.addEventListener('pageshow', onShow);
+    return () => window.removeEventListener('pageshow', onShow);
+  }, []);
+
   const show = () => {
     dialogRef.current?.showModal();
     setOpen(true);
