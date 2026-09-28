@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import story from '@/content/fixtures/story.json';
 
@@ -89,5 +89,15 @@ describe('deploy docs, env example and README', () => {
     const readme = readFileSync('README.md', 'utf8');
     expect(readme).toContain('npm run qa');
     expect(readme).not.toMatch(BANNED_WORDS);
+  });
+});
+
+describe('design/white-edition/README.md', () => {
+  it('explains both reference files and how to check the site against them', () => {
+    const path = 'design/white-edition/README.md';
+    expect(existsSync(path)).toBe(true);
+    const text = existsSync(path) ? readFileSync(path, 'utf8') : '';
+    for (const s of ['prototype/index.html', 'APPLE-SCALE.md', 'npm run qa']) expect(text, s).toContain(s);
+    expect(text).not.toMatch(BANNED_WORDS);
   });
 });
