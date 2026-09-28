@@ -67,3 +67,27 @@ describe('docs/NOTION_SETUP.md', () => {
     expect(guide).not.toMatch(BANNED_WORDS);
   });
 });
+
+const ALL_ENV = [
+  'NOTION_TOKEN', 'NOTION_DB_PROJECTS', 'NOTION_DB_POSTS', 'NOTION_DB_CAREER', 'NOTION_DB_PROFILE',
+  'NOTION_DB_SKILLS', 'NOTION_DB_QUESTIONS', 'NOTION_DB_STORY', 'NOTION_DB_FAQ',
+];
+
+describe('deploy docs, env example and README', () => {
+  it('.env.example has a line for every Notion variable', () => {
+    const env = readFileSync('.env.example', 'utf8');
+    for (const v of ALL_ENV) expect(env, v).toMatch(new RegExp(`^${v}=`, 'm'));
+  });
+
+  it('docs/DEPLOY.md lists every Notion variable and promises nothing instant', () => {
+    const deploy = readFileSync('docs/DEPLOY.md', 'utf8');
+    for (const v of ALL_ENV) expect(deploy, v).toContain(v);
+    expect(deploy).not.toMatch(BANNED_WORDS);
+  });
+
+  it('README explains the QA matrix and promises nothing instant', () => {
+    const readme = readFileSync('README.md', 'utf8');
+    expect(readme).toContain('npm run qa');
+    expect(readme).not.toMatch(BANNED_WORDS);
+  });
+});
