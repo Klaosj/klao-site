@@ -1,32 +1,23 @@
 import type { Locale } from './models';
 
 const en = {
-  // T11: SiteNav's four in-page anchors reuse each section's own eyebrow
-  // label where one already exists (about/selectedProjects/career) -- `home`
-  // is the one genuinely new label, since Hero has no eyebrow of its own.
-  // (`selectedWork` was that eyebrow's key until the owner renamed the
-  // section "Selected projects" on 2026-08-15; both call sites now share
-  // the pre-existing `selectedProjects` key.)
+  // T11: SiteNav's in-page anchors reuse each section's own eyebrow label
+  // where one already exists (about/career) -- `home` is the one genuinely
+  // new label, since Hero has no eyebrow of its own.
   home: 'Home',
   projects: 'Projects',
   writing: 'Writing',
   career: 'Career',
   resume: 'Resume',
-  selectedProjects: 'Selected projects',
-  latestWriting: 'Latest writing',
   allProjects: 'All projects',
-  allPosts: 'All posts',
   now: 'Now',
-  fullCareer: 'Full career',
   back: 'Back',
   email: 'Email',
   liveSite: 'Live site',
   viewCode: 'View code',
   readStory: 'Read the story',
   greeting: "Hi, I'm",
-  roleLine: 'Business Development · builds his own tools',
   about: 'About',
-  howIWork: 'How I work',
   // Pitch deck (spec 2026-08-15 §5): the two chapter labels and the deck
   // subtitle. Chapter labels also head the /projects listing's two groups.
   workTypeBusiness: 'Business',
@@ -47,7 +38,6 @@ const en = {
   startConversation: 'Start a conversation',
   basedIn: 'Based in',
   workingIn: 'Working in',
-  photoPlaceholder: 'Photo',
   // ContactBand's statement heading. Ported verbatim from
   // .superpowers/brainstorm/11719-1786211516/content/studio.html's #contact
   // bigHead, same as craftHeading/aboutHeading.
@@ -79,16 +69,6 @@ const en = {
   // button now carries this explicit label instead (QA C2).
   copyEmailAction: 'Copy email address',
 
-  // Hero identity stack, replacing the single `roleLine` above. Every line
-  // is literally true of the owner and traceable to his own data: "Business
-  // development" is his current ActMedia title, "Barista" is the VELA Central
-  // World role in career.json, and the tools are the four builds in
-  // projects.json. The combination is the differentiator -- one sentence
-  // buried the fact that all three are the same person. Same fixed-copy
-  // category as `craft` above, hence a dictionary array rather than a
-  // profile field.
-  identities: ['Business development.', 'Barista.', 'Builds his own tools.'] as readonly string[],
-
   // /writing rendered a bare empty <ul> with no message once the two
   // placeholder posts were pulled. Mirrors `careerUnpublished` above: say
   // the content is not there yet rather than showing an empty container the
@@ -114,14 +94,6 @@ const en = {
   // three plain categories (Works in / Focus / Languages, CareerBand.tsx).
   toolbox: 'Toolbox',
   toolboxHeading: 'What I actually work with.',
-  // Open-questions band (wave 2, spec 2026-08-13). The band's copy IS its
-  // question list (owner-authored, from the Questions DB) -- these are just
-  // the frame: the eyebrow, an optional bigger heading (openQuestionsHeading
-  // is dormant until browser review decides the eyebrow alone reads too
-  // quiet), and the one status marker a `building` question carries.
-  openQuestions: 'Open questions',
-  openQuestionsHeading: 'Questions I have not answered yet.',
-  statusBuilding: 'building',
   // Task 4: the case page's "born from a question" line -- an `answered`
   // question whose linkSlug points at this story surfaces when it was
   // asked, prefixed by this label.
@@ -297,21 +269,15 @@ const th: typeof en = {
   writing: 'บทความ',
   career: 'เส้นทางอาชีพ',
   resume: 'เรซูเม่',
-  selectedProjects: 'โปรเจกต์ที่เลือกมา',
-  latestWriting: 'บทความล่าสุด',
   allProjects: 'ผลงานทั้งหมด',
-  allPosts: 'บทความทั้งหมด',
   now: 'ตอนนี้',
-  fullCareer: 'เส้นทางอาชีพทั้งหมด',
   back: 'กลับ',
   email: 'อีเมล',
   liveSite: 'ดูเว็บไซต์',
   viewCode: 'ดูโค้ด',
   readStory: 'อ่านเรื่องราว',
   greeting: 'สวัสดีครับ ผม',
-  roleLine: 'Business Development · สร้างเครื่องมือเอง',
   about: 'เกี่ยวกับ',
-  howIWork: 'วิธีทำงานของผม',
   workTypeBusiness: 'ธุรกิจ',
   workTypeBuild: 'สร้างเอง',
   deckHeading: 'เกมธุรกิจที่ผมเดิน และของที่ผมลงมือสร้าง',
@@ -323,7 +289,6 @@ const th: typeof en = {
   startConversation: 'เริ่มคุยกัน',
   basedIn: 'ประจำอยู่',
   workingIn: 'ทำงานเป็น',
-  photoPlaceholder: 'รูป',
   contactHeading: 'มีของที่ควรมีอยู่จริง แต่ยังไม่มีใครทำ?',
 
   skipToContent: 'ข้ามไปยังเนื้อหาหลัก',
@@ -339,8 +304,6 @@ const th: typeof en = {
 
   copyEmailAction: 'คัดลอกที่อยู่อีเมล',
 
-  identities: ['พัฒนาธุรกิจ', 'บาริสต้า', 'สร้างเครื่องมือใช้เอง'] as readonly string[],
-
   writingUnpublished: 'ยังไม่ได้เผยแพร่บทความ',
 
   navMain: 'เมนูหลัก',
@@ -350,9 +313,6 @@ const th: typeof en = {
 
   toolbox: 'กล่องเครื่องมือ',
   toolboxHeading: 'ของจริงที่ผมใช้ทำงาน',
-  openQuestions: 'คำถามที่ยังเปิดอยู่',
-  openQuestionsHeading: 'คำถามที่ยังไม่มีคำตอบ',
-  statusBuilding: 'กำลังสร้าง',
   askedOn: 'ตั้งคำถามไว้เมื่อ',
   contentUpdated: 'อัปเดตเนื้อหาล่าสุด',
   tourListLabel: 'ทัวร์โปรเจกต์',
