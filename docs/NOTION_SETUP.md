@@ -125,8 +125,10 @@ never see).
 
 All twelve may stay empty — the site falls back to a sensible default for
 each (Media: `img` when the row has a Screenshot, otherwise `win`; Wash:
-`none`; not in the tour; no lineage card), so they can be added in any
-order.
+`none`; Tour: until any row is ticked, every row with a Screenshot plays,
+by `Order` — after that only ticked rows, and a ticked row needs a
+Screenshot or `Media` = `notion`; LineageOf: no pair, no Signature scene
+and no lineage card), so they can be added in any order.
 
 | Property | What it does | Example |
 |---|---|---|
@@ -134,7 +136,7 @@ order.
 | StatusEN / StatusTH | The words beside the mark | `Live · since Aug 2026` / `เปิดใช้งานแล้ว · ตั้งแต่ ส.ค. 2026` |
 | KickerEN / KickerTH | Small line above the project's question | `Build · Live` / `สร้างเอง · เปิดใช้งานแล้ว` |
 | Media | What the index and the sheet show: `img` the screenshot, `win` the screenshot in a window frame, `notion` a drawn Notion row, `rings` the TAM/SAM/SOM drawing, `five` the five-apps-to-one drawing | `win` |
-| Wash | The pale tint behind the project in the tour and the Signature scene | `gonai` |
+| Wash | The pale tint behind the project in the hero tour and the project's sheet | `gonai` |
 | Tour | Puts the project in the hero tour | ticked on Aje, GoNai, klao-site |
 | TourOrder | Tour order, lower first — fill it on every Tour row | `1` |
 | LineageOf | The earlier idea this project grew from; the Signature scene and the "Same idea, four years apart" card read it | GoNai → Tripedia |
@@ -533,12 +535,15 @@ Work top to bottom; tick as you go.
    bundled copy and looks correct — the quiet failure described below.
 8. **Set the two IDs**, `NOTION_DB_STORY` and `NOTION_DB_FAQ`, in
    `.env.local` and on Vercel for Production and Preview (and Development),
-   then **redeploy** — `docs/DEPLOY.md` step 5: a saved variable doesn't
-   reach a deployment that already exists.
+   then redeploy the White Edition **preview** (Vercel → the
+   `feat/white-edition` deployment → Redeploy) — `docs/DEPLOY.md` step 5: a
+   saved variable doesn't reach a deployment that already exists. Production
+   runs the old code until the merge and ignores these two IDs, so there is
+   nothing to redeploy there yet.
 9. **Prove it's live:** add a throwaway FAQ row `TEST — delete me`, tick
-   Published, check `#faq` on the redeployed site (the bundled copy can't
-   contain it), then delete the row. Content edits after this reach
-   production within about an hour, through ISR.
+   Published, check `#faq` on the redeployed **preview** (the bundled copy
+   can't contain it), then delete the row. After the White Edition merge,
+   content edits reach production within about an hour, through ISR.
 10. **Just before the White Edition merge:** untick Published on the
     AISecretary and DailyBrief rows (they're no longer part of the site),
     and rewrite `OutcomeEN`/`OutcomeTH` as one receipt per line (step 2).
