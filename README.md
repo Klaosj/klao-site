@@ -25,11 +25,13 @@ Each project's image comes from the `Screenshot` files property on its row in th
 **Projects** database. The site serves it through `/api/img/page/<row-id>/Screenshot`, so
 replacing the file in Notion changes the live site within the hour — no deploy.
 
-- **Size:** capture 2560 px wide without the scrollbar and export a JPEG of ≤ 250 KB (the
-  budget for every image on the site). Keep the app's header in shot.
+- **Size:** capture 2560 px wide at about 16:9 without the scrollbar (the site's own files are
+  1580×900) and export a JPEG of ≤ 250 KB (the budget for every image on the site). Every
+  frame crops with `object-fit: cover`, centred, so a taller capture loses the app's header.
 - **Home-page tour:** projects with the `Tour` checkbox ticked play in the hero tour, in
-  `TourOrder` order. A project without a screenshot can still sit in the Projects index —
-  give it a `Media` drawing (`notion`, `rings`, `five`); see `docs/NOTION_SETUP.md`.
+  `TourOrder` order. Until any row is ticked, every project with a screenshot plays, by
+  `Order`. A project without a screenshot can still sit in the Projects index — give it a
+  `Media` drawing (`notion`, `rings`, `five`); see `docs/NOTION_SETUP.md`.
 - **Fallback copies:** `src/content/fixtures/projects.json` points at `public/images/*` for
   local dev and every test run. When you change a screenshot in Notion, drop the same file in
   `public/images/`, update that row's `imageSrc` if the filename changed, and describe what
