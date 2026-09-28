@@ -3,7 +3,7 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { usePathname } from 'next/navigation';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import LocaleToggle, { switchLocaleHref } from '@/components/LocaleToggle';
-import { setActiveSection } from '@/lib/active-section';
+import { setReadingAnchor } from '@/lib/active-section';
 import { dict } from '@/lib/dictionary';
 
 // A router spy and a marked next/link, so a test can prove the switch never
@@ -30,7 +30,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
-  setActiveSection(null);
+  setReadingAnchor(null);
   window.removeEventListener('click', stayOnPage);
   vi.mocked(usePathname).mockReturnValue('/en');
 });
@@ -50,6 +50,10 @@ describe('switchLocaleHref', () => {
     expect(switchLocaleHref('/en', 'th', 'career')).toBe('/th#career');
     expect(switchLocaleHref('/th/', 'en', 'faq')).toBe('/en#faq');
     expect(switchLocaleHref('/en', 'th', null)).toBe('/th');
+    // P1 re-review Important 1: the bands outside the nav count too.
+    expect(switchLocaleHref('/en', 'th', 'signature')).toBe('/th#signature');
+    expect(switchLocaleHref('/th', 'en', 'contact')).toBe('/en#contact');
+    expect(switchLocaleHref('/en/projects', 'th', 'contact')).toBe('/th/projects');
     expect(switchLocaleHref('/en/projects', 'th', 'career')).toBe('/th/projects');
     expect(switchLocaleHref('/th/writing/some-post', 'en', 'story')).toBe('/en/writing/some-post');
   });
@@ -167,10 +171,10 @@ describe('LocaleToggle', () => {
     render(<LocaleToggle />);
     const [en, th] = Array.from(document.querySelectorAll('.lt-seg a'));
     expect(th.getAttribute('href')).toBe('/th');
-    act(() => setActiveSection('story'));
+    act(() => setReadingAnchor('story'));
     expect(th.getAttribute('href')).toBe('/th#story');
     expect(en.getAttribute('href')).toBe('/en');
-    act(() => setActiveSection(null));
+    act(() => setReadingAnchor(null));
     expect(th.getAttribute('href')).toBe('/th');
   });
 
@@ -182,7 +186,7 @@ describe('LocaleToggle', () => {
   // or the router, still carrying the section being read (finding 8).
   it('is a plain link the browser follows, a full page load that keeps the section', () => {
     render(<LocaleToggle />);
-    act(() => setActiveSection('career'));
+    act(() => setReadingAnchor('career'));
     const th = document.querySelector('.lt-seg a[hreflang="th"]') as HTMLAnchorElement;
     expect(document.querySelector('.lt-seg [data-next-link]')).toBeNull();
     expect(th.getAttribute('href')).toBe('/th#career');

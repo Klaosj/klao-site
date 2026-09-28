@@ -2,20 +2,21 @@
 
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { useActiveSection } from '@/lib/active-section';
+import { useReadingAnchor } from '@/lib/active-section';
 import { dict } from '@/lib/dictionary';
 import type { Locale } from '@/lib/models';
-import { isPlainClick, type NavSection } from '@/lib/nav';
+import { isPlainClick, type ReadingAnchor } from '@/lib/nav';
 import './locale-toggle.css';
 
 /** The same page in the other language: swap the first path segment and keep
  *  the rest (the logic the old toggle had). On the home page it also carries
- *  the section being read (Klao decision (a), 2026-09-28): section ids are the
- *  same in both locales, and it is the section itself, never the URL's hash,
+ *  the band being read, the reading anchor (Klao decision (a), 2026-09-28):
+ *  its ids are the same in both locales, and it is the band itself, never the
+ *  URL's hash,
  *  so a stale `#work`, an open sheet's `#work/<key>` or a `#faq-…` answer is
  *  never carried. No other page has those sections: /en/projects goes to
  *  /th/projects and nothing more. */
-export function switchLocaleHref(pathname: string, target: Locale, section: NavSection | null = null): string {
+export function switchLocaleHref(pathname: string, target: Locale, section: ReadingAnchor | null = null): string {
   const rest = pathname.split('/').slice(2).filter(Boolean).join('/');
   return `/${target}${rest ? `/${rest}` : section ? `#${section}` : ''}`;
 }
@@ -66,10 +67,11 @@ const ITEMS: readonly { locale: Locale; label: string }[] = [
 export default function LocaleToggle({ wide = false }: { wide?: boolean }) {
   const pathname = usePathname() ?? '/en';
   const current: Locale = pathname.split('/')[1] === 'th' ? 'th' : 'en';
-  // The section the capsule marks as being read. Arriving at /th#career is a
-  // jump (the site sets no smooth scrolling), so reduced motion needs no
-  // branch; html's scroll-padding-top (site-nav.css) clears the capsule.
-  const section = useActiveSection();
+  // The band being read (the reading anchor SiteNav publishes). Arriving at
+  // /th#career is a jump (the site sets no smooth scrolling), so reduced
+  // motion needs no branch; html's scroll-padding-top (site-nav.css) clears
+  // the capsule.
+  const section = useReadingAnchor();
   // P1 final review M-2 (A02): the thumb moves on the click itself, while
   // the next page loads, instead of leaving the tap unanswered. The pick is
   // kept with the pathname it was made on, so it lapses once the route

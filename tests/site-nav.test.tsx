@@ -339,7 +339,89 @@ describe('SiteNav', () => {
     expect(otherLanguage().getAttribute('href')).toBe('/th');
     FakeIO.watching(career).fire([{ target: career, isIntersecting: true }]);
     expect(otherLanguage().getAttribute('href')).toBe('/th#career');
-    FakeIO.watching(career).fire([{ target: career, isIntersecting: false }]);
+  });
+
+  // P1 re-review Important 1: the switch kept only the four nav sections,
+  // so from Signature, the Contact band, the footer or a gap between bands
+  // it landed on the hero. The reading anchor (the prototype's anchor():
+  // every band plus the footer) is separate from the pill, which stays
+  // nav-only.
+  function WholePage() {
+    return (
+      <>
+        {['top', 'signature', 'work', 'career', 'story', 'faq', 'contact'].map((id) => (
+          <section key={id} id={id} />
+        ))}
+        <footer className="site-foot" />
+      </>
+    );
+  }
+  const band = (el: Element, on: boolean) => FakeIO.watching(el).fire([{ target: el, isIntersecting: on }]);
+  const byId = (id: string) => document.getElementById(id)!;
+  const pillOn = () => sectionLinks().some((a) => a.hasAttribute('aria-current'));
+
+  it('carries Signature, the Contact band and the footer (as #contact) across a switch; the pill stays nav-only', () => {
+    render(
+      <>
+        <WholePage />
+        <SiteNav locale="en" profile={profile} />
+      </>,
+    );
+    band(byId('signature'), true);
+    expect(otherLanguage().getAttribute('href')).toBe('/th#signature');
+    expect(pillOn()).toBe(false);
+    band(byId('signature'), false);
+    band(byId('contact'), true);
+    expect(otherLanguage().getAttribute('href')).toBe('/th#contact');
+    expect(pillOn()).toBe(false);
+    band(byId('contact'), false);
+    band(document.querySelector('footer')!, true);
+    expect(otherLanguage().getAttribute('href')).toBe('/th#contact');
+  });
+
+  it('keeps the last section while the reading band sits in the gap between two', () => {
+    render(
+      <>
+        <WholePage />
+        <SiteNav locale="en" profile={profile} />
+      </>,
+    );
+    band(byId('work'), true);
+    band(byId('work'), false); // the gap between #work and #career
+    expect(otherLanguage().getAttribute('href')).toBe('/th#work');
+    expect(pillOn()).toBe(false);
+    band(byId('career'), true);
+    expect(otherLanguage().getAttribute('href')).toBe('/th#career');
+  });
+
+  // A jump (an anchor link, a reload that restores the scroll) can land in a
+  // gap before the observer has seen any band: the band above the reading
+  // line, the one just read, stands in for "the last one".
+  it('takes the band above the reading line when a jump lands in a gap with nothing passed yet', () => {
+    render(
+      <>
+        <WholePage />
+        <SiteNav locale="en" profile={profile} />
+      </>,
+    );
+    // jsdom has no layout: place the bands around the reading line (45 %).
+    const tops: Record<string, number> = { top: -3000, signature: -2000, work: -900, career: 600, story: 1800, faq: 3000, contact: 4000 };
+    for (const [id, top] of Object.entries(tops)) vi.spyOn(byId(id), 'getBoundingClientRect').mockReturnValue({ top } as DOMRect);
+    vi.spyOn(document.querySelector('footer')!, 'getBoundingClientRect').mockReturnValue({ top: 5000 } as DOMRect);
+    band(byId('top'), false);
+    expect(otherLanguage().getAttribute('href')).toBe('/th#work');
+  });
+
+  it('carries nothing from the hero', () => {
+    render(
+      <>
+        <WholePage />
+        <SiteNav locale="en" profile={profile} />
+      </>,
+    );
+    band(byId('signature'), true);
+    band(byId('signature'), false);
+    band(byId('top'), true);
     expect(otherLanguage().getAttribute('href')).toBe('/th');
   });
 

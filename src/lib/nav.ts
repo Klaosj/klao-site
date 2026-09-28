@@ -9,6 +9,17 @@ import type { Locale, Profile } from './models';
 export const NAV_SECTIONS = ['work', 'career', 'story', 'faq'] as const;
 export type NavSection = (typeof NAV_SECTIONS)[number];
 
+/**
+ * The bands a language switch can land on (Klao decision (a), P1 re-review
+ * Important 1), in page order: the prototype's anchor() kept every band plus
+ * the footer. Wider than NAV_SECTIONS on purpose -- the pill marks the four
+ * places to read, the switch keeps the reader wherever they are. The ids are
+ * the same on both locales' home pages. The footer has no id of its own and
+ * counts as 'contact', the band right above it.
+ */
+export const READING_ANCHORS = ['signature', ...NAV_SECTIONS, 'contact'] as const;
+export type ReadingAnchor = (typeof READING_ANCHORS)[number];
+
 /** The dictionary key for each section link's label. */
 export const NAV_LABEL_KEY = {
   work: 'navWork',
