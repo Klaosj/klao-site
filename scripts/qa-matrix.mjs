@@ -35,6 +35,7 @@ mkdirSync(join(OUT, 'pages'), { recursive: true });
 
 const lines = [];
 let failures = 0;
+let lenExceptions = 0; // M6 — R15 overages, tallied separately so they never silently vanish from the run's own summary.
 // I5 — a base URL is often a Vercel share link (…?_vercel_share=<token>).
 // Nothing printed by this script — a crash line, a preflight error, a URL —
 // may carry that token verbatim: it is redacted centrally here so every
@@ -72,6 +73,12 @@ async function preflight() {
   }
   if (/vercel\.com\/(sso|login)/.test(res.headers.get('location') ?? '')) {
     throw new Error('This deployment is behind Vercel Authentication. Pass a share link (…?_vercel_share=…) as the base URL — see README "Browser QA".');
+  }
+  // M4 — a non-redirect error status (a bare 401, a dev server already
+  // crashed to 500) used to pass preflight silently and then produce
+  // nothing but noise from every probe and combo.
+  if (res.status >= 400) {
+    throw new Error(`${redact(urlFor('/en'))} answered HTTP ${res.status}. Start the site first (npm run build && npm run start), or check the base URL / share link.`);
   }
 }
 
@@ -124,7 +131,6 @@ async function runCombo(browser, c) {
   const context = await newContext(browser, { ...c, scheme: c.theme === 'light' ? 'dark' : 'light' });
   try {
     const { page, errors } = await open(context, `/${c.locale}`);
-    const perf = await page.evaluate(readPerf);
     const scrollOverflow = await page.evaluate(scrollThrough);
     await page.waitForTimeout(c.motion ? 1500 : 300);
     const m = await page.evaluate(collect, {
@@ -135,6 +141,12 @@ async function runCombo(browser, c) {
       thai: c.locale === 'th',
       reduced: !c.motion,
     });
+    // M1 — read perf AFTER the scroll-through and its settle wait, not right
+    // after load: layout-shift entries keep accumulating as lazy content
+    // below the fold comes in, so an early read misses exactly the CLS
+    // spec §9 exists to catch. window.__qa.cls only grows, so this is
+    // always at least as accurate as the early read it replaces.
+    const perf = await page.evaluate(readPerf);
     const contrast = await page.evaluate(contrastIssues); // I2 — the home matrix now checks contrast like every other page.
     await page.screenshot({ path: join(OUT, `${name}.png`), fullPage: true });
     const overflow = Math.max(m.overflow, scrollOverflow);
@@ -147,6 +159,7 @@ async function runCombo(browser, c) {
     const budget = LEN_BUDGET[c.width];
     const overBudget = budget !== undefined && m.len > budget;
     const lenExempt = overBudget && (c.locale === 'th' || !c.motion);
+    if (lenExempt) lenExceptions++; // M6 — counted so the final tally can't silently drop it.
     if (overBudget && !lenExempt) p.push(`page length ${m.len} screens > ${budget}`);
     if (overflow > 0) p.push(`horizontal overflow ${overflow}px${m.bleeders.length ? ': ' + m.bleeders.join(', ') : ''}`);
     for (const e of errors) p.push(`console: ${e}`);
@@ -398,6 +411,10 @@ async function pages(browser) {
       const m = re.exec(xml);
       if (m) extra.push(m[1]);
     }
+  } catch (e) {
+    // M5 — a refused sitemap fetch used to abort the whole run before
+    // summary.txt was written. Note it and carry on with the fixed PATHS.
+    log(`     ! sitemap discovery skipped: ${redact(String(e?.message ?? e).split('\n')[0])}`);
   } finally {
     await discover.close();
   }
@@ -506,5 +523,9 @@ try {
   await browser.close();
 }
 log(failures ? `\n${failures} check group(s) failed — screenshots in ${OUT}` : `\nall green — screenshots in ${OUT}`);
+// M6 — R15 exceptions never fail the run, but the tail line and summary.txt
+// still say how many there were, so a run that is "all green" only because
+// every overage was a reportable one is never confused with a clean run.
+if (lenExceptions) log(`${lenExceptions} length exception(s) to report to Klao (R15) — see the [R15: …] lines above`);
 writeFileSync(join(OUT, 'summary.txt'), lines.join('\n') + '\n');
 process.exitCode = failures ? 1 : 0;

@@ -2,7 +2,7 @@
 // stays quiet on a clean page. A check that can't fail is worse than none.
 // No server needed: both pages are inline HTML.
 //   node scripts/qa-selftest.mjs        (npm run qa:self)
-import { collect, contrastIssues, launch, watchErrors } from './qa-lib.mjs';
+import { collect, contrastIssues, launch, scrollThrough, watchErrors } from './qa-lib.mjs';
 
 const OPTS = {
   sectionIds: ['top', 'tour', 'signature', 'work', 'career', 'story', 'faq', 'contact'],
@@ -59,9 +59,14 @@ async function measure(browser, html) {
     await page.evaluate(async () => {
       await document.fonts.ready;
     });
+    // scrollThrough duplicates collect()'s overflow walk for its own reasons
+    // (Playwright serialises each in-page function separately — see
+    // qa-lib.mjs's file header) — call it here too, so a break in that copy
+    // shows up as a self-test failure instead of only in production (M3).
+    const scrollBleed = await page.evaluate(scrollThrough);
     const m = await page.evaluate(collect, OPTS);
     const contrast = await page.evaluate(contrastIssues);
-    return { ...m, contrast, errors };
+    return { ...m, scrollBleed, contrast, errors };
   } finally {
     await context.close();
   }
@@ -76,7 +81,10 @@ try {
   for (const k of ['missing', 'empty', 'hidden', 'smallText', 'smallTargets', 'thaiBreaks', 'nwWraps', 'contrast', 'errors']) {
     check(clean[k].length === 0, `clean page raises no ${k}${clean[k].length ? ': ' + clean[k].join(' | ') : ''}`);
   }
-  check(clean.overflow === 0, `clean page has no horizontal overflow, incl. a bleed an overflow-x: clip ancestor absorbs (${clean.overflow}px)`);
+  check(
+    clean.overflow === 0 && clean.scrollBleed === 0,
+    `clean page has no horizontal overflow, incl. a bleed an overflow-x: clip ancestor absorbs (collect=${clean.overflow}px scroll=${clean.scrollBleed}px)`,
+  );
 
   const dirty = await measure(browser, DIRTY);
   check(dirty.missing.includes('faq'), 'a missing section (#faq) is caught');

@@ -117,6 +117,14 @@ export function pageInit() {
   requestAnimationFrame(probe);
 }
 
+/**
+ * Reads the CLS/LCP counters. Call this AFTER scrollThrough() has run and
+ * settled (Lane B review M1): a layout-shift observer keeps accumulating as
+ * lazy content loads in below the fold, so reading it right after the first
+ * paint — before anything below the fold has scrolled into view — misses
+ * exactly the shift spec §9 exists to catch. window.__qa.cls only grows, so
+ * reading late is always at least as accurate as reading early.
+ */
 export function readPerf() {
   const qa = window.__qa || { lcp: 0, cls: 0 };
   return {
