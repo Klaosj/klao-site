@@ -62,7 +62,13 @@ export default function PaletteHost({
       // a Thai candidate with Enter, or a compose step that happens to land
       // on "k"/"/", could toggle or open the palette out from under the IME.
       if (e.isComposing || e.keyCode === 229) return;
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+      // M7 (fix wave finding 10): e.key reflects the character the active
+      // keyboard *layout* produces, not the physical key -- on a Thai
+      // layout, the K/slash keys produce Thai letters, not 'k'/'/', so
+      // Cmd+K and "/" alone did nothing at all. e.code names the physical
+      // key regardless of layout (KeyK, Slash); either check passing opens
+      // the palette, so a Latin layout (where they usually agree) is unaffected.
+      if ((e.metaKey || e.ctrlKey) && (e.key.toLowerCase() === 'k' || e.code === 'KeyK')) {
         e.preventDefault();
         if (openRef.current) close();
         else show('');
@@ -70,7 +76,12 @@ export default function PaletteHost({
       }
       // "/" is the prototype's second shortcut — never while typing, never
       // over another dialog (a project sheet, the phone menu).
-      if (e.key === '/' && !openRef.current && !isTyping(e.target) && !document.querySelector('dialog[open]')) {
+      if (
+        (e.key === '/' || e.code === 'Slash') &&
+        !openRef.current &&
+        !isTyping(e.target) &&
+        !document.querySelector('dialog[open]')
+      ) {
         e.preventDefault();
         show('');
       }
