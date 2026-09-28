@@ -419,7 +419,10 @@ async function pages(browser) {
     await discover.close();
   }
   const REAL_PATHS = ['/en/projects', '/th/projects', '/en/writing', '/th/writing', '/en/career', ...extra];
-  const MISSING_PATH = '/en/qa-missing-page';
+  // T12 — both locales: the root 404 is ONE static page (global-not-found.tsx)
+  // whose pre-paint picks lang, the visible copy and the Thai tab title from
+  // the URL, so /th is the half that can silently come out English.
+  const MISSING_PATHS = ['/en/qa-missing-page', '/th/qa-missing-page'];
 
   // I4 — the 404 path is queued last across every width/theme, so a dev
   // crash it can trigger (routed to Lane A/T5 — every affected line carries
@@ -443,6 +446,22 @@ async function pages(browser) {
       for (const e of errors) if (!(isMissing && /404/.test(e))) p.push(`console: ${e}`);
       const s = await page.evaluate(themeState);
       if (s.bg !== CANVAS[theme]) p.push(`canvas ${s.bg}, expected ${CANVAS[theme]}`);
+      // The canvas alone can pass by accident (light stored, light default);
+      // the stored choice and html.js must both survive hydration too.
+      if (s.theme !== theme) p.push(`data-theme "${s.theme}", stored "${theme}"`);
+      if (!s.js) p.push('html.js missing — the pre-paint script did not run or was wiped');
+      if (isMissing) {
+        const want = path.split('/')[1] === 'th' ? 'th' : 'en';
+        const nf = await page.evaluate(() => ({
+          lang: document.documentElement.lang,
+          h1: [...document.querySelectorAll('h1')].filter((h) => h.getClientRects().length).map((h) => h.textContent.trim()),
+          title: document.title,
+        }));
+        if (nf.lang !== want) p.push(`lang "${nf.lang}", expected "${want}"`);
+        if (nf.h1.length !== 1) p.push(`${nf.h1.length} visible h1, expected 1 (one locale copy)`);
+        else if (/[฀-๿]/.test(nf.h1[0]) !== (want === 'th')) p.push(`visible copy "${nf.h1[0]}" is not ${want}`);
+        if (!nf.h1.length || !nf.title.startsWith(nf.h1[0])) p.push(`tab title "${nf.title}" does not match the visible heading`);
+      }
       const ov = await page.evaluate(overflowBleed); // I1 — same combined measure as the home matrix, named element(s) included.
       if (ov.overflow > 0) p.push(`horizontal overflow ${ov.overflow}px${ov.bleeders.length ? ': ' + ov.bleeders.join(', ') : ''}`);
       if (path === '/en/career') {
@@ -480,7 +499,7 @@ async function pages(browser) {
   }
   for (const width of [1440, 390]) {
     for (const theme of ['light', 'dark']) {
-      await runPage(width, theme, MISSING_PATH, { isMissing: true });
+      for (const path of MISSING_PATHS) await runPage(width, theme, path, { isMissing: true });
     }
   }
 }
