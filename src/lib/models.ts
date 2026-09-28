@@ -93,6 +93,9 @@ export interface Project {
   tourOrder: number | null; // TourOrder; null sorts after every numbered project
   lineageOf: string | null; // LineageOf relation: Project.id of the earlier idea (GoNai -> Tripedia)
   alt: Localized | null; // AltEN/TH: what the picture shows; null falls back to image-alt.ts
+  // P5 T18-f (Q1 = A): ScreenshotPhone (Files), the hero tour's own 6:5 phone
+  // capture of the same screen. null = the phone stage centre-crops imageSrc.
+  screenshotPhone: string | null;
   outcomes: { en: string[]; th: string[] }; // OutcomeEN/TH one per line (th falls back to en); `outcome` stays for the old pages
 }
 

@@ -1,4 +1,4 @@
-import { statSync } from 'node:fs';
+import { readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import projects from '@/content/fixtures/projects.json';
@@ -7,6 +7,18 @@ import { PROJECT_MEDIA, PROJECT_STATUS_KEYS, PROJECT_WASHES } from '@/lib/models
 import { mapProject } from '@/lib/notion-mappers';
 
 const fixtures = projects as Project[];
+
+// Width and height from a JPEG's frame header (SOF0-SOF3), or null.
+function jpegSize(buf: Buffer): { width: number; height: number } | null {
+  if (buf[0] !== 0xff || buf[1] !== 0xd8) return null;
+  let i = 2;
+  while (i + 9 < buf.length && buf[i] === 0xff) {
+    const marker = buf[i + 1];
+    if (marker >= 0xc0 && marker <= 0xc3) return { height: buf.readUInt16BE(i + 5), width: buf.readUInt16BE(i + 7) };
+    i += 2 + buf.readUInt16BE(i + 2);
+  }
+  return null;
+}
 const byName = (name: string) => fixtures.find((p) => p.name === name)!;
 
 describe('projects fixture (the 24-Sep lineup)', () => {
@@ -51,6 +63,21 @@ describe('projects fixture (the 24-Sep lineup)', () => {
   it('gives klao-site the Notion-row vignette instead of the old dark screenshot', () => {
     expect(byName('klao-site').media).toBe('notion');
     expect(byName('klao-site').imageSrc).toBeNull();
+  });
+
+  // T18-f (CO-06, Q1 = A): every tour project that claims a phone frame has
+  // the file, a JPEG no bigger than 250 KB, drawn for the 6:5 phone stage
+  // at 2x (780 x 650). klao-site's frame is the HTML vignette, so it has none.
+  it('gives the screenshot tour frames a real 6:5 phone image in public/, at most 250 KB', () => {
+    const toured = fixtures.filter((p) => p.tour && p.media !== 'notion');
+    expect(toured.map((p) => p.name)).toEqual(['Aje', 'GoNai']);
+    for (const p of toured) {
+      expect(p.screenshotPhone, p.name).toBe(`/images/${p.name.toLowerCase()}-phone.jpg`);
+      const file = readFileSync(join('public', p.screenshotPhone!));
+      expect(file.length, `${p.screenshotPhone} is ${file.length} bytes`).toBeLessThanOrEqual(250 * 1024);
+      expect(jpegSize(file), p.screenshotPhone!).toEqual({ width: 780, height: 650 });
+    }
+    expect(byName('klao-site').screenshotPhone).toBeNull();
   });
 
   it('points every screenshot at a real file in public/, at most 250 KB', () => {

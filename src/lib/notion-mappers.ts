@@ -98,6 +98,8 @@ export function mapProject(page: NotionPage): Project | null {
     tourOrder: numOrNull(page.properties.TourOrder),
     lineageOf: relationFirst(page.properties.LineageOf),
     alt: optLocalized(text(page.properties.AltEN), text(page.properties.AltTH)),
+    // P5 T18-f: optional, served through the same image proxy as Screenshot.
+    screenshotPhone: fileProxy(page, 'ScreenshotPhone'),
     outcomes: { en: outcomesEn, th: outcomesTh.length ? outcomesTh : [...outcomesEn] },
   };
 }

@@ -34,6 +34,7 @@
       "en": "Three nested rings labelled TAM, SAM and SOM, with SOM filled. Method, not to scale.",
       "th": "วงกลมซ้อนสามวง TAM, SAM และ SOM โดยระบาย SOM วิธีคิด ไม่ใช่สัดส่วนจริง"
     },
+    "screenshotPhone": null,
     "outcomes": {
       "en": ["Market sized (TAM–SAM–SOM, SOM THB 37M, an estimate)", "5 revenue streams", "First-year financial plan", "Clickable prototype"],
       "th": ["ขนาดตลาด TAM–SAM–SOM (SOM 37 ล้านบาท เป็นการประเมิน)", "5 ช่องทางรายได้", "แผนการเงินปีแรก", "prototype กดได้จริง"]
@@ -74,6 +75,7 @@
       "en": "Five separate app squares become one.",
       "th": "แอปห้าตัวแยกกัน รวมเป็นหนึ่งเดียว"
     },
+    "screenshotPhone": null,
     "outcomes": {
       "en": ["Final 30 of 500 teams", "Market sized (TAM–SAM–SOM)", "Subscription + partner-margin revenue model"],
       "th": ["เข้ารอบ 30 ทีมสุดท้ายจาก 500 ทีม", "ขนาดตลาด TAM–SAM–SOM", "โมเดลรายได้ subscription + ส่วนแบ่งจากพาร์ตเนอร์"]
@@ -114,6 +116,7 @@
       "en": "Aje’s Review screen for a sample idea, BikeFix Home: the idea, its biggest uncertainty and the next test.",
       "th": "หน้า Review ของ Aje สำหรับไอเดียตัวอย่าง BikeFix Home: ตัวไอเดีย ความไม่แน่นอนที่ใหญ่ที่สุด และการทดสอบถัดไป"
     },
+    "screenshotPhone": "/images/aje-phone.jpg",
     "outcomes": {
       "en": ["Working prototype", "8-dimension report card with letter grades", "16 hand-drawn framework diagrams", "Advisor runs on Claude or a local model"],
       "th": ["prototype ใช้งานได้จริง", "report card 8 มิติพร้อมเกรด", "framework diagram 16 ใบวาดเอง", "advisor รันบน Claude หรือโมเดล local"]
@@ -151,6 +154,7 @@
       "en": "GoNai home screen: Plan a full day out, know every baht before you leave, with a budget prompt.",
       "th": "หน้าแรกของ GoNai: วางแผนเที่ยวทั้งวัน รู้ทุกบาทก่อนออกจากบ้าน พร้อมช่องพิมพ์งบประมาณ"
     },
+    "screenshotPhone": "/images/gonai-phone.jpg",
     "outcomes": { "en": [], "th": [] }
   },
   {
@@ -188,6 +192,7 @@
       "en": "The project’s own Notion row: name, type, stack and status.",
       "th": "แถวข้อมูลของโปรเจกต์นี้ใน Notion: ชื่อ ประเภท stack และสถานะ"
     },
+    "screenshotPhone": null,
     "outcomes": {
       "en": ["Live since Aug 2026", "Notion as the only CMS", "EN/TH", "400+ automated tests"],
       "th": ["ออนไลน์ตั้งแต่ ส.ค. 2026", "Notion เป็น CMS เดียว", "EN/TH", "เทสต์อัตโนมัติ 400+ ข้อ"]

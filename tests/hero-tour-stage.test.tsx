@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { readFileSync } from 'node:fs';
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { renderToString } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import HeroTourStage from '@/components/HeroTourStage';
 import { dict } from '@/lib/dictionary';
@@ -18,6 +19,7 @@ const slides: TourSlide[] = [
     href: '#work',
     media: 'img',
     src: '/images/aje.jpg',
+    phoneSrc: '/images/aje-phone.jpg',
     alt: 'Aje review screen.',
     wash: 'aje',
     dwellMs: 6000,
@@ -30,6 +32,7 @@ const slides: TourSlide[] = [
     href: '#work',
     media: 'img',
     src: '/images/gonai.jpg',
+    phoneSrc: null,
     alt: 'GoNai home screen.',
     wash: 'gonai',
     dwellMs: 5500,
@@ -42,6 +45,7 @@ const slides: TourSlide[] = [
     href: '#work',
     media: 'notion',
     src: null,
+    phoneSrc: null,
     alt: '',
     wash: 'site',
     dwellMs: 7000,
@@ -433,6 +437,46 @@ describe('HeroTourStage', () => {
     expect(imgs[0].getAttribute('alt')).toBe('Aje review screen.');
   });
 
+  // T18-f (CO-06, Q1 = A): a phone gets its own 6:5 capture, the prototype
+  // way -- <picture><source media="(max-width: 734px)"> + the desktop <img>
+  // -- and only when the project has one; without it the phone keeps the
+  // centre crop of the desktop screenshot. The <img> (desktop source, size
+  // hints, alt) is the same either way.
+  it('offers a phone image through <picture> only when the project has one', () => {
+    renderStage();
+    const [aje, gonai, site] = frames();
+    const source = aje.querySelector('picture > source')!;
+    expect(source.getAttribute('media')).toBe('(max-width: 734px)');
+    expect(source.getAttribute('srcset')).toBe('/images/aje-phone.jpg');
+    expect(source.getAttribute('width')).toBe('780');
+    expect(source.getAttribute('height')).toBe('650');
+    // The <source> comes before the <img>, or the browser never reads it.
+    expect(aje.querySelector('picture')!.lastElementChild).toBe(aje.querySelector('img.ht-cam'));
+    expect(aje.querySelector('img.ht-cam')!.getAttribute('src')).toBe('/images/aje.jpg');
+    expect(gonai.querySelector('source')).toBeNull();
+    expect(gonai.querySelector('picture > img.ht-cam')!.getAttribute('src')).toBe('/images/gonai.jpg');
+    expect(site.querySelector('picture, source')).toBeNull();
+  });
+
+  // T18-f: React preloads an eager server-rendered <img> on its own, but not
+  // one inside a <picture> (the <source> may win). The first frame is the
+  // LCP image, so the stage preloads it itself: one link per screen size
+  // when a phone capture exists, one plain link when it doesn't.
+  it('preloads the first frame for the screen that will show it', () => {
+    const links = (html: string) => [...html.matchAll(/<link[^>]*rel="preload"[^>]*>/g)].map((m) => m[0]);
+    const both = links(renderToString(<HeroTourStage slides={slides} vignette={vignette} locale="en" />));
+    expect(both).toHaveLength(2);
+    expect(both.find((l) => l.includes('href="/images/aje.jpg"'))).toMatch(/media="\(min-width: 735px\)"/);
+    expect(both.find((l) => l.includes('href="/images/aje-phone.jpg"'))).toMatch(/media="\(max-width: 734px\)"/);
+    for (const l of both) expect(l).toMatch(/as="image"/);
+    for (const l of both) expect(l).toMatch(/fetchPriority="high"|fetchpriority="high"/);
+    const plain = links(renderToString(<HeroTourStage slides={slides.slice(1)} vignette={vignette} locale="en" />));
+    expect(plain).toHaveLength(1);
+    expect(plain[0]).toContain('href="/images/gonai.jpg"');
+    expect(plain[0]).not.toContain('media=');
+    expect(plain[0]).toMatch(/fetchPriority="high"|fetchpriority="high"/);
+  });
+
   it('ends on the klao-site Notion-row vignette: the headline in both languages, decorative for screen readers', () => {
     renderStage();
     const vig = tour().querySelector('.ht-vig') as HTMLElement;
@@ -636,12 +680,20 @@ describe('hero-tour-stage.css (polish A04 + A08 exceptions)', () => {
   // every rule in the file and requires that ANY one carrying mask-image
   // has EXACTLY the selector `.ht-card:has(> .ht-cam)` -- nothing more,
   // nothing less -- which both mutations fail.
-  it('mask-image appears on exactly one rule, whose selector is exactly .ht-card:has(> .ht-cam) (polish A08)', () => {
+  // T18-f: the <picture> around a screenshot takes no box of its own, so the
+  // <img> sizes against the card exactly as it did without the wrapper.
+  it('lets the picture wrapper take no box of its own, so the desktop frame is unchanged', () => {
+    expect(CSS).toContain('.ht-pic { display: contents; }');
+  });
+
+  // T18-f: the screenshot now sits inside a <picture>, so the card selectors
+  // look for a .ht-cam anywhere inside the card, not only as a direct child.
+  it('mask-image appears on exactly one rule, whose selector is exactly .ht-card:has(.ht-cam) (polish A08)', () => {
     let sawRule = false;
     for (const rule of CSS.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
       if (!/mask-image/.test(rule[2])) continue;
       const selector = rule[1].trim();
-      expect(selector, `mask-image on an unexpected selector: "${selector}"`).toBe('.ht-card:has(> .ht-cam)');
+      expect(selector, `mask-image on an unexpected selector: "${selector}"`).toBe('.ht-card:has(.ht-cam)');
       expect(rule[2]).toContain('-webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent 98%);');
       expect(rule[2]).toContain('mask-image: linear-gradient(to bottom, #000 55%, transparent 98%);');
       sawRule = true;
@@ -653,8 +705,8 @@ describe('hero-tour-stage.css (polish A04 + A08 exceptions)', () => {
   // invisibly (the mask clips it too), so it must be declared only on the
   // card kind that is never masked -- the vignette.
   it('declares the outer lift shadow only on the unmasked (vignette) card', () => {
-    expect(CSS).toContain('.ht-card:not(:has(> .ht-cam)) { box-shadow: var(--e2); }');
-    expect(CSS).not.toMatch(/\.ht-card:has\(> \.ht-cam\)[^{]*\{[^}]*box-shadow/);
+    expect(CSS).toContain('.ht-card:not(:has(.ht-cam)) { box-shadow: var(--e2); }');
+    expect(CSS).not.toMatch(/\.ht-card:has\(\.ht-cam\)[^{]*\{[^}]*box-shadow/);
   });
 
   // Fix round 1 (Important #2): WCAG 2.4.7 -- the only tabbable dot's focus
