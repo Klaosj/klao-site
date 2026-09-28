@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, it, expect, vi } from 'vitest';
 import { mapProject, mapCareerEntry, mapProfile, mapSkill, mapQuestion, mapStoryChapter } from '@/lib/notion-mappers';
 import { slugKey } from '@/lib/format';
@@ -639,5 +640,19 @@ describe('mapStoryChapter', () => {
     expect(mapStoryChapter(page)).toBeNull();
     expect(warn).toHaveBeenCalled();
     warn.mockRestore();
+  });
+});
+
+// T18-e (CO-17 and CO-19, this lane's files): the comments in these lib
+// files describe the code as it is today. The site spells the company
+// "Actmedia", and a component the White Edition retired (SkillsBand, the
+// old ContactBand, the particle wordmark) is named only as history, on a
+// line that says it is retired.
+describe('lib comments name the live code (T18-e)', () => {
+  const RETIRED = /SkillsBand|ContactBand|ParticleField|particle wordmark|CvBand|AboutBand|CraftBand|HeroMonument/;
+  it.each(['src/lib/models.ts', 'src/lib/notion-mappers.ts', 'src/lib/career.ts'])('%s', (file) => {
+    const lines = readFileSync(file, 'utf8').split('\n');
+    expect(lines.filter((l) => /ActMedia/.test(l))).toEqual([]);
+    expect(lines.filter((l) => RETIRED.test(l) && !/\bretired\b/.test(l))).toEqual([]);
   });
 });
