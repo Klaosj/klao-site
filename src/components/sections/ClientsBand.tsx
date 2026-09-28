@@ -4,7 +4,7 @@ import { dict } from '@/lib/dictionary';
 import type { Locale } from '@/lib/models';
 
 // Server component -- no 'use client'. Reveal is itself a client component
-// but is composed here the same way CraftBand/CvBand do it: imported and
+// but is composed here the same way CareerBand does it: imported and
 // rendered as a plain child.
 export default function ClientsBand({ clients, locale }: { clients: string[]; locale: Locale }) {
   const t = dict[locale];

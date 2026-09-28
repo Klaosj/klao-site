@@ -17,12 +17,11 @@ describe('dictionary', () => {
   // Guards against a `th` entry that is a copy-paste of its `en`
   // counterpart -- a value that is non-empty (so the "no empty strings"
   // test above misses it) but was never actually translated. Every key
-  // in this dictionary currently has genuinely distinct en/th wording
-  // (including the shared "Business Development ·" prefix in roleLine,
-  // which diverges after the separator), so this assertion has no known
-  // false positives to carve out. If a future key legitimately needs the
-  // same string in both locales (e.g. a brand name or a URL), add it to
-  // `sharedKeys` below rather than weakening this check.
+  // in this dictionary currently has genuinely distinct en/th wording, so
+  // this assertion has no known false positives to carve out. If a future
+  // key legitimately needs the same string in both locales (e.g. a brand
+  // name or a URL), add it to `sharedKeys` below rather than weakening
+  // this check.
   it('has no untranslated (en === th) string values, aside from explicitly shared keys', () => {
     // navFaq: "FAQ" is the Thai UI's word too (prototype UI.th.nav).
     // backToTour is three project names and an arrow -- identical by design.

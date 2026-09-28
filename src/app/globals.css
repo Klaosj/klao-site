@@ -219,9 +219,10 @@
 }
 
 /* `--font-display` / `--font-thai`: aliases the standalone routes' own
-   headings still read (K10) -- /projects, /writing, /career and
-   typography.ts -- both resolving to the one stack above. Not colour names,
-   so the P5 Task 7 sweep (tests/no-legacy-tokens.test.ts) leaves them be. */
+   headings still read (K10) -- /projects, /writing, /career, /work/[slug],
+   /writing/[slug], PostBody.tsx:60 and typography.ts -- both resolving to
+   the one stack above. Not colour names, so the P5 Task 7 sweep
+   (tests/no-legacy-tokens.test.ts) leaves them be. */
 @theme inline static {
   --font-display: var(--font-sans);
   --font-thai: var(--font-sans);
@@ -277,10 +278,14 @@
 
 /* Unlayered on purpose (K10): Thai marks stack above and below the base
    letter and need more leading than a bare heading's tight arbitrary
-   `leading-[...]` utility gives -- the standalone routes' own h1/h2/h3 (no
-   layout redesign in P5, spec §75), which carry no White Edition type class
-   of their own to bring a Thai line-height along with it. The White Edition
-   type classes (.t-h1, .t-h2, ...) carry their own, so they are excluded.
+   `leading-[...]` utility gives -- today, only the three 404 h1s (both
+   not-found.tsx files and global-not-found.tsx), which carry no White
+   Edition type class of their own to bring a Thai line-height along with
+   it (the other standalone routes' h1s use `font-display text-3xl`-style
+   classes with no `leading-[...]` at all, so this rule never matches
+   them). No layout redesign in P5 (spec §4) is why a bare heading exists
+   here at all. The White Edition type classes (.t-h1, .t-h2, ...) carry
+   their own, so they are excluded.
    Fix wave finding 3: the `:not(...)` list above named only the five type
    classes that existed when this rule was written, so any new heading --
    P1-P4's own -- was caught the moment it used h1/h2/h3 at all. Scoped

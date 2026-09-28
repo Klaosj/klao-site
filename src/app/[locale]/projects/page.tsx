@@ -79,7 +79,7 @@ export default async function ProjectsPage({ params }: { params: Promise<{ local
   const locale = assertLocale((await params).locale);
   const t = dict[locale];
   const projects = await getProjects();
-  // Business first, same chapter order as WorkDeck; an empty group renders
+  // Business first, same order as the home page's ProjectsIndex; an empty group renders
   // nothing (fixture mode has no business rows yet). Each group carries its
   // own `type` so the React key can be the stable data value rather than
   // `label`, which is translated display copy and changes with the locale.

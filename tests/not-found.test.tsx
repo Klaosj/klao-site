@@ -6,8 +6,8 @@ import { dict } from '@/lib/dictionary';
 import { THEME_PREPAINT_SCRIPT } from '@/lib/theme';
 
 // No RTL auto-cleanup is wired up in this project (no setupFiles in
-// vitest.config.ts) -- same pattern as tests/cv-band.test.tsx and friends.
-// Without this, screen.getByText(...) can match leftover nodes from a
+// vitest.config.ts) -- same pattern as tests/career-detent.test.tsx and
+// friends. Without this, screen.getByText(...) can match leftover nodes from a
 // previous test in this file.
 afterEach(cleanup);
 

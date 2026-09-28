@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import ClientsBand from '@/components/sections/ClientsBand';
 import { dict } from '@/lib/dictionary';
 
-// No RTL auto-cleanup is wired up in this project -- see tests/bands.test.tsx
+// No RTL auto-cleanup is wired up in this project -- see tests/not-found.test.tsx
 // for the same note. Without this, screen.getByText(...) can match leftover
 // nodes from a previous test in this file.
 afterEach(cleanup);

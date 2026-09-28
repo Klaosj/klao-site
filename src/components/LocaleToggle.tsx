@@ -69,8 +69,8 @@ export default function LocaleToggle({ wide = false }: { wide?: boolean }) {
   const current: Locale = pathname.split('/')[1] === 'th' ? 'th' : 'en';
   // The band being read (the reading anchor SiteNav publishes). Arriving at
   // /th#career is a jump (the site sets no smooth scrolling), so reduced
-  // motion needs no branch; html's scroll-padding-top (site-nav.css) clears
-  // the capsule.
+  // motion needs no branch; html's scroll-padding-top (globals.css, CO-20)
+  // clears the capsule.
   const section = useReadingAnchor();
   // P1 final review M-2 (A02): the thumb moves on the click itself, while
   // the next page loads, instead of leaving the tap unanswered. The pick is

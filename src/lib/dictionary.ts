@@ -1,10 +1,6 @@
 import type { Locale } from './models';
 
 const en = {
-  // T11: SiteNav's in-page anchors reuse each section's own eyebrow label
-  // where one already exists (about/career) -- `home` is the one genuinely
-  // new label, since Hero has no eyebrow of its own.
-  home: 'Home',
   projects: 'Projects',
   writing: 'Writing',
   career: 'Career',
@@ -17,7 +13,6 @@ const en = {
   viewCode: 'View code',
   readStory: 'Read the story',
   greeting: "Hi, I'm",
-  about: 'About',
   // Pitch deck (spec 2026-08-15 §5): the two chapter labels and the deck
   // subtitle. Chapter labels also head the /projects listing's two groups.
   workTypeBusiness: 'Business',
@@ -58,10 +53,9 @@ const en = {
   // skipped the whole section (QA I5). This is the heading that fixes it.
   cvHeading: 'Where I have been, and what came of it.',
 
-  // "Companies & brands" band. Names come from profile.json's `clients`,
-  // seeded from the owner's OWN career.json -- employers plus the accounts
-  // he names in his own ActMedia bullet. Nothing here is invented.
-  clients: 'Companies & brands',
+  // ClientsBand's h2 (spec §4: kept in the code, unrendered, until
+  // profile.clients has names again -- the eyebrow label above it, `clients`,
+  // had no reader anywhere and was removed).
   clientsHeading: 'Rooms I have already been in.',
 
   // CopyEmail's button label. The visible "Copied" text used to be
@@ -249,7 +243,7 @@ const en = {
   sheetStack: 'Built with',
   sheetStatus: 'Status',
   sheetClose: 'Close',
-  // "within the hour", never "instantly": the site updates through ISR, about an hour.
+  // Promise "within the hour", nothing faster: the site updates through ISR, about an hour.
   sheetNotionNote: 'Edit this row in Notion, and this page follows within the hour.',
   // C-6 ruling: Talatify's TAM/SAM/SOM rings sheet drawing gets its own caption (prototype
   // line 1170), so the drawing never reads as a real proportion.
@@ -264,7 +258,6 @@ const en = {
 };
 
 const th: typeof en = {
-  home: 'หน้าแรก',
   projects: 'ผลงาน',
   writing: 'บทความ',
   career: 'เส้นทางอาชีพ',
@@ -277,7 +270,6 @@ const th: typeof en = {
   viewCode: 'ดูโค้ด',
   readStory: 'อ่านเรื่องราว',
   greeting: 'สวัสดีครับ ผม',
-  about: 'เกี่ยวกับ',
   workTypeBusiness: 'ธุรกิจ',
   workTypeBuild: 'สร้างเอง',
   deckHeading: 'เกมธุรกิจที่ผมเดิน และของที่ผมลงมือสร้าง',
@@ -299,7 +291,6 @@ const th: typeof en = {
 
   cvHeading: 'เคยอยู่ที่ไหนมาบ้าง และได้อะไรกลับมา',
 
-  clients: 'บริษัทและแบรนด์',
   clientsHeading: 'ห้องที่ผมเคยเข้าไปนั่งมาแล้ว',
 
   copyEmailAction: 'คัดลอกที่อยู่อีเมล',

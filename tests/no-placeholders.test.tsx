@@ -17,17 +17,17 @@ const BANNED = ['example.dev', 'from Notion · Career', 'lorem ipsum', 'Lorem ip
 // Deliberately scoped to fixtures only, not merged into BANNED/the wider
 // .ts/.tsx/.css scan: these generic terms show up legitimately in real
 // source. src/app/[locale]/layout.tsx quotes an upstream Next.js
-// `// TODO: ...` comment verbatim, and src/lib/dictionary.ts declares a
-// `photoPlaceholder` key name -- both would misfire under a naive substring
-// match. Fixture JSON has no code comments or camelCase identifiers, so the
-// wider net is safe there without needing those files (which this task
-// doesn't own) to change.
+// `// TODO: ...` comment verbatim -- that would misfire under a naive
+// substring match. Fixture JSON has no code comments or camelCase
+// identifiers, so the wider net is safe there without needing those files
+// (which this task doesn't own) to change.
 //
-// Each pattern is word-bounded so `photoPlaceholder` (no boundary before its
-// capital P) still doesn't match `\bplaceholder\b`. The placeholder pattern
-// additionally excludes image-asset references like `/placeholder.svg` --
-// profile.json's photoSrc legitimately falls back to that path -- so only
-// "placeholder" used as prose/copy trips it.
+// Each pattern is word-bounded so a future camelCase identifier like
+// `xPlaceholder` (no boundary before its capital P) still doesn't match
+// `\bplaceholder\b`. The placeholder pattern additionally excludes
+// image-asset references like `/placeholder.svg` -- profile.json's photoSrc
+// legitimately falls back to that path -- so only "placeholder" used as
+// prose/copy trips it.
 const FIXTURE_PATTERNS: RegExp[] = [
   /replace in notion/i,
   /replace with real/i,
