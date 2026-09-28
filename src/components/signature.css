@@ -40,9 +40,25 @@
   .sig-app-face { position: absolute; inset: 0; display: grid; place-items: center; background: #1C7A57; color: #fff; opacity: 0; }
 
   /* GoNai's screenshot: a window keeps its hairline + soft shadow so a white UI shot never vanishes
-     on white. It fades into the page at its bottom edge, static and unconditional (polish A08). */
-  .sig-frame { position: relative; width: min(1040px, 100%); aspect-ratio: 16 / 9; overflow: hidden; border-radius: 14px; background: #fff; box-shadow: var(--e2); -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent 98%); mask-image: linear-gradient(to bottom, #000 55%, transparent 98%); }
-  .sig-frame img { display: block; width: 100%; height: 100%; object-fit: cover; }
+     on white. It fades into the page at its bottom edge, static and unconditional (polish A08).
+     Fix wave finding 2 (re-review N5 correction): `.sig-frame`'s mask-image applies to
+     everything painted inside it, `::after` included -- a pseudo-element does not escape its
+     parent's mask. `--e2` rendered invisible here because it is an OUTER box-shadow: it paints
+     outside the border box, entirely outside `mask-clip`'s default `border-box` painting area,
+     so mask-clip removes it outright rather than fading it. The hairline moves to `::after` as
+     an INSET shadow instead: an inset shadow paints inside the border box, so it stays within
+     the mask's own painting area and fades with the rest of the frame's content near the bottom
+     edge, exactly like HeroTourStage's own screenshot card (hero-tour-stage.css:44-45), instead
+     of being removed outright the way the outer shadow was. */
+  /* Aspect 1580/900, not 16/9 (fix wave finding 9, R21): matches the screenshot itself, like
+     HeroTourStage's `.ht-card` (hero-tour-stage.css:25) -- signature.ts's sigGeometry math
+     mirrors the same ratio. */
+  .sig-frame { position: relative; width: min(1040px, 100%); aspect-ratio: 1580 / 900; overflow: hidden; border-radius: 14px; background: #fff; -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent 98%); mask-image: linear-gradient(to bottom, #000 55%, transparent 98%); }
+  .sig-frame::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 .5px rgb(0 0 0 / .14); pointer-events: none; }
+  /* Fix wave finding 2: GoNai's screenshot is a light UI, so it dims a touch in dark mode
+     (ruling C6, --shot-dim) -- without it the white shot dissolved into the white page
+     background once the page itself went dark (spec §5.3), same as HeroTourStage's GoNai frame. */
+  .sig-frame img { display: block; width: 100%; height: 100%; object-fit: cover; filter: var(--shot-dim); }
 
   /* Glass captions. */
   .sig-cap { position: relative; width: min(600px, 100%); padding: 12px 22px; border-radius: 26px; text-align: left; }
@@ -80,7 +96,12 @@
      `contain 100%` = its bottom at the viewport bottom: the same 0..1 as sigProgress(). */
   @supports (animation-timeline: view()) {
     @media (prefers-reduced-motion: no-preference) {
-      .sig.pin .sig-track { view-timeline: --sig block; }
+      /* Fix wave finding 1: `view-timeline-inset` defaults to the scroll-padding the browser
+         infers for the timeline subject, which here inherits `html`'s own `scroll-padding-top`
+         (76px, the nav capsule's clearance) -- so the CSS path started 76px of scroll ahead of
+         `sigProgress()`, which knows nothing about scroll-padding. Pinning it to 0 makes both
+         paths agree on what "the track's top meets the viewport's top" means. */
+      .sig.pin .sig-track { view-timeline: --sig block; view-timeline-inset: 0px; }
       .sig.pin :is(.sig-head-in, .sig-app, .sig-app-face, .sig-card, .sig-frame, .sig-tint, .sig-chip, .sig-cap-a, .sig-cap-b) {
         animation-duration: auto;
         animation-timing-function: linear;

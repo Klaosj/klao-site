@@ -168,6 +168,39 @@ describe('ProjectSheet content', () => {
     }
   });
 
+  // Fix wave finding 5 (I2): description, outcomes and lineage cells now route through ThaiText,
+  // like the .sbody h3 headings above -- each assertion below leans on fixture Thai copy that
+  // already carries a THAI_KEEP/date/unit match, rather than monkey-patching the dictionary.
+  it('routes the description through ThaiText keep-runs on /th (GoNai: "งบประมาณ")', () => {
+    const dialog = openAt('gonai', 'th');
+    expect(texts(dialog, '.sheet-desc .nw')).toContain('งบประมาณ');
+  });
+
+  it('routes each outcome through ThaiText keep-runs on /th (Talatify: "37 ล้านบาท")', () => {
+    const dialog = openAt('talatify', 'th');
+    expect(texts(dialog, '.sheet-list li .nw')).toContain('37 ล้านบาท');
+  });
+
+  it('routes the lineage cells through ThaiText keep-runs on /th (Result row: "ส.ค. 2026")', () => {
+    const dialog = openAt('gonai', 'th');
+    expect(texts(dialog, '.lin td .nw')).toContain('ส.ค. 2026');
+  });
+
+  // Re-review N4: the assertion above only exercised the later (b) column. dict.th.lineageResult
+  // has both dictionary and fixture-free -- "รอบ 30 ทีมสุดท้ายจาก 500" (the earlier/Tripedia
+  // value) already carries "30 ทีม" (digit + the "ทีม" unit word), so the earlier <td> gets its
+  // own real keep-run match without needing to inject fixture copy.
+  it('routes the earlier lineage column through ThaiText too, not just the later one (re-review N4)', () => {
+    const dialog = openAt('gonai', 'th');
+    const resultRow = Array.from(dialog.querySelectorAll('.lin tbody tr')).find((tr) => tr.querySelector('th')?.textContent === dict.th.lineageResult[0])!;
+    expect(resultRow).toBeTruthy();
+    // The row's <th> is its own first child, so the two <td>s are indexed directly rather than
+    // via :first-child/:last-child (which would match neither -- the <th> holds that place).
+    const [earlierCell, laterCell] = Array.from(resultRow.querySelectorAll('td'));
+    expect(texts(earlierCell, '.nw')).toContain('30 ทีม'); // earlier (Tripedia)
+    expect(texts(laterCell, '.nw')).toContain('ส.ค. 2026'); // later (GoNai)
+  });
+
   it('a pre-migration row (no kicker, status, outcomes or screenshot) still opens whole', () => {
     const bare = makeProject({ id: 'fx-bare', name: 'Bare', imageSrc: null, media: 'win', description: { en: 'Only the old fields.', th: 'มีแค่ฟิลด์เดิม' } });
     const dialog = openAt('bare', 'en', [bare]);

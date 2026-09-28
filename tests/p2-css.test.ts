@@ -66,6 +66,12 @@ describe('signature.css mirrors SIG in src/lib/signature.ts', () => {
     expect(css).toContain('view-timeline: --sig block;');
   });
 
+  it('zeroes the view-timeline-inset so the CSS path starts at the same point as sigProgress (fix wave finding 1)', () => {
+    // Without this, the inferred inset (html's scroll-padding-top, 76px for the nav capsule)
+    // makes the CSS scroll-timeline run ahead of the JS fallback, which knows nothing about it.
+    expect(css).toContain('.sig.pin .sig-track { view-timeline: --sig block; view-timeline-inset: 0px; }');
+  });
+
   it('keeps every caption visible in the static stack (no hiding outside .pin)', () => {
     // Keyframe stops are only ever applied under `.sig.pin`, so they are judged by the
     // selectors that name them; everything else must not hide content outside `.pin`.
@@ -101,6 +107,62 @@ describe('signature.css mirrors SIG in src/lib/signature.ts', () => {
     expect(frameRule).toContain('-webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent 98%);');
     expect(frameRule).toContain('mask-image: linear-gradient(to bottom, #000 55%, transparent 98%);');
     expect(css).not.toMatch(/\.sig-cap[^{]*\{[^}]*mask-image/);
+  });
+
+  // Fix wave finding 2: the bottom-fade mask clips everything painted for the element it's on
+  // (mask-clip's default border-box), so a box-shadow declared directly on `.sig-frame` never
+  // rendered -- the hairline has to live on `::after` instead, same as HeroTourStage's `.ht-card`.
+  it('declares the hairline on ::after, never a box-shadow that the mask would clip (fix wave finding 2)', () => {
+    const frameRule = css.slice(css.indexOf('.sig-frame {'), css.indexOf('.sig-frame::after'));
+    expect(frameRule).not.toMatch(/box-shadow/);
+    expect(css).toContain('.sig-frame::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 .5px rgb(0 0 0 / .14); pointer-events: none; }');
+  });
+
+  // Fix wave finding 2: GoNai's light-UI screenshot must dim in dark mode (ruling C6) so it
+  // never dissolves into the (also white) page background.
+  it("dims GoNai's screenshot in dark mode so it never dissolves into the page (fix wave finding 2)", () => {
+    expect(css).toContain('.sig-frame img { display: block; width: 100%; height: 100%; object-fit: cover; filter: var(--shot-dim); }');
+  });
+
+  // Fix wave finding 9 (R21): the frame's aspect must match the 1580x900 screenshots it holds,
+  // not a generic 16:9 -- signature.ts's sigGeometry math mirrors the same ratio.
+  it('sizes the frame to the 1580/900 screenshot ratio, not 16:9 (fix wave finding 9, R21)', () => {
+    expect(css).toContain('aspect-ratio: 1580 / 900;');
+    expect(css).not.toMatch(/\.sig-frame[^}]*aspect-ratio:\s*16\s*\/\s*9/);
+  });
+});
+
+describe('project-sheet.css', () => {
+  const css = readFileSync('src/components/project-sheet.css', 'utf8');
+
+  // Fix wave finding 3 (gate 5): `float: right` forced `.smedia` (a BFC, `display: grid`) to
+  // shrink around the float for its own height, leaving the media 52/56px short on the right.
+  // `float: none` + `margin-left: auto` right-aligns the button without creating that box; the
+  // negative bottom margin keeps it from otherwise pushing `.smedia` down by its own height.
+  it('right-aligns the close button without floating it, so .smedia never shrinks around it (fix wave finding 3)', () => {
+    expect(css).toContain('.sheet-close { position: sticky; top: 16px; z-index: 5; float: none; display: grid; place-items: center; width: 36px; height: 36px; margin: 16px 16px -52px auto; border-radius: 50%; font-size: 16px; }');
+    expect(css).toContain('.sheet-close { width: 44px; height: 44px; margin: 12px 12px -56px auto; }');
+    expect(css).not.toMatch(/\.sheet-close\s*\{[^}]*float:\s*right/);
+  });
+
+  // Re-review N2 (edge regression from finding 3): SheetMedia renders null for a pre-migration
+  // row (Two-layer content rule), so the negative bottom margin above has no `.smedia` to pull
+  // up into, and a long name could slide under the button. This restores the pre-fix float only
+  // when there is no `.smedia` sibling right after the button.
+  it('floats the close button right when there is no media to pull up into (fix wave N2)', () => {
+    expect(css).toContain('.sheet-close:not(:has(+ .smedia)) { float: right; margin-bottom: 0; }');
+  });
+
+  // Fix wave finding 4 (I1): `.smedia-draw` was a content-sized grid row, so its SVG (and the
+  // caption drawn near the bottom of its viewBox) never filled -- let alone reached the bottom
+  // of -- `.smedia`'s own aspect-ratio box. Taking it out of grid flow with `inset: 0` sizes it
+  // directly against `.smedia` instead.
+  it('sizes the drawing against .smedia directly, not a content-sized grid row (fix wave finding 4)', () => {
+    expect(css).toContain('.smedia-draw { position: absolute; inset: 0; display: grid; place-items: center; color: var(--ink-1); }');
+  });
+
+  it('gives the rings drawing a shorter box on phone so its caption has room (fix wave finding 4)', () => {
+    expect(css).toContain('.smedia[data-media="rings"] { aspect-ratio: 4 / 3; }');
   });
 });
 

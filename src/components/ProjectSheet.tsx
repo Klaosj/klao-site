@@ -90,7 +90,7 @@ function runShotTransition(before: HTMLElement | null, change: () => boolean, fi
   before.style.viewTransitionName = 'shot';
   let after: HTMLElement | null = null;
   const transition = document.startViewTransition(() => {
-    // Only one element may carry a given view-transition-name at the instant the "after"
+    // Only one element may carry a given view-transition-name at the moment the "after"
     // snapshot is taken; clearing `before` here (rather than after `change`) guarantees that
     // even if `before` is also `change`'s target for removal, the name never collides with
     // whatever `findAfter` returns.
@@ -445,8 +445,14 @@ function LineageCard({ lineage, locale }: { lineage: Lineage; locale: Locale }) 
           {rows.map(([label, a, b]) => (
             <tr key={label}>
               <th scope="row">{label}</th>
-              <td>{a}</td>
-              <td>{b}</td>
+              {/* Fix wave finding 5 (I2): a lineage cell can be Thai (a Notion field), so it needs
+                  the same keep-run protection as every other body copy on the sheet. */}
+              <td>
+                <ThaiText text={a} />
+              </td>
+              <td>
+                <ThaiText text={b} />
+              </td>
             </tr>
           ))}
         </tbody>
@@ -490,7 +496,11 @@ function SheetBody({ project, projects, locale, headingRef, onClose }: SheetBody
           <h3>
             <ThaiText text={t.sheetWhat} />
           </h3>
-          <p className="sheet-desc">{project.description[locale]}</p>
+          {/* Fix wave finding 5 (I2): the description is Notion body copy, so it needs the same
+              keep-run protection as every other Thai string on the sheet. */}
+          <p className="sheet-desc">
+            <ThaiText text={project.description[locale]} />
+          </p>
         </div>
         <div className="sheet-side">
           {project.status && (
@@ -507,8 +517,11 @@ function SheetBody({ project, projects, locale, headingRef, onClose }: SheetBody
                 <ThaiText text={t.sheetOutcomes} />
               </h3>
               <ul className="sheet-list">
+                {/* Fix wave finding 5 (I2): each outcome is Notion body copy. */}
                 {outcomes.map((o) => (
-                  <li key={o}>{o}</li>
+                  <li key={o}>
+                    <ThaiText text={o} />
+                  </li>
                 ))}
               </ul>
             </>

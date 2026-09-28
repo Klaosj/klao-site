@@ -23,8 +23,23 @@
   /* Ruling C-5: reuses P0's .ctl (globals.css, "Small glass controls (tour paddles, sheet
      close)") for the blur/fill/fallbacks -- this rule only adds the close button's position and
      size, not its surface. */
-  .sheet-close { position: sticky; top: 16px; z-index: 5; float: right; display: grid; place-items: center; width: 36px; height: 36px; margin: 16px 16px 0 0; border-radius: 50%; font-size: 16px; }
+  /* Fix wave finding 3 (gate 5): `float: right` put the button in its own box, which forces
+     `.smedia` -- a BFC (it's `display: grid`) -- to shrink its content-box around the float
+     for the float's own height (52px: 16px margin-top + 36px), so the media was 52/56px short
+     on the right for that band. `float: none` + `margin-left: auto` right-aligns the button
+     without creating that box; the negative bottom margin collapses the 52/56px of flow height
+     the button would otherwise now take, so `.smedia` still starts exactly where it did before. */
+  .sheet-close { position: sticky; top: 16px; z-index: 5; float: none; display: grid; place-items: center; width: 36px; height: 36px; margin: 16px 16px -52px auto; border-radius: 50%; font-size: 16px; }
   .sheet-close::after { content: ""; position: absolute; inset: -4px; }
+  /* Re-review N2 (edge regression from finding 3): the negative bottom margin above assumes
+     `.smedia` follows -- SheetMedia renders null for a pre-migration row with no screenshot
+     (Two-layer content rule), so there is no next sibling to pull up into, and a long name could
+     slide under the button instead. `:not(:has(+ .smedia))` restores the pre-fix float here,
+     only for that case. One unconditional rule covers both breakpoints: its specificity (0,2,0
+     -- `.sheet-close` plus `:has()`'s own argument specificity, itself class-level) beats the
+     plain `.sheet-close` at (0,1,0) in both the base rule above and the phone override below,
+     regardless of media-query source order. */
+  .sheet-close:not(:has(+ .smedia)) { float: right; margin-bottom: 0; }
   .sbody { display: grid; grid-template-columns: 7fr 5fr; gap: 40px; padding: 40px; }
   .sheet-name { margin: 6px 0 0; font-size: 40px; line-height: 44px; font-weight: 600; letter-spacing: 0; }
   /* Ruling C-9 (Global Constraint "Thai is one size step smaller than English everywhere"):
@@ -36,7 +51,7 @@
   @media (max-width: 734px) {
     .sheet { width: 100%; max-width: 100%; height: calc(100dvh - 12px); max-height: none; margin: 12px 0 0; border-radius: 20px 20px 0 0; }
     .sheet::before { content: ""; position: absolute; top: 6px; left: 50%; z-index: 6; width: 36px; height: 5px; margin-left: -18px; border-radius: 3px; background: var(--ink-3); }
-    .sheet-close { width: 44px; height: 44px; margin: 12px 12px 0 0; }
+    .sheet-close { width: 44px; height: 44px; margin: 12px 12px -56px auto; }
     .sbody { grid-template-columns: 1fr; gap: 8px; padding: 24px 20px; }
     .sheet-name { font-size: 32px; line-height: 36px; }
     .sheet .sheet-name:lang(th) { font-size: 28px; line-height: 38px; }
@@ -50,7 +65,12 @@
   .sheet-bar { display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; background: #f2f2f4; }
   .sheet-bar i { width: 8px; height: 8px; border-radius: 50%; background: #d4d4d8; }
   .sheet-bar span { margin: 0 auto; padding: 1px 12px; border-radius: 9px; background: #fff; color: #6e6e73; font-size: 11px; }
-  .smedia-draw { display: grid; place-items: center; width: 100%; height: 100%; color: var(--ink-1); }
+  /* Fix wave finding 4 (I1): a content-sized grid row (the old width/height:100% resolved
+     against .smedia's implicit "auto" row, which sizes to its own content -- a circular
+     reference that just falls back to the SVG's intrinsic size) cropped the drawing and clipped
+     its caption, drawn near the bottom of the SVG's own viewBox. `position: absolute; inset: 0`
+     takes it out of grid flow and sizes it directly against `.smedia`'s aspect-ratio box instead. */
+  .smedia-draw { position: absolute; inset: 0; display: grid; place-items: center; color: var(--ink-1); }
   .smedia-draw svg { width: 100%; height: 100%; }
   .sheet-notion { padding: 18px 22px; color: #1A1C20; }
   .sheet-notion-row { display: grid; grid-template-columns: 110px 1fr; gap: 12px; padding: 10px 0; border-bottom: 1px solid rgb(20 26 44 / .08); }
@@ -91,6 +111,12 @@
     :lang(th) .sheet-q { line-height: 29px; }
     .lin { margin: 0 20px 24px; padding: 18px; }
     .lin table { font-size: 14px; }
+    /* Fix wave finding 4 (I1): now that .smedia-draw fills .smedia's own box (above), the rings
+       drawing's 320x260 viewBox rendered small and letter-boxed inside .smedia's 16:9 box on a
+       narrow phone -- a 4:3 box fits its own proportions closer, so the drawing (and its "Method,
+       not to scale." caption, drawn near the bottom of the viewBox) reads at a legible size
+       (labels ~14.6px) instead of shrinking to fit the wider box. Screenshot media keep 16:9. */
+    .smedia[data-media="rings"] { aspect-ratio: 4 / 3; }
     /* Follow-up round: the Notion vignette's row count is content-driven, unlike a screenshot's
        fixed 16:9 box -- forcing it into that box on a narrow phone clipped a row (Stack/Status)
        and drew .sheet-note on top of whatever row landed at its fixed `bottom` offset. This is a

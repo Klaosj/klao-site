@@ -8,7 +8,6 @@ import Reveal from '@/components/motion/Reveal';
 import { Sketch } from '@/components/sketches';
 import { dict } from '@/lib/dictionary';
 import type { Locale, Project } from '@/lib/models';
-import { unbreak } from '@/lib/project-view';
 import { projectKey, sheetHash } from '@/lib/sheet-url';
 
 // "Business plays, and the things I shipped." (spec §4 row 3, §6; replaces WorkDeck). Server
@@ -68,7 +67,13 @@ function Row({ project, locale }: { project: Project; locale: Locale }) {
           {project.status ? ' ' : null}
           <StatusChip project={project} locale={locale} />
         </span>
-        {question && <span className="pi-q">{unbreak(question)}</span>}
+        {/* Fix wave finding 5 (I2): ThaiText's keep-runs replace unbreak() -- unbreak() only
+            stripped `|` without protecting keep-list words/dates/units from a mid-word break. */}
+        {question && (
+          <span className="pi-q">
+            <ThaiText text={question} />
+          </span>
+        )}
       </span>
       {/* S-7: no chevron on a row with nothing to open -- it would promise a click that does
           nothing. */}
@@ -128,7 +133,8 @@ export default function ProjectsIndex({ projects, locale }: { projects: Project[
               {gi === 0 && (
                 <li>
                   <a className="pi-door" href="#story">
-                    {t.workDoor}
+                    {/* Fix wave finding 5 (I2). */}
+                    <ThaiText text={t.workDoor} />
                   </a>
                 </li>
               )}

@@ -225,6 +225,15 @@ describe('shared classes (C9)', () => {
     expect(kt).not.toContain('white-space: nowrap;');
   });
 
+  // Re-review N1: .nw/.kt are inline-block, so a link's hover underline (text-decoration) does
+  // not reach inside one on its own -- on /th the By-day door's underline broke under "ดีล" and
+  // "เครือข่าย". Low specificity (a + :is()'s class = 0,1,1) so a more specific override, e.g.
+  // hero-tour-stage.css's `a.ht-q:hover .ht-qt :is(.nw, .kt)` (0,4,1), still wins where it exists.
+  it('lets a link\'s text-decoration reach inside its own keep-runs (fix wave N1)', () => {
+    const rule = rulesFor('a :is(.nw, .kt)')[0];
+    expect(rule).toContain('text-decoration: inherit;');
+  });
+
   // D1 (preflight): block-scoped, so a rule cannot satisfy this by sitting
   // anywhere later in the file -- it must be the .glass rule inside the
   // named at-rule's own balanced block.

@@ -3,8 +3,18 @@ import { act, cleanup, render } from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import SignatureScene, { type SignatureCopy } from '@/components/SignatureScene';
+import { sigGeometry } from '@/lib/signature';
 import { FakeIO, installFakeIO } from './helpers/io';
 import { stubMatchMedia } from './helpers/media';
+
+// Re-review N4: sigGeometry wrapped as a spy that still calls through to the real
+// implementation, so every other test in this file (all of which call it indirectly via
+// SignatureScene, never assert on it) behaves exactly as before -- only the call-site wiring
+// test below reads `.mock.calls`.
+vi.mock('@/lib/signature', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/signature')>();
+  return { ...actual, sigGeometry: vi.fn(actual.sigGeometry) };
+});
 
 const COPY: SignatureCopy = {
   eyebrow: '2022 → 2026',
@@ -186,6 +196,11 @@ describe('SignatureScene: markup', () => {
     expect(container.querySelector('.sig-chip')?.getAttribute('aria-hidden')).toBe('true');
     expect(Array.from(container.querySelectorAll('.sig-year')).map((y) => y.textContent)).toEqual(['2022', '2023', '2024', '2025', '2026']);
     expect(container.querySelector('.sig-frame img')?.getAttribute('alt')).toBe(COPY.frameAlt);
+    // Re-review N3 (finding 9 leftover): the file is 1580x900, matching FRAME_RATIO and
+    // signature.css's aspect-ratio -- not the generic 1600x900 the img carried before.
+    const frameImg = container.querySelector('.sig-frame img');
+    expect(frameImg?.getAttribute('width')).toBe('1580');
+    expect(frameImg?.getAttribute('height')).toBe('900');
     const open = container.querySelector('a.sig-open') as HTMLAnchorElement;
     expect(open.getAttribute('href')).toBe(COPY.openHref);
     expect(open.getAttribute('target')).toBe('_blank');
@@ -210,6 +225,55 @@ describe('SignatureScene: markup', () => {
     expect(container.querySelector('.sig-frame')).toBeNull();
     expect(container.querySelector('a.sig-open')).toBeNull();
     expect(container.querySelector('.sig-card-q')).toBeNull();
+  });
+});
+
+// Fix wave finding 5 (I2): every caption routes through ThaiText now, not raw text -- default
+// mode (.nw) for capSub/endTitle/endSub, display mode (.kt) for cardQuestion/capTitle (a
+// heading-length line, like the prototype's own disp()).
+describe('SignatureScene routes captions through ThaiText keep-runs (fix wave finding 5, I2)', () => {
+  it('capSub, endTitle and endSub keep a `|`-marked run whole, in default mode', () => {
+    const html = renderToStaticMarkup(
+      <SignatureScene copy={{ ...COPY, capSub: 'คำถามเดิม|เครื่องมือใหม่', endTitle: 'เดินเอง|ได้แล้ว', endSub: 'ใช้เวลา|สามปี' }} />,
+    );
+    expect(html).toContain('class="nw">คำถามเดิม</span>');
+    expect(html).toContain('class="nw">เครื่องมือใหม่</span>');
+    expect(html).toContain('class="nw">เดินเอง</span>');
+    expect(html).toContain('class="nw">ได้แล้ว</span>');
+    expect(html).toContain('class="nw">ใช้เวลา</span>');
+    expect(html).toContain('class="nw">สามปี</span>');
+  });
+
+  it('cardQuestion and capTitle keep every Thai token whole, in display mode', () => {
+    const html = renderToStaticMarkup(<SignatureScene copy={{ ...COPY, cardQuestion: 'ทำไมต้องรอ', capTitle: 'สี่ปีต่อมา' }} />);
+    expect(html).toContain('class="kt">ทำไมต้องรอ</span>');
+    expect(html).toContain('class="kt">สี่ปีต่อมา</span>');
+  });
+});
+
+// Re-review N4: the call site (SignatureScene.tsx layout()) passes `phone:
+// matchMedia('(max-width: 734px)').matches` into sigGeometry -- untested until now (deleting
+// that line kept every other test green, since sigGeometry's own width-only default still
+// produces a plausible geometry). This proves the wiring itself, not just sigGeometry's own
+// override logic (already covered by signature-math.test.ts).
+describe('SignatureScene wires the phone media query into sigGeometry (re-review N4)', () => {
+  it('passes phone: false from the media query even when the measured stage width alone would say phone', () => {
+    vi.mocked(sigGeometry).mockClear();
+    // jsdom never lays elements out, so stage.clientWidth (sigGeometry's `width`) is always 0 in
+    // this harness -- sigGeometry's own width-only default (`width <= 734`) would read that as
+    // "phone" every time. Forcing the media query false is the only way the geometry can still
+    // come out "desktop": if SignatureScene stopped passing `phone` (the mutation this closes),
+    // the override would vanish and `call.phone` would fall back to `true`, failing this test.
+    stubMatchMedia((q) => {
+      if (q.includes('max-width: 734px')) return false; // force "desktop" via the media query
+      if (q.includes(': reduce')) return false; // motion allowed, so the scene actually pins
+      return q.includes('no-preference'); // its inverse
+    });
+    render(<SignatureScene copy={COPY} />);
+    expect(sigGeometry).toHaveBeenCalled();
+    const call = vi.mocked(sigGeometry).mock.calls.at(-1)![0];
+    expect(call.width).toBeLessThanOrEqual(734); // the measured stage width really would say "phone"
+    expect(call.phone).toBe(false); // but the wired-in media query still won
   });
 });
 

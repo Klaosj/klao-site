@@ -16,10 +16,11 @@ describe('THAI_RE / THAI_KEEP', () => {
     expect(THAI_RE.test('Thai 2026 – ok')).toBe(false);
   });
 
-  it('carries the prototype keep list verbatim, plus the fix wave 7 addition ("ตอนนี้")', () => {
+  it('carries the prototype keep list verbatim, plus the fix wave additions (P3 finding 7, P2 finding 6)', () => {
     expect(THAI_KEEP).toEqual([
       'เบอร์เกอร์คราฟต์', 'พาร์ตเนอร์ชิป', 'ซัพพลายเออร์', 'นอกเวลางาน', 'กำไรขั้นต้น', 'สุดสัปดาห์',
       'เครื่องมือ', 'งบประมาณ', 'สตาร์ทอัพ', 'โปรเจกต์', 'บาริสต้า', 'ค้าปลีก', 'ไอเดีย', 'ตอนนี้', 'ดีล',
+      'เครือข่าย', 'เท่าไหร่', 'คนเดียว',
     ]);
   });
 });
@@ -84,6 +85,13 @@ describe('keepRuns', () => {
   // from src/content/fixtures/career.json's Actmedia body.
   it('keeps "ตอนนี้" whole (fix wave finding 7)', () => {
     expect(kept(keepRuns('ตอนนี้อยู่ระหว่างเจรจา'))).toEqual(['ตอนนี้']);
+  });
+
+  // Fix wave finding 6 (M1): เครือข่าย, เท่าไหร่ and คนเดียว, added to THAI_KEEP above.
+  it('keeps the fix wave additions whole (finding 6, M1)', () => {
+    expect(kept(keepRuns('สร้างเครือข่ายร้านค้าทั่วประเทศ'))).toEqual(['เครือข่าย']);
+    expect(kept(keepRuns('ใช้เงินเท่าไหร่ถึงจะพอ'))).toEqual(['เท่าไหร่']);
+    expect(kept(keepRuns('ทำงานคนเดียวทั้งบริษัท'))).toEqual(['คนเดียว']);
   });
 
   it('keeps Thai dates together, with or without the day', () => {

@@ -221,7 +221,15 @@ export default function SignatureScene({ copy }: { copy: SignatureCopy }) {
       if (pin) {
         // Read after `.pin` applies: the card's pinned width is what the tiles orbit.
         cardBaseline = card.offsetHeight;
-        geo = sigGeometry({ width: stage.clientWidth, height: stage.clientHeight, cardWidth: card.offsetWidth, cardHeight: cardBaseline });
+        // Fix wave finding 7 (gate 4): the media query, not stage.clientWidth (which excludes
+        // the scrollbar band and can disagree with it right at the 734px edge).
+        geo = sigGeometry({
+          width: stage.clientWidth,
+          height: stage.clientHeight,
+          cardWidth: card.offsetWidth,
+          cardHeight: cardBaseline,
+          phone: matchMedia('(max-width: 734px)').matches,
+        });
         place(geo);
         measure();
         paint(true);
@@ -326,9 +334,11 @@ export default function SignatureScene({ copy }: { copy: SignatureCopy }) {
           </div>
           <div className="sig-card" data-sig-part="card">
             <p className="t-cap sig-card-kick">{copy.cardKicker}</p>
+            {/* Fix wave finding 5 (I2): display mode -- a heading-length line, like the prototype's
+                own disp() treatment, not the short default keep-list runs. */}
             {copy.cardQuestion && (
               <p className="sig-card-q">
-                <ThaiText text={copy.cardQuestion} />
+                <ThaiText text={copy.cardQuestion} display />
               </p>
             )}
             <p className="t-stat sig-stat">
@@ -351,20 +361,32 @@ export default function SignatureScene({ copy }: { copy: SignatureCopy }) {
             ))}
           </div>
           <div className="sig-cap sig-cap-a glass glass-pill" data-sig-part="capA">
+            {/* Fix wave finding 5 (I2): display mode -- a heading-length line. */}
             <p className="sig-cap-t1">
-              <ThaiText text={copy.capTitle} />
+              <ThaiText text={copy.capTitle} display />
             </p>
-            <p className="sig-cap-t2">{copy.capSub}</p>
+            <p className="sig-cap-t2">
+              <ThaiText text={copy.capSub} />
+            </p>
           </div>
           {copy.frameSrc && (
             <div className="sig-frame" data-sig-part="frame">
-              <img src={copy.frameSrc} alt={copy.frameAlt} width={1600} height={900} loading="lazy" decoding="async" />
+              {/* Re-review N3 (finding 9 leftover): 1580, not 1600 -- the file is 1580x900 (the
+                  ratio signature.ts's FRAME_RATIO and signature.css's aspect-ratio both use),
+                  matching HeroTourStage.tsx:236 and ProjectSheet.tsx:411. No visible effect
+                  (object-fit: cover, 100%/100%), but the intrinsic ratio hint was wrong. */}
+              <img src={copy.frameSrc} alt={copy.frameAlt} width={1580} height={900} loading="lazy" decoding="async" />
             </div>
           )}
           <div className="sig-cap sig-cap-b glass glass-pill" data-sig-part="capB">
             <div>
-              <p className="sig-cap-t1">{copy.endTitle}</p>
-              <p className="sig-cap-t2">{copy.endSub}</p>
+              {/* Fix wave finding 5 (I2). */}
+              <p className="sig-cap-t1">
+                <ThaiText text={copy.endTitle} />
+              </p>
+              <p className="sig-cap-t2">
+                <ThaiText text={copy.endSub} />
+              </p>
             </div>
             {copy.openHref && (
               <a className="sig-open" href={copy.openHref} target="_blank" rel="noreferrer">
