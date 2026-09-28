@@ -22,9 +22,10 @@ you're actually connected.
    (the site never writes to Notion).
 3. Copy the "Internal Integration Secret" → this is `NOTION_TOKEN`.
 
-## 2. Create six databases
+## 2. Create eight databases
 
-Full-page databases, anywhere in your workspace. **Property names must match
+Full-page databases, anywhere in your workspace — Projects, Posts, Career,
+Skills, Questions, Profile, Story and FAQ. **Property names must match
 exactly** — same spelling, same capitalization. Most typos are quiet but
 limited: a misspelled *content* property (e.g. `DescriptionEN` typed as
 `DiscriptionEN`) just leaves that one field empty — the row itself still
@@ -37,6 +38,11 @@ failure mode.
 
 Each database also needs a **Published** checkbox property, except Profile
 (details in its section below).
+
+**Thai display text** (titles, questions, headlines): a `|` marks the one
+place the line may break and is never shown — for example
+`ไอเดียนี้คุ้มกับ|หนึ่งสุดสัปดาห์ หรือทั้งปี?`. Without one, the site still keeps
+common long words, dates and number + unit pairs from splitting.
 
 ### Projects
 
@@ -57,20 +63,35 @@ Each database also needs a **Published** checkbox property, except Profile
 | QuestionEN | Text | |
 | QuestionTH | Text | |
 | Slug | Text | |
+| StatusKey | Select (live, proto, pitched, finalist) | |
+| StatusEN | Text | |
+| StatusTH | Text | |
+| KickerEN | Text | |
+| KickerTH | Text | |
+| Media | Select (img, win, notion, rings, five) | |
+| Wash | Select (aje, gonai, site, none) | |
+| Tour | Checkbox | |
+| TourOrder | Number | |
+| LineageOf | Relation → Projects | |
+| AltEN | Text | |
+| AltTH | Text | |
 | Published | Checkbox | (see above) |
 
-`Featured` controls which 3 projects show on the home page. `Order` controls
-display order everywhere (lower first).
+`Featured` + `Published` decide which projects appear in the home page's
+Projects index (`#work`); there is no cap. `Order` controls display order
+everywhere (lower first). The twelve properties added in September 2026 are
+explained under "White Edition fields" at the end of this section.
 
-`Type` decides which pitch-deck chapter the project appears in on the home
-page (and which group on /projects): `Business` rows lead, `Build` rows
-follow. **A blank or unrecognised Type renders as Build** — existing rows
-keep working untouched until you tag them.
+`Type` decides which column of the home page's Projects index the project
+sits in (Business or Build), and which group it joins on /projects.
+**A blank or unrecognised Type renders as Build** — existing rows keep
+working untouched until you tag them.
 
-`OutcomeEN`/`OutcomeTH` are the one-line receipt shown on the project's
-slide ("Validated with 3 paying pilots"). Only real, checkable results —
-leave blank until you have the number, and the line simply won't render.
-Never write a placeholder here.
+`OutcomeEN`/`OutcomeTH` are the project's receipts, **one per line** — each
+line becomes one bullet in the project's sheet (`#work/<key>`). Leave
+`OutcomeTH` empty and the English lines are reused on /th. Only real,
+checkable results — leave blank until you have the number. Never write a
+placeholder here.
 
 `QuestionEN` and `QuestionTH` are the bilingual case-study question (e.g.
 "One day in Bangkok — what's the real budget?"). A project's
@@ -99,6 +120,27 @@ you got) → สิ่งที่เรียนรู้ (what you learned).
 **A row with a blank Name is silently dropped** — it won't appear anywhere
 on the site, with no visible error (the only trace is a server log you'll
 never see).
+
+#### White Edition fields (September 2026)
+
+All twelve may stay empty — the site falls back to a sensible default for
+each (Media: `img` when the row has a Screenshot, otherwise `win`; Wash:
+`none`; not in the tour; no lineage card), so they can be added in any
+order.
+
+| Property | What it does | Example |
+|---|---|---|
+| StatusKey | Shape of the status mark (monochrome: a shape and words, no colour) | `live` |
+| StatusEN / StatusTH | The words beside the mark | `Live · since Aug 2026` / `เปิดใช้งานแล้ว · ตั้งแต่ ส.ค. 2026` |
+| KickerEN / KickerTH | Small line above the project's question | `Build · Live` / `สร้างเอง · เปิดใช้งานแล้ว` |
+| Media | What the index and the sheet show: `img` the screenshot, `win` the screenshot in a window frame, `notion` a drawn Notion row, `rings` the TAM/SAM/SOM drawing, `five` the five-apps-to-one drawing | `win` |
+| Wash | The pale tint behind the project in the tour and the Signature scene | `gonai` |
+| Tour | Puts the project in the hero tour | ticked on Aje, GoNai, klao-site |
+| TourOrder | Tour order, lower first — fill it on every Tour row | `1` |
+| LineageOf | The earlier idea this project grew from; the Signature scene and the "Same idea, four years apart" card read it | GoNai → Tripedia |
+| AltEN / AltTH | What the picture shows, for screen readers — never just the project name, which is already on screen | `GoNai home screen: plan a full day out and know every baht before you leave.` |
+
+The page is designed around one lineage pair (GoNai → Tripedia).
 
 ### Posts
 
@@ -156,6 +198,13 @@ block.
 | Period | Text | |
 | WinsEN | Text | |
 | WinsTH | Text | |
+| StartDate | Date | |
+| EndDate | Date | |
+| FigureValue | Text | |
+| FigureLabelEN | Text | |
+| FigureLabelTH | Text | |
+| FigureNoteEN | Text | |
+| FigureNoteTH | Text | |
 | Order | Number | |
 | Published | Checkbox | (see above) |
 
@@ -168,6 +217,21 @@ automatically — you don't have to duplicate them just to avoid a blank
 section. **A row with a blank Role is silently dropped**, same as Name on
 Projects above.
 
+`StartDate` and `EndDate` place the job on the Career band's time rail; only
+the month is shown. Leave `EndDate` empty for the job you're in now — it
+reads "Now".
+
+`FigureValue`, `FigureLabelEN/TH` and `FigureNoteEN/TH` add one big number
+to the job's panel. Example (the Casetify row): `THB 1.1M` · `My personal
+monthly sales target` / `เป้ายอดขายส่วนตัวต่อเดือน` · `Target met` /
+`ทำถึงเป้า`. Leave `FigureValue` empty and the panel shows no figure. Same
+receipt rule as Outcome: only a real, checkable number.
+
+Each job's deep-link key is its `Company` turned into a slug by `slugKey()`
+in `src/lib/format.ts` (`Actmedia` → `actmedia`); FAQ links use it as
+`career:actmedia`. **Renaming a Company changes its key** — update any FAQ
+`Links` line that pointed at the old one.
+
 ### Skills
 
 | Property | Type | Required |
@@ -178,21 +242,14 @@ Projects above.
 | Order | Number | |
 | Published | Checkbox | (see above) |
 
-`Tier` still controls the full honesty scale a Skill row is fetched and
-sorted by, but as of the 2026-08-12 Toolbox redesign the site itself only
-**renders** three things from it: the `top` tier (statement-scale, one per
-line), a curated row of iconed "Core tools" badges (a fixed allowlist of
-tool names, drawn from skills of any tier — see `TOOLS_ALLOWLIST` in
-`SkillsBand.tsx`), and the `learning` tier as one quiet joined-text line.
-`daily`/`working`/`basic` rows are still fetched and still count toward the
-"same Tier spelling" validation below, but nothing on the site renders them
-— that fuller inventory lives in the Notion database itself (for anyone who
-opens it) and on the owner's GitHub profile, and the render-layer cut can be
-reversed at any time without touching this schema or the fetcher. **Rows
-with a blank Name or a blank/unrecognised Tier are silently dropped**, same
-mechanism as Name on Projects and Role on Career above — `Tier` must be
-spelled exactly one of the five values, or the row disappears with no
-visible error.
+The toolbox at the end of the Career band (`#toolbox`) has three columns.
+**Methods** are the Skills rows whose `Tier` is `top`. **Stack** is a short
+curated list kept in code (`TOOLBOX_STACK` in `src/lib/career.ts`), and
+**Languages** comes from the site's own text — neither is read from this
+database. `Category` is not used for the grouping. **Rows with a blank Name
+or a blank/unrecognised Tier are silently dropped**, same mechanism as Name
+on Projects and Role on Career above — `Tier` must be spelled exactly one of
+the five values, or the row disappears with no visible error.
 
 ### Questions
 
@@ -252,19 +309,36 @@ Name on Projects and Role on Career above.
 | Email | Email | |
 | ResumeURL | URL | |
 | Clients | Multi-select | |
+| PrologueEN | Text | |
+| PrologueTH | Text | |
+| ClosingLineEN | Text | |
+| ClosingLineTH | Text | |
+| BasedInEN | Text | |
+| BasedInTH | Text | |
+| WorkingInEN | Text | |
+| WorkingInTH | Text | |
 
-`NameNative` is the native-script display name (Thai) that drives the /th
-hero wordmark — empty falls back to the Latin name. `Clients` fills the
-"Companies & brands" band; leave it empty and that band simply doesn't
-render. (Notion multi-select options can't contain commas, so e.g. "MMB
-Technology Co., Ltd" has to be entered without its comma.)
+`NameNative` (the Thai display name) is no longer shown: the hero stopped
+drawing a name wordmark in September 2026. It can stay filled. `Clients`
+feeds a "Companies & brands" band that is kept in the code but not on the
+page, so filling it changes nothing today. (Notion multi-select options
+can't contain commas, so e.g. "MMB Technology Co., Ltd" has to be entered
+without its comma.)
 
-Create exactly **one row**. Unlike the other three databases, **Profile has
+`PrologueEN/TH` is the owner-side story at the start of "By day"
+(`#story`), and `ClosingLineEN/TH` the line that closes it ("Business
+developer who builds his own tools."). `BasedInEN/TH` and `WorkingInEN/TH`
+fill the Based in / Working in facts in the closing Contact block
+(`Bangkok, TH` · `TH / EN`). Leave `WorkingInTH` empty and the English line
+is reused on /th, same fallback as `BasedInTH`. Any of them may stay empty
+while you migrate; the page still renders.
+
+Create exactly **one row**. Unlike every other database, **Profile has
 no Published property** — do not add one, and don't expect a Published
 toggle to hide it. The site simply reads whatever the single row contains,
 always. (If you want to double-check this against the code: `fetchProfile`
 in `src/lib/notion.ts` queries the Profile database without the Published
-filter the other five fetchers use, with a comment noting exactly this.)
+filter every other fetcher uses, with a comment noting exactly this.)
 
 **Name is required here too, and it's the most deceptive failure mode in
 this guide:** if Name is blank, the site doesn't just drop the row — it
@@ -273,10 +347,73 @@ headline, byline, etc., compiled into the code). That looks completely
 correct on the live site, so you'd have no way to notice that none of your
 Profile edits are actually taking effect.
 
+### Story
+
+The six "By day" chapters (`#story`), one row each. New in September 2026.
+
+| Property | Type | Required |
+|---|---|---|
+| TitleEN | Title | **Yes** |
+| TitleTH | Text | |
+| BodyEN | Text | |
+| BodyTH | Text | |
+| RuleEN | Text | |
+| RuleTH | Text | |
+| Icon | Select (target-duotone, chart-line-up-duotone, translate-duotone, rocket-launch-duotone, key-duotone, wrench-duotone) | |
+| Sketch | Select (room, cases, formats, rollout, handover) | |
+| Order | Number | |
+| Published | Checkbox | (see above) |
+
+`BodyEN/TH` is one short paragraph; wrap the one clause that should be bold
+in `**double asterisks**`. `RuleEN/TH` is the short rule beside the icon
+(`Scope it honestly.` / `ประเมินตามจริง`). `Icon` and `Sketch` pick the
+chapter's icon and line drawing — spell the option exactly as listed. The
+sixth chapter has no `Sketch` (leave it blank); its caption still works.
+`Order` runs 1–6.
+
+Until `NOTION_DB_STORY` is set, the page shows the bundled chapters
+(`src/content/fixtures/story.json`) — never an empty section.
+
+### FAQ
+
+"What people usually ask." (`#faq`), one row per question. New in September
+2026.
+
+| Property | Type | Required |
+|---|---|---|
+| QuestionEN | Title | **Yes** |
+| QuestionTH | Text | |
+| AnswerEN | Text | |
+| AnswerTH | Text | |
+| Links | Text | |
+| Order | Number | |
+| Published | Checkbox | (see above) |
+
+`Links` holds the answer's deep links, **one per line**, as
+`LabelEN|LabelTH|target` — keep both `|` even when the two labels match:
+
+```
+Career · Actmedia|Career · Actmedia|career:actmedia
+Projects|โปรเจกต์|work
+```
+
+| target | Opens |
+|---|---|
+| `work` | the Projects index |
+| `work/<key>` | that project's sheet — `<key>` is the project's `Slug`, or its Name as a slug when Slug is empty (`work/gonai`) |
+| `career:<key>` | that job in the Career band (`career:actmedia`; see Career above) |
+| `toolbox` | the toolbox at the end of the Career band |
+| `contact` | the closing Contact block |
+| `https://…` | an outside page |
+
+If you add "What work is he open to?", leave it unpublished until its answer
+is written. Until `NOTION_DB_FAQ` is set, the page shows the bundled answers
+(`src/content/fixtures/faq.json`).
+
 ## 3. Share each database with the integration
 
-On each of the six databases: `•••` menu (top right) → **Connections** →
-add `klao-site`. Do this for all six — a database you forget to share
+On each of the eight databases: `•••` menu (top right) → **Connections** →
+add `klao-site`. Do this for all eight — a database you forget to share
 returns a "not found" error from Notion, which the site catches and quietly
 falls back to that database's bundled sample content (see below), not to an
 empty page. It will look like nothing changed since before you started this
@@ -296,7 +433,7 @@ URL if there's no `?v=`) is the database ID.
 
 ## 5. Fill in your environment variables
 
-Copy `.env.example` to `.env.local`. It has eight lines — the seven Notion
+Copy `.env.example` to `.env.local`. It has ten lines — the nine Notion
 values below, plus `NEXT_PUBLIC_SITE_URL` (leave that one blank for local
 dev; the site defaults to `http://localhost:3000` automatically. It matters
 only for production — see `docs/DEPLOY.md`):
@@ -309,30 +446,106 @@ NOTION_DB_CAREER=...
 NOTION_DB_PROFILE=...
 NOTION_DB_SKILLS=...
 NOTION_DB_QUESTIONS=...
+NOTION_DB_STORY=...
+NOTION_DB_FAQ=...
 ```
 
-Set all seven Notion values together, not just some of them. The site
-treats "Notion configured" as "the token is present" — so if the token is
-set but a database ID is missing, the code doesn't fail loudly: the missing
-ID check throws *before* any request reaches Notion, and (during a build)
-that throw is caught the same way as every other Notion failure in this
-guide — silent fallback to sample content, not a visible connection error.
+Set the token and the five core database IDs (Projects, Posts, Career,
+Skills, Profile) together, not just some of them. The site treats "Notion
+configured" as "the token is present" — so if the token is set but one of
+those IDs is missing, the code doesn't fail loudly: the missing ID check
+throws *before* any request reaches Notion, and (during a build) that throw
+is caught the same way as every other Notion failure in this guide — silent
+fallback to sample content, not a visible connection error.
 
-**One exception:** `NOTION_DB_QUESTIONS` doesn't go through that missing-ID
-throw at all. With the token set and `NOTION_DB_QUESTIONS` left blank,
-`getQuestionsCached` (`src/lib/content.ts`) returns an empty list before
-attempting any fetch — no throw, no fixture fallback, no build-vs-runtime
-ISR split. The only visible effect is that the home page's open-questions
-band doesn't render; nothing else on the site is touched. This is
-deliberate — the owner adds Vercel env vars in a separate step from code
-deploys, and Questions is the one database allowed to sit unconfigured
-indefinitely without degrading anything else.
+**Three exceptions:** `NOTION_DB_QUESTIONS`, `NOTION_DB_STORY` and
+`NOTION_DB_FAQ` don't go through that missing-ID throw at all.
+
+- With the token set and `NOTION_DB_QUESTIONS` left blank,
+  `getQuestionsCached` (`src/lib/content.ts`) returns an empty list before
+  attempting any fetch — no throw, no fixture fallback. The only visible
+  effect is that the open question in the closing Contact block doesn't
+  render.
+- With `NOTION_DB_STORY` or `NOTION_DB_FAQ` left blank, `getStory()` /
+  `getFaq()` return the bundled chapters and answers
+  (`src/content/fixtures/story.json`, `faq.json`) — never an empty section.
+
+This is deliberate — the owner adds Vercel env vars in a separate step from
+code deploys, so these three may sit unset without degrading anything else.
 
 Restart `npm run dev`. Your Notion content replaces the sample content.
 
-For the live site, the same seven variables go into Vercel — see
+For the live site, the same nine variables go into Vercel — see
 `docs/DEPLOY.md`, which also covers a Vercel-specific step (a redeploy)
 that this local setup doesn't need.
+
+## 6. White Edition migration (one-time, September 2026)
+
+The White Edition home page reads a few new properties and two new
+databases. **The mappers tolerate every new field being empty, so add
+properties in any order** — the live site keeps rendering at every step,
+and the code that is live before the White Edition merge ignores
+properties it doesn't know. Don't rename or delete an existing property:
+that code still reads them.
+
+Work top to bottom; tick as you go.
+
+1. **Projects — add the twelve properties** from the Projects table
+   (StatusKey, StatusEN, StatusTH, KickerEN, KickerTH, Media, Wash, Tour,
+   TourOrder, LineageOf, AltEN, AltTH). Create the select options exactly
+   as written (lowercase). `LineageOf` is a relation to the Projects
+   database itself.
+2. **Projects — fill the five lineup rows.** Values from the approved
+   prototype; the Thai text, kickers and alt text are in
+   `src/content/fixtures/projects.json`:
+
+   | Row | StatusKey | StatusEN | Media | Wash | Tour | TourOrder | LineageOf |
+   |---|---|---|---|---|---|---|---|
+   | Talatify | pitched | Pitched · TEP 2025 | rings | none | — | — | — |
+   | Tripedia | finalist | Final 30 of 500 · 2022 | five | none | — | — | — |
+   | Aje | proto | Working prototype | img | aje | ✓ | 1 | — |
+   | GoNai | live | Live · since Aug 2026 | win | gonai | ✓ | 2 | Tripedia |
+   | klao-site | live | Live · since Aug 2026 | notion | site | ✓ | 3 | — |
+
+   **If Klao has confirmed replacing the old screenshots (Gate b, pending
+   decision):** the Aje and GoNai rows' `Screenshot` files in Notion today
+   are the pre-White-Edition captures (1600×900, with the browser
+   scrollbar visible) — drag in the current `public/images/aje.jpg` and
+   `gonai.jpg` (1580×900, no scrollbar, within the 250 KB budget) instead.
+   klao-site's dark-theme shot stops appearing on its own, once step 1's
+   `Media` select is set to `notion` for that row. If Klao hasn't decided
+   yet, leave the files as they are — the Gate a preview shows the old
+   captures either way, which is expected, not a bug.
+3. **Career — add the seven properties** (StartDate, EndDate, FigureValue,
+   FigureLabelEN/TH, FigureNoteEN/TH). Fill StartDate/EndDate on every row
+   (`src/content/fixtures/career.json` has them) and the one figure with a
+   receipt: Casetify — `THB 1.1M`, "My personal monthly sales target",
+   "Target met".
+4. **Profile — add the eight properties** (PrologueEN/TH, ClosingLineEN/TH,
+   BasedInEN/TH, WorkingInEN/TH) and fill them from
+   `src/content/fixtures/profile.json`.
+5. **Create the Story database** (section 2), add the six chapters from
+   `src/content/fixtures/story.json` with Order 1–6, tick Published.
+6. **Create the FAQ database** (section 2), add the questions from
+   `src/content/fixtures/faq.json`, tick Published.
+7. **Share Story and FAQ with the integration** (`•••` → Connections → add
+   `klao-site`, as in section 3). Without this the site keeps showing the
+   bundled copy and looks correct — the quiet failure described below.
+8. **Set the two IDs**, `NOTION_DB_STORY` and `NOTION_DB_FAQ`, in
+   `.env.local` and on Vercel for Production and Preview (and Development),
+   then **redeploy** — `docs/DEPLOY.md` step 5: a saved variable doesn't
+   reach a deployment that already exists.
+9. **Prove it's live:** add a throwaway FAQ row `TEST — delete me`, tick
+   Published, check `#faq` on the redeployed site (the bundled copy can't
+   contain it), then delete the row. Content edits after this reach
+   production within about an hour, through ISR.
+10. **Just before the White Edition merge:** untick Published on the
+    AISecretary and DailyBrief rows (they're no longer part of the site),
+    and rewrite `OutcomeEN`/`OutcomeTH` as one receipt per line (step 2).
+    Doing either earlier shows on the *current* production site — today's
+    code still renders both `Published` rows and the old single-line
+    `OutcomeEN`/`OutcomeTH` — so this step is timed to land right before
+    the merge, not before.
 
 ## Why images don't break
 
@@ -353,7 +566,7 @@ instead of expecting one uniform "site shows sample content" behavior.
 
 An unshared database, or a typo/omission in a property used *inside a
 query filter* (that's `Published` — every one of Projects/Posts/Career/
-Skills/Questions filters on it — and, only for a single post's own page,
+Skills/Questions/Story/FAQ filters on it — and, only for a single post's own page,
 `Slug`). Notion rejects the request outright, the site's error handling
 catches it, and what happens next depends on **when** it happens:
 
@@ -385,7 +598,7 @@ fixtures, no fallback, no error.** (Opening one specific post directly,
 `fetchPostBySlug`, *does* filter on `Slug`, so that one request behaves
 like Mechanism A instead.)
 
-For Projects/Posts/Career/Skills/Questions, a row dropped this way just
+For Projects/Posts/Career/Skills/Questions/Story/FAQ, a row dropped this way just
 makes the returned list one item shorter — nothing substitutes for it, the
 content simply isn't there. **Profile is the one exception**, and it's the
 most deceptive case in this guide: because Profile is a single row, not a
@@ -402,9 +615,9 @@ permanently, quietly wrong.
 
 Don't trust the page looking right. Add a throwaway row — a Project named
 `TEST — delete me` works well — tick **both Published and Featured**, and
-check the home page's Work grid. (The grid shows every Featured+Published
-project, uncapped; `/en/projects` is no longer a page of its own — it
-redirects to the home grid.) Fixture content cannot pass this test —
+check the home page's Projects index (`#work`; it shows every Featured +
+Published project, uncapped, and `/en/projects` lists every Published one).
+Fixture content cannot pass this test —
 `TEST — delete me` isn't in the bundled sample data — so seeing it appear
 is the one check that proves you're actually reading from Notion, not from
 fixtures and not from a frozen stale page. Delete the row once you've
@@ -415,10 +628,10 @@ confirmed it.
 *(Once you've confirmed you're actually connected — see above.)*
 
 - Add or edit rows/pages in Notion as normal.
-- Tick **Published** when a Project, Post, Career entry, or Skill is ready
-  to show. Untick it to hide it again — instantly for local dev, within the
-  hour for production (see below). Profile has no Published toggle; it's
-  always live.
+- Tick **Published** when a Project, Post, Career entry, Skill, Story
+  chapter or FAQ is ready to show. Untick it to hide it again — on the next
+  reload in local dev, within about an hour in production (see below).
+  Profile has no Published toggle; it's always live.
 - **Local (`npm run dev`):** just reload the page — every request re-reads
   Notion live.
 - **Production:** the site uses Next.js ISR with a 1-hour cache
