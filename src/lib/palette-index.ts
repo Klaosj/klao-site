@@ -308,14 +308,18 @@ function score(entry: PaletteEntry, q: string): number {
   if (names.some((n) => n.includes(q))) return 2;
   if (kwWords.some((w) => w.startsWith(q))) return 1;
   if (kw.includes(q)) return 0.75;
-  if (
-    q.length >= 4 &&
-    !THAI.test(q) &&
-    words
-      .concat(kwWords)
-      .some((w) => oneEdit(w.slice(0, q.length), q) || oneEdit(w.slice(0, q.length + 1), q) || oneEdit(w, q))
-  ) {
-    return 0.5;
+  // Re-review round 1, Important B: a typo of the row's OWN name/alias
+  // (0.6) outranks a typo of a word merely mentioned in its description
+  // (0.5) -- searching "gonia" used to tie GoNai's own name against the
+  // word "GoNai" inside Tripedia's description ("...the idea GoNai was
+  // later built from"), and the tie went to whichever row's index was
+  // lower (Tripedia, in the real projects.json order), not the project the
+  // typo actually named.
+  if (q.length >= 4 && !THAI.test(q)) {
+    const typo = (w: string): boolean =>
+      oneEdit(w.slice(0, q.length), q) || oneEdit(w.slice(0, q.length + 1), q) || oneEdit(w, q);
+    if (words.some(typo)) return 0.6;
+    if (kwWords.some(typo)) return 0.5;
   }
   return 0;
 }

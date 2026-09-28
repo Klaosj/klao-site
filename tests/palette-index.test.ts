@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
+import careerFixture from '@/content/fixtures/career.json';
+import faqFixture from '@/content/fixtures/faq.json';
+import profileFixture from '@/content/fixtures/profile.json';
+import projectsFixture from '@/content/fixtures/projects.json';
 import { dict } from '@/lib/dictionary';
 import { faqAnchorId } from '@/lib/link-target';
+import type { CareerEntry, FaqItem, Profile, Project } from '@/lib/models';
 import {
   PALETTE_GROUPS,
   bestScoreIndex,
@@ -12,6 +17,20 @@ import {
   type PaletteInput,
 } from '@/lib/palette-index';
 import { projectKey } from '@/lib/sheet-url';
+
+// Re-review round 1, Important B: the real fixture order matters. The
+// hand-built `input` below happens to list GoNai first and its Tripedia
+// description never mentions GoNai -- a "gonia" typo test against it alone
+// could not have caught a tie broken by array order. `realInput` uses the
+// actual content fixtures (Talatify, Tripedia, Aje, GoNai, klao-site --
+// Tripedia's own description ends "...the idea GoNai was later built
+// from"), the exact shape the bug reproduced in on the live site.
+const realInput: PaletteInput = {
+  profile: profileFixture as Profile,
+  projects: projectsFixture as Project[],
+  career: careerFixture as CareerEntry[],
+  faq: faqFixture as FaqItem[],
+};
 
 const input: PaletteInput = {
   profile: {
@@ -294,9 +313,24 @@ describe('bestScoreIndex (M3)', () => {
     expect(rows[bestScoreIndex(rows, 'ภาษา')].id).toBe('pref:lang');
   });
 
-  it('picks GoNai first for the typo "gonia"', () => {
-    const entries = buildPaletteIndex(input, 'en');
+  // Re-review round 1, Important B. Tripedia's real description ends "...the
+  // idea GoNai was later built from" -- its keyword word 'gonai' used to hit
+  // the SAME 0.5 typo tier as GoNai's own name, and the real projects.json
+  // array order (Talatify, Tripedia, Aje, GoNai, klao-site) put Tripedia
+  // first, so the tie went to Tripedia's index, not the project the typo
+  // actually named. score() now scores a typo of the row's own name (0.6)
+  // above a typo of a word merely mentioned in its description (0.5).
+  it.each(['en', 'th'] as const)('picks GoNai first for the typo "gonia" on /%s, against the real fixtures (Important B)', (locale) => {
+    const entries = buildPaletteIndex(realInput, locale);
+    // GoNai (index 3) lists after Tripedia (index 1) in display order --
+    // this only proves the fix picked the right SELECTION, not that it
+    // reordered the list.
+    const tripedia = entries.findIndex((e) => e.label === 'Tripedia');
+    const gonai = entries.findIndex((e) => e.label === 'GoNai');
+    expect(tripedia).toBeGreaterThanOrEqual(0);
+    expect(gonai).toBeGreaterThan(tripedia);
     const rows = searchPalette(entries, 'gonia');
+    expect(rows.map((r) => r.label)).toContain('Tripedia');
     expect(rows[bestScoreIndex(rows, 'gonia')].label).toBe('GoNai');
   });
 
