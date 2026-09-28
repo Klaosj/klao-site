@@ -279,6 +279,19 @@ describe('CommandPalette', () => {
     expect(within(card).getByText('โปรเจกต์', { selector: '.nw' })).toBeTruthy();
   });
 
+  // Re-review round 1, Minor D: the finding-2 test above only covers
+  // withMarkers' answer-body segments. The source quote <em> (AskCard.tsx)
+  // needs its own assertion -- Tripedia's TH quote 'เข้ารอบ 30 ทีมสุดท้ายจาก
+  // 500 ทีม' contains '30 ทีม', a number+unit keep run (src/lib/thai.ts's
+  // UNIT pattern: 'ทีม' is on its unit list).
+  it('renders a Thai source quote with keep-run spans too (re-review Minor D)', () => {
+    const box = open('th');
+    type(box, 'เคยทำสตาร์ทอัพไหม');
+    fireEvent.keyDown(box, { key: 'Enter' });
+    const card = screen.getByRole('region', { name: dict.th.askTitle });
+    expect(card.querySelector('.ask-srcs em .nw')?.textContent).toBe('30 ทีม');
+  });
+
   it('has no network API anywhere in the palette source', () => {
     for (const f of ['src/components/palette/CommandPalette.tsx', 'src/components/palette/AskCard.tsx']) {
       expect(readFileSync(f, 'utf8'), f).not.toMatch(/\bfetch\s*\(|XMLHttpRequest|sendBeacon|WebSocket|EventSource/);
