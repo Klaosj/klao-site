@@ -1,6 +1,13 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  // T18-g (CO-30): the folder above this project (~/Desktop/Klao Workspace)
+  // has a package-lock.json of its own, so Next's lockfile walk picked that
+  // folder as the workspace root and warned on every dev and build. The
+  // root is this project. `__dirname` is the folder next.config.ts sits in:
+  // Next compiles this file to CommonJS, so it is defined (import.meta is
+  // not). Next also copies the value into outputFileTracingRoot.
+  turbopack: { root: __dirname },
   async redirects() {
     // Pre-redesign routes the home page absorbed as sections; temporary
     // (307) so the URLs can come back as real pages if the sections outgrow
