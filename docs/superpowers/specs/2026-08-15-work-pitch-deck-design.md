@@ -17,8 +17,8 @@ Decisions made during brainstorming (owner-confirmed):
 - The two types are both the owner's own projects: `business` (business-logic
   plays: SME Studio, Little Duck, options framework, …) and `build` (shipped
   software: GoNai, AISecretary, DailyBrief, TickerDesk, …).
-- **ActMedia work (TWD × Thai Watsadu, Salesforce, Tops) is NOT part of this
-  section.** It is already represented by ClientsBand + CvBand (career wins).
+- **Employer work (retail-media client projects and the CRM rollout) is NOT
+  part of this section.** It is already represented by ClientsBand + CvBand (career wins).
   No new ActMedia band. No code change on those bands.
 - Of three presented mockups (A two-bands / B chapters / C pitch-deck), the
   owner chose **C — Pitch Deck**: one project = one full-width slide,
