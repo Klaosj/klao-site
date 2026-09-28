@@ -35,9 +35,16 @@ mkdirSync(join(OUT, 'pages'), { recursive: true });
 
 const lines = [];
 let failures = 0;
+// I5 — a base URL is often a Vercel share link (…?_vercel_share=<token>).
+// Nothing printed by this script — a crash line, a preflight error, a URL —
+// may carry that token verbatim: it is redacted centrally here so every
+// caller of log()/report()/crashed() gets it for free, rather than trusting
+// each call site to remember.
+const redact = (s) => String(s).replace(/([?&]_vercel_share=)[^&#\s]+/gi, '$1…');
 const log = (s) => {
-  console.log(s);
-  lines.push(s);
+  const safe = redact(s);
+  console.log(safe);
+  lines.push(safe);
 };
 const report = (label, problems, extra = '') => {
   if (problems.length) failures++;
@@ -101,12 +108,12 @@ async function newContext(browser, { width, theme, motion = true, scheme, blockS
 async function open(context, path) {
   const page = await context.newPage();
   const errors = watchErrors(page);
-  await page.goto(urlFor(path), { waitUntil: 'load', timeout: 90_000 });
+  const res = await page.goto(urlFor(path), { waitUntil: 'load', timeout: 90_000 });
   await page.evaluate(async () => {
     await document.fonts.ready;
   });
   await page.waitForTimeout(400);
-  return { page, errors };
+  return { page, errors, status: res?.status() ?? null };
 }
 
 async function runCombo(browser, c) {
@@ -394,36 +401,69 @@ async function pages(browser) {
   } finally {
     await discover.close();
   }
-  const PATHS = ['/en/projects', '/th/projects', '/en/writing', '/th/writing', '/en/career', '/en/qa-missing-page', ...extra];
-  for (const width of [1440, 390]) {
-    for (const theme of ['light', 'dark']) {
-      for (const path of PATHS) {
-        const label = `page ${path} ${width} ${theme}`;
-        const ctx = await newContext(browser, { width, theme, scheme: theme === 'light' ? 'dark' : 'light' });
+  const REAL_PATHS = ['/en/projects', '/th/projects', '/en/writing', '/th/writing', '/en/career', ...extra];
+  const MISSING_PATH = '/en/qa-missing-page';
+
+  // I4 — the 404 path is queued last across every width/theme, so a dev
+  // crash it can trigger (routed to Lane A/T5 — every affected line carries
+  // "not-found.tsx … doesn't have a root layout") can no longer mask the
+  // real pages that already ran clean, including the entire dark half.
+  // `serverDied` is set once, the first time a 5xx is confirmed to still be
+  // failing on a fresh request — so every line after that point says so,
+  // instead of implying it is still as meaningful as the lines before it.
+  let serverDied = false;
+  async function runPage(width, theme, path, { isMissing = false } = {}) {
+    const label = `page ${path} ${width} ${theme}`;
+    const ctx = await newContext(browser, { width, theme, scheme: theme === 'light' ? 'dark' : 'light' });
+    try {
+      const { page, errors, status } = await open(ctx, path);
+      const p = [];
+      if (isMissing) {
+        if (status !== 404) p.push(`HTTP ${status}, expected exactly 404 (a soft-404 — a 200 on an unmatched path — would otherwise pass)`);
+      } else if (status >= 400) {
+        p.push(`HTTP ${status}`);
+      }
+      for (const e of errors) if (!(isMissing && /404/.test(e))) p.push(`console: ${e}`);
+      const s = await page.evaluate(themeState);
+      if (s.bg !== CANVAS[theme]) p.push(`canvas ${s.bg}, expected ${CANVAS[theme]}`);
+      const ov = await page.evaluate(overflowBleed); // I1 — same combined measure as the home matrix, named element(s) included.
+      if (ov.overflow > 0) p.push(`horizontal overflow ${ov.overflow}px${ov.bleeders.length ? ': ' + ov.bleeders.join(', ') : ''}`);
+      if (path === '/en/career') {
+        const u = new URL(page.url());
+        if (u.pathname !== '/en' || u.hash !== '#career') p.push(`landed on ${u.pathname}${u.hash}, expected /en#career (C7 redirect)`);
+      } else {
+        for (const x of await page.evaluate(contrastIssues)) p.push(`contrast ${x}`);
+      }
+      const file = `${path.replace(/^\//, '').replace(/\//g, '_')}-${width}-${theme}.png`;
+      await page.screenshot({ path: join(OUT, 'pages', file), fullPage: true });
+      report(label, p);
+      if (status >= 500 && !serverDied) {
+        let stillDown = false;
         try {
-          const { page, errors } = await open(ctx, path);
-          const p = [];
-          const missingPage = path.endsWith('/qa-missing-page');
-          for (const e of errors) if (!(missingPage && /404/.test(e))) p.push(`console: ${e}`);
-          const s = await page.evaluate(themeState);
-          if (s.bg !== CANVAS[theme]) p.push(`canvas ${s.bg}, expected ${CANVAS[theme]}`);
-          const ov = await page.evaluate(overflowBleed); // I1 — same combined measure as the home matrix, named element(s) included.
-          if (ov.overflow > 0) p.push(`horizontal overflow ${ov.overflow}px${ov.bleeders.length ? ': ' + ov.bleeders.join(', ') : ''}`);
-          if (path === '/en/career') {
-            const u = new URL(page.url());
-            if (u.pathname !== '/en' || u.hash !== '#career') p.push(`landed on ${u.pathname}${u.hash}, expected /en#career (C7 redirect)`);
-          } else {
-            for (const x of await page.evaluate(contrastIssues)) p.push(`contrast ${x}`);
-          }
-          const file = `${path.replace(/^\//, '').replace(/\//g, '_')}-${width}-${theme}.png`;
-          await page.screenshot({ path: join(OUT, 'pages', file), fullPage: true });
-          report(label, p);
-        } catch (e) {
-          crashed(label, e);
-        } finally {
-          await ctx.close();
+          stillDown = (await fetch(urlFor('/en'))).status >= 500;
+        } catch {
+          stillDown = true;
+        }
+        if (stillDown) {
+          serverDied = true;
+          log(`     ! server stopped answering after ${path} — later page lines are not meaningful`);
         }
       }
+    } catch (e) {
+      crashed(label, e);
+    } finally {
+      await ctx.close();
+    }
+  }
+
+  for (const width of [1440, 390]) {
+    for (const theme of ['light', 'dark']) {
+      for (const path of REAL_PATHS) await runPage(width, theme, path);
+    }
+  }
+  for (const width of [1440, 390]) {
+    for (const theme of ['light', 'dark']) {
+      await runPage(width, theme, MISSING_PATH, { isMissing: true });
     }
   }
 }
@@ -431,7 +471,7 @@ async function pages(browser) {
 try {
   await preflight();
 } catch (e) {
-  console.error(e.message);
+  console.error(redact(e.message));
   process.exit(1);
 }
 const browser = await launch();
