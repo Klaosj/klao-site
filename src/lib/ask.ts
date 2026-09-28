@@ -53,6 +53,20 @@ const AJE: CannedSource = {
   target: 'work/aje',
   quote: { en: 'Build · Working prototype', th: 'สร้างเอง · Prototype ใช้งานได้' },
 };
+// The build answer, shared by the two entries that give it (T18-b below).
+const BUILD_ANSWER: Record<Locale, string> = {
+  en: 'Yes, on nights and weekends, with AI-assisted development (Claude). GoNai is live[1], Aje is a working prototype[2], and this site is edited in Notion.[3]',
+  th: 'จริงครับ ทำนอกเวลางานด้วย AI-assisted development (Claude) GoNai เปิดใช้งานแล้ว[1] Aje เป็น prototype ที่ใช้งานได้[2] และเว็บนี้แก้เนื้อหาผ่าน Notion[3]',
+};
+const BUILD_SOURCES: CannedSource[] = [
+  GONAI,
+  AJE,
+  {
+    label: 'Projects · klao-site',
+    target: 'work/klao-site',
+    quote: { en: 'Notion as the only CMS', th: 'Notion เป็น CMS เดียว' },
+  },
+];
 
 // The prototype's ASK array, in its order: first match wins. Pay and rates
 // are declined on purpose — not published, so never guessed.
@@ -81,14 +95,60 @@ const AJE: CannedSource = {
 // media isn't published content either way, so it now declines explicitly
 // (the new entry right after this one) rather than falling through to a
 // confident wrong topic.
+//
+// T18-b (CO-10, ruling PR5) -- the prototype's own wrong answers (P4
+// review Minor F), pinned in tests/ask.test.ts's question table:
+//  - "business model" and "featured in/on/by" (press) decline: neither is
+//    published content (rows 25 and "featured in the media"). T18-b2 adds
+//    the Thai press words (ออกสื่อ, ให้สัมภาษณ์, ลงข่าว).
+//  - bare "today" left the right-now entry: "Can I call him today?" is not
+//    a current-work question (row 26); it now declines.
+//  - "founded"/"founder" answer with the startups (row 14), "built" with
+//    the build answer (row 13) -- each guarded against the business and
+//    BD nouns that made them steal other questions (lane C review I1, I2).
+//  - "code in" / โค้ด is checked before the language entry, so "Which
+//    languages does he code in?" / เขียนโค้ดภาษาอะไร get the build answer,
+//    not the spoken-language one (rows 24 and 39).
 export const ASK_CANNED: readonly Canned[] = [
   { match: /\bsalary\b|\bpay\b|\bpaid\b|\brate card\b|\bprice\b|เงินเดือน|ค่าจ้าง|ค่าตัว/i, decline: true },
   // Re-review Important A: social media strategy/marketing isn't published
   // content -- checked before the retail entry (bare "media"/"สื่อ" would
   // otherwise read "social media"/"สื่อโซเชียล" as a retail-media question).
   { match: /\bsocial media\b|โซเชียล/i, decline: true },
+  // T18-b: not published either -- a project's business model, press.
+  // T18-b2: the Thai press words too (ออกสื่อ "in the media", ให้สัมภาษณ์
+  // "gave an interview", ลงข่าว "in the news"). Checked before the retail
+  // entry, whose bare สื่อ would otherwise answer them as retail media;
+  // ออกสื่อโฆษณา / ออกสื่อในร้าน mean running ads or in-store media, so
+  // those still fall through to retail -- in (ใน) or at (ที่) a store, a
+  // mall, a branch or a supermarket alike (lane C review m2).
+  // Lane C review I3: the English and mixed press questions too ("been in
+  // the media", "media coverage", "interview"), which the retail entry's
+  // bare "media" answered with a confident "Yes." -- except "in the media
+  // industry / business / sales", which is a job question and stays retail.
   {
-    match: /\bright now\b|\bworking on\b|\bcurrently\b|\bthese days\b|\btoday\b|ตอนนี้|ทำอะไรอยู่|ช่วงนี้/i,
+    match:
+      /\bbusiness models?\b|\bfeatured (in|on|by)\b|\b(?:been|appeared?) in the (?:media|news|press)\b(?!\s+(?:industry|business|sales))|\b(?:media|press) (?:coverage|mentions?)\b|\binterview(?:s|ed)?\b|ออกสื่อ(?!โฆษณา|(?:ใน|ที่)(?:ร้าน|ห้าง|สาขา|ซูเปอร์))|ให้สัมภาษณ์|ลงข่าว/i,
+    decline: true,
+  },
+  // Lane C review I1: who founded a company, and when, isn't published
+  // either -- "When was Actmedia founded?" read as a startup question. His
+  // own ventures are left out (their answers carry the dates), and any
+  // founder question about Actmedia declines, in English or Thai (ก่อตั้ง,
+  // lane C re-check R1): he is not its founder, and the retail answer opens
+  // with "Yes."
+  {
+    match:
+      /^(?!.*(?:\bbun dance\b|\bburgers?\b|\btripedia\b|\btalatify\b|ร้าน|เบอร์เกอร์)).*\b(?:when|what year|who)\b.*\bfounded\b|\bactmedia\b.*(?:\bfound(?:ed|er)\b|ก่อตั้ง)|(?:\bfound(?:ed|er)\b|ก่อตั้ง).*\bactmedia\b/i,
+    decline: true,
+  },
+  {
+    // Lane C review m1: bare "today" is not a current-work question ("Can I
+    // call him today?"), but his work today is: a work word before it, or
+    // ทำงาน after it in a mixed question. A "can he / can I / can we"
+    // question about today is a request, not his current work (re-check R5).
+    match:
+      /\bright now\b|\bworking on\b|\bcurrently\b|\bthese days\b|^(?!.*\bcan (?:he|i|we)\b).*\b(?:doing|work|works|job|living)\b[^.?!]*\btoday\b|\btoday\b[^.?!]*ทำงาน|ตอนนี้|ทำอะไรอยู่|ช่วงนี้/i,
     answer: {
       en: 'Klao has been Senior Business Development at Actmedia since March 2026, opening new channels with Modern Trade retailers and project-managing live in-store rollouts; the largest is a nationwide in-store screen installation.[1] Outside work he builds AI tools: GoNai is live[2] and Aje is a working prototype.[3]',
       th: 'ตั้งแต่ มี.ค. 2026 Klao เป็น Senior Business Development ที่ Actmedia หาช่องทางใหม่กับค้าปลีก Modern Trade และคุมโปรเจกต์ที่รันอยู่ โปรเจกต์ใหญ่สุดคือติดตั้งจอในร้านทั่วประเทศ[1] นอกเวลางานเขาสร้างเครื่องมือ AI เอง GoNai เปิดใช้งานแล้ว[2] และ Aje เป็น prototype ที่ใช้งานได้[3]',
@@ -96,7 +156,13 @@ export const ASK_CANNED: readonly Canned[] = [
     sources: [ACTMEDIA, GONAI, AJE],
   },
   {
-    match: /\bstartups?\b|\bstart-ups?\b|สตาร์ทอัพ|\btripedia\b|\btalatify\b|\bpitch(ed|es)?\b/i,
+    // Lane C review I1: PR5's founded/founder only when the question names
+    // no shop or business -- "Is he the founder of a burger shop?" is the
+    // A Bun Dance question (the business entry below), not this one. (The
+    // reviewer's guard also listed Actmedia; a founder question about
+    // Actmedia never gets here, the decline entry above takes it.)
+    match:
+      /\bstartups?\b|\bstart-ups?\b|สตาร์ทอัพ|\btripedia\b|\btalatify\b|\bpitch(ed|es)?\b|^(?!.*(?:\bbusiness\b|\bshops?\b|\bburgers?\b|\brestaurants?\b|\bbun dance\b|ร้าน|เบอร์เกอร์)).*(?:\bfound(?:ed|er)\b|ผู้ก่อตั้ง)/i,
     answer: {
       en: 'Yes. He co-founded two. Tripedia, a trip-planning platform, made the final 30 of 500 teams at KATALYST Startup Launchpad 2022.[1] Talatify, a fresh-market delivery platform, was pitched at the TEP startup screening round in 2025, with SOM sized at THB 37M.[2]',
       th: 'เคยครับ Klao เป็น Co-founder สองโปรเจกต์ Tripedia แพลตฟอร์มวางแผนทริป เข้ารอบ 30 ทีมสุดท้ายจาก 500 ทีมใน KATALYST Startup Launchpad 2022[1] และ Talatify แพลตฟอร์มส่งของสดจากตลาด ที่นำเสนอในรอบคัดเลือก TEP ปี 2025 และประเมิน SOM ไว้ 37 ล้านบาท[2]',
@@ -157,6 +223,19 @@ export const ASK_CANNED: readonly Canned[] = [
       },
     ],
   },
+  // T18-b: programming languages are a build question -- checked before the
+  // spoken-language entry below, with the same answer as the last entry.
+  // Lane C review m3: "programming", "written in" (but not "written in
+  // Thai/English", the site's own languages), เขียนโปรแกรม, ภาษาโปรแกรม /
+  // โปรแกรมมิ่ง (re-check R2), and making or writing an app or a site ด้วยภาษา
+  // ("in" a language) -- writing anything else in a language, such as a post,
+  // is the language question (re-check R3).
+  {
+    match:
+      /\bcode in\b|\bprogramming\b|\bwritten in\b(?! (?:thai|english)\b)|โค้ด|เขียนโปรแกรม|ภาษาโปรแกรม|โปรแกรมมิ่ง|(?:ทำ|สร้าง)(?:แอป|เว็บ)?ด้วยภาษา|เขียน(?:แอป|เว็บ)ด้วยภาษา/i,
+    answer: BUILD_ANSWER,
+    sources: BUILD_SOURCES,
+  },
   {
     match: /\blanguages?\b|\benglish\b|\bthai\b|ภาษา|อังกฤษ/i,
     answer: {
@@ -176,20 +255,13 @@ export const ASK_CANNED: readonly Canned[] = [
     // /\bdevelops?\b|\bdeveloped\b|\bdeveloping\b/ verb-only set dropped
     // "Is he a developer?"). "development" stays out on purpose -- it's
     // business development's word, not this row's.
-    match: /\bbuilds?\b|\bbuilding\b|\bcodes?\b|\bcoding\b|\bapps?\b|\bdevelop(s|ed|ing|ers?)?\b|สร้าง|แอป|โค้ด/i,
-    answer: {
-      en: 'Yes, on nights and weekends, with AI-assisted development (Claude). GoNai is live[1], Aje is a working prototype[2], and this site is edited in Notion.[3]',
-      th: 'จริงครับ ทำนอกเวลางานด้วย AI-assisted development (Claude) GoNai เปิดใช้งานแล้ว[1] Aje เป็น prototype ที่ใช้งานได้[2] และเว็บนี้แก้เนื้อหาผ่าน Notion[3]',
-    },
-    sources: [
-      GONAI,
-      AJE,
-      {
-        label: 'Projects · klao-site',
-        target: 'work/klao-site',
-        quote: { en: 'Notion as the only CMS', th: 'Notion เป็น CMS เดียว' },
-      },
-    ],
+    // Lane C review I2: build/building/built are BD verbs too ("built a
+    // sales pipeline", "building a sales team"), so they count only when
+    // the question names none of those BD nouns; "apps" etc. still match.
+    match:
+      /^(?!.*\b(?:partnerships?|pipelines?|relationships?|teams?|networks?|channels?|sales)\b).*\b(?:builds?|building|built)\b|\bcodes?\b|\bcoding\b|\bapps?\b|\bdevelop(s|ed|ing|ers?)?\b|สร้าง|แอป|โค้ด/i,
+    answer: BUILD_ANSWER,
+    sources: BUILD_SOURCES,
   },
 ];
 

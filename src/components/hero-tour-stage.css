@@ -29,10 +29,11 @@
   /* Fix round 1 (Important #1): the bottom-fade mask (polish A08) is a
      screenshot-window effect only -- it must never reach the klao-site
      Notion vignette, whose headline (including its EN -> TH switch) has to
-     stay fully legible. `:has(> .ht-cam)` is true only for a card that
-     actually holds a screenshot <img>; the vignette's card has none. Never
-     on the caption pill below either (see hero-tour-stage.test.tsx). */
-  .ht-card:has(> .ht-cam) {
+     stay fully legible. `:has(.ht-cam)` is true only for a card that
+     actually holds a screenshot <img> (inside its <picture>, P5 T18-f); the
+     vignette's card has none. Never on the caption pill below either (see
+     hero-tour-stage.test.tsx). */
+  .ht-card:has(.ht-cam) {
     -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent 98%);
     mask-image: linear-gradient(to bottom, #000 55%, transparent 98%);
   }
@@ -41,8 +42,11 @@
      rendered invisible anyway (mask-clip's default border-box). Declaring
      it only on the one card kind that keeps it (the vignette, never
      masked) means the CSS says what actually renders. */
-  .ht-card:not(:has(> .ht-cam)) { box-shadow: var(--e2); }
+  .ht-card:not(:has(.ht-cam)) { box-shadow: var(--e2); }
   .ht-card::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 .5px rgb(0 0 0 / .14); pointer-events: none; }
+  /* P5 T18-f: the <picture> around the screenshot takes no box of its own,
+     so the <img> sizes against the card exactly as it did without it. */
+  .ht-pic { display: contents; }
   .ht-cam { display: block; width: 100%; height: 100%; object-fit: cover; }
   /* The camera: a slow, linear 1.00 -> 1.03 push across the frame's dwell and
      on through the next crossfade (duration set inline per frame). */
@@ -226,7 +230,7 @@
        rule's `:not(:has(...))` outweighs a plain `.ht-card` on specificity
        alone, so a same-specificity override is the only way this actually
        wins on mobile (the screenshot cards never had a shadow to reset). */
-    .ht-card:not(:has(> .ht-cam)) { box-shadow: none; }
+    .ht-card:not(:has(.ht-cam)) { box-shadow: none; }
     .ht-card::after { display: none; }
     .ht-vig { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
     .ht-vig-n { padding: 16px 16px 8px; border-right: 0; border-bottom: 1px solid rgb(20 26 44 / .08); }

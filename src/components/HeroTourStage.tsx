@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useId, useReducer, useRef, useState, type FocusEvent, type KeyboardEvent, type PointerEvent } from 'react';
+import { preload } from 'react-dom';
 import { Icon } from '@/components/icons';
 import ThaiText from '@/components/ThaiText';
 import { dict } from '@/lib/dictionary';
@@ -20,6 +21,13 @@ const WASH: Record<ProjectWash, string> = {
 const SETTLE_MS = 800;
 /** The camera keeps pushing through the next crossfade (prototype: dwell + 700). */
 const CAMERA_TAIL_MS = 700;
+/** The phone captures (P5 T18-f): the 6:5 phone stage at 2x of a 390-wide
+ *  screen. Size hints on the <source>, like the <img>'s, reserve the box. */
+const PHONE_W = 780;
+const PHONE_H = 650;
+/** The phone stage's own breakpoint (hero-tour-stage.css), and the one above it. */
+const PHONE_MQ = '(max-width: 734px)';
+const DESK_MQ = '(min-width: 735px)';
 /** A drag this long, and clearly more sideways than down, is a swipe. */
 const SWIPE_PX = 40;
 const KEY_STEP: Record<string, (index: number, count: number) => number> = {
@@ -197,6 +205,20 @@ export default function HeroTourStage({ slides, vignette, locale }: Props) {
   };
 
   const of = (n: number) => fill(t.tourOf, { n, total: count });
+  // P5 T18-f: the first frame is the LCP image. React preloads an eager
+  // server-rendered <img> by itself, but not one inside a <picture> (a
+  // <source> may win), so the stage asks for it: per screen size when a
+  // phone capture exists, so each screen fetches only the file it shows.
+  const first = slides[0];
+  if (first?.src && first.media === 'img') {
+    if (first.phoneSrc) {
+      preload(first.src, { as: 'image', fetchPriority: 'high', media: DESK_MQ });
+      preload(first.phoneSrc, { as: 'image', fetchPriority: 'high', media: PHONE_MQ });
+    } else {
+      preload(first.src, { as: 'image', fetchPriority: 'high' });
+    }
+  }
+
   const current = slides[s.index];
   const playLabel = ended ? t.tourReplay : s.phase === 'playing' ? t.tourPause : t.tourPlay;
   // The vignette plays its EN -> TH beat while autoplay sits on it; at rest it
@@ -243,18 +265,27 @@ export default function HeroTourStage({ slides, vignette, locale }: Props) {
                   {slide.media === 'notion' ? (
                     <Vignette vignette={vignette} beat={beatFor(i)} />
                   ) : slide.src ? (
-                    <img
-                      className="ht-cam"
-                      src={slide.src}
-                      alt={slide.alt}
-                      width={1580}
-                      height={900}
-                      loading={i === 0 ? 'eager' : 'lazy'}
-                      fetchPriority={i === 0 ? 'high' : undefined}
-                      decoding="async"
-                      data-run={camera ? '' : undefined}
-                      style={{ ['--ht-cam-ms' as string]: `${slide.dwellMs + CAMERA_TAIL_MS}ms` }}
-                    />
+                    // P5 T18-f (CO-06): the prototype's art direction -- a phone
+                    // gets the project's own 6:5 capture when it has one (a
+                    // <source> the browser reads before the <img>); otherwise
+                    // the phone stage keeps centre-cropping the desktop shot.
+                    <picture className="ht-pic">
+                      {slide.phoneSrc && (
+                        <source media={PHONE_MQ} srcSet={slide.phoneSrc} width={PHONE_W} height={PHONE_H} />
+                      )}
+                      <img
+                        className="ht-cam"
+                        src={slide.src}
+                        alt={slide.alt}
+                        width={1580}
+                        height={900}
+                        loading={i === 0 ? 'eager' : 'lazy'}
+                        fetchPriority={i === 0 ? 'high' : undefined}
+                        decoding="async"
+                        data-run={camera ? '' : undefined}
+                        style={{ ['--ht-cam-ms' as string]: `${slide.dwellMs + CAMERA_TAIL_MS}ms` }}
+                      />
+                    </picture>
                   ) : null}
                 </div>
               </div>

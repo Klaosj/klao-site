@@ -133,12 +133,21 @@ describe('toTourSlides', () => {
       href: '#work/aje',
       media: 'img',
       src: '/api/img/page/aje/Screenshot',
+      phoneSrc: null,
       alt: IMAGE_ALT['/images/aje.jpg'],
       wash: 'aje',
       dwellMs: 6000,
     });
     expect(slides[1].media).toBe('img'); // a 'win' project is a plain card in the tour
     expect(slides[2]).toMatchObject({ media: 'notion', src: null, wash: 'site', dwellMs: 7000 });
+  });
+
+  // T18-f (CO-06, Q1 = A): a project's ScreenshotPhone rides along as the
+  // slide's phone image; the Notion vignette never has one.
+  it('carries the phone screenshot for a screenshot frame, and none for the vignette', () => {
+    const phone = '/api/img/page/aje/ScreenshotPhone';
+    expect(toTourSlides([{ ...aje, screenshotPhone: phone }], 'en')[0].phoneSrc).toBe(phone);
+    expect(toTourSlides([{ ...site, screenshotPhone: phone }], 'en')[0].phoneSrc).toBeNull();
   });
 
   it("prefers the project's own alt text, in the page's language", () => {

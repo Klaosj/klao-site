@@ -85,6 +85,8 @@ export interface TourSlide {
   href: string | null;
   media: 'img' | 'notion';
   src: string | null;
+  /** The phone-only capture (P5 T18-f); null = the phone centre-crops `src`. */
+  phoneSrc: string | null;
   alt: string;
   wash: ProjectWash;
   dwellMs: number;
@@ -111,6 +113,7 @@ export function toTourSlides(projects: Project[], locale: Locale): TourSlide[] {
       href: key ? sheetHash(key) : null,
       media,
       src,
+      phoneSrc: media === 'img' ? p.screenshotPhone : null,
       alt: p.alt?.[locale] || (src ? imageAlt(src, p.name) : ''),
       wash: p.wash,
       dwellMs: tourDwellMs(p, locale),

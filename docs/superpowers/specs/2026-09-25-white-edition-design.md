@@ -174,7 +174,7 @@ Headlines fade and rise once when they reach 85 % of the viewport, with the prot
 | Career | add | `StartDate`, `EndDate` (empty = now), `FigureValue` (e.g. "THB 1.1M"), `FigureLabelEN/TH` (e.g. "My personal monthly sales target"), `FigureNoteEN/TH` ("Target met") |
 | Story (**new**) | create | `TitleEN/TH`, `BodyEN/TH` (`**bold**` for the one clause), `RuleEN/TH`, `Icon` (select), `Sketch` (select), `Order`, `Published` |
 | FAQ (**new**) | create | `QuestionEN/TH`, `AnswerEN/TH`, `Links` (lines of `Label|target`), `Order`, `Published` |
-| Profile | keep/add | Headline, Byline, Photo, Email, LinkedIn, GitHub, ResumeURL; add `PrologueEN/TH`, `ClosingLineEN/TH`, `BasedIn`, `WorkingIn` |
+| Profile | keep/add | Headline, Byline, Photo, Email, LinkedIn, GitHub, ResumeURL; add `PrologueEN/TH`, `ClosingLineEN/TH`, `BasedInEN/TH`, `WorkingInEN/TH` (master R29; a bare `WorkingIn` is still read as EN) |
 | Questions | keep | the close section shows the newest `wondering`/`building` question |
 | Skills | keep | toolbox columns map from `Category` |
 

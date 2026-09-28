@@ -84,8 +84,8 @@ export const AJE = makeProject({
   imageSrc: '/images/aje.jpg',
   stack: ['Next.js', 'Claude API', 'Ollama'],
   alt: {
-    en: 'Aje’s Review screen for a sample idea, BikeFix Home: the idea, its biggest uncertainty and the next test.',
-    th: 'หน้า Review ของ Aje สำหรับไอเดียตัวอย่าง BikeFix Home: ตัวไอเดีย ความไม่แน่นอนที่ใหญ่ที่สุด และการทดสอบถัดไป',
+    en: 'Aje’s Review screen for a sample idea, BikeFix Home: its readiness level and a one-line summary of the idea.',
+    th: 'หน้า Review ของ Aje สำหรับไอเดียตัวอย่าง BikeFix Home: ระดับความพร้อม และสรุปไอเดียในหนึ่งบรรทัด',
   },
   outcomes: {
     en: ['Working prototype', '8-dimension report card with letter grades', '16 hand-drawn framework diagrams', 'Advisor runs on Claude or a local model'],
@@ -115,8 +115,8 @@ export const GONAI = makeProject({
   stack: ['Next.js', 'Supabase'],
   lineageOf: 'fx-tripedia',
   alt: {
-    en: 'GoNai home screen: Plan a full day out, know every baht before you leave, with a budget prompt.',
-    th: 'หน้าแรกของ GoNai: วางแผนเที่ยวทั้งวัน รู้ทุกบาทก่อนออกจากบ้าน พร้อมช่องพิมพ์งบประมาณ',
+    en: 'GoNai home screen: the headline Plan a full day out, know every baht before you leave.',
+    th: 'หน้าแรกของ GoNai: หัวข้อ วางแผนเที่ยวทั้งวัน รู้ทุกบาทก่อนออกจากบ้าน',
   },
 });
 

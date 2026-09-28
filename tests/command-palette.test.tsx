@@ -52,6 +52,11 @@ const input: PaletteInput = {
 
 let fetchSpy: ReturnType<typeof vi.fn>;
 let onClose: ReturnType<typeof vi.fn>;
+// T18-c (CO-26): jsdom can't leave the document -- `location.href = mailto:`
+// or window.open() only print "Not implemented" to stderr while the test
+// still passes. Every test that navigates stubs it; this spy fails any test
+// that forgets.
+let consoleError: ReturnType<typeof vi.spyOn>;
 
 beforeEach(() => {
   stubMatchMedia();
@@ -70,11 +75,15 @@ beforeEach(() => {
   onClose = vi.fn();
   localStorage.clear();
   document.documentElement.removeAttribute('data-theme');
+  consoleError = vi.spyOn(console, 'error');
 });
 
 afterEach(() => {
-  // The whole palette, Ask Preview included, never touches the network.
-  expect(fetchSpy).not.toHaveBeenCalled();
+  // Read what the test left behind, tear down, and only then assert (lane C
+  // review m6): a failed check here must not skip the teardown and take the
+  // next test down with it.
+  const fetches = fetchSpy.mock.calls.length;
+  const notImplemented = consoleError.mock.calls.map((args) => args.map(String).join(' ')).filter((m) => /Not implemented/.test(m));
   cleanup();
   document.body.innerHTML = '';
   history.replaceState(null, '', '/');
@@ -83,6 +92,9 @@ afterEach(() => {
   // A couple of fix-round-1 tests below use fake timers (the Ask decline's
   // 2 s copy revert); this returns every test after them to real ones.
   vi.useRealTimers();
+  // The whole palette, Ask Preview included, never touches the network.
+  expect(fetches, 'fetch calls').toBe(0);
+  expect(notImplemented).toEqual([]);
 });
 
 function open(locale: 'en' | 'th' = 'en', initialQuery = '') {
@@ -372,19 +384,26 @@ describe('CommandPalette', () => {
   });
 
   it('closes with the default focus restore before a mailto href, not restoreFocus:false (fix #3)', () => {
+    // CO-26: a plain object stands in for location, so the mailto: is
+    // recorded instead of jsdom trying (and failing) to open it.
+    const location = { href: '/', pathname: '/' };
+    vi.stubGlobal('location', location);
     // "conversation" matches only suggested:mail ("Start a conversation"),
     // whose action is an internal (non-external) mailto: href.
     const box = open();
     type(box, 'conversation');
     fireEvent.keyDown(box, { key: 'Enter' });
     expect(onClose).toHaveBeenCalledWith(undefined);
+    expect(location.href).toMatch(/^mailto:real@example\.com\?subject=/);
   });
 
   it('closes normally (no restoreFocus override) before an external href, e.g. the résumé', () => {
+    const windowOpen = vi.spyOn(window, 'open').mockImplementation(() => null); // CO-26
     const box = open();
     type(box, 'resume');
     fireEvent.keyDown(box, { key: 'Enter' });
     expect(onClose).toHaveBeenCalledWith();
+    expect(windowOpen).toHaveBeenCalledTimes(1);
   });
 
   // M8 (fix wave finding 11): repo convention for an outbound target="_blank"

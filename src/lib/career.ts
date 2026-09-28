@@ -201,10 +201,10 @@ export interface ToolboxColumn {
 }
 
 // The owner's own cut of which concrete tools the toolbox names, in reading
-// order: the prototype's "Works in" + "Builds with" cells (the old
-// SkillsBand TOOLS_ALLOWLIST plus Next.js). A Skills row not listed here is
-// not shown (owner, 2026-08-12: "too many chips reads as overclaiming"); a
-// listed name with no Skills row is skipped, never invented.
+// order: the prototype's "Works in" + "Builds with" cells (the
+// TOOLS_ALLOWLIST of the retired SkillsBand, plus Next.js). A Skills row not
+// listed here is not shown (owner, 2026-08-12: "too many chips reads as
+// overclaiming"); a listed name with no Skills row is skipped, never invented.
 export const TOOLBOX_STACK: readonly string[] = [
   'Salesforce',
   'Excel & Sheets modeling',

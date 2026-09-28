@@ -1,6 +1,6 @@
 import type { Project } from '@/lib/models';
 
-type P1Fields = 'statusKey' | 'status' | 'kicker' | 'media' | 'wash' | 'tour' | 'tourOrder' | 'lineageOf' | 'alt' | 'outcomes';
+type P1Fields = 'statusKey' | 'status' | 'kicker' | 'media' | 'wash' | 'tour' | 'tourOrder' | 'lineageOf' | 'alt' | 'outcomes' | 'screenshotPhone';
 
 /**
  * The White Edition (C5) Project fields at the values a pre-migration Notion
@@ -19,6 +19,7 @@ export const P1_DEFAULTS: Pick<Project, P1Fields> = {
   lineageOf: null,
   alt: null,
   outcomes: { en: [], th: [] },
+  screenshotPhone: null, // P5 T18-f: no phone frame; the tour centre-crops imageSrc
 };
 
 /** A complete Project for tests: a build with a screenshot, every field set. */
