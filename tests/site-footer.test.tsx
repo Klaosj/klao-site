@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { readFileSync } from 'node:fs';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import careerFixture from '@/content/fixtures/career.json';
@@ -96,6 +97,22 @@ describe('SiteFooter', () => {
     expect(screen.queryByText('No Key Co')).toBeNull();
   });
 
+  // Fix wave finding 1 (Important, gate item 1): a project with a Thai-only
+  // name and no Notion Slug gives projectKey('') -- sheetHash('') is the
+  // unparseable '#work/'. Dropped from the column instead of shown as a dead
+  // link, same S-7 treatment as the career row above.
+  it('skips a project with no slug and a Thai-only name (S-7) instead of a dead #work/ link', async () => {
+    const slugless: Project = { ...projects[0], id: 'fx-slugless', slug: null, name: 'ร้านขนมจีบ' };
+    const contentModule = await import('@/lib/content');
+    vi.spyOn(contentModule, 'getFeaturedProjects').mockResolvedValueOnce([...projects, slugless]);
+    await renderFooter();
+    expect(screen.queryByText('ร้านขนมจีบ')).toBeNull();
+    // Every other featured project still links normally.
+    for (const p of projects) {
+      expect(screen.getByRole('link', { name: p.name }).getAttribute('href')).toBe(`/en${sheetHash(projectKey(p))}`);
+    }
+  });
+
   it('opens LinkedIn, GitHub and the résumé in a new tab, and drops what is missing', async () => {
     await renderFooter();
     for (const [name, href] of [
@@ -151,5 +168,24 @@ describe('SiteFooter', () => {
   it('never renders href="#"', async () => {
     const { container } = await renderFooter();
     for (const a of Array.from(container.querySelectorAll('a'))) expect(a.getAttribute('href')).not.toBe('#');
+  });
+});
+
+// I-2 (fix wave finding 3): at 320px "การแสดงผล" (Appearance) wrapped on /th,
+// and on /en the longer "Appearance" label pushed the row half a pixel past
+// the viewport (P1 lane measurement: document.documentElement.scrollWidth >
+// 320 -- the page's one source of sideways scroll at that width). The
+// prototype (R21) stacks a pref's label above its control instead of beside
+// it -- read as text here (jsdom computes no layout); verified for real with
+// headless Chrome at 320/390px, /en and /th, light and dark (scrollWidth ===
+// clientWidth === 320 in every combination, screenshots in
+// /tmp/klao-qa/fx-p4/footer-*.png).
+describe('site-footer.css (I-2: stacked pref label under 734px)', () => {
+  const CSS = readFileSync('src/components/site-footer.css', 'utf8');
+  const mobile = CSS.slice(CSS.indexOf('@media (max-width: 734px)'));
+
+  it('stacks each .foot-pref label above its control, and keeps the label on one line', () => {
+    expect(mobile).toMatch(/\.foot-pref\s*\{[^}]*flex-direction:\s*column;[^}]*align-items:\s*start;/s);
+    expect(mobile).toMatch(/\.foot-pref-label\s*\{[^}]*white-space:\s*nowrap;/s);
   });
 });

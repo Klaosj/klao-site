@@ -1,8 +1,14 @@
 import { describe, expect, it } from 'vitest';
+import careerFixture from '@/content/fixtures/career.json';
+import faqFixture from '@/content/fixtures/faq.json';
+import profileFixture from '@/content/fixtures/profile.json';
+import projectsFixture from '@/content/fixtures/projects.json';
 import { dict } from '@/lib/dictionary';
 import { faqAnchorId } from '@/lib/link-target';
+import type { CareerEntry, FaqItem, Profile, Project } from '@/lib/models';
 import {
   PALETTE_GROUPS,
+  bestScoreIndex,
   buildPaletteIndex,
   fold,
   highlight,
@@ -11,6 +17,20 @@ import {
   type PaletteInput,
 } from '@/lib/palette-index';
 import { projectKey } from '@/lib/sheet-url';
+
+// Re-review round 1, Important B: the real fixture order matters. The
+// hand-built `input` below happens to list GoNai first and its Tripedia
+// description never mentions GoNai -- a "gonia" typo test against it alone
+// could not have caught a tie broken by array order. `realInput` uses the
+// actual content fixtures (Talatify, Tripedia, Aje, GoNai, klao-site --
+// Tripedia's own description ends "...the idea GoNai was later built
+// from"), the exact shape the bug reproduced in on the live site.
+const realInput: PaletteInput = {
+  profile: profileFixture as Profile,
+  projects: projectsFixture as Project[],
+  career: careerFixture as CareerEntry[],
+  faq: faqFixture as FaqItem[],
+};
 
 const input: PaletteInput = {
   profile: {
@@ -44,6 +64,8 @@ const input: PaletteInput = {
       company: 'Actmedia',
       role: { en: 'Senior Business Development', th: 'นักพัฒนาธุรกิจอาวุโส' },
       period: 'MAR 2026 – Present',
+      start: '2026-03',
+      end: null,
     },
   ],
   faq: [{ id: 'fx-faq-contact', question: { en: 'How do I reach him?', th: 'ติดต่อยังไง?' } }],
@@ -108,10 +130,26 @@ describe('buildPaletteIndex', () => {
     expect(e.get(`project:${projectKey(input.projects[1])}`)?.icon).toBe('chart-line-up-duotone');
   });
 
+  // Fix wave finding 1 (Important, gate item 1): a project with a Thai-only
+  // name and no Notion Slug gives projectKey('') -- unlike the footer (which
+  // drops the row), a ⌘K row must stay findable and unique, so the id falls
+  // back to the project's own id and the target falls back to the 'work'
+  // section instead of the unparseable 'work/' sheet target.
+  it('keeps a slugless, Thai-only-named project findable, targeting the work section instead of a dead sheet (S-7)', () => {
+    const slugless = { ...input.projects[0], id: 'p-slugless', slug: null, name: 'ร้านขนมจีบ' };
+    const entries = buildPaletteIndex({ ...input, projects: [slugless] }, 'en');
+    const row = entries.find((e) => e.group === 'projects')!;
+    expect(row.id).toBe('project:p-slugless');
+    expect(row.action).toEqual({ type: 'target', target: 'work' });
+  });
+
   it('opens each Career pill and each FAQ answer', () => {
     const e = byId('th');
     expect(e.get('career:actmedia')?.action).toEqual({ type: 'target', target: 'career:actmedia' });
-    expect(e.get('career:actmedia')?.hint).toBe('MAR 2026 – Present');
+    // M4 (fix wave finding 7): the hint is now pillYears()'s localised short
+    // form ('2026 – <nowWord>'), not the hand-typed, untranslated `period`
+    // string -- see the dedicated describe block below for the full case.
+    expect(e.get('career:actmedia')?.hint).toBe(`2026 – ${dict.th.careerNow}`);
     const faq = e.get('faq:fx-faq-contact')!;
     expect(faq.label).toBe('ติดต่อยังไง?');
     expect(faq.alt).toBe('How do I reach him?');
@@ -138,7 +176,15 @@ describe('buildPaletteIndex', () => {
         ...input,
         career: [
           ...input.career,
-          { id: 'c2', key: '', company: 'ร้านขนมจีบ', role: { en: 'Owner', th: 'เจ้าของ' }, period: '2024' },
+          {
+            id: 'c2',
+            key: '',
+            company: 'ร้านขนมจีบ',
+            role: { en: 'Owner', th: 'เจ้าของ' },
+            period: '2024',
+            start: null,
+            end: null,
+          },
         ],
       },
       'en',
@@ -146,6 +192,34 @@ describe('buildPaletteIndex', () => {
     const career = entries.filter((e) => e.group === 'career');
     expect(career).toHaveLength(1);
     expect(career[0].id).toBe('career:actmedia');
+  });
+
+  // M4 (fix wave finding 7): the hand-typed `period` string ("MAR 2026 –
+  // Present") is English regardless of locale, so it leaked untranslated
+  // into the Thai palette. pillYears() -- the same helper the Career pill
+  // itself uses -- gives a short, localised form instead; `period` is now
+  // only a fallback for a pre-migration row with no StartDate at all.
+  describe('career hint uses pillYears, localised, falling back to period (M4)', () => {
+    it('shows "<year> – <nowWord>" for an ongoing role, in both languages', () => {
+      expect(byId('en').get('career:actmedia')?.hint).toBe(`2026 – ${dict.en.careerNow}`);
+      expect(byId('th').get('career:actmedia')?.hint).toBe(`2026 – ${dict.th.careerNow}`);
+    });
+
+    it('shows "<start> – <end>" for a finished role', () => {
+      const entries = buildPaletteIndex(
+        { ...input, career: [{ ...input.career[0], start: '2021-05', end: '2022-12' }] },
+        'en',
+      );
+      expect(entries.find((e) => e.group === 'career')?.hint).toBe('2021 – 2022');
+    });
+
+    it('falls back to the raw `period` string for a pre-migration row with no StartDate', () => {
+      const entries = buildPaletteIndex(
+        { ...input, career: [{ ...input.career[0], period: 'Since 2019', start: null, end: null }] },
+        'en',
+      );
+      expect(entries.find((e) => e.group === 'career')?.hint).toBe('Since 2019');
+    });
   });
 
   // Ledger ruling (preflight C13): Notion copy may carry the '|' break mark
@@ -202,6 +276,70 @@ describe('searchPalette', () => {
   it('forgives one typo in a Latin query of four or more letters', () => {
     expect(searchPalette(entries, 'resme').map((e) => e.id)).toContain('suggested:resume');
     expect(searchPalette(entries, 'zzzq')).toEqual([]);
+  });
+});
+
+// M3 (fix wave finding 6): Enter used to just run rows[0] -- searchPalette's
+// fixed PALETTE_GROUPS order, not score order, so a weaker match in an
+// earlier group could beat the actual best match. bestScoreIndex fixes the
+// selection itself; the alias/description scoring split (score(), above)
+// and the restored Career alias make the ranking underneath it trustworthy.
+describe('bestScoreIndex (M3)', () => {
+  // A second FAQ item, its Thai question containing 'ภาษา' as a substring
+  // (like the real content fixture's "ทำงานได้กี่ภาษา?") -- gives both the
+  // FAQ row (tier 2, an included substring) and Preferences' language row
+  // (tier 1 via its keywords on /th, tier 3 via its EN label 'Switch to
+  // ภาษาไทย' on /en) something to match.
+  const withLangFaq: PaletteInput = {
+    ...input,
+    faq: [...input.faq, { id: 'fx-faq-lang', question: { en: 'Which languages does he work in?', th: 'ทำงานได้กี่ภาษา?' } }],
+  };
+
+  it('picks the FAQ row for "ภาษา" on /th', () => {
+    const entries = buildPaletteIndex(withLangFaq, 'th');
+    const rows = searchPalette(entries, 'ภาษา');
+    expect(rows[bestScoreIndex(rows, 'ภาษา')].id).toBe('faq:fx-faq-lang');
+  });
+
+  it('picks Preferences over the FAQ row for "ภาษา" on /en, even though FAQ lists first (group order != score order)', () => {
+    const entries = buildPaletteIndex(withLangFaq, 'en');
+    const rows = searchPalette(entries, 'ภาษา');
+    // Display order is unchanged (still fixed by PALETTE_GROUPS) -- 'faq'
+    // lists before 'prefs' regardless of which one actually matches better.
+    expect(rows[0].group).toBe('faq');
+    // But pref:lang's EN label ('Switch to ภาษาไทย') has a word that starts
+    // with the query (tier 3); the FAQ row only contains it as a substring
+    // of its Thai alt (tier 2) -- pref:lang is the true best match.
+    expect(rows[bestScoreIndex(rows, 'ภาษา')].id).toBe('pref:lang');
+  });
+
+  // Re-review round 1, Important B. Tripedia's real description ends "...the
+  // idea GoNai was later built from" -- its keyword word 'gonai' used to hit
+  // the SAME 0.5 typo tier as GoNai's own name, and the real projects.json
+  // array order (Talatify, Tripedia, Aje, GoNai, klao-site) put Tripedia
+  // first, so the tie went to Tripedia's index, not the project the typo
+  // actually named. score() now scores a typo of the row's own name (0.6)
+  // above a typo of a word merely mentioned in its description (0.5).
+  it.each(['en', 'th'] as const)('picks GoNai first for the typo "gonia" on /%s, against the real fixtures (Important B)', (locale) => {
+    const entries = buildPaletteIndex(realInput, locale);
+    // GoNai (index 3) lists after Tripedia (index 1) in display order --
+    // this only proves the fix picked the right SELECTION, not that it
+    // reordered the list.
+    const tripedia = entries.findIndex((e) => e.label === 'Tripedia');
+    const gonai = entries.findIndex((e) => e.label === 'GoNai');
+    expect(tripedia).toBeGreaterThanOrEqual(0);
+    expect(gonai).toBeGreaterThan(tripedia);
+    const rows = searchPalette(entries, 'gonia');
+    expect(rows.map((r) => r.label)).toContain('Tripedia');
+    expect(rows[bestScoreIndex(rows, 'gonia')].label).toBe('GoNai');
+  });
+
+  it('finds Actmedia for "retail" and "ค้าปลีก" via the restored alias (M3, ruling: generic words only)', () => {
+    const entries = buildPaletteIndex(input, 'en');
+    for (const q of ['retail', 'ค้าปลีก']) {
+      const rows = searchPalette(entries, q);
+      expect(rows[bestScoreIndex(rows, q)].id).toBe('career:actmedia');
+    }
   });
 });
 

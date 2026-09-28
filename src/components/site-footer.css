@@ -94,5 +94,23 @@
       flex-direction: column;
       align-items: start;
     }
+    /* I-2 (fix wave finding 3): at 320px the label + control row overflowed
+       -- "การแสดงผล" wrapped mid-word on /th, and on /en the longer English
+       "Appearance" label pushed the row past the viewport by half a pixel
+       (P1 lane measurement: document.documentElement.scrollWidth > 320,
+       the page's one source of sideways scroll at that width). The
+       prototype (R21) stacks each pref's label above its control instead
+       of beside it; stacked, the row's width is just the wider of the two,
+       comfortably under the 288px content box in both languages. Verified
+       with headless Chrome at 320/390px, /en and /th, light and dark:
+       scrollWidth === clientWidth === 320 in every combination. */
+    .foot-pref {
+      flex-direction: column;
+      align-items: start;
+      gap: 6px;
+    }
+    .foot-pref-label {
+      white-space: nowrap;
+    }
   }
 }

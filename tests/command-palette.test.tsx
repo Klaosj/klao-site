@@ -42,6 +42,8 @@ const input: PaletteInput = {
       company: 'Actmedia',
       role: { en: 'Senior Business Development', th: 'นักพัฒนาธุรกิจอาวุโส' },
       period: 'MAR 2026 – Present',
+      start: '2026-03',
+      end: null,
     },
   ],
   faq,
@@ -261,6 +263,75 @@ describe('CommandPalette', () => {
     expect(card.textContent).toContain(fill(dict.th.askDeclined, { email: 'real@example.com' }));
   });
 
+  // Fix wave finding 2 (Important, I-1): the Ask card's Thai body copy
+  // (withMarkers' plain segments, the decline line, source quotes, the
+  // trust line) rendered as bare strings, so the browser could break a
+  // keep-list compound mid-word. Every one of those spots now goes through
+  // ThaiText, same as the rest of the page's Thai body text.
+  it('renders the Ask answer’s Thai body copy with keep-run spans (fix wave finding 2)', () => {
+    const box = open('th');
+    type(box, 'เคยทำสตาร์ทอัพไหม');
+    fireEvent.keyDown(box, { key: 'Enter' });
+    const card = screen.getByRole('region', { name: dict.th.askTitle });
+    // 'โปรเจกต์' is on the Thai keep-list (src/lib/thai.ts THAI_KEEP) and
+    // appears inside the canned startup answer -- ThaiText renders it as an
+    // unbreakable '.nw' span so a browser line break can never split it.
+    expect(within(card).getByText('โปรเจกต์', { selector: '.nw' })).toBeTruthy();
+  });
+
+  // Re-review round 1, Minor D: the finding-2 test above only covers
+  // withMarkers' answer-body segments. The source quote <em> (AskCard.tsx)
+  // needs its own assertion -- Tripedia's TH quote 'เข้ารอบ 30 ทีมสุดท้ายจาก
+  // 500 ทีม' contains '30 ทีม', a number+unit keep run (src/lib/thai.ts's
+  // UNIT pattern: 'ทีม' is on its unit list).
+  it('renders a Thai source quote with keep-run spans too (re-review Minor D)', () => {
+    const box = open('th');
+    type(box, 'เคยทำสตาร์ทอัพไหม');
+    fireEvent.keyDown(box, { key: 'Enter' });
+    const card = screen.getByRole('region', { name: dict.th.askTitle });
+    expect(card.querySelector('.ask-srcs em .nw')?.textContent).toBe('30 ทีม');
+  });
+
+  // Re-review round 1, Minor E: a [n] marker with no preceding text to glue
+  // to could wrap onto its own line (e.g. a lone "1" starting the next
+  // line). U+2060 WORD JOINER right before the marker forbids a break there.
+  // Re-review round 2 (Minor E reopened): U+2060 WORD JOINER doesn't stop
+  // Chrome breaking before an inline-block <sup> -- verified live, 314/3388
+  // markers still started a new line in a 320-440px sweep. An explicit
+  // `.ask-glue { white-space: nowrap }` span around [tail word + marker]
+  // does (re-verified live: 0 orphans, 0 overflow, 320-440px, EN and TH).
+  // jsdom has no layout, so this checks the structure the CSS then protects.
+  it('glues each [n] marker to the word before it inside a nowrap span (re-review Minor E, round 2)', () => {
+    const box = open();
+    type(box, 'has he done a startup?');
+    fireEvent.keyDown(box, { key: 'Enter' });
+    const card = screen.getByRole('region', { name: dict.en.askTitle });
+    const sups = card.querySelectorAll('.ask-a sup');
+    expect(sups.length).toBeGreaterThan(0);
+    for (const sup of Array.from(sups)) {
+      const glue = sup.closest('.ask-glue');
+      expect(glue, 'every marker sits inside .ask-glue').not.toBeNull();
+      expect(glue!.contains(sup)).toBe(true);
+      // The span holds the word it's glued to as well as the marker's own
+      // digit -- not just the bare number by itself.
+      expect(glue!.textContent!.length).toBeGreaterThan((sup.textContent ?? '').length);
+    }
+  });
+
+  // Minor E's keep-run case: Tripedia/Talatify's TH quote/answer ends
+  // "...37 ล้านบาท[2]" -- a UNIT keep run (src/lib/thai.ts). glueTail()
+  // takes the WHOLE run rather than re-splitting it (splitting it would
+  // defeat the keep-run mechanism that protects it elsewhere on the page).
+  it('glues the whole keep run to its marker, never splitting it (re-review Minor E, round 2)', () => {
+    const box = open('th');
+    type(box, 'เคยทำสตาร์ทอัพไหม');
+    fireEvent.keyDown(box, { key: 'Enter' });
+    const card = screen.getByRole('region', { name: dict.th.askTitle });
+    const sup2 = Array.from(card.querySelectorAll('.ask-a sup')).find((s) => s.textContent === '2');
+    const glue = sup2?.closest('.ask-glue');
+    expect(glue?.querySelector('.nw')?.textContent).toBe('37 ล้านบาท');
+  });
+
   it('has no network API anywhere in the palette source', () => {
     for (const f of ['src/components/palette/CommandPalette.tsx', 'src/components/palette/AskCard.tsx']) {
       expect(readFileSync(f, 'utf8'), f).not.toMatch(/\bfetch\s*\(|XMLHttpRequest|sendBeacon|WebSocket|EventSource/);
@@ -315,6 +386,16 @@ describe('CommandPalette', () => {
     expect(onClose).toHaveBeenCalledWith();
   });
 
+  // M8 (fix wave finding 11): repo convention for an outbound target="_blank"
+  // link is 'noopener,noreferrer' -- this row was missing the referrer half.
+  it('opens an external row with noopener,noreferrer (M8)', () => {
+    const windowOpen = vi.spyOn(window, 'open').mockImplementation(() => null);
+    const box = open();
+    type(box, 'resume');
+    fireEvent.keyDown(box, { key: 'Enter' });
+    expect(windowOpen).toHaveBeenCalledWith('/resume.pdf', '_blank', 'noopener,noreferrer');
+  });
+
   it('switches locale through switchLocaleHref and window.location.assign (C2 wiring)', () => {
     const assign = vi.fn();
     vi.stubGlobal('location', { assign, pathname: '/', href: '/' });
@@ -322,6 +403,43 @@ describe('CommandPalette', () => {
     type(box, 'language');
     fireEvent.keyDown(box, { key: 'Enter' });
     expect(onClose).toHaveBeenCalledWith({ restoreFocus: false });
+    expect(assign).toHaveBeenCalledWith('/th');
+  });
+
+  // M3 (fix wave finding 6): Enter used to just run the row listed first
+  // (rows[0]), which follows the fixed group display order -- not score
+  // order. A query that matches an earlier group's row only weakly, and a
+  // later group's row strongly, used to run the weak match.
+  it('Enter runs the best-scoring row, not just whichever group lists first (M3)', () => {
+    const assign = vi.fn();
+    vi.stubGlobal('location', { assign, pathname: '/', href: '/' });
+    const withLangFaq: PaletteInput = {
+      ...input,
+      faq: [...input.faq, { id: 'fx-faq-lang', question: { en: 'Which languages does he work in?', th: 'ทำงานได้กี่ภาษา?' } }],
+    };
+    render(
+      <CommandPalette
+        entries={buildPaletteIndex(withLangFaq, 'en')}
+        faq={faq}
+        email="real@example.com"
+        locale="en"
+        initialQuery=""
+        onClose={onClose}
+      />,
+    );
+    const box = screen.getByRole('combobox') as HTMLInputElement;
+    type(box, 'ภาษา');
+    const options = screen.getAllByRole('option');
+    // Display order is unchanged -- the FAQ row (group 'faq') still lists
+    // before the language switch (group 'prefs').
+    expect(options[0].textContent).toContain('Which languages');
+    // But the language switch is the one that's actually highlighted
+    // (its EN label 'Switch to ภาษาไทย' has a word starting with the
+    // query -- a closer match than the FAQ row's Thai substring hit) --
+    // and the one Enter runs.
+    const langOption = options.find((o) => o.textContent?.includes('ภาษาไทย'))!;
+    expect(langOption.getAttribute('aria-selected')).toBe('true');
+    fireEvent.keyDown(box, { key: 'Enter' });
     expect(assign).toHaveBeenCalledWith('/th');
   });
 
@@ -399,6 +517,11 @@ describe('CommandPalette', () => {
     expect(onClose).not.toHaveBeenCalled();
   });
 
+  it('.ask-glue is white-space: nowrap (re-review Minor E, round 2)', () => {
+    const css = readFileSync('src/components/palette/palette.css', 'utf8');
+    expect(css).toMatch(/\.ask-glue\s*\{[^}]*white-space:\s*nowrap;/);
+  });
+
   it('phone Ask is a bottom sheet: full width, content-height capped, safe-area padding (fix round 2 #1)', () => {
     // Regression guard for the phone cut-off bug: the desktop
     // .ck:has(> .ask) rule (0,2,0 specificity) used to keep winning over
@@ -426,7 +549,12 @@ describe('CommandPalette', () => {
     const phone = css.slice(start, end);
     const askOverride = /\.ck:has\(>\s*\.ask\)\s*\{([^}]*)\}/.exec(phone)?.[1] ?? '';
     expect(askOverride, 'the phone .ck:has(> .ask) override').toContain('width: 100%');
-    expect(askOverride).toContain('height: auto');
+    // M5 (fix wave finding 8): `height: auto` here, with the dialog's inset
+    // (top:0/bottom:0) both non-auto, stretched to fill the gap instead of
+    // letting `margin-top: auto` push a content-sized box to the bottom --
+    // the sheet was always ~97% tall. `fit-content` is what content-sizes it.
+    expect(askOverride).not.toContain('height: auto');
+    expect(askOverride).toContain('height: fit-content');
     expect(askOverride).toContain('max-height: calc(100dvh - 24px)');
     expect(askOverride).toContain('margin: auto 0 0');
     expect(askOverride).toContain('border-radius: 24px 24px 0 0');

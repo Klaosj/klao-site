@@ -37,6 +37,12 @@ export default async function SiteFooter({ locale = 'en' }: { locale?: Locale } 
   // match -- DeepLink would fall back to a plain, unclickable <span>. Drop
   // those rows here instead of showing a dead-looking link in the footer.
   const careerLinks = career.filter((c) => c.key);
+  // S-7 (carried from ProjectsIndex's Row / project-tour.ts's TourSlide): a
+  // project with a Thai-only name and no Notion Slug gives projectKey('') ->
+  // sheetHash('') is the unparseable '#work/', a link that changes the URL
+  // hash and opens nothing. Dropped here rather than shown, same as
+  // careerLinks above -- "All projects" already covers it.
+  const projectLinks = projects.filter((p) => projectKey(p) !== '');
   const elsewhere = [
     profile.linkedin ? { href: profile.linkedin, icon: 'linkedin-logo', label: 'LinkedIn' } : null,
     profile.github ? { href: profile.github, icon: 'github-logo', label: 'GitHub' } : null,
@@ -59,7 +65,7 @@ export default async function SiteFooter({ locale = 'en' }: { locale?: Locale } 
                     sheet or in-page deep link. */}
                 <Link href={`/${locale}/projects`}>{t.allProjects}</Link>
               </li>
-              {projects.map((p) => (
+              {projectLinks.map((p) => (
                 <li key={p.id}>
                   {/* Plain <a>, not next/link: the sheet (P2) opens on the
                       hashchange a normal link fires, and from any other

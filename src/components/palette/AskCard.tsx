@@ -2,11 +2,13 @@
 
 import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { Icon } from '@/components/icons';
+import ThaiText from '@/components/ThaiText';
 import type { AskAnswer, AskSource } from '@/lib/ask';
 import { dict } from '@/lib/dictionary';
 import { fill } from '@/lib/format';
 import { mailto } from '@/lib/link-target';
 import type { Locale } from '@/lib/models';
+import { glueTail } from '@/lib/thai';
 
 // Subject line on the "Something wrong?" mail (prototype). This string
 // exists only here (preflight C14): ask.ts's canned answers carry no mail
@@ -64,7 +66,9 @@ export default function AskCard({
           {t.palCancel}
         </button>
       </div>
-      <p className="ask-trust">{t.askTrust}</p>
+      <p className="ask-trust">
+        <ThaiText text={t.askTrust} />
+      </p>
       {/* Fix round 1 #9: the visitor's own question, shown verbatim, is in
           whichever language they typed it in -- same reasoning as .ask-a/
           .ask-decl's own lang below, just for the query instead of the
@@ -74,7 +78,9 @@ export default function AskCard({
       </p>
       {answer.kind === 'decline' ? (
         <div className="ask-decl">
-          <p lang={answer.lang}>{fill(a.askDeclined, { email })}</p>
+          <p lang={answer.lang}>
+            <ThaiText text={fill(a.askDeclined, { email })} />
+          </p>
           <p className="ask-decl-act">
             <button type="button" className="btn btn-out" onClick={onCopyEmail}>
               {/* C1: reuses the existing copyEmail key instead of a duplicate
@@ -92,7 +98,7 @@ export default function AskCard({
       ) : (
         <>
           <p className="ask-a" lang={answer.lang}>
-            {withMarkers(answer.text, answer.sources, a.askSourceN, onGo)}
+            {withMarkers(answer.text, answer.sources, a.askSourceN, answer.lang, onGo)}
           </p>
           <div className="ask-srcs">
             <h3>{t.askSources}</h3>
@@ -103,7 +109,11 @@ export default function AskCard({
                     <b aria-hidden="true">{i + 1}</b>
                     <span>
                       <span>{s.label}</span>
-                      {s.quote && <em lang={answer.lang}>“{s.quote}”</em>}
+                      {s.quote && (
+                        <em lang={answer.lang}>
+                          “<ThaiText text={s.quote} />”
+                        </em>
+                      )}
                     </span>
                   </button>
                 </li>
@@ -121,23 +131,59 @@ export default function AskCard({
 
 // "…GoNai is live[2] and…" → each [n] becomes a small button that jumps to
 // source n. split() with a capture group puts the numbers at odd indexes.
+//
+// Minor E, re-review round 2 (Minor E was reopened): U+2060 WORD JOINER
+// (round-1 fix) doesn't stop Chrome breaking before an inline-block <sup> --
+// verified live, 314/3388 markers still started a new line in a 320-440px
+// sweep. glueTail() (src/lib/thai.ts) finds the short tail -- the segment's
+// last keep run, or just its last word -- that should move with the marker
+// instead; that tail and the <sup> render together inside one
+// `.ask-glue { white-space: nowrap }` span (palette.css), which a browser
+// genuinely cannot break inside. Everything before the tail (`head`) keeps
+// wrapping normally. Re-verified live: 0 orphaned markers, 0 overflow,
+// 320-440px, EN and TH.
 function withMarkers(
   text: string,
   sources: AskSource[],
   labelTemplate: string,
+  lang: Locale,
   onGo: (target: string) => void,
 ): ReactNode[] {
-  return text.split(/\[(\d+)\]/).map((part, i) => {
-    if (i % 2 === 0) return part;
-    const n = Number(part);
+  const nodes: ReactNode[] = [];
+  const re = /\[(\d+)\]/g;
+  let at = 0;
+  let m: RegExpExecArray | null;
+  let key = 0;
+  while ((m = re.exec(text)) !== null) {
+    const segment = text.slice(at, m.index);
+    at = m.index + m[0].length;
+    const n = Number(m[1]);
     const src = sources[n - 1];
-    if (!src) return null;
-    return (
-      <sup key={i}>
+    const marker = src && (
+      <sup key={`m${key}`}>
         <button type="button" aria-label={fill(labelTemplate, { n })} onClick={() => onGo(src.target)}>
           {n}
         </button>
       </sup>
     );
-  });
+    if (!marker) {
+      // No source for this number -- same as before, the segment still
+      // renders (I-1: through ThaiText) but the dangling marker is dropped.
+      if (segment) nodes.push(<ThaiText key={`h${key}`} text={segment} />);
+      key++;
+      continue;
+    }
+    const { head, tail } = glueTail(segment, lang);
+    if (head) nodes.push(<ThaiText key={`h${key}`} text={head} />);
+    nodes.push(
+      <span className="ask-glue" key={`g${key}`}>
+        {tail && <ThaiText text={tail} />}
+        {marker}
+      </span>,
+    );
+    key++;
+  }
+  const rest = text.slice(at);
+  if (rest) nodes.push(<ThaiText key={`t${key}`} text={rest} />);
+  return nodes;
 }

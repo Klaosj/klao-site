@@ -79,6 +79,15 @@ describe('PaletteHost', () => {
     expect(await screen.findByRole('combobox')).toBeTruthy();
   });
 
+  // M7 (fix wave finding 10): on a Thai keyboard layout, the physical K key
+  // produces a Thai letter, not 'k' -- e.key alone missed it. e.code names
+  // the physical key regardless of layout, so Cmd+K still opens the palette.
+  it('opens on ⌘K under a Thai keyboard layout, where e.key is a Thai letter, not "k" (M7)', async () => {
+    mount();
+    press({ key: 'ๆ', code: 'KeyK', metaKey: true });
+    expect(await screen.findByRole('combobox')).toBeTruthy();
+  });
+
   it('opens from the klao:palette event with its query (nav button, FAQ line)', async () => {
     mount();
     act(() => {
@@ -99,6 +108,46 @@ describe('PaletteHost', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
     press({ key: '/' });
     expect(await screen.findByRole('combobox')).toBeTruthy();
+  });
+
+  // M7 (fix wave finding 10): same layout problem as ⌘K above -- the "/" key
+  // produces a Thai letter on a Thai layout. e.code's 'Slash' still opens it.
+  it('opens on "/" under a Thai keyboard layout, where e.key is a Thai letter, not "/" (M7)', async () => {
+    mount();
+    press({ key: 'ฟ', code: 'Slash' });
+    expect(await screen.findByRole('combobox')).toBeTruthy();
+  });
+
+  // Re-review round 1, Minor C: e.code === 'Slash' alone doesn't mean a
+  // non-Latin layout -- it also fires for US Shift+Slash ('?') and for a
+  // German layout's own Slash-position key ('-'). The e.code fallback now
+  // requires e.key to be non-ASCII too (a genuinely non-Latin layout), and
+  // "/" additionally requires no Shift.
+  it('does not open on Shift+Slash ("?", a real US shortcut elsewhere) (Minor C)', () => {
+    mount();
+    press({ key: '?', code: 'Slash', shiftKey: true });
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('does not open on a German layout\'s Slash-position key ("-") (Minor C)', () => {
+    mount();
+    press({ key: '-', code: 'Slash' });
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('does not open ⌘K on a German layout\'s KeyK-position key with a Latin e.key (Minor C)', () => {
+    mount();
+    // Not a real German ⌘-combo (German QWERTZ's K key is still 'k'), but
+    // guards the same rule for the KeyK path: e.code alone is never enough
+    // when e.key is printable ASCII.
+    press({ key: '-', code: 'KeyK', metaKey: true });
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('does not open on Shift held with a non-Latin e.key and code "Slash" (Minor C, "/" also requires no Shift)', () => {
+    mount();
+    press({ key: 'ก', code: 'Slash', shiftKey: true });
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 
   it('hands focus back to whatever opened it', async () => {

@@ -1,4 +1,5 @@
 import type { IconName } from '@/components/icons';
+import { pillYears } from './career';
 import { dict, type UiStringKey } from './dictionary';
 import { CONTACT_SUBJECT, faqAnchorId, mailto } from './link-target';
 import type { CareerEntry, FaqItem, Locale, Profile, Project } from './models';
@@ -46,7 +47,7 @@ export interface PaletteEntry {
 export interface PaletteInput {
   profile: Pick<Profile, 'email' | 'resumeUrl' | 'linkedin' | 'github'>;
   projects: Pick<Project, 'id' | 'name' | 'slug' | 'type' | 'kicker' | 'description'>[];
-  career: Pick<CareerEntry, 'id' | 'key' | 'company' | 'role' | 'period'>[];
+  career: Pick<CareerEntry, 'id' | 'key' | 'company' | 'role' | 'period' | 'start' | 'end'>[];
   faq: Pick<FaqItem, 'id' | 'question'>[];
 }
 
@@ -63,6 +64,12 @@ const SECTIONS: readonly { id: string; label: UiStringKey; icon: IconName; keywo
   { id: 'faq', label: 'palFaq', icon: 'arrow-right', keywords: 'faq questions คำถาม' },
   { id: 'contact', label: 'navContact', icon: 'envelope-duotone', keywords: 'contact email ติดต่อ' },
 ];
+
+// M3 (fix wave finding 6): the prototype's one per-row alias (index.html:1774,
+// commands()'s `add('car', …)`), restored -- generic industry words, never a
+// client name or figure (Global Constraint: the repo is public). No other
+// Career row carries one; Klao's current Career database only has this one.
+const CAREER_ALIAS: Record<string, string> = { actmedia: 'retail media bd ค้าปลีก' };
 
 const THEMES: readonly { pref: ThemePref; label: UiStringKey; icon: IconName }[] = [
   { pref: 'auto', label: 'themeAuto', icon: 'circle-half' },
@@ -131,7 +138,13 @@ export function buildPaletteIndex(input: PaletteInput, locale: Locale): PaletteE
   for (const p of input.projects) {
     const key = projectKey(p);
     entries.push({
-      id: `project:${key}`,
+      // S-7: a Thai-only-named project with no Notion Slug gives
+      // projectKey('') -- unlike the footer (SiteFooter.tsx drops the row),
+      // a ⌘K row stays findable, so the id falls back to the project's own
+      // (always-unique) id instead of colliding on 'project:' with any other
+      // slugless project, and the action below falls back to the 'work'
+      // section instead of the unparseable 'work/' sheet target.
+      id: `project:${key || p.id}`,
       group: 'projects',
       // p.name is the project's title, not Localized body copy, so it never
       // carries the '|' break mark and skips unbreak() (fix round 1, minor).
@@ -146,7 +159,7 @@ export function buildPaletteIndex(input: PaletteInput, locale: Locale): PaletteE
       // hand-kept alias list per project.
       keywords: unbreak(`${p.description.en} ${p.description.th}`),
       icon: p.type === 'business' ? 'chart-line-up-duotone' : 'code-duotone',
-      action: { type: 'target', target: `work/${key}` },
+      action: { type: 'target', target: key ? `work/${key}` : 'work' },
     });
   }
 
@@ -164,8 +177,14 @@ export function buildPaletteIndex(input: PaletteInput, locale: Locale): PaletteE
       // mark and both skip unbreak() (fix round 1, minor).
       label: c.company,
       alt: '',
-      hint: c.period,
-      keywords: unbreak(`${c.role.en} ${c.role.th}`),
+      // M4 (fix wave finding 7): the raw `period` string is hand-typed
+      // English ("MAR 2026 – Present"), so it leaked into the Thai palette
+      // untranslated. pillYears() gives the same quiet '2024 – 2026' /
+      // '2026 – <nowWord>' short form the Career pill itself shows,
+      // localised through t.careerNow -- falling back to `period` only for
+      // a pre-migration row with no StartDate (pillYears returns null).
+      hint: pillYears(c, t.careerNow) ?? c.period,
+      keywords: unbreak(`${c.role.en} ${c.role.th}`) + (CAREER_ALIAS[c.key] ? ` ${CAREER_ALIAS[c.key]}` : ''),
       icon: 'arrow-right',
       action: { type: 'target', target: `career:${c.key}` },
     });
@@ -274,8 +293,12 @@ export function oneEdit(a: string, b: string): boolean {
 }
 
 // Prototype score(): 3 = a name or word starts with the query, 2 = a name
-// contains it, 1 = a keyword matches, 0.5 = one typo away (Latin, 4+ letters
-// only — Thai has no spaces to anchor a typo on).
+// contains it, 1 = a curated keyword/alias word starts with the query, 0.5 =
+// one typo away (Latin, 4+ letters only — Thai has no spaces to anchor a
+// typo on). M3 (fix wave finding 6) adds 0.75, below every curated-word hit:
+// a project's `keywords` is its full bilingual description (not a short
+// alias like Career's), so a bare substring match anywhere in that blob is
+// real but weaker signal than a word actually starting with the query.
 function score(entry: PaletteEntry, q: string): number {
   const names = [fold(entry.label), fold(entry.alt)].filter(Boolean);
   const words = names.join(' ').split(/\s+/).filter(Boolean);
@@ -283,15 +306,20 @@ function score(entry: PaletteEntry, q: string): number {
   const kwWords = kw.split(/\s+/).filter(Boolean);
   if (names.some((n) => n.startsWith(q)) || words.some((w) => w.startsWith(q))) return 3;
   if (names.some((n) => n.includes(q))) return 2;
-  if (kwWords.some((w) => w.startsWith(q)) || kw.includes(q)) return 1;
-  if (
-    q.length >= 4 &&
-    !THAI.test(q) &&
-    words
-      .concat(kwWords)
-      .some((w) => oneEdit(w.slice(0, q.length), q) || oneEdit(w.slice(0, q.length + 1), q) || oneEdit(w, q))
-  ) {
-    return 0.5;
+  if (kwWords.some((w) => w.startsWith(q))) return 1;
+  if (kw.includes(q)) return 0.75;
+  // Re-review round 1, Important B: a typo of the row's OWN name/alias
+  // (0.6) outranks a typo of a word merely mentioned in its description
+  // (0.5) -- searching "gonia" used to tie GoNai's own name against the
+  // word "GoNai" inside Tripedia's description ("...the idea GoNai was
+  // later built from"), and the tie went to whichever row's index was
+  // lower (Tripedia, in the real projects.json order), not the project the
+  // typo actually named.
+  if (q.length >= 4 && !THAI.test(q)) {
+    const typo = (w: string): boolean =>
+      oneEdit(w.slice(0, q.length), q) || oneEdit(w.slice(0, q.length + 1), q) || oneEdit(w, q);
+    if (words.some(typo)) return 0.6;
+    if (kwWords.some(typo)) return 0.5;
   }
   return 0;
 }
@@ -305,6 +333,30 @@ export function searchPalette(entries: PaletteEntry[], query: string): PaletteEn
     .filter((x) => x.s > 0)
     .sort((a, b) => b.s - a.s || a.index - b.index);
   return PALETTE_GROUPS.flatMap((g) => scored.filter((x) => x.entry.group === g).map((x) => x.entry));
+}
+
+// M3 (fix wave finding 6): the index of the best-scoring row in `rows` (a
+// searchPalette() result, in fixed group order -- 'faq' can list before
+// 'prefs' even though a 'prefs' row scores higher for a given query). Enter
+// on the palette's default selection used to just run rows[0], whatever that
+// group order happened to put first; CommandPalette now starts (and resets,
+// on every keystroke) the selection here instead, so Enter always runs the
+// row that actually matched best. 0 for an empty query (no scoring to do --
+// the first Suggested row, same as before) and 0 when nothing scores above 0
+// (rows is then either empty or just the "Ask Klao" row appended after).
+export function bestScoreIndex(rows: readonly PaletteEntry[], query: string): number {
+  const q = fold(query.trim());
+  if (!q || rows.length === 0) return 0;
+  let bestIndex = 0;
+  let bestScore = 0;
+  rows.forEach((entry, i) => {
+    const s = score(entry, q);
+    if (s > bestScore) {
+      bestScore = s;
+      bestIndex = i;
+    }
+  });
+  return bestIndex;
 }
 
 // Thai vowel signs and tone marks that only ever attach to the character
