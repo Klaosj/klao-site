@@ -80,6 +80,28 @@ describe('projects fixture (the 24-Sep lineup)', () => {
     expect(byName('klao-site').screenshotPhone).toBeNull();
   });
 
+  // Review M1: with a <picture>, one alt covers both the desktop frame and
+  // the 6:5 phone frame, so it may only name what both show -- never the
+  // desktop-only parts (Aje's uncertainty and next-test cards, GoNai's
+  // budget prompt, which the phone crops away).
+  it('describes only what both tour frames show in the alt of a project with a phone capture', () => {
+    const desktopOnly = /uncertainty|next test|budget prompt|ความไม่แน่นอน|การทดสอบถัดไป|ช่องพิมพ์งบประมาณ/i;
+    const withPhone = fixtures.filter((p) => p.screenshotPhone);
+    expect(withPhone.map((p) => p.name)).toEqual(['Aje', 'GoNai']);
+    for (const p of withPhone) {
+      expect(p.alt!.en, p.name).not.toMatch(desktopOnly);
+      expect(p.alt!.th, p.name).not.toMatch(desktopOnly);
+    }
+    expect(byName('Aje').alt).toEqual({
+      en: 'Aje’s Review screen for a sample idea, BikeFix Home: its readiness level and a one-line summary of the idea.',
+      th: 'หน้า Review ของ Aje สำหรับไอเดียตัวอย่าง BikeFix Home: ระดับความพร้อม และสรุปไอเดียในหนึ่งบรรทัด',
+    });
+    expect(byName('GoNai').alt).toEqual({
+      en: 'GoNai home screen: the headline Plan a full day out, know every baht before you leave.',
+      th: 'หน้าแรกของ GoNai: หัวข้อ วางแผนเที่ยวทั้งวัน รู้ทุกบาทก่อนออกจากบ้าน',
+    });
+  });
+
   it('points every screenshot at a real file in public/, at most 250 KB', () => {
     for (const p of fixtures.filter((x) => x.imageSrc)) {
       const size = statSync(join('public', p.imageSrc!)).size;

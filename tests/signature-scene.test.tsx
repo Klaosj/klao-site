@@ -32,7 +32,7 @@ const COPY: SignatureCopy = {
   openLabel: 'Open app',
   openHref: 'https://gonai-three.vercel.app',
   frameSrc: '/images/gonai.jpg',
-  frameAlt: 'GoNai home screen: Plan a full day out, know every baht before you leave, with a budget prompt.',
+  frameAlt: 'GoNai home screen: the headline Plan a full day out, know every baht before you leave.',
 };
 
 let reduce = false;
