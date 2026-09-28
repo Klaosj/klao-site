@@ -1,7 +1,7 @@
 # klao-site
 
 Klao's personal brand hub — bilingual (English / Thai), Next.js App Router.
-All content (Projects, Writing, Career, Profile) lives in Notion; the site
+All content (Projects, Writing, Career, Profile, By day, FAQ) lives in Notion; the site
 ships with sample fixture content built in, so it runs out of the box before
 Notion is ever connected.
 
@@ -10,8 +10,8 @@ Notion is ever connected.
     npm install
     npm run dev
 
-Open http://localhost:3000 (it redirects to `/en`). Works immediately on the
-bundled sample content — no environment variables required.
+Open http://localhost:3000 (it redirects to `/en`). It runs on the bundled
+sample content — no environment variables required.
 
 ## Connect your Notion content
 
@@ -25,11 +25,13 @@ Each project's image comes from the `Screenshot` files property on its row in th
 **Projects** database. The site serves it through `/api/img/page/<row-id>/Screenshot`, so
 replacing the file in Notion changes the live site within the hour — no deploy.
 
-- **Size:** 16:9, ideally 1600×900 JPEG at quality ~80 (≤ 300 KB). The frame crops from the
-  bottom (`object-position: top`), so keep the app's header in shot.
-- **Home-page tour:** every featured project that has a screenshot appears in the `#tour`
-  band, ordered by `Order`. A project without one keeps its place in the deck with a
-  monogram cover and joins the tour the day a screenshot is uploaded — nothing else to change.
+- **Size:** capture 2560 px wide at about 16:9 without the scrollbar (the site's own files are
+  1580×900) and export a JPEG of ≤ 250 KB (the budget for every image on the site). Every
+  frame crops with `object-fit: cover`, centred, so a taller capture loses the app's header.
+- **Home-page tour:** projects with the `Tour` checkbox ticked play in the hero tour, in
+  `TourOrder` order. Until any row is ticked, every project with a screenshot plays, by
+  `Order`. A project without a screenshot can still sit in the Projects index — give it a
+  `Media` drawing (`notion`, `rings`, `five`); see `docs/NOTION_SETUP.md`.
 - **Fallback copies:** `src/content/fixtures/projects.json` points at `public/images/*` for
   local dev and every test run. When you change a screenshot in Notion, drop the same file in
   `public/images/`, update that row's `imageSrc` if the filename changed, and describe what
@@ -44,6 +46,32 @@ Run this before every commit. It should report 0 errors. (There is exactly
 one known, pre-existing warning from `eslint.config.mjs`
 (`import/no-anonymous-default-export`) — harness-generated config, left
 as-is; it is not a regression.)
+
+### Browser QA (the White Edition matrix)
+
+    npm run qa:self                  # proves each check catches its fault — no server needed
+    npm run build && npm run start   # then, in a second terminal:
+    npm run qa                       # 16 combinations + 4 narrow checks against http://localhost:3000
+    npm run qa "https://<preview>/?_vercel_share=<token>"   # or any other base URL
+
+`npm run qa` loads the home page at 1440×900 and 390×844, in EN and TH,
+light and dark, motion on and reduced (16 combinations), plus two narrower
+widths — 360×780 and 320×568, EN/TH, light, motion on (4 more lines) — that
+check everything except page length (the spec sets that budget at 1440/390
+only). It also runs probes (Auto theme, blocked storage, bad `#work/`
+links, no JavaScript, a ⌘K that sends nothing) and the standalone pages. It
+fails on console errors, sideways scroll, text under 14 px on phones, tap
+targets under 24 px, content left hidden, Thai lines that start with a
+vowel or tone mark, and pages longer than 8.6 screens (desktop) or 12
+(phone). It prints one line per combination and writes screenshots and
+`summary.txt` to `/tmp/klao-qa/`.
+
+Playwright is not a dependency of this repo. The scripts use
+`$PLAYWRIGHT_PATH` (a `…/node_modules/playwright/index.mjs`), else a
+resolvable `playwright`, else the copy `npx playwright --version` leaves in
+`~/.npm/_npx/`, and drive your installed Chrome (`QA_CHANNEL=bundled` uses
+Playwright's own Chromium). Vercel previews sit behind Vercel's login — pass
+a share link as the base URL.
 
 ## Local development
 

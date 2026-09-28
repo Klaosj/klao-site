@@ -3,10 +3,11 @@
 Exact steps, in order. Follow them in this order — step 3 in particular must
 happen *before* the first Vercel build, not after.
 
-Current state at time of writing: the code lives in a local git repo, branch
-`build/v1`, with no GitHub remote configured yet. `gh` (the GitHub CLI) is
-not installed on this machine, so both a CLI path and a web-UI path are
-given for step 1.
+Current state (September 2026): the repo is public on GitHub
+(`Klaosj/klao-site`). Vercel builds `main` to production and every other
+pushed branch to a preview URL; previews sit behind Vercel's login (use a
+share link to test one from outside the account). Steps 1–4 are the
+original one-time setup, kept for reference.
 
 ## 1. Create the GitHub repo and push
 
@@ -122,8 +123,8 @@ bundle at build time, not read at runtime. Editing the value in Vercel's
 dashboard alone does nothing to a live deployment — the old value is
 already baked into the build that's currently serving traffic.
 
-**Every environment variable — including the five Notion ones in step 6
-below — is also subject to a separate, platform-level rule:** a Vercel
+**Every environment variable — including the Notion ones in step 6 below —
+is also subject to a separate, platform-level rule:** a Vercel
 deployment is an immutable snapshot, and the environment variables visible
 to its running functions are fixed at the moment that deployment was built.
 Saving a new or changed value under Project → Settings → Environment
@@ -140,7 +141,7 @@ new deployment (push a commit, or use the "Redeploy" button in the Vercel
 dashboard) before expecting the change to take effect. Saving the variable
 alone is not enough for either kind.
 
-## 6. The five Notion variables — optional, can come later
+## 6. The Notion variables — optional, can come later
 
 ```
 NOTION_TOKEN=
@@ -148,6 +149,10 @@ NOTION_DB_PROJECTS=
 NOTION_DB_POSTS=
 NOTION_DB_CAREER=
 NOTION_DB_PROFILE=
+NOTION_DB_SKILLS=
+NOTION_DB_QUESTIONS=
+NOTION_DB_STORY=
+NOTION_DB_FAQ=
 ```
 
 You can deploy the site right now without any of these set — it runs fully
@@ -157,12 +162,22 @@ fully independent — do the deploy now, do `docs/NOTION_SETUP.md` whenever
 you're ready.
 
 When you do add them, under Project → Settings → Environment Variables: set
-all five together — see `docs/NOTION_SETUP.md` for why a partial set (e.g.
+the token and the five core database IDs (Projects, Posts, Career, Skills,
+Profile) together — see `docs/NOTION_SETUP.md` for why a partial set (e.g.
 a token with no matching database ID) silently falls back to sample content
 rather than failing loudly — then **redeploy** (step 5 above: adding these
 variables to the project does not touch the deployment that's already
 live, Notion variables included, even though the code technically reads
 `process.env` at request time).
+
+`NOTION_DB_QUESTIONS`, `NOTION_DB_STORY` and `NOTION_DB_FAQ` may follow
+later: until they're set, the open question hides itself and By day / FAQ
+show the bundled copy. **For Story and FAQ, fill and publish the rows in
+Notion before setting the ID** — once it's set, the site shows only the
+published rows, so an empty or fully-unpublished database empties the
+section instead of falling back (`docs/NOTION_SETUP.md` §6). Scope every
+Notion variable to **Production and Preview** — a preview built without
+them runs on the bundled copy, which hides whether the Notion side works.
 
 **Don't trust the page looking right as proof it worked.** The bundled
 sample content is Klao's real name, headline, LinkedIn, email, and project
@@ -170,9 +185,9 @@ list — not placeholder text — so an unconnected site looks completely
 correct even after you've added the vars and reloaded. The only reliable
 check: add a throwaway row in Notion (e.g. a Project named `TEST — delete
 me`), tick **both Published and Featured**, redeploy if you haven't already,
-and check the home page's Work section (`/en/projects` works too since
-2026-08-15 — it lists EVERY published project, not just Featured — but the
-home section is the stricter check). The home section shows every Featured+Published
+and check the home page's Projects index (`#work`; `/en/projects` works too —
+it lists EVERY published project, not just Featured — but the home index is
+the stricter check). The home index shows every Featured+Published
 project, uncapped, so a fresh row that's both Featured and Published always
 appears there, with no existing Featured slots to compete for. Confirm
 `TEST — delete me` shows up on the home page. If it doesn't, you're either
