@@ -90,7 +90,9 @@ describe('sigGeometry', () => {
   it('sizes the frame to the stage minus 160 px (max 1280) and starts it as one 56 px tile on the card', () => {
     expect(DESK.frame.width).toBe(1280);
     expect(DESK.frame.left).toBe(80);
-    expect(DESK.frame.top).toBeCloseTo(90, 6); // 450 - 720 / 2
+    // Fix wave finding 9 (R21): frame height follows the 1580/900 screenshot ratio, not 16:9 --
+    // 1280 * 900 / 1580 ≈ 729.114, so top = 450 - 729.114 / 2.
+    expect(DESK.frame.top).toBeCloseTo(85.443, 3);
     expect(DESK.frame.scale0).toBeCloseTo(56 / 1280, 9);
     expect(DESK.frame.dx).toBe(0);
     expect(DESK.frame.dy).toBeCloseTo(36, 6); // card centre 486 - frame centre 450

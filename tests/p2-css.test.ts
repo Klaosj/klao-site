@@ -123,6 +123,13 @@ describe('signature.css mirrors SIG in src/lib/signature.ts', () => {
   it("dims GoNai's screenshot in dark mode so it never dissolves into the page (fix wave finding 2)", () => {
     expect(css).toContain('.sig-frame img { display: block; width: 100%; height: 100%; object-fit: cover; filter: var(--shot-dim); }');
   });
+
+  // Fix wave finding 9 (R21): the frame's aspect must match the 1580x900 screenshots it holds,
+  // not a generic 16:9 -- signature.ts's sigGeometry math mirrors the same ratio.
+  it('sizes the frame to the 1580/900 screenshot ratio, not 16:9 (fix wave finding 9, R21)', () => {
+    expect(css).toContain('aspect-ratio: 1580 / 900;');
+    expect(css).not.toMatch(/\.sig-frame[^}]*aspect-ratio:\s*16\s*\/\s*9/);
+  });
 });
 
 describe('project-sheet.css', () => {

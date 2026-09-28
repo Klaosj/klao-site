@@ -38,7 +38,9 @@ export const SIG = {
 export const SIG_YEAR_STEPS = [0.4, 0.5, 0.6, 0.7] as const;
 
 const TILE = 56;
-const FRAME_RATIO = 9 / 16; // the screenshots are 16:9
+// Fix wave finding 9 (R21): the screenshots are 1580x900, not 16:9 -- matches signature.css
+// `.sig-frame`'s aspect-ratio exactly, the same value HeroTourStage's `.ht-card` uses.
+const FRAME_RATIO = 900 / 1580;
 
 export const clamp = (v: number, a: number, b: number): number => Math.min(b, Math.max(a, v));
 export const sub = (p: number, [a, b]: SigWindow): number => clamp((p - a) / (b - a), 0, 1);
