@@ -2,8 +2,9 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { GLOBAL_NOT_FOUND_PREPAINT_SCRIPT, GLOBAL_NOT_FOUND_STYLE } from '@/app/global-not-found';
 import { dict } from '@/lib/dictionary';
-import { THEME_PREPAINT_SCRIPT } from '@/lib/theme';
+import { THEME_PREPAINT_SCRIPT, THEME_STORAGE_KEY } from '@/lib/theme';
 
 // No RTL auto-cleanup is wired up in this project (no setupFiles in
 // vitest.config.ts) -- same pattern as tests/career-detent.test.tsx and
@@ -240,10 +241,16 @@ describe('RootNotFound (src/app/not-found.tsx)', () => {
 // Only loads once `experimental.globalNotFound` is set in next.config.ts
 // (out of this lane's ownership -- see the P5 lane-A report's Merge notes).
 // Tested here anyway so the component itself is covered and doesn't bit-rot
-// before that flag lands: unlike not-found.tsx, this file supplies its own
-// <html>/<body>, so `lang` is correct on the very first render -- no
-// post-hydration useEffect correction needed (verified against a real
-// cold `next dev` with the flag on locally, then reverted -- see the report).
+// before that flag lands.
+//
+// P1 (review, 28 Sep): this page is static, so it can't read the visited
+// URL server-side -- it renders BOTH locale copies unconditionally and
+// identically on server and client (no hydration content mismatch is even
+// possible), and CSS keyed off <html lang> shows only one. `<html lang>`
+// itself starts as the server's static "en" and is corrected by the
+// pre-paint script, which is the only part of this page that still needs
+// the real, client-side URL -- see resolveLocale's own comment for why it
+// has no caller left despite being kept exported.
 //
 // renderToStaticMarkup, not RTL's render(): a component whose root element
 // is <html> genuinely cannot nest inside RTL's own container <div> (real
@@ -253,22 +260,13 @@ describe('RootNotFound (src/app/not-found.tsx)', () => {
 // a markup string sidesteps the DOM-nesting question entirely, the same way
 // tests/smoke.test.tsx checks full-page server components.
 describe('GlobalNotFound (src/app/global-not-found.tsx)', () => {
-  it('sets <html lang> directly from the URL, with no correction effect needed', async () => {
-    usePathname.mockReturnValue('/th/nope');
-    const { default: GlobalNotFound } = await import('@/app/global-not-found');
-    const html = renderToStaticMarkup(<GlobalNotFound />);
-    expect(html).toMatch(/^<html lang="th">/);
-  });
-
-  it('sets <html lang="en"> for the English case', async () => {
-    usePathname.mockReturnValue('/en/nope');
+  it('sets <html lang="en"> as the static default', async () => {
     const { default: GlobalNotFound } = await import('@/app/global-not-found');
     const html = renderToStaticMarkup(<GlobalNotFound />);
     expect(html).toMatch(/^<html lang="en">/);
   });
 
-  it('sets suppressHydrationWarning on <html> (review I1): THEME_PREPAINT_SCRIPT legitimately changes its attributes before hydration, and without this every root 404 logged a React hydration error once the flag was on', async () => {
-    usePathname.mockReturnValue('/en/nope');
+  it('sets suppressHydrationWarning on <html> (review I1): the pre-paint script legitimately changes its attributes before hydration, and without this every root 404 logged a React hydration error once the flag was on', async () => {
     const { default: GlobalNotFound } = await import('@/app/global-not-found');
     // Calling the component directly (not via JSX/render) inspects the real
     // React element's props -- renderToStaticMarkup strips this attribute
@@ -279,36 +277,125 @@ describe('GlobalNotFound (src/app/global-not-found.tsx)', () => {
     expect(element.props.suppressHydrationWarning).toBe(true);
   });
 
-  it('inlines the same theme pre-paint script inside a real <head>', async () => {
-    usePathname.mockReturnValue('/en/nope');
+  it('renders BOTH locale copies unconditionally (P1) -- English and Thai title/body text are both present, each under its own data-gnf-locale wrapper', async () => {
     const { default: GlobalNotFound } = await import('@/app/global-not-found');
     const html = renderToStaticMarkup(<GlobalNotFound />);
-    const head = /<head>([\s\S]*?)<\/head>/.exec(html)?.[1] ?? '';
-    expect(head).toContain(`<script>${THEME_PREPAINT_SCRIPT}</script>`);
-  });
-
-  it('renders the Thai title and body copy for a /th/... path that matched nothing', async () => {
-    usePathname.mockReturnValue('/th/nope');
-    const { default: GlobalNotFound } = await import('@/app/global-not-found');
-    const html = renderToStaticMarkup(<GlobalNotFound />);
-    expect(html).toContain(`<title>${dict.th.notFoundTitle} · Klao</title>`);
+    expect(html).toContain('data-gnf-locale="en"');
+    expect(html).toContain('data-gnf-locale="th"');
+    expect(html).toContain(dict.en.notFoundTitle);
+    expect(html).toContain(dict.en.notFoundBody);
+    expect(html).toContain(dict.th.notFoundTitle);
     expect(html).toContain(dict.th.notFoundBody);
   });
 
-  it('links to the three real English destination routes, locale-prefixed', async () => {
-    usePathname.mockReturnValue('/en/nope');
+  it('gives each locale copy its own locale-prefixed nav links, three per copy', async () => {
     const { default: GlobalNotFound } = await import('@/app/global-not-found');
     const html = renderToStaticMarkup(<GlobalNotFound />);
     const hrefs = [...html.matchAll(/<nav[^>]*>[\s\S]*?<\/nav>/g)]
       .flatMap((m) => [...m[0].matchAll(/href="([^"]+)"/g)])
       .map((m) => m[1]);
-    expect(hrefs).toEqual(['/en/projects', '/en/writing', '/en/career']);
+    expect(hrefs).toEqual(['/en/projects', '/en/writing', '/en/career', '/th/projects', '/th/writing', '/th/career']);
   });
 
-  it('falls back to English when the path carries no recognizable locale', async () => {
-    usePathname.mockReturnValue(null);
+  it('renders exactly one <title>, the static English default (P1 does not attempt to fix this smaller, pre-existing gap)', async () => {
     const { default: GlobalNotFound } = await import('@/app/global-not-found');
     const html = renderToStaticMarkup(<GlobalNotFound />);
-    expect(html).toMatch(/^<html lang="en">/);
+    expect(html.match(/<title>/g)).toHaveLength(1);
+    expect(html).toContain(`<title>${dict.en.notFoundTitle} · Klao</title>`);
+  });
+
+  it('inlines the CSS selection rule (P1): hides both copies by default and shows only the one matching <html lang>, via display:none/contents -- never visibility (which would still expose the hidden copy to assistive tech)', async () => {
+    const { default: GlobalNotFound } = await import('@/app/global-not-found');
+    const html = renderToStaticMarkup(<GlobalNotFound />);
+    const head = /<head>([\s\S]*?)<\/head>/.exec(html)?.[1] ?? '';
+    expect(head).toContain(`<style>${GLOBAL_NOT_FOUND_STYLE}</style>`);
+    expect(GLOBAL_NOT_FOUND_STYLE).toContain('[data-gnf-locale]{display:none}');
+    expect(GLOBAL_NOT_FOUND_STYLE).toContain('html[lang="en"] [data-gnf-locale="en"]');
+    expect(GLOBAL_NOT_FOUND_STYLE).toContain('html[lang="th"] [data-gnf-locale="th"]');
+    expect(GLOBAL_NOT_FOUND_STYLE).not.toContain('visibility');
+  });
+
+  it('inlines the pre-paint script inside a real <head>', async () => {
+    const { default: GlobalNotFound } = await import('@/app/global-not-found');
+    const html = renderToStaticMarkup(<GlobalNotFound />);
+    const head = /<head>([\s\S]*?)<\/head>/.exec(html)?.[1] ?? '';
+    expect(head).toContain(`<script>${GLOBAL_NOT_FOUND_PREPAINT_SCRIPT}</script>`);
+  });
+});
+
+describe('GLOBAL_NOT_FOUND_PREPAINT_SCRIPT (src/app/global-not-found.tsx)', () => {
+  // Same document.documentElement the pre-paint script runs against; reset
+  // between tests since it carries `lang`/`class`/`data-theme` state.
+  const root = document.documentElement;
+  const run = () => new Function(GLOBAL_NOT_FOUND_PREPAINT_SCRIPT)();
+
+  afterEach(() => {
+    root.removeAttribute('lang');
+    root.removeAttribute('data-theme');
+    root.classList.remove('js');
+    window.localStorage.clear();
+    history.replaceState(null, '', '/');
+  });
+
+  it('sets lang="th" from a /th/... pathname, before paint (P1)', () => {
+    history.replaceState(null, '', '/th/nope');
+    run();
+    expect(root.lang).toBe('th');
+  });
+
+  it('sets lang="en" from a /en/... pathname', () => {
+    history.replaceState(null, '', '/en/nope');
+    run();
+    expect(root.lang).toBe('en');
+  });
+
+  it('defaults to lang="en" for a path with no recognizable locale segment', () => {
+    history.replaceState(null, '', '/qa-missing-page');
+    run();
+    expect(root.lang).toBe('en');
+  });
+
+  it('still marks <html> with `js` and applies a saved theme, same as THEME_PREPAINT_SCRIPT', () => {
+    window.localStorage.setItem(THEME_STORAGE_KEY, 'dark');
+    history.replaceState(null, '', '/th/nope');
+    run();
+    expect(root.classList.contains('js')).toBe(true);
+    expect(root.getAttribute('data-theme')).toBe('dark');
+  });
+
+  it('does not throw when storage is blocked, and still sets lang', () => {
+    const realDescriptor = Object.getOwnPropertyDescriptor(window, 'localStorage')!;
+    Object.defineProperty(window, 'localStorage', {
+      configurable: true,
+      get() {
+        throw new DOMException('The operation is insecure.', 'SecurityError');
+      },
+    });
+    history.replaceState(null, '', '/th/nope');
+    expect(run).not.toThrow();
+    expect(root.lang).toBe('th');
+    Object.defineProperty(window, 'localStorage', realDescriptor);
+  });
+});
+
+describe('resolveLocale (src/app/global-not-found.tsx)', () => {
+  // Kept exported per PR9 even though GlobalNotFound no longer calls it
+  // (P1 replaced per-request locale selection with rendering both copies
+  // unconditionally) -- these are its own unit tests, the reason PR9 keeps
+  // a pure helper around at all.
+  it('reads th off a /th/... pathname', async () => {
+    const { resolveLocale } = await import('@/app/global-not-found');
+    expect(resolveLocale('/th/nope')).toBe('th');
+  });
+
+  it('reads en off a /en/... pathname', async () => {
+    const { resolveLocale } = await import('@/app/global-not-found');
+    expect(resolveLocale('/en/nope')).toBe('en');
+  });
+
+  it('defaults to en for null or an unrecognized locale segment', async () => {
+    const { resolveLocale } = await import('@/app/global-not-found');
+    expect(resolveLocale(null)).toBe('en');
+    expect(resolveLocale('/xx/nope')).toBe('en');
   });
 });
