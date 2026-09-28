@@ -39,10 +39,10 @@ describe('signature.css mirrors SIG in src/lib/signature.ts', () => {
     ['sig-head', [SIG.head]],
     ['sig-app', [SIG.gather, SIG.collapse, SIG.tilesOut]],
     ['sig-face', [SIG.face]],
-    ['sig-card', [SIG.cardOut]],
+    ['sig-card', [SIG.gather, SIG.cardOut]],
     ['sig-frame', [SIG.frameIn, SIG.zoom]],
     ['sig-tint', [SIG.tint]],
-    ['sig-chip', [SIG.chipOut]],
+    ['sig-chip', [SIG.gather, SIG.chipOut]],
     ['sig-cap-a', [SIG.capAIn, SIG.capAOut]],
     ['sig-cap-b', [SIG.capBIn]],
   ] as const)('@keyframes %s carries its windows', (name, windows) => {
@@ -51,6 +51,15 @@ describe('signature.css mirrors SIG in src/lib/signature.ts', () => {
       expect(hasStop(kf, a), `${name} is missing ${pct(a)}`).toBe(true);
       expect(hasStop(kf, b), `${name} is missing ${pct(b)}`).toBe(true);
     }
+  });
+
+  // T12 F2: the card and the chip open `--lift` px low (set per element by SignatureScene from
+  // sigVars) and rise on the gather's glide, like sigFrame's `rise`. The fallback keeps desktop,
+  // where nothing sets --lift, on the identity it had before.
+  it.each(['sig-card', 'sig-chip'])('@keyframes %s opens at --lift and settles on the gather\u2019s glide (T12 F2)', (name) => {
+    const kf = block(css, name);
+    expect(kf).toMatch(/0%, 10% \{[^}]*transform: translateY\(var\(--lift, 0px\)\)[^}]*animation-timing-function: cubic-bezier\(\.4, 0, \.6, 1\);/);
+    expect(kf).toMatch(/34%[^{]*\{[^}]*transform: translateY\(0px\)/);
   });
 
   it('switches the year chip at SIG_YEAR_STEPS', () => {

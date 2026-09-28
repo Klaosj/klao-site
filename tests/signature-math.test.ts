@@ -133,6 +133,103 @@ describe('sigGeometry', () => {
   });
 });
 
+// T12 F2: at real phone browser heights (the toolbars take ~180 px of an 844 px screen) the
+// opening frame put the scattered tiles, the year chip and the card's top under the head's lead.
+// Card and head sizes below are measured in Chrome on the dev build (EN / TH).
+describe('sigGeometry opens below the head on a short phone (T12 F2)', () => {
+  const HEAD_GAP = 12;
+  const SHORT_EN = { width: 390, height: 664, cardWidth: 350, cardHeight: 220, headBottom: 242 };
+  const SHORT_TH = { width: 390, height: 664, cardWidth: 350, cardHeight: 238, headBottom: 290 };
+  const SE_TH = { width: 375, height: 667, cardWidth: 335, cardHeight: 238, headBottom: 290 };
+  const TALL_EN = { width: 390, height: 844, cardWidth: 350, cardHeight: 220, headBottom: 242 };
+  const TALL_TH = { width: 430, height: 932, cardWidth: 390, cardHeight: 206, headBottom: 252 };
+  const without = (input: typeof SHORT_EN) => sigGeometry({ ...input, headBottom: undefined });
+
+  // The highest point of the opening frame, worked out here from first principles rather than
+  // from the implementation: a scattered tile's box rotated about its centre (its rect top in
+  // the browser), the chip's top, the card's top -- all where the opening puts them.
+  function openingTop(g: ReturnType<typeof sigGeometry>): number {
+    const tiles = g.tiles.map(({ scatter: s }) => {
+      const rad = (s.r * Math.PI) / 180;
+      return s.y + 28 - 28 * (Math.abs(Math.cos(rad)) + Math.abs(Math.sin(rad)));
+    });
+    return Math.min(...tiles, g.chip.top + g.lift, g.card.top + g.lift);
+  }
+
+  it.each([
+    ['390×664 EN', SHORT_EN],
+    ['390×664 TH', SHORT_TH],
+    ['375×667 TH', SE_TH],
+  ])('%s: the opening clears the head by exactly the gap', (_name, input) => {
+    const g = sigGeometry(input);
+    expect(g.lift).toBeGreaterThan(0);
+    expect(openingTop(g)).toBeCloseTo(input.headBottom + HEAD_GAP, 6);
+  });
+
+  it.each([
+    ['390×664 EN', SHORT_EN],
+    ['390×664 TH', SHORT_TH],
+  ])('%s: only the opening moves -- the settled card, chip, ring, pile and frame are the old ones', (_name, input) => {
+    const g = sigGeometry(input);
+    const old = without(input);
+    expect(g.card).toEqual(old.card);
+    expect(g.chip).toEqual(old.chip);
+    expect(g.frame).toEqual(old.frame);
+    g.tiles.forEach((t, i) => {
+      expectPoint(t.ring, old.tiles[i].ring);
+      expectPoint(t.pile, old.tiles[i].pile);
+      // The scattered tiles open lower by the same lift as the card, keeping their offsets from it.
+      expectPoint(t.scatter, { ...old.tiles[i].scatter, y: old.tiles[i].scatter.y + g.lift });
+    });
+  });
+
+  it.each([
+    ['390×844 EN', TALL_EN],
+    ['430×932 TH', TALL_TH],
+  ])('%s: a tall phone already clears the head, so nothing moves', (_name, input) => {
+    const g = sigGeometry(input);
+    expect(g.lift).toBe(0);
+    expect(g).toEqual({ ...without(input), lift: 0 });
+    expect(openingTop(g)).toBeGreaterThan(input.headBottom + HEAD_GAP);
+  });
+
+  it('leaves desktop alone even where its head would collide (1280×800, measured)', () => {
+    const input = { width: 1280, height: 800, cardWidth: 440, cardHeight: 236, headBottom: 255 };
+    const g = sigGeometry(input);
+    expect(g.lift).toBe(0);
+    expect(g).toEqual({ ...without(input), lift: 0 });
+  });
+
+  it('without a head measurement it behaves as before (lift 0)', () => {
+    expect(PHONE.lift).toBe(0);
+    expect(DESK.lift).toBe(0);
+  });
+
+  it('the card and chip rise from the opening on the tiles’ own glide, and are settled by the end of the gather', () => {
+    const g = sigGeometry(SHORT_TH);
+    const rise = (p: number) => g.lift * (1 - glide((p - 0.1) / 0.24));
+    for (const p of [0, 0.1]) {
+      expect(sigFrame(p, g).card.transform).toBe(`translateY(${g.lift.toFixed(1)}px) scale(1.0000)`);
+      expect(sigFrame(p, g).chip.transform).toBe(`translateY(${g.lift.toFixed(1)}px)`);
+    }
+    // .16 = a quarter into the gather, where glide is well off linear.
+    expect(sigFrame(0.16, g).card.transform).toBe(`translateY(${rise(0.16).toFixed(1)}px) scale(1.0000)`);
+    expect(sigFrame(0.16, g).chip.transform).toBe(`translateY(${rise(0.16).toFixed(1)}px)`);
+    for (const p of [0.34, 0.6, 1]) {
+      expect(sigFrame(p, g).card.transform).toMatch(/^translateY\(0\.0px\) scale\(/);
+      expect(sigFrame(p, g).chip.transform).toBe('translateY(0.0px)');
+    }
+    // The tiles leave from where the opening put them: the same strings the CSS path reads.
+    expect(sigFrame(0, g).tiles.map((t) => t.transform)).toEqual(sigVars(g).tiles.map((t) => t.s));
+  });
+
+  it('hands the lift to the CSS path as a px length', () => {
+    const g = sigGeometry(SHORT_TH);
+    expect(sigVars(g).lift).toBe(`${g.lift.toFixed(1)}px`);
+    expect(sigVars(DESK).lift).toBe('0.0px');
+  });
+});
+
 describe('sigYear', () => {
   it('steps the chip from 2022 to 2026 at SIG_YEAR_STEPS', () => {
     expect(SIG_YEARS[sigYear(0)]).toBe('2022');
@@ -183,7 +280,7 @@ describe('sigFrame', () => {
     const f = sigFrame(1, DESK);
     expect(f.frame.transform).toBe('translate(0.0px, 0.0px) scale(1.0000)');
     expect(f.tint).toBe('1.000');
-    expect(f.chip).toBe('0.000');
+    expect(f.chip.opacity).toBe('0.000');
     expect(f.capA.opacity).toBe('0.000');
     expect(f.capB).toEqual({ opacity: '1.000', transform: 'translateY(0.0px)' });
     expect(SIG_YEARS[f.year]).toBe('2026');

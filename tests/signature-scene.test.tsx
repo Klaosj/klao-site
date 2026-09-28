@@ -277,6 +277,25 @@ describe('SignatureScene wires the phone media query into sigGeometry (re-review
   });
 });
 
+// T12 F2: the opening frame clears the head only if layout() hands sigGeometry the head's real
+// bottom -- the `.sig-head` block's layout box (offsetTop + offsetHeight, which no Reveal or scrub
+// transform moves). Without this wiring sigGeometry sees no head and lifts nothing.
+describe('SignatureScene wires the head’s bottom into sigGeometry (T12 F2)', () => {
+  it('passes the .sig-head block’s offsetTop + offsetHeight as headBottom', () => {
+    vi.mocked(sigGeometry).mockClear();
+    const isHead = (el: HTMLElement) => el.classList.contains('sig-head');
+    vi.spyOn(HTMLElement.prototype, 'offsetTop', 'get').mockImplementation(function (this: HTMLElement) {
+      return isHead(this) ? 80 : 0;
+    });
+    vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockImplementation(function (this: HTMLElement) {
+      return isHead(this) ? 210 : 0;
+    });
+    render(<SignatureScene copy={COPY} />);
+    expect(sigGeometry).toHaveBeenCalled();
+    expect(vi.mocked(sigGeometry).mock.calls.at(-1)![0].headBottom).toBe(290);
+  });
+});
+
 describe('SignatureScene: motion modes', () => {
   it('stays the static stack under reduced motion, with no scroll work even in view', () => {
     reduce = true;
@@ -362,6 +381,53 @@ describe('SignatureScene: motion modes', () => {
     expect(app.style.transform).toBe('');
     expect(sceneObserver(root)).toBeUndefined();
     expect(add.mock.calls.filter(([type]) => type === 'scroll')).toHaveLength(0);
+  });
+
+  it('with scroll timelines, hands the card and the chip their --lift (T12 F2)', () => {
+    vi.stubGlobal('CSS', { supports: (q: string) => q.includes('animation-timeline') });
+    // A short phone whose head reaches low: the geometry lifts, and CSS must receive that lift.
+    Object.defineProperty(document.documentElement, 'clientHeight', { value: 664, configurable: true });
+    stubMatchMedia((q) => q.includes('max-width: 734px') || q.includes('no-preference'));
+    vi.spyOn(HTMLElement.prototype, 'offsetTop', 'get').mockImplementation(function (this: HTMLElement) {
+      return this.classList.contains('sig-head') ? 80 : 0;
+    });
+    vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockImplementation(function (this: HTMLElement) {
+      return this.classList.contains('sig-head') ? 210 : this.dataset.sigPart === 'card' ? 238 : 0;
+    });
+    const { container } = render(<SignatureScene copy={COPY} />);
+    const root = sectionOf(container);
+    const lift = vi.mocked(sigGeometry).mock.results.at(-1)!.value.lift as number;
+    expect(lift).toBeGreaterThan(0); // the fixture really does collide, so the check below bites
+    for (const sel of ['.sig-card', '.sig-chip']) {
+      expect(root.querySelector<HTMLElement>(sel)!.style.getPropertyValue('--lift')).toBe(`${lift.toFixed(1)}px`);
+    }
+  });
+
+  it('without scroll timelines, paints the chip rising with the card (T12 F2)', () => {
+    const { container } = render(<SignatureScene copy={COPY} />);
+    const root = sectionOf(container);
+    expect(root.querySelector<HTMLElement>('.sig-chip')!.style.transform).toMatch(/^translateY\(/);
+    expect(root.querySelector<HTMLElement>('.sig-card')!.style.transform).toMatch(/^translateY\(.*\) scale\(/);
+  });
+
+  it('watches the head block too, and its re-wrap relayouts; the same height again does not (T12 F2)', () => {
+    const ro = stubResizeObserver(180);
+    const { container } = render(<SignatureScene copy={COPY} />);
+    const root = sectionOf(container);
+    const headBlock = root.querySelector('.sig-head') as HTMLElement;
+    expect(ro.isObserving(headBlock)).toBe(true);
+    expect(ro.observeCallCount(headBlock)).toBe(1);
+    ro.flush(); // the guaranteed first notification: the height layout() used, so nothing to do
+    const toggle = vi.spyOn(root.classList, 'toggle');
+    ro.flush();
+    expect(toggle).not.toHaveBeenCalled();
+    ro.setSize(headBlock, 240); // a Thai font swap re-wrapping the lead one line longer
+    ro.flush();
+    expect(toggle).toHaveBeenCalledTimes(1);
+    toggle.mockClear();
+    ro.setSize(headBlock, 240);
+    ro.flush();
+    expect(toggle).not.toHaveBeenCalled();
   });
 
   it('watches both the pinned card and body, once, on the unpinned -> pinned transition (fix round 1, item 3)', () => {

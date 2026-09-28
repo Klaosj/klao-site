@@ -63,6 +63,8 @@ export default function SignatureScene({ copy }: { copy: SignatureCopy }) {
     const track = root.querySelector<HTMLElement>('[data-sig="track"]');
     const stage = root.querySelector<HTMLElement>('[data-sig="stage"]');
     const head = one('head');
+    // The head's absolutely placed block (the Reveal header), whose layout box the geometry clears.
+    const headBlock = root.querySelector<HTMLElement>('.sig-head');
     const card = one('card');
     const chip = one('chip');
     const tint = one('tint');
@@ -72,7 +74,7 @@ export default function SignatureScene({ copy }: { copy: SignatureCopy }) {
     const face = one('face');
     const apps = all('app');
     const years = all('year');
-    if (!track || !stage || !head || !card || !chip || !tint || !capA || !capB) return;
+    if (!track || !stage || !head || !headBlock || !card || !chip || !tint || !capA || !capB) return;
 
     const cssPath = supportsScrollTimeline();
     const reduce = matchMedia('(prefers-reduced-motion: reduce)');
@@ -89,7 +91,7 @@ export default function SignatureScene({ copy }: { copy: SignatureCopy }) {
     let lastWidth = 0;
     let lastHeight = 0;
     let roRaf = 0;
-    let cardResized = false;
+    let partResized = false;
     // The card height the current geometry was built from: layout() records the very
     // `card.offsetHeight` it hands to sigGeometry (wave-1 reconciliation p). A card notification
     // relayouts only when the card's border box has moved off this -- so the guaranteed first
@@ -97,7 +99,10 @@ export default function SignatureScene({ copy }: { copy: SignatureCopy }) {
     // change that lands between layout() and that first notification (a web font re-wrapping the
     // question) still counts, which the old "first notification sets the baseline" rule missed.
     let cardBaseline = 0;
-    // Whether body/card are currently ResizeObserver-watched -- mirrors `listening` below, and
+    // The same, for the head block (T12 F2): the opening frame is placed under its bottom, and a
+    // late font swap re-wrapping the lead moves that bottom just as it moves the card's height.
+    let headBaseline = 0;
+    // Whether body/card/head are currently ResizeObserver-watched -- mirrors `listening` below, and
     // exists so the watch is armed/disarmed once per pin transition, not on every layout() call
     // (fix round 2, Critical; see `syncResizeWatch`).
     let watching = false;
@@ -126,6 +131,7 @@ export default function SignatureScene({ copy }: { copy: SignatureCopy }) {
       paintStyle(card, f.card);
       paintStyle(capA, f.capA);
       paintStyle(capB, f.capB);
+      paintStyle(chip, f.chip);
       if (frame) paintStyle(frame, f.frame);
       apps.forEach((el, i) => {
         const s = f.tiles[i];
@@ -133,7 +139,6 @@ export default function SignatureScene({ copy }: { copy: SignatureCopy }) {
       });
       if (face) face.style.opacity = f.face;
       tint.style.opacity = f.tint;
-      chip.style.opacity = f.chip;
       years.forEach((el, i) => {
         el.style.opacity = i === f.year ? '1' : '0';
       });
@@ -161,6 +166,9 @@ export default function SignatureScene({ copy }: { copy: SignatureCopy }) {
         el.style.setProperty('--p', t.p);
       });
       frame?.style.setProperty('--z0', v.frameStart);
+      // T12 F2: where the card and the chip open before rising (sig-card / sig-chip keyframes).
+      card.style.setProperty('--lift', v.lift);
+      chip.style.setProperty('--lift', v.lift);
     };
     const onScroll = () => {
       if (raf) return;
@@ -194,12 +202,13 @@ export default function SignatureScene({ copy }: { copy: SignatureCopy }) {
       if (pin === watching) return;
       watching = pin;
       if (pin) {
-        // layout() has just recorded this pin's baseline (`cardBaseline`). A card change flagged
-        // during the previous pin whose frame never ran (a resize unpinned first) belongs to that
-        // old geometry; left set, it would relayout the new pin for nothing.
-        cardResized = false;
+        // layout() has just recorded this pin's baselines (`cardBaseline`, `headBaseline`). A
+        // change flagged during the previous pin whose frame never ran (a resize unpinned first)
+        // belongs to that old geometry; left set, it would relayout the new pin for nothing.
+        partResized = false;
         ro?.observe(document.body);
         ro?.observe(card);
+        ro?.observe(headBlock);
       } else {
         ro?.disconnect();
       }
@@ -221,6 +230,9 @@ export default function SignatureScene({ copy }: { copy: SignatureCopy }) {
       if (pin) {
         // Read after `.pin` applies: the card's pinned width is what the tiles orbit.
         cardBaseline = card.offsetHeight;
+        // The pinned head block's bottom in stage px (T12 F2). Layout offsets, not a rect: the
+        // Reveal rise and the CSS scrub's lift-away are transforms, which these ignore.
+        headBaseline = headBlock.offsetHeight;
         // Fix wave finding 7 (gate 4): the media query, not stage.clientWidth (which excludes
         // the scrollbar band and can disagree with it right at the 734px edge).
         geo = sigGeometry({
@@ -229,6 +241,7 @@ export default function SignatureScene({ copy }: { copy: SignatureCopy }) {
           cardWidth: card.offsetWidth,
           cardHeight: cardBaseline,
           phone: matchMedia('(max-width: 734px)').matches,
+          headBottom: headBlock.offsetTop + headBaseline,
         });
         place(geo);
         measure();
@@ -265,24 +278,26 @@ export default function SignatureScene({ copy }: { copy: SignatureCopy }) {
       // stale without this (fix round 1, item 3). rAF-throttled so a burst of callbacks in one
       // frame does one flush. `syncResizeWatch` (above) owns arming/disarming this observer once
       // per pin transition; this callback only decides, per notification, whether that warrants
-      // `layout()` (the card actually changed size) or just `measure()` (everything else).
+      // `layout()` (the card or the head block actually changed size) or just `measure()`
+      // (everything else).
       if (typeof ResizeObserver !== 'undefined') {
         ro = new ResizeObserver((entries) => {
           for (const e of entries) {
-            if (e.target !== card) continue;
+            const baseline = e.target === card ? cardBaseline : e.target === headBlock ? headBaseline : null;
+            if (baseline === null) continue;
             // Border box, the same box offsetHeight measures (contentRect is the content box, so
             // any padding would read as a permanent change); offsetHeight where a browser has no
             // borderBoxSize yet. offsetHeight is a whole number and borderBoxSize is not, so only
             // a change of a pixel or more counts -- less than that never moves the geometry.
-            const h = e.borderBoxSize?.[0]?.blockSize ?? card.offsetHeight;
-            if (Math.abs(h - cardBaseline) >= 1) cardResized = true;
+            const h = e.borderBoxSize?.[0]?.blockSize ?? (e.target as HTMLElement).offsetHeight;
+            if (Math.abs(h - baseline) >= 1) partResized = true;
           }
           if (roRaf) return;
           roRaf = requestAnimationFrame(() => {
             roRaf = 0;
             if (!geo) return;
-            if (cardResized) {
-              cardResized = false;
+            if (partResized) {
+              partResized = false;
               layout();
             } else {
               measure();

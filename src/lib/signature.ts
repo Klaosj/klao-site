@@ -38,6 +38,8 @@ export const SIG = {
 export const SIG_YEAR_STEPS = [0.4, 0.5, 0.6, 0.7] as const;
 
 const TILE = 56;
+// T12 F2: the clear space between the head's last line and the opening frame's highest point.
+const HEAD_GAP = 12;
 // Fix wave finding 9 (R21): the screenshots are 1580x900, not 16:9 -- matches signature.css
 // `.sig-frame`'s aspect-ratio exactly, the same value HeroTourStage's `.ht-card` uses.
 const FRAME_RATIO = 900 / 1580;
@@ -90,8 +92,11 @@ export interface SigTile {
 
 export interface SigGeometry {
   phone: boolean;
-  card: { left: number; top: number };
+  card: { left: number; top: number }; // settled: where the card rings, piles and opens the frame
   chip: { left: number; top: number };
+  // T12 F2: how far below its settled place the opening frame starts the card, the chip and the
+  // scattered tiles, so they clear the head on a short phone. 0 on desktop and on tall phones.
+  lift: number;
   frame: { width: number; left: number; top: number; scale0: number; dx: number; dy: number };
   tiles: SigTile[];
 }
@@ -108,12 +113,21 @@ export interface SigInput {
   // from a slightly different number. Optional and defaults to the old `W <= 734` when omitted,
   // so every existing caller (and test) is unaffected.
   phone?: boolean;
+  // T12 F2: the head block's bottom edge in stage px -- its layout box, which no transform moves.
+  // On a phone the opening frame starts low enough to clear it. Optional: omitted, nothing lifts.
+  headBottom?: number;
 }
 
 type Offset = readonly [number, number, number]; // x, y, deg from the card's centre
 
+/** Half the height of a tile's box once rotated by `deg` about its centre (its rect in the browser). */
+const halfSpan = (deg: number): number => {
+  const rad = (deg * Math.PI) / 180;
+  return (TILE / 2) * (Math.abs(Math.cos(rad)) + Math.abs(Math.sin(rad)));
+};
+
 /** Port of the prototype's `layout()`: every position the scene uses, from four measurements. */
-export function sigGeometry({ width: W, height: H, cardWidth, cardHeight, phone: phoneOverride }: SigInput): SigGeometry {
+export function sigGeometry({ width: W, height: H, cardWidth, cardHeight, phone: phoneOverride, headBottom }: SigInput): SigGeometry {
   const phone = phoneOverride ?? W <= 734;
   const hw = cardWidth / 2;
   const hh = cardHeight / 2;
@@ -132,12 +146,23 @@ export function sigGeometry({ width: W, height: H, cardWidth, cardHeight, phone:
   const pile: Offset[] = [[0, 0, 0], [5, 4, 5], [-5, 6, -6], [8, 9, 9], [-8, 10, -10]];
   const at = ([x, y, r]: Offset): SigPoint => ({ x: cx + x - TILE / 2, y: cy + y - TILE / 2, r });
 
+  // T12 F2: a phone's real browser height (390x664 with Safari's toolbars, not the 844 screen)
+  // leaves too little room under the head: the opening frame's top -- a scattered tile's rotated
+  // corner, the chip or the card, whichever is highest above the card's centre -- sat up to 63 px
+  // under the lead. Fitting the whole scene lower instead would push the ring under caption A and
+  // the thumb bar later on, so only the opening moves: it starts `lift` px down, and the card, chip
+  // and tiles rise into their settled places on the gather's own glide (sigFrame; sig-card and
+  // sig-chip in signature.css), finishing before caption A comes in. Desktop is left as it was.
+  const reach = Math.max(hh + 48, ...scatter.map(([, y, r]) => -y + halfSpan(r))); // chip top, tile corners
+  const lift = phone && headBottom !== undefined ? Math.max(0, headBottom + HEAD_GAP + reach - cy) : 0;
+
   return {
     phone,
     card: { left: cx - hw, top: cy - hh },
     chip: { left: cx - 30, top: cy - hh - 48 },
+    lift,
     frame: { width: fw, left: W / 2 - fw / 2, top: fcy - fh / 2, scale0: TILE / Math.max(1, fw), dx: cx - W / 2, dy: cy - fcy },
-    tiles: scatter.map((s, i) => ({ scatter: at(s), ring: at(ring[i]), pile: at(pile[i]) })),
+    tiles: scatter.map(([x, y, r], i) => ({ scatter: at([x, y + lift, r]), ring: at(ring[i]), pile: at(pile[i]) })),
   };
 }
 
@@ -164,7 +189,7 @@ export interface SigFrameStyles {
   card: SigStyle;
   frame: SigStyle;
   tint: string; // opacity
-  chip: string; // opacity
+  chip: SigStyle; // rises with the card (T12 F2)
   year: number; // index into SIG_YEARS
   capA: SigStyle;
   capB: SigStyle;
@@ -174,6 +199,7 @@ export interface SigFrameStyles {
 export function sigFrame(p: number, g: SigGeometry): SigFrameStyles {
   const h = sub(p, SIG.head);
   const t1 = glide(sub(p, SIG.gather));
+  const rise = g.lift * (1 - t1); // T12 F2: what is left of the opening's lift
   const t2 = glide(sub(p, SIG.collapse));
   const tilesOpacity = op(1 - sub(p, SIG.tilesOut));
   const tc = sub(p, SIG.cardOut);
@@ -191,13 +217,13 @@ export function sigFrame(p: number, g: SigGeometry): SigFrameStyles {
       }),
     })),
     face: op(sub(p, SIG.face)),
-    card: { opacity: op(1 - tc), transform: `scale(${(1 - 0.06 * tc).toFixed(4)})` },
+    card: { opacity: op(1 - tc), transform: `translateY(${px(rise)}) scale(${(1 - 0.06 * tc).toFixed(4)})` },
     frame: {
       opacity: op(sub(p, SIG.frameIn)),
       transform: frameTransform(g.frame.dx * (1 - tz), g.frame.dy * (1 - tz), lerp(g.frame.scale0, 1, tz)),
     },
     tint: op(sub(p, SIG.tint)),
-    chip: op(1 - sub(p, SIG.chipOut)),
+    chip: { opacity: op(1 - sub(p, SIG.chipOut)), transform: `translateY(${px(rise)})` },
     year: sigYear(p),
     capA: { opacity: op(a), transform: `translateY(${px(8 * (1 - a))})` },
     capB: { opacity: op(b), transform: b === 0 ? 'translateY(100vh)' : `translateY(${px(8 * (1 - b))})` },
@@ -207,6 +233,7 @@ export function sigFrame(p: number, g: SigGeometry): SigFrameStyles {
 export interface SigVars {
   tiles: { s: string; k: string; p: string }[]; // --s --k --p per tile
   frameStart: string; // --z0 on the frame
+  lift: string; // --lift on the card and the chip (T12 F2)
 }
 
 /** The geometry as the custom properties signature.css's keyframes read. */
@@ -214,5 +241,6 @@ export function sigVars(g: SigGeometry): SigVars {
   return {
     tiles: g.tiles.map((t) => ({ s: tileTransform(t.scatter), k: tileTransform(t.ring), p: tileTransform(t.pile) })),
     frameStart: frameTransform(g.frame.dx, g.frame.dy, g.frame.scale0),
+    lift: px(g.lift),
   };
 }
