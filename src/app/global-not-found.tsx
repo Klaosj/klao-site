@@ -1,6 +1,9 @@
 // The 404 for a path that matches no page anywhere in the app (e.g.
-// /en/nope, /th/nope), and for [locale]/layout.tsx's own notFound() on a
-// segment that is no locale (e.g. /foo.png). Next routes both here because
+// /en/nope, /th/nope), and for a first segment that is no locale (e.g.
+// /foo.png), which the [locale] route 404s: in production through the leaf
+// pages' `dynamicParams = false` (Next logs that as a benign
+// "NoFallbackError"), otherwise through [locale]/layout.tsx's
+// assertLocale() notFound(). Next routes all of these here because
 // `experimental.globalNotFound` is on in next.config.ts -- still experimental
 // in Next 15.5.26 (the config schema and the dev banner both list it under
 // "Experiments (use with caution)"), so re-check this file's own assumptions
@@ -157,11 +160,12 @@ export default function GlobalNotFound() {
             - itemProp opts this <title> out of React 19's hoisting (see the
               react.dev <title> page). React re-writes a hoisted title from
               its props when it hydrates, which put the English title back
-              (seen in dev on 28 Sep). With no itemscope around it, the
-              attribute means nothing to a microdata reader.
+              (seen in dev on 28 Sep). There is no itemscope around it: the
+              W3C checker flags that, while browsers and React ignore it.
             - suppressHydrationWarning: as a plain element, its text differs
               from the server's on a Thai path; React then keeps the
               browser's text instead of throwing a mismatch (#418). */}
+        {/* Never give this file metadata.title: Next would add a second, hoisted <title> first, and the Thai swap is lost. */}
         <title itemProp="name" suppressHydrationWarning>{`${dict.en.notFoundTitle} · Klao`}</title>
         <style dangerouslySetInnerHTML={{ __html: GLOBAL_NOT_FOUND_STYLE }} />
         <script dangerouslySetInnerHTML={{ __html: GLOBAL_NOT_FOUND_PREPAINT_SCRIPT }} />
