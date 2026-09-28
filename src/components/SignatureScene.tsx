@@ -371,7 +371,11 @@ export default function SignatureScene({ copy }: { copy: SignatureCopy }) {
           </div>
           {copy.frameSrc && (
             <div className="sig-frame" data-sig-part="frame">
-              <img src={copy.frameSrc} alt={copy.frameAlt} width={1600} height={900} loading="lazy" decoding="async" />
+              {/* Re-review N3 (finding 9 leftover): 1580, not 1600 -- the file is 1580x900 (the
+                  ratio signature.ts's FRAME_RATIO and signature.css's aspect-ratio both use),
+                  matching HeroTourStage.tsx:236 and ProjectSheet.tsx:411. No visible effect
+                  (object-fit: cover, 100%/100%), but the intrinsic ratio hint was wrong. */}
+              <img src={copy.frameSrc} alt={copy.frameAlt} width={1580} height={900} loading="lazy" decoding="async" />
             </div>
           )}
           <div className="sig-cap sig-cap-b glass glass-pill" data-sig-part="capB">

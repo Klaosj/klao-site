@@ -186,6 +186,11 @@ describe('SignatureScene: markup', () => {
     expect(container.querySelector('.sig-chip')?.getAttribute('aria-hidden')).toBe('true');
     expect(Array.from(container.querySelectorAll('.sig-year')).map((y) => y.textContent)).toEqual(['2022', '2023', '2024', '2025', '2026']);
     expect(container.querySelector('.sig-frame img')?.getAttribute('alt')).toBe(COPY.frameAlt);
+    // Re-review N3 (finding 9 leftover): the file is 1580x900, matching FRAME_RATIO and
+    // signature.css's aspect-ratio -- not the generic 1600x900 the img carried before.
+    const frameImg = container.querySelector('.sig-frame img');
+    expect(frameImg?.getAttribute('width')).toBe('1580');
+    expect(frameImg?.getAttribute('height')).toBe('900');
     const open = container.querySelector('a.sig-open') as HTMLAnchorElement;
     expect(open.getAttribute('href')).toBe(COPY.openHref);
     expect(open.getAttribute('target')).toBe('_blank');
