@@ -53,6 +53,20 @@ const AJE: CannedSource = {
   target: 'work/aje',
   quote: { en: 'Build · Working prototype', th: 'สร้างเอง · Prototype ใช้งานได้' },
 };
+// The build answer, shared by the two entries that give it (T18-b below).
+const BUILD_ANSWER: Record<Locale, string> = {
+  en: 'Yes, on nights and weekends, with AI-assisted development (Claude). GoNai is live[1], Aje is a working prototype[2], and this site is edited in Notion.[3]',
+  th: 'จริงครับ ทำนอกเวลางานด้วย AI-assisted development (Claude) GoNai เปิดใช้งานแล้ว[1] Aje เป็น prototype ที่ใช้งานได้[2] และเว็บนี้แก้เนื้อหาผ่าน Notion[3]',
+};
+const BUILD_SOURCES: CannedSource[] = [
+  GONAI,
+  AJE,
+  {
+    label: 'Projects · klao-site',
+    target: 'work/klao-site',
+    quote: { en: 'Notion as the only CMS', th: 'Notion เป็น CMS เดียว' },
+  },
+];
 
 // The prototype's ASK array, in its order: first match wins. Pay and rates
 // are declined on purpose — not published, so never guessed.
@@ -81,14 +95,28 @@ const AJE: CannedSource = {
 // media isn't published content either way, so it now declines explicitly
 // (the new entry right after this one) rather than falling through to a
 // confident wrong topic.
+//
+// T18-b (CO-10, ruling PR5) -- the prototype's own wrong answers (P4
+// review Minor F), pinned in tests/ask.test.ts's 47 + 20 rows:
+//  - "business model" and "featured in/on/by" (press) decline: neither is
+//    published content (rows 25 and "featured in the media").
+//  - bare "today" left the right-now entry: "Can I call him today?" is not
+//    a current-work question (row 26); it now declines.
+//  - "founded"/"founder" answer with the startups (row 14), "built" with
+//    the build answer (row 13).
+//  - "code in" / โค้ด is checked before the language entry, so "Which
+//    languages does he code in?" / เขียนโค้ดภาษาอะไร get the build answer,
+//    not the spoken-language one (rows 24 and 39).
 export const ASK_CANNED: readonly Canned[] = [
   { match: /\bsalary\b|\bpay\b|\bpaid\b|\brate card\b|\bprice\b|เงินเดือน|ค่าจ้าง|ค่าตัว/i, decline: true },
   // Re-review Important A: social media strategy/marketing isn't published
   // content -- checked before the retail entry (bare "media"/"สื่อ" would
   // otherwise read "social media"/"สื่อโซเชียล" as a retail-media question).
   { match: /\bsocial media\b|โซเชียล/i, decline: true },
+  // T18-b: not published either -- a project's business model, press.
+  { match: /\bbusiness models?\b|\bfeatured (in|on|by)\b/i, decline: true },
   {
-    match: /\bright now\b|\bworking on\b|\bcurrently\b|\bthese days\b|\btoday\b|ตอนนี้|ทำอะไรอยู่|ช่วงนี้/i,
+    match: /\bright now\b|\bworking on\b|\bcurrently\b|\bthese days\b|ตอนนี้|ทำอะไรอยู่|ช่วงนี้/i,
     answer: {
       en: 'Klao has been Senior Business Development at Actmedia since March 2026, opening new channels with Modern Trade retailers and project-managing live in-store rollouts; the largest is a nationwide in-store screen installation.[1] Outside work he builds AI tools: GoNai is live[2] and Aje is a working prototype.[3]',
       th: 'ตั้งแต่ มี.ค. 2026 Klao เป็น Senior Business Development ที่ Actmedia หาช่องทางใหม่กับค้าปลีก Modern Trade และคุมโปรเจกต์ที่รันอยู่ โปรเจกต์ใหญ่สุดคือติดตั้งจอในร้านทั่วประเทศ[1] นอกเวลางานเขาสร้างเครื่องมือ AI เอง GoNai เปิดใช้งานแล้ว[2] และ Aje เป็น prototype ที่ใช้งานได้[3]',
@@ -96,7 +124,7 @@ export const ASK_CANNED: readonly Canned[] = [
     sources: [ACTMEDIA, GONAI, AJE],
   },
   {
-    match: /\bstartups?\b|\bstart-ups?\b|สตาร์ทอัพ|\btripedia\b|\btalatify\b|\bpitch(ed|es)?\b/i,
+    match: /\bstartups?\b|\bstart-ups?\b|สตาร์ทอัพ|\btripedia\b|\btalatify\b|\bpitch(ed|es)?\b|\bfounded\b|\bfounder\b/i,
     answer: {
       en: 'Yes. He co-founded two. Tripedia, a trip-planning platform, made the final 30 of 500 teams at KATALYST Startup Launchpad 2022.[1] Talatify, a fresh-market delivery platform, was pitched at the TEP startup screening round in 2025, with SOM sized at THB 37M.[2]',
       th: 'เคยครับ Klao เป็น Co-founder สองโปรเจกต์ Tripedia แพลตฟอร์มวางแผนทริป เข้ารอบ 30 ทีมสุดท้ายจาก 500 ทีมใน KATALYST Startup Launchpad 2022[1] และ Talatify แพลตฟอร์มส่งของสดจากตลาด ที่นำเสนอในรอบคัดเลือก TEP ปี 2025 และประเมิน SOM ไว้ 37 ล้านบาท[2]',
@@ -157,6 +185,9 @@ export const ASK_CANNED: readonly Canned[] = [
       },
     ],
   },
+  // T18-b: programming languages are a build question -- checked before the
+  // spoken-language entry below, with the same answer as the last entry.
+  { match: /\bcode in\b|โค้ด/i, answer: BUILD_ANSWER, sources: BUILD_SOURCES },
   {
     match: /\blanguages?\b|\benglish\b|\bthai\b|ภาษา|อังกฤษ/i,
     answer: {
@@ -176,20 +207,9 @@ export const ASK_CANNED: readonly Canned[] = [
     // /\bdevelops?\b|\bdeveloped\b|\bdeveloping\b/ verb-only set dropped
     // "Is he a developer?"). "development" stays out on purpose -- it's
     // business development's word, not this row's.
-    match: /\bbuilds?\b|\bbuilding\b|\bcodes?\b|\bcoding\b|\bapps?\b|\bdevelop(s|ed|ing|ers?)?\b|สร้าง|แอป|โค้ด/i,
-    answer: {
-      en: 'Yes, on nights and weekends, with AI-assisted development (Claude). GoNai is live[1], Aje is a working prototype[2], and this site is edited in Notion.[3]',
-      th: 'จริงครับ ทำนอกเวลางานด้วย AI-assisted development (Claude) GoNai เปิดใช้งานแล้ว[1] Aje เป็น prototype ที่ใช้งานได้[2] และเว็บนี้แก้เนื้อหาผ่าน Notion[3]',
-    },
-    sources: [
-      GONAI,
-      AJE,
-      {
-        label: 'Projects · klao-site',
-        target: 'work/klao-site',
-        quote: { en: 'Notion as the only CMS', th: 'Notion เป็น CMS เดียว' },
-      },
-    ],
+    match: /\bbuilds?\b|\bbuilding\b|\bbuilt\b|\bcodes?\b|\bcoding\b|\bapps?\b|\bdevelop(s|ed|ing|ers?)?\b|สร้าง|แอป|โค้ด/i,
+    answer: BUILD_ANSWER,
+    sources: BUILD_SOURCES,
   },
 ];
 

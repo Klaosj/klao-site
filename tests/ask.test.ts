@@ -105,18 +105,25 @@ describe('askPreview', () => {
 // through the real askPreview() -- canned matchers AND the bestFaq()
 // fallback -- against the real faq.json fixture. `outcome` identifies which
 // canned entry (by name) or FAQ item produced the answer, so each row pins
-// the exact result, not just "an answer of some kind". Rows 24-26 and 39
-// stay WRONG and 13-14 stay a MISS on purpose: they're inherited from the
-// prototype, not part of this fix (Minor F, P5 candidates) -- fixing them
-// risks a regression Important A's own patch was verified NOT to cause.
-describe('askPreview 47-question table (fix wave finding 4 + re-review Important A)', () => {
+// the exact result, not just "an answer of some kind".
+//
+// T18-b (CO-10, ruling PR5): the six rows the prototype also got wrong
+// (Minor F: 13, 14, 24, 25, 26, 39) now land where PR5 put them, and the
+// reviewer's 20 re-check questions (66793b1) follow the 47 -- one of them,
+// "featured in the media", was a confident retail answer and now declines.
+// Every other row keeps its earlier outcome: 0 regressions across all 67.
+describe('askPreview 47 + 20 question table (fix wave finding 4, re-review Important A, T18-b)', () => {
+  // One name per ASK_CANNED index. 'build' appears twice: PR5's "code in /
+  // โค้ด" check runs ahead of the language entry and gives the build answer.
   const ENTRY_NAME = [
     'decline-pay',
     'decline-social',
+    'decline-unpublished',
     'right-now',
     'startup',
     'retail',
     'business',
+    'build',
     'language',
     'build',
   ] as const;
@@ -146,8 +153,8 @@ describe('askPreview 47-question table (fix wave finding 4 + re-review Important
     ['Which retailers has he worked with?', 'en', 'retail', 'plural: retailers (round-1 regression)'],
     ['Is he paying for Claude?', 'en', 'decline', 'verb: paying'],
     ['Is he a developer?', 'en', 'build', 'noun: developer (round-1 regression)'],
-    ['Has he built a chatbot?', 'en', 'decline', 'verb: built (inherited miss, Minor F)'],
-    ['Has he founded anything?', 'en', 'decline', 'verb: founded (inherited miss, Minor F)'],
+    ['Has he built a chatbot?', 'en', 'build', 'verb: built (Minor F -> build, PR5)'],
+    ['Has he founded anything?', 'en', 'startup', 'verb: founded (Minor F -> startup, PR5)'],
     ['Does he build apps himself?', 'en', 'build', ''],
     ['Does he write code?', 'en', 'build', ''],
     ["What's he working on right now?", 'en', 'right-now', ''],
@@ -157,9 +164,9 @@ describe('askPreview 47-question table (fix wave finding 4 + re-review Important
     ['Has he run his own business?', 'en', 'business', ''],
     ['Did he start a startup?', 'en', 'startup', ''],
     ['Does he speak English?', 'en', 'language', ''],
-    ['Which languages does he code in?', 'en', 'language', 'inherited WRONG (Minor F, P5)'],
-    ["What's the business model of GoNai?", 'en', 'business', 'inherited WRONG (Minor F, P5)'],
-    ['Can I call him today?', 'en', 'right-now', 'inherited WRONG (Minor F, P5)'],
+    ['Which languages does he code in?', 'en', 'build', 'code in: before language (Minor F, PR5)'],
+    ["What's the business model of GoNai?", 'en', 'decline', 'business model: not published (Minor F, PR5)'],
+    ['Can I call him today?', 'en', 'decline', 'bare "today" is not current work (Minor F, PR5)'],
     ['How do I reach him?', 'en', 'faq:fx-faq-contact', ''],
     ['What is Actmedia?', 'en', 'retail', ''],
     ['ตอนนี้ทำงานอะไรอยู่', 'th', 'right-now', ''],
@@ -172,7 +179,7 @@ describe('askPreview 47-question table (fix wave finding 4 + re-review Important
     ['งานพัฒนาธุรกิจที่ทำอยู่คืออะไร', 'th', 'retail', 'TH "business development" (named bug, TH)'],
     ['นักพัฒนาธุรกิจทำอะไรบ้าง', 'th', 'retail', "TH BD, site's own role word (named bug, TH)"],
     ['ทำสื่อโซเชียลเป็นไหม', 'th', 'decline', 'TH "social media" (named bug, TH)'],
-    ['เขียนโค้ดภาษาอะไร', 'th', 'language', 'inherited WRONG (Minor F, P5)'],
+    ['เขียนโค้ดภาษาอะไร', 'th', 'build', 'โค้ด: before language (Minor F, PR5)'],
     ['ติดต่อยังไง', 'th', 'faq:fx-faq-contact', ''],
     ['เคยทำ startup ไหม', 'th', 'startup', 'mixed'],
     ['ทำappอะไรบ้าง', 'th', 'build', 'mixed, no spaces'],
@@ -181,7 +188,32 @@ describe('askPreview 47-question table (fix wave finding 4 + re-review Important
     ['ขอ salary expectation หน่อย', 'th', 'decline', 'mixed pay'],
     ['ทำงานกับ retailers เจ้าไหนบ้าง', 'th', 'retail', 'mixed plural (round-1 regression)'],
     ['ใช้ Claude เขียน code ไหม', 'th', 'build', 'mixed'],
+    // The reviewer's 20 re-check questions (re-check 66793b1, row A).
+    ['Does he use social media?', 'en', 'decline', 'social'],
+    ['Which social media platforms is he on?', 'en', 'decline', 'social'],
+    ['Is he a social person?', 'en', 'decline', 'social, no "media"'],
+    ['Has he been featured in the media?', 'en', 'decline', 'press: not published (Minor F, PR5)'],
+    ['Does he have media sales experience?', 'en', 'retail', 'media'],
+    ['Is he a product developer?', 'en', 'build', 'developer'],
+    ['Does he work with developers?', 'en', 'build', 'developers'],
+    ['Did he develop GoNai alone?', 'en', 'build', 'develop'],
+    ['Is he good at business development?', 'en', 'retail', 'BD'],
+    ['Has he worked for a retailer?', 'en', 'retail', 'retailer'],
+    ['Is he a founder?', 'en', 'startup', 'founder: startup since PR5 (business before; both acceptable)'],
+    ['Has he pitched a startup?', 'en', 'startup', ''],
+    ['What is his take on social media strategy?', 'en', 'decline', 'social'],
+    ['ทำงานด้านพัฒนาธุรกิจมากี่ปี', 'th', 'retail', 'TH BD'],
+    ['เคยทำโซเชียลมีเดียไหม', 'th', 'decline', 'TH social'],
+    ['มีโซเชียลอะไรบ้าง', 'th', 'decline', 'TH socials'],
+    ['เคยทำงานสื่อไหม', 'th', 'retail', 'TH media'],
+    ['เคยพัฒนาแอปเองไหม', 'th', 'build', 'TH develop app'],
+    ['ธุรกิจที่เคยทำมีอะไรบ้าง', 'th', 'business', 'TH business'],
+    ['ทำ media มาก่อนไหม', 'th', 'retail', 'mixed media'],
   ];
+
+  it('covers all 67 questions', () => {
+    expect(ROWS).toHaveLength(67);
+  });
 
   it.each(ROWS)('%s (%s) -> %s [%s]', (query, locale, expected) => {
     expect(outcome(query, locale)).toBe(expected);
