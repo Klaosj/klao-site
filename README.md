@@ -49,22 +49,30 @@ as-is; it is not a regression.)
 
 ### Browser QA (the White Edition matrix)
 
-    npm run qa:self                  # proves each check catches its fault — no server needed
+    npm run qa:self                  # checks the checks on planted faults, no server needed: "self-test ok (22 checks)"
     npm run build && npm run start   # then, in a second terminal:
     npm run qa                       # 16 combinations + 4 narrow checks against http://localhost:3000
     npm run qa "https://<preview>/?_vercel_share=<token>"   # or any other base URL
+    npm run qa -- --only=pages       # one part only: matrix, probes or pages
 
 `npm run qa` loads the home page at 1440×900 and 390×844, in EN and TH,
 light and dark, motion on and reduced (16 combinations), plus two narrower
 widths — 360×780 and 320×568, EN/TH, light, motion on (4 more lines) — that
 check everything except page length (the spec sets that budget at 1440/390
-only). It also runs probes (Auto theme, blocked storage, bad `#work/`
-links, no JavaScript, a ⌘K that sends nothing) and the standalone pages. It
-fails on console errors, sideways scroll, text under 14 px on phones, tap
-targets under 24 px, content left hidden, Thai lines that start with a
-vowel or tone mark, and pages longer than 8.6 screens (desktop) or 12
-(phone). It prints one line per combination and writes screenshots and
-`summary.txt` to `/tmp/klao-qa/`.
+only). It also runs 7 probes (Auto theme in light and dark, blocked
+storage, bad `#work/` links, an EN→TH switch that keeps the section and the
+theme, no JavaScript, a ⌘K that sends nothing) and the standalone pages
+(`/projects`, `/writing`, the `/career` redirect, and the 404 in English and
+Thai), each in light and dark at 1440 and 390. It fails on console errors,
+sideways scroll, text under 14 px on phones, tap targets under 24 px,
+content left hidden, low contrast, layout shift over 0.05, the wrong theme
+or a flash of it, Thai lines that start with a vowel or tone mark, and
+pages longer than 8.6 screens (desktop) or 12 (phone), measured with By day
+on Short. A Thai or reduced-motion line over that length doesn't fail: it
+is marked `[R15: …]` and counted on the last line, to be reported rather
+than fixed by cutting space. It prints one line per combination, exits 1
+when anything fails, and writes screenshots and `summary.txt` to
+`/tmp/klao-qa/` (or `$QA_OUT`).
 
 Playwright is not a dependency of this repo. The scripts use
 `$PLAYWRIGHT_PATH` (a `…/node_modules/playwright/index.mjs`), else a
