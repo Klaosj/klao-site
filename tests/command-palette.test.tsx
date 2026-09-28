@@ -333,6 +333,16 @@ describe('CommandPalette', () => {
     expect(onClose).toHaveBeenCalledWith();
   });
 
+  // M8 (fix wave finding 11): repo convention for an outbound target="_blank"
+  // link is 'noopener,noreferrer' -- this row was missing the referrer half.
+  it('opens an external row with noopener,noreferrer (M8)', () => {
+    const windowOpen = vi.spyOn(window, 'open').mockImplementation(() => null);
+    const box = open();
+    type(box, 'resume');
+    fireEvent.keyDown(box, { key: 'Enter' });
+    expect(windowOpen).toHaveBeenCalledWith('/resume.pdf', '_blank', 'noopener,noreferrer');
+  });
+
   it('switches locale through switchLocaleHref and window.location.assign (C2 wiring)', () => {
     const assign = vi.fn();
     vi.stubGlobal('location', { assign, pathname: '/', href: '/' });

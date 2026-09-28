@@ -208,7 +208,11 @@ export default function CommandPalette({ entries, faq, email, locale, initialQue
       case 'href':
         if (action.external) {
           onClose();
-          window.open(action.href, '_blank', 'noopener');
+          // M8 (fix wave finding 11): repo convention for an outbound
+          // target="_blank" is 'noopener,noreferrer' (SiteFooter's
+          // LinkedIn/GitHub rows, NavMenu, WorkDeck, ProjectTour, PostBody,
+          // SignatureScene) -- this row was missing the referrer half.
+          window.open(action.href, '_blank', 'noopener,noreferrer');
         } else {
           // Fix round 1 #3: restoreFocus:false is for a same-tab navigation
           // that unloads this document (focus would be moot). A `mailto:`

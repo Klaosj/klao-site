@@ -54,7 +54,12 @@
     height: 18px;
   }
   .copy-clip {
-    transition: opacity 160ms var(--ease-glide), transform 200ms var(--ease-tick);
+    /* M6 (fix wave finding 9): --ease-tick overshoots (cubic-bezier(.34,
+       1.56, .64, 1), values > 1) -- right for the button's own confirm
+       scale below, wrong for a fade/scale-out, which visibly bounced past
+       0.7 and back. --ease-settle (no overshoot) is what every other
+       fade/scale transition on the page already uses. */
+    transition: opacity 160ms var(--ease-glide), transform 200ms var(--ease-settle);
   }
   .copy-b[data-state='ok'] .copy-clip {
     opacity: 0;
@@ -62,10 +67,12 @@
   }
   .copy-ok path {
     /* Named exception (master R27): the only non-transform/opacity transition
-       on the page, scoped to this one 18 px inline-stroke icon. */
+       on the page, scoped to this one 18 px inline-stroke icon. M6: same
+       overshoot problem as .copy-clip above -- --ease-tick drew the check
+       stroke past 100% and back, not a settle. --ease-settle draws it once. */
     stroke-dasharray: 20;
     stroke-dashoffset: 20;
-    transition: stroke-dashoffset 360ms var(--ease-tick) 80ms;
+    transition: stroke-dashoffset 360ms var(--ease-settle) 80ms;
   }
   .copy-b[data-state='ok'] .copy-ok path {
     stroke-dashoffset: 0;

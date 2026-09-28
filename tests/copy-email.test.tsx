@@ -234,6 +234,24 @@ describe('copy-email.css (A03 stroke-dashoffset exception)', () => {
     expect(sawException, 'expected exactly the .copy-ok path stroke-dashoffset exception').toBe(true);
   });
 
+  // M6 (fix wave finding 9): --ease-tick overshoots (cubic-bezier(.34, 1.56,
+  // .64, 1), values > 1) -- right for the button's own confirm scale, wrong
+  // for the clip fade/scale-out and the check's stroke draw, which visibly
+  // bounced past their end value instead of settling once.
+  it('keeps --ease-tick on the button scale only; the clip and the check stroke use --ease-settle', () => {
+    // `.copy-b`'s own transition (not its `[data-state='ok']` rule, which
+    // only sets the target `transform` -- the transition itself lives on
+    // the base selector, since it's the same element) is the button's
+    // confirm scale; that one keeps the overshoot.
+    const ruleFor = (selector: string): string =>
+      new RegExp(`${selector.replace(/[.[\]='"]/g, '\\$&')}\\s*\\{([^}]*)\\}`).exec(CSS)?.[1] ?? '';
+    expect(ruleFor('.copy-b'), '.copy-b').toContain('var(--ease-tick)');
+    expect(ruleFor('.copy-clip'), '.copy-clip').toContain('var(--ease-settle)');
+    expect(ruleFor('.copy-clip'), '.copy-clip').not.toContain('var(--ease-tick)');
+    expect(ruleFor('.copy-ok path'), '.copy-ok path').toContain('var(--ease-settle)');
+    expect(ruleFor('.copy-ok path'), '.copy-ok path').not.toContain('var(--ease-tick)');
+  });
+
   it('turns off every transition, including the draw-on, under prefers-reduced-motion: reduce', () => {
     // Depth-counted, not a lazy regex across the outer/inner braces (same
     // idiom as globals-css.test.ts's blockFrom): the media query nests one
