@@ -258,25 +258,55 @@ async function probes(browser) {
   // the switch must still keep the stored theme and leave html.js set. Story
   // is the band checked because it has a distinctive child (.bd-seg,
   // StoryDetail's Short/Full control) to confirm the destination rendered.
+  //
+  // Lane B review I3 — the context must NOT be seeded with `theme` here: that
+  // option installs an addInitScript that rewrites klao-theme on every new
+  // document in the context, including the /th document the switch lands
+  // on, which would make "theme kept" true no matter what the app does.
+  // Dark is seeded for real, once, via a throwaway page opened and closed
+  // before #story is ever loaded — the same one-time localStorage write a
+  // visitor's own toggle click makes, without the click itself: a first
+  // attempt clicked the real Dark toggle on the #story page directly, which
+  // reliably set the theme but was also found to unsettle the reading-
+  // anchor observer #story's own redirect relies on (it landed on
+  // /th#contact instead of /th#story) — a page it never touches can't do
+  // that. A mutation that resets the theme on navigation is still the only
+  // way to make the "kept after the switch" assertion below pass.
   {
     const label = 'probe language-switch';
-    const ctx = await newContext(browser, { width: 1440, theme: 'dark', scheme: 'light' });
+    const ctx = await newContext(browser, { width: 1440, scheme: 'light' });
     try {
+      const seed = await ctx.newPage();
+      await seed.goto(urlFor('/en'), { waitUntil: 'load' });
+      await seed.evaluate(() => {
+        try {
+          localStorage.setItem('klao-theme', 'dark');
+        } catch {
+          // Covered by the storage-blocked probe.
+        }
+      });
+      await seed.close();
+
       const { page, errors } = await open(ctx, '/en#story');
       await page.waitForTimeout(300); // lets the reading-anchor observer settle on #story
+      const before = await page.evaluate(themeState);
       const link = page.locator('.lt-seg a[hreflang="th"]').first();
       if (!(await link.count())) {
         report(label, ['no Thai link found in the locale toggle (.lt-seg a[hreflang="th"])']);
       } else {
         const p = [];
+        if (before.theme !== 'dark') p.push(`theme "${before.theme}" before the switch, expected "dark" (seeded via localStorage once)`);
         await link.click();
-        await page.waitForTimeout(600);
+        await page.waitForURL(/\/th/, { waitUntil: 'load' });
+        await page.waitForTimeout(300);
         const u = new URL(page.url());
         const landed = `${u.pathname}${u.hash}`;
         if (landed !== '/th#story') p.push(`landed on ${landed}, expected /th#story`);
         const s = await page.evaluate(themeState);
         if (!s.js) p.push('html.js missing after the switch');
-        if (s.theme !== 'dark') p.push(`theme "${s.theme}" after the switch, expected "dark" kept`);
+        if (s.theme !== 'dark' || s.bg !== CANVAS.dark) {
+          p.push(`theme "${s.theme}" (canvas ${s.bg}) after the switch, expected "dark" kept (canvas ${CANVAS.dark})`);
+        }
         const segVisible = await page.evaluate(() => {
           const seg = document.querySelector('.bd-seg');
           return !!seg && seg.getClientRects().length > 0 && getComputedStyle(seg).visibility !== 'hidden';
