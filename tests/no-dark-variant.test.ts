@@ -53,6 +53,8 @@ describe('the dark: variant detector (T18-c, CO-16)', () => {
   it('finds a dark: class in a className string, a class helper call and a template literal', () => {
     expect(darkVariants('const a = <div className="p-4 dark:bg-mist" />;')).toEqual(['p-4 dark:bg-mist']);
     expect(darkVariants("const b = cn('md:dark:hidden', x);")).toEqual(['md:dark:hidden']);
+    // Review m5 (ME): a class string that starts with the variant.
+    expect(darkVariants("const e = cn('dark:hidden', x);")).toEqual(['dark:hidden']);
     expect(darkVariants('const c = `px-2 dark:text-${tone}`;')).toEqual(['px-2 dark:text-']);
     expect(darkVariants('const d = `${base} dark:ring-1`;')).toEqual([' dark:ring-1']);
   });

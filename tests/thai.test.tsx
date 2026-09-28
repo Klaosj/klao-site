@@ -251,6 +251,10 @@ const GLUE_CASES: [segment: string, locale: 'en' | 'th', tail: string, fallbackT
   ['...', 'en', '...', '...'],
   // Nit: an emoji is one code point pair -- never split into lone surrogates.
   ['ok 🙂', 'en', 'ok 🙂', 'ok 🙂'],
+  // Review m5 (MA): the text after a marker starts with a space, as AskCard
+  // hands it over (" Outside work he builds…"); the cut must count it.
+  [' and Aje is a working prototype.', 'en', 'prototype.', 'prototype.'],
+  [' GoNai เปิดใช้งานแล้ว', 'th', 'แล้ว', 'ว'],
 ];
 
 describe('glueTail (T18-a, CO-11)', () => {
@@ -266,8 +270,9 @@ describe('glueTail (T18-a, CO-11)', () => {
   });
 
   // The defensive floor for a runtime with no Intl.Segmenter: a Latin word is
-  // still found by its spaces, but Thai has none, so only its last syllable
-  // (leading vowel + consonant + marks) glues -- short, never a clause.
+  // still found by its spaces, but Thai has none, so only its last consonant
+  // glues, with a leading vowel before it and any marks after it -- short,
+  // never a clause.
   describe('without Intl.Segmenter', () => {
     const saved = Intl.Segmenter;
     beforeEach(() => {

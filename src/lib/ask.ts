@@ -97,7 +97,7 @@ const BUILD_SOURCES: CannedSource[] = [
 // confident wrong topic.
 //
 // T18-b (CO-10, ruling PR5) -- the prototype's own wrong answers (P4
-// review Minor F), pinned in tests/ask.test.ts's 47 + 20 rows:
+// review Minor F), pinned in tests/ask.test.ts's question table:
 //  - "business model" and "featured in/on/by" (press) decline: neither is
 //    published content (rows 25 and "featured in the media"). T18-b2 adds
 //    the Thai press words (ออกสื่อ, ให้สัมภาษณ์, ลงข่าว).
@@ -120,14 +120,15 @@ export const ASK_CANNED: readonly Canned[] = [
   // "gave an interview", ลงข่าว "in the news"). Checked before the retail
   // entry, whose bare สื่อ would otherwise answer them as retail media;
   // ออกสื่อโฆษณา / ออกสื่อในร้าน mean running ads or in-store media, so
-  // those still fall through to retail.
+  // those still fall through to retail -- in (ใน) or at (ที่) a store, a
+  // mall, a branch or a supermarket alike (lane C review m2).
   // Lane C review I3: the English and mixed press questions too ("been in
   // the media", "media coverage", "interview"), which the retail entry's
   // bare "media" answered with a confident "Yes." -- except "in the media
   // industry / business / sales", which is a job question and stays retail.
   {
     match:
-      /\bbusiness models?\b|\bfeatured (in|on|by)\b|\b(?:been|appeared?) in the (?:media|news|press)\b(?!\s+(?:industry|business|sales))|\b(?:media|press) (?:coverage|mentions?)\b|\binterview(?:s|ed)?\b|ออกสื่อ(?!โฆษณา|ในร้าน)|ให้สัมภาษณ์|ลงข่าว/i,
+      /\bbusiness models?\b|\bfeatured (in|on|by)\b|\b(?:been|appeared?) in the (?:media|news|press)\b(?!\s+(?:industry|business|sales))|\b(?:media|press) (?:coverage|mentions?)\b|\binterview(?:s|ed)?\b|ออกสื่อ(?!โฆษณา|(?:ใน|ที่)(?:ร้าน|ห้าง|สาขา|ซูเปอร์))|ให้สัมภาษณ์|ลงข่าว/i,
     decline: true,
   },
   // Lane C review I1: who founded a company, and when, isn't published
@@ -141,7 +142,11 @@ export const ASK_CANNED: readonly Canned[] = [
     decline: true,
   },
   {
-    match: /\bright now\b|\bworking on\b|\bcurrently\b|\bthese days\b|ตอนนี้|ทำอะไรอยู่|ช่วงนี้/i,
+    // Lane C review m1: bare "today" is not a current-work question ("Can I
+    // call him today?"), but his work today is: a work word before it, or
+    // ทำงาน after it in a mixed question.
+    match:
+      /\bright now\b|\bworking on\b|\bcurrently\b|\bthese days\b|\b(?:doing|work|works|job|living)\b[^.?!]*\btoday\b|\btoday\b[^.?!]*ทำงาน|ตอนนี้|ทำอะไรอยู่|ช่วงนี้/i,
     answer: {
       en: 'Klao has been Senior Business Development at Actmedia since March 2026, opening new channels with Modern Trade retailers and project-managing live in-store rollouts; the largest is a nationwide in-store screen installation.[1] Outside work he builds AI tools: GoNai is live[2] and Aje is a working prototype.[3]',
       th: 'ตั้งแต่ มี.ค. 2026 Klao เป็น Senior Business Development ที่ Actmedia หาช่องทางใหม่กับค้าปลีก Modern Trade และคุมโปรเจกต์ที่รันอยู่ โปรเจกต์ใหญ่สุดคือติดตั้งจอในร้านทั่วประเทศ[1] นอกเวลางานเขาสร้างเครื่องมือ AI เอง GoNai เปิดใช้งานแล้ว[2] และ Aje เป็น prototype ที่ใช้งานได้[3]',
@@ -155,7 +160,7 @@ export const ASK_CANNED: readonly Canned[] = [
     // reviewer's guard also listed Actmedia; a founder question about
     // Actmedia never gets here, the decline entry above takes it.)
     match:
-      /\bstartups?\b|\bstart-ups?\b|สตาร์ทอัพ|\btripedia\b|\btalatify\b|\bpitch(ed|es)?\b|^(?!.*(?:\bbusiness\b|\bshops?\b|\bburgers?\b|\brestaurants?\b|\bbun dance\b|ร้าน|เบอร์เกอร์)).*\bfound(?:ed|er)\b/i,
+      /\bstartups?\b|\bstart-ups?\b|สตาร์ทอัพ|\btripedia\b|\btalatify\b|\bpitch(ed|es)?\b|^(?!.*(?:\bbusiness\b|\bshops?\b|\bburgers?\b|\brestaurants?\b|\bbun dance\b|ร้าน|เบอร์เกอร์)).*(?:\bfound(?:ed|er)\b|ผู้ก่อตั้ง)/i,
     answer: {
       en: 'Yes. He co-founded two. Tripedia, a trip-planning platform, made the final 30 of 500 teams at KATALYST Startup Launchpad 2022.[1] Talatify, a fresh-market delivery platform, was pitched at the TEP startup screening round in 2025, with SOM sized at THB 37M.[2]',
       th: 'เคยครับ Klao เป็น Co-founder สองโปรเจกต์ Tripedia แพลตฟอร์มวางแผนทริป เข้ารอบ 30 ทีมสุดท้ายจาก 500 ทีมใน KATALYST Startup Launchpad 2022[1] และ Talatify แพลตฟอร์มส่งของสดจากตลาด ที่นำเสนอในรอบคัดเลือก TEP ปี 2025 และประเมิน SOM ไว้ 37 ล้านบาท[2]',
@@ -218,7 +223,15 @@ export const ASK_CANNED: readonly Canned[] = [
   },
   // T18-b: programming languages are a build question -- checked before the
   // spoken-language entry below, with the same answer as the last entry.
-  { match: /\bcode in\b|โค้ด/i, answer: BUILD_ANSWER, sources: BUILD_SOURCES },
+  // Lane C review m3: "programming", "written in" (but not "written in
+  // Thai/English", the site's own languages), เขียนโปรแกรม, and making an
+  // app or a site ด้วยภาษา ("in" a language).
+  {
+    match:
+      /\bcode in\b|\bprogramming\b|\bwritten in\b(?! (?:thai|english)\b)|โค้ด|เขียนโปรแกรม|(?:ทำ|เขียน|สร้าง)(?:แอป|เว็บ)?ด้วยภาษา/i,
+    answer: BUILD_ANSWER,
+    sources: BUILD_SOURCES,
+  },
   {
     match: /\blanguages?\b|\benglish\b|\bthai\b|ภาษา|อังกฤษ/i,
     answer: {

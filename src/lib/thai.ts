@@ -195,9 +195,10 @@ export function keepRuns(text: string, options?: { display?: boolean }): Run[] {
  *
  *  Where Intl.Segmenter is missing it falls back to spaces: a Latin word or
  *  number back to the space before it, and for Thai (no spaces inside a
- *  clause) just the last syllable -- leading vowel, consonant, and whatever
- *  follows it. Intl.Segmenter ships in every browser and Node version this
- *  app targets, so this is a defensive floor, not a path expected to run. */
+ *  clause) just the last consonant, with a leading vowel before it and any
+ *  marks or punctuation after it ("ทั่วประเทศ" glues "ศ", "ได้" glues whole).
+ *  Intl.Segmenter ships in every browser and Node version this app targets,
+ *  so this is a defensive floor, not a path expected to run. */
 export function glueTail(segment: string, locale: Locale): { head: string; tail: string } {
   const body = segment.trimEnd();
   if (!body) return { head: segment, tail: '' };
@@ -239,8 +240,8 @@ function lastWordStart(plain: string, locale: Locale): number | null {
   const last = /[\p{L}\p{N}](?=[^\p{L}\p{N}]*$)/u.exec(plain);
   if (!last) return null;
   if (THAI_RE.test(last[0])) {
-    // Thai: back to its syllable's consonant, and the leading vowel
-    // (เ แ โ ใ ไ) written before it, if any.
+    // Thai: back to the last consonant, plus the leading vowel (เ แ โ ใ ไ)
+    // written before it, if any.
     return /[เ-ไ]?[ก-ฮ][^ก-ฮ\s]*$/.exec(plain)?.index ?? last.index;
   }
   // A Latin word or a number: back to the space (or Thai text) before it.

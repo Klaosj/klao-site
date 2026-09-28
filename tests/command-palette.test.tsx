@@ -79,10 +79,11 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  // The whole palette, Ask Preview included, never touches the network.
-  expect(fetchSpy).not.toHaveBeenCalled();
+  // Read what the test left behind, tear down, and only then assert (lane C
+  // review m6): a failed check here must not skip the teardown and take the
+  // next test down with it.
+  const fetches = fetchSpy.mock.calls.length;
   const notImplemented = consoleError.mock.calls.map((args) => args.map(String).join(' ')).filter((m) => /Not implemented/.test(m));
-  expect(notImplemented).toEqual([]);
   cleanup();
   document.body.innerHTML = '';
   history.replaceState(null, '', '/');
@@ -91,6 +92,9 @@ afterEach(() => {
   // A couple of fix-round-1 tests below use fake timers (the Ask decline's
   // 2 s copy revert); this returns every test after them to real ones.
   vi.useRealTimers();
+  // The whole palette, Ask Preview included, never touches the network.
+  expect(fetches, 'fetch calls').toBe(0);
+  expect(notImplemented).toEqual([]);
 });
 
 function open(locale: 'en' | 'th' = 'en', initialQuery = '') {

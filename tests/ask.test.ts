@@ -288,10 +288,49 @@ describe('askPreview pinned question table (fix wave finding 4, re-review Import
     // the decline stands between it and the retail answer.
     ['Was his retail media work featured on TV?', 'en', 'decline', 'm5: featured on'],
     ['Was his in-store work featured by a magazine?', 'en', 'decline', 'm5: featured by'],
+    // Review m1: bare "today" left right-now in PR5, but a question about
+    // his work today is still a current-work question.
+    ["What's he doing today?", 'en', 'right-now', 'review #10, m1'],
+    ['Where does he work today?', 'en', 'right-now', 'review #11, m1'],
+    ['Is he free today for a call?', 'en', 'decline', 'review #12, m1: no work word'],
+    ['What does he do for a living today?', 'en', 'right-now', 'review #13, m1'],
+    ['today ทำงานที่ไหน', 'th', 'right-now', 'review #37, m1 (mixed)'],
+    ['Tell me where he works today', 'en', 'right-now', 'm1: works'],
+    ['Which job does he have today?', 'en', 'right-now', 'm1: job'],
+    ['วันนี้ว่างไหม', 'th', 'decline', 'review #29'],
+    // Review m2: ออกสื่อ in the in-store sense (in a store, a mall, a branch,
+    // a supermarket) keeps the retail answer; the press sense declines.
+    ['ช่วยออกสื่อในห้างได้ไหม', 'th', 'retail', 'review #27, m2: in a mall'],
+    ['เคยออกสื่อในร้านค้าไหม', 'th', 'retail', 'review #46, m2/m5 (MC): in a store'],
+    ['ช่วยออกสื่อที่สาขาได้ไหม', 'th', 'retail', 'm2: at a branch'],
+    ['ออกสื่อในซูเปอร์ได้ไหม', 'th', 'retail', 'm2: in a supermarket'],
+    ['เคยออกทีวีไหม', 'th', 'decline', 'review #25'],
+    ['มีข่าวเกี่ยวกับเขาไหม', 'th', 'decline', 'review #26'],
+    ['ขายสื่อในร้านค้าปลีกไหม', 'th', 'retail', 'review #28'],
+    // Review m3: programming-language questions get the build answer, not
+    // the spoken-language one; the site's own languages stay language.
+    ['What programming languages does he know?', 'en', 'build', 'review #19, m3'],
+    ['Does he code in Python?', 'en', 'build', 'review #20'],
+    ['What language is GoNai written in?', 'en', 'build', 'review #21, m3'],
+    ['Can he code in TypeScript?', 'en', 'build', 'review #22'],
+    ['เขียนโปรแกรมภาษาอะไรได้บ้าง', 'th', 'build', 'review #31, m3'],
+    ['ทำแอปด้วยภาษาอะไร', 'th', 'build', 'review #32, m3'],
+    ['code in ภาษาอะไร', 'th', 'build', 'review #36'],
+    ['Did he code in his last job?', 'en', 'build', 'review #45'],
+    ['Is the site written in Thai?', 'en', 'language', 'm3: written in Thai/English is the site language'],
+    ['เขียนเว็บด้วยภาษาอะไร', 'th', 'build', 'm3: writing a site "in" a language'],
+    ['คุยด้วยภาษาอะไรได้บ้าง', 'th', 'language', 'm3: speaking in a language stays language'],
+    // Review m4: the Thai word for founder, under the same guard as I1.
+    ['เป็นผู้ก่อตั้งอะไรบ้าง', 'th', 'startup', 'review #30, m4'],
+    ['เป็นผู้ก่อตั้งร้านอะไร', 'th', 'business', 'm4 guard: a shop is A Bun Dance'],
+    // The rest of the reviewer's 46.
+    ['เคยเป็นเจ้าของร้านไหม', 'th', 'business', 'review #33'],
+    ['Which projects are featured on this site?', 'en', 'decline', 'review #41'],
+    ['What tools are featured in his toolbox?', 'en', 'decline', 'review #42'],
   ];
 
   it('covers every pinned question', () => {
-    expect(ROWS).toHaveLength(126);
+    expect(ROWS).toHaveLength(157);
   });
 
   it.each(ROWS)('%s (%s) -> %s [%s]', (query, locale, expected) => {

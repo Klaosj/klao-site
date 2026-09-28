@@ -24,13 +24,16 @@ beforeEach(() => {
 afterEach(async () => {
   // A followed link navigates on a later task, so let one run first.
   await new Promise((r) => setTimeout(r, 0));
+  // Read what the test left behind, tear down, and only then assert (lane C
+  // review m6): a failed check here must not skip the teardown and take the
+  // next test down with it.
   const notImplemented = consoleError.mock.calls.map((args) => args.map(String).join(' ')).filter((m) => /Not implemented/.test(m));
-  expect(notImplemented).toEqual([]);
   cleanup();
   document.body.innerHTML = '';
   history.replaceState(null, '', '/');
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
+  expect(notImplemented).toEqual([]);
 });
 
 const listen = (name: string) => {
