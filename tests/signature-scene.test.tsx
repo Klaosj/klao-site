@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { readFileSync } from 'node:fs';
 import { act, cleanup, render } from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -431,6 +432,28 @@ describe('SignatureScene re-fits when a web font lands late (N3)', () => {
     sizes.head = 260;
     await f.resolveReady();
     expect(toggle.mock.calls.filter(([cls, on]) => cls === 'pin' && on === true)).toHaveLength(0);
+  });
+});
+
+// N2 (Klao chose option A, 28 Sep): mid-scroll on a short phone, caption A sits over the ring of
+// app tiles. The frosted caption goes on top, so the tiles read softly through its blur and never
+// cover its text. Only the stacking order changes, never a position. The tiles take
+// z-index `apps.length - i` (the first tile, which turns into GoNai's pin, tops the pile), so the
+// captions must sit above the highest of them.
+describe('SignatureScene stacks the captions over every app tile (N2)', () => {
+  it('gives the captions a z-index above every tile, and keeps the pile topped by the GoNai tile', () => {
+    const { container } = render(<SignatureScene copy={COPY} />);
+    const root = sectionOf(container);
+    expect(root.classList.contains('pin')).toBe(true);
+    const tileZ = Array.from(root.querySelectorAll<HTMLElement>('.sig-app')).map((el) => Number(el.style.zIndex));
+    expect(tileZ).toEqual([5, 4, 3, 2, 1]);
+    const css = readFileSync('src/components/signature.css', 'utf8');
+    const rule = css.match(/\.sig\.pin \.sig-cap \{[^}]*\}/)?.[0] ?? '';
+    const capZ = Number(rule.match(/z-index:\s*(-?\d+)/)?.[1]);
+    expect(capZ).toBeGreaterThan(Math.max(...tileZ));
+    // The head still sits under the tiles it never meets (T12 F2 keeps them apart), and the
+    // "Open app" caption shares the captions' layer: nothing else in the stack moves.
+    expect(css).toContain('.sig.pin .sig-head { position: absolute; top: 12vh; left: 0; right: 0; z-index: 3;');
   });
 });
 

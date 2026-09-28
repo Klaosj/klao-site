@@ -86,7 +86,11 @@
   .sig.pin .sig-chip { display: grid; padding: 4px 12px; border-radius: 14px; background: var(--glass-ctl); color: var(--ink-1); font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
   .sig.pin .sig-year { grid-area: 1 / 1; opacity: 0; }
   .sig.pin .sig-frame { max-width: none; transform-origin: 50% 50%; opacity: 0; }
-  .sig.pin .sig-cap { position: absolute; left: 50%; bottom: 32px; z-index: 4; width: min(600px, 100% - 32px); margin-left: calc(min(600px, 100% - 32px) / -2); opacity: 0; transform: translateY(8px); }
+  /* z-index 6 (N2, Klao's option A): above every app tile, which SignatureScene stacks at
+     `apps.length - i` (5 down to 1). Mid-scroll on a short phone caption A meets the ring; its
+     frosted glass now sits on top and blurs the tiles instead of the map tile covering its text.
+     Stacking only: no position moves. */
+  .sig.pin .sig-cap { position: absolute; left: 50%; bottom: 32px; z-index: 6; width: min(600px, 100% - 32px); margin-left: calc(min(600px, 100% - 32px) / -2); opacity: 0; transform: translateY(8px); }
   /* Off-stage until its window: an invisible "Open app" must not catch clicks. */
   .sig.pin .sig-cap-b { transform: translateY(100vh); }
   /* A keyboard user who tabs to "Open app" early sees it: focus wins over the scrub. */
