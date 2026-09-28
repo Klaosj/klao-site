@@ -89,41 +89,102 @@ describe('askPreview', () => {
   });
 });
 
-// I-3 (fix wave finding 4, Important): the prototype's canned matchers were
-// bare substrings, so a common English word inside an unrelated question
-// gave a confident wrong answer -- "app" matched inside "approach", bare
-// "media" matched "social media", "business" alone matched "business
-// development" (the founder/burger-shop entry, not the job-title one), and
-// the "pay " trailing-space hack still matched inside "repay". Every English
-// alternative is now \b-anchored and the retail entry is checked before the
-// business/founder one. This walks ASK_CANNED the same first-match-wins way
-// askPreview() does, without the bestFaq() fallback, so each row pins
-// exactly which entry (by name) a query lands on, or 'none'.
-describe('ASK_CANNED word-boundary matching (fix wave finding 4)', () => {
-  const ENTRY_NAME = ['decline-pay', 'right-now', 'startup', 'retail', 'business', 'language', 'build'] as const;
-  const matchedEntry = (q: string): string => {
-    const i = ASK_CANNED.findIndex((c) => c.match.test(q));
-    return i < 0 ? 'none' : ENTRY_NAME[i];
-  };
+// I-3 (fix wave finding 4, Important) + re-review round 1 (Important A). The
+// prototype's canned matchers were bare substrings, so a common word inside
+// an unrelated question gave a confident wrong answer -- "app" matched
+// inside "approach", bare "media" matched "social media", "business" alone
+// matched "business development" (the founder entry, not the job-title
+// one), the "pay " hack matched inside "repay". Every English alternative
+// is \b-anchored, the retail entry is checked before business/founder, and
+// (round 1 fix-up) "retail(ers?)"/"media"/"developer(s)" are kept as real
+// words instead of dropped outright, พัฒนาธุรกิจ (the site's own TH job
+// title) is added to retail, and "social media"/โซเชียล declines explicitly
+// (checked first) rather than falling through to a wrong topic.
+//
+// 47 independent questions (reviewer's re-review table, verbatim), run
+// through the real askPreview() -- canned matchers AND the bestFaq()
+// fallback -- against the real faq.json fixture. `outcome` identifies which
+// canned entry (by name) or FAQ item produced the answer, so each row pins
+// the exact result, not just "an answer of some kind". Rows 24-26 and 39
+// stay WRONG and 13-14 stay a MISS on purpose: they're inherited from the
+// prototype, not part of this fix (Minor F, P5 candidates) -- fixing them
+// risks a regression Important A's own patch was verified NOT to cause.
+describe('askPreview 47-question table (fix wave finding 4 + re-review Important A)', () => {
+  const ENTRY_NAME = [
+    'decline-pay',
+    'decline-social',
+    'right-now',
+    'startup',
+    'retail',
+    'business',
+    'language',
+    'build',
+  ] as const;
 
-  it.each([
-    ['What is his approach to enterprise deals?', 'none'],
-    ['Does he build apps himself?', 'build'],
-    ['What is his take on social media strategy?', 'none'],
-    ['Is he active on social media?', 'none'],
-    ['Tell me about his business development experience', 'retail'],
-    ['Has he run his own business?', 'business'],
-    ['Will he repay the investors?', 'none'],
-    ['How much does the role pay?', 'decline-pay'],
-    ['What is his salary?', 'decline-pay'],
-    ['Does he do retail media?', 'retail'],
-    ['เคยทำงานค้าปลีกไหม', 'retail'],
-    ['Has he pitched a startup?', 'startup'],
-    ['Which languages does he speak?', 'language'],
-    ['Does he code himself?', 'build'],
-    ['Is he a founder?', 'business'],
-  ])('%s -> %s', (query, expected) => {
-    expect(matchedEntry(query)).toBe(expected);
+  function outcome(query: string, locale: 'en' | 'th'): string {
+    const answer = askPreview(query, faq, locale);
+    if (answer.kind === 'decline') return 'decline';
+    const i = ASK_CANNED.findIndex((c) => !c.decline && answer.text === c.answer[answer.lang]);
+    if (i >= 0) return ENTRY_NAME[i];
+    // Not a canned match: the bestFaq() fallback. Its first source is
+    // always the FAQ item itself, id faqAnchorId()'d ('faq-xxx').
+    return `faq:${(answer.sources[0]?.target ?? '').replace(/^faq-/, '')}`;
+  }
+
+  // Explicit tuple type: an inline `as const` array of heterogeneous string
+  // literals doesn't unify into one tuple shape for it.each's callback.
+  const ROWS: [query: string, locale: 'en' | 'th', expected: string, note: string][] = [
+    ["What's his approach to enterprise deals?", 'en', 'decline', 'named: approach'],
+    ['Is he active on social media?', 'en', 'decline', 'named: social media'],
+    ['Does he do social media marketing?', 'en', 'decline', 'named: social media'],
+    ['Tell me about his business development experience', 'en', 'retail', 'named: BD'],
+    ['What does business development at Actmedia involve?', 'en', 'retail', 'named: BD'],
+    ['How much does the job pay?', 'en', 'decline', 'named: pay'],
+    ['Will he repay the investors?', 'en', 'decline', 'named: pay (repay)'],
+    ['Which apps has he made?', 'en', 'build', 'plural: apps'],
+    ['Does he work with retailers?', 'en', 'retail', 'plural: retailers (round-1 regression)'],
+    ['Which retailers has he worked with?', 'en', 'retail', 'plural: retailers (round-1 regression)'],
+    ['Is he paying for Claude?', 'en', 'decline', 'verb: paying'],
+    ['Is he a developer?', 'en', 'build', 'noun: developer (round-1 regression)'],
+    ['Has he built a chatbot?', 'en', 'decline', 'verb: built (inherited miss, Minor F)'],
+    ['Has he founded anything?', 'en', 'decline', 'verb: founded (inherited miss, Minor F)'],
+    ['Does he build apps himself?', 'en', 'build', ''],
+    ['Does he write code?', 'en', 'build', ''],
+    ["What's he working on right now?", 'en', 'right-now', ''],
+    ['What is his salary?', 'en', 'decline', ''],
+    ['Does he work in media?', 'en', 'retail', 'bare "media" (round-1 regression)'],
+    ['Does he do in-store media?', 'en', 'retail', ''],
+    ['Has he run his own business?', 'en', 'business', ''],
+    ['Did he start a startup?', 'en', 'startup', ''],
+    ['Does he speak English?', 'en', 'language', ''],
+    ['Which languages does he code in?', 'en', 'language', 'inherited WRONG (Minor F, P5)'],
+    ["What's the business model of GoNai?", 'en', 'business', 'inherited WRONG (Minor F, P5)'],
+    ['Can I call him today?', 'en', 'right-now', 'inherited WRONG (Minor F, P5)'],
+    ['How do I reach him?', 'en', 'faq:fx-faq-contact', ''],
+    ['What is Actmedia?', 'en', 'retail', ''],
+    ['ตอนนี้ทำงานอะไรอยู่', 'th', 'right-now', ''],
+    ['เงินเดือนเท่าไหร่', 'th', 'decline', ''],
+    ['เคยทำสตาร์ทอัพไหม', 'th', 'startup', ''],
+    ['เคยทำธุรกิจของตัวเองไหม', 'th', 'business', ''],
+    ['พูดภาษาอังกฤษได้ไหม', 'th', 'language', ''],
+    ['เขียนโค้ดเองหรือเปล่า', 'th', 'build', ''],
+    ['เคยทำงานกับร้านค้าปลีกไหม', 'th', 'retail', 'ร้าน + ค้าปลีก'],
+    ['งานพัฒนาธุรกิจที่ทำอยู่คืออะไร', 'th', 'retail', 'TH "business development" (named bug, TH)'],
+    ['นักพัฒนาธุรกิจทำอะไรบ้าง', 'th', 'retail', "TH BD, site's own role word (named bug, TH)"],
+    ['ทำสื่อโซเชียลเป็นไหม', 'th', 'decline', 'TH "social media" (named bug, TH)'],
+    ['เขียนโค้ดภาษาอะไร', 'th', 'language', 'inherited WRONG (Minor F, P5)'],
+    ['ติดต่อยังไง', 'th', 'faq:fx-faq-contact', ''],
+    ['เคยทำ startup ไหม', 'th', 'startup', 'mixed'],
+    ['ทำappอะไรบ้าง', 'th', 'build', 'mixed, no spaces'],
+    ['ทำ business development ที่ไหน', 'th', 'retail', 'mixed BD'],
+    ['ทำ retail media มานานยัง', 'th', 'retail', 'mixed'],
+    ['ขอ salary expectation หน่อย', 'th', 'decline', 'mixed pay'],
+    ['ทำงานกับ retailers เจ้าไหนบ้าง', 'th', 'retail', 'mixed plural (round-1 regression)'],
+    ['ใช้ Claude เขียน code ไหม', 'th', 'build', 'mixed'],
+  ];
+
+  it.each(ROWS)('%s (%s) -> %s [%s]', (query, locale, expected) => {
+    expect(outcome(query, locale)).toBe(expected);
   });
 });
 
