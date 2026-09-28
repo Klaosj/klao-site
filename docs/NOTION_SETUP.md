@@ -677,3 +677,69 @@ confirmed it.
   content changes — only for code changes, or (per `docs/DEPLOY.md`) the
   one-time step of adding the Notion environment variables to Vercel in the
   first place.
+
+## Where each piece of the home page comes from
+
+Checked against the code in September 2026. "Bundled fallback" is what the
+page shows while a database or property is missing (`src/content/fixtures/`).
+Rows marked "code" change only with a commit, not in Notion.
+
+| On the page | Edited in | Bundled fallback |
+|---|---|---|
+| Hero headline and subline | Profile · HeadlineEN/TH, NowEN/TH — **not** BylineEN/TH, which the home page never reads (`HeroTour.tsx`) | `profile.json` |
+| Portrait | Profile · Photo — the hero's greeting icon, the klao-site tour frame's small photo, and the By day photo all read the same field | `profile.json` |
+| Tour frames and their captions | Projects · Tour, TourOrder, Media, Screenshot, **ScreenshotPhone** (phone-only, falls back to a centre-crop of Screenshot), Wash, KickerEN/TH (falls back to StatusEN/TH), QuestionEN/TH (falls back to DescriptionEN/TH), LiveURL (shown as the window's host when Media is `win`), AltEN/TH. The klao-site frame is the one exception: it draws Profile · HeadlineEN/TH and Photo instead of a Projects row | `projects.json` |
+| Signature scene (2022 → 2026) | Projects · the Tripedia row (QuestionEN/TH only) and the GoNai row (Name, StatusKey, DescriptionEN/TH, LiveURL, Screenshot, AltEN/TH), joined by GoNai's `LineageOf`. **The "30 → 500" figure is code** (`SIG_STAT` in `src/lib/signature.ts`), not either row's Outcome — OutcomeEN/TH is not read by this scene at all | `projects.json` |
+| Projects index rows | Projects · Name, Type, QuestionEN/TH, StatusKey, StatusEN/TH, Media, Screenshot, Order | `projects.json` |
+| Project sheet | Projects · Name, KickerEN/TH, QuestionEN/TH, DescriptionEN/TH, StatusKey, StatusEN/TH, OutcomeEN/TH, Stack, LiveURL, RepoURL, Media, Screenshot, Wash, AltEN/TH, LineageOf, Slug | `projects.json` |
+| Career rail, pills and panel | Career · Role, RoleTH, Company, StartDate, EndDate, Period (fallback text when Start/End are both empty), WinsEN/TH, FigureValue, FigureLabelEN/TH, FigureNoteEN/TH | `career.json` |
+| Toolbox — Methods | Skills · Name, Tier (`top` rows) | `skills.json` |
+| Toolbox — Stack and Languages | code: `TOOLBOX_STACK` in `src/lib/career.ts`, `src/lib/dictionary.ts` | — |
+| Résumé meta line ("2 pages · updated …") | code: `resumeMeta` in `src/lib/dictionary.ts` | — |
+| By day prologue and closing line | Profile · PrologueEN/TH, ClosingLineEN/TH (empty falls back to HeadlineEN/TH, so the section still ends on a sentence) | `profile.json` |
+| By day chapters | Story (every field) | `story.json` |
+| FAQ questions, answers, links | FAQ (every field) | `faq.json` |
+| Contact: email, Based in, Working in, Résumé | Profile · Email, BasedInEN/TH, **WorkingInEN/TH** (renamed from the bare `WorkingIn`, master R29), ResumeURL | `profile.json` |
+| Contact: the open question | Questions · newest `wondering`/`building` row — shown only when Profile `Email` is also filled | `questions.json` |
+| Section headlines, eyebrows, nav, buttons, footer legal line | code: `src/lib/dictionary.ts` | — |
+| ⌘K Ask Preview answers | code: `src/lib/ask.ts` (`ASK_CANNED`, with the FAQ as a second source) | — |
+
+**Corrections from the row list this table started from** (traced against
+the merged code, `feat/white-edition` at `1c0dac0`):
+
+- The hero's second line is `Profile.now` (NowEN/TH), not Byline — the
+  prototype's Byline text ("Bangkok · BD × Data Analytics …") is not on the
+  White Edition home page at all. `BylineEN/TH` still exists on the Profile
+  database and in the fixture, and nothing in `src/` reads it — it is
+  effectively dead content, kept only because deleting a Profile property
+  isn't reversible from this repo. No action needed; noted here so it
+  isn't mistaken for something Klao should keep editing.
+- The Signature scene's "30 → 500" is a fixed brand fact in code
+  (`signature.ts`), never Tripedia's Outcome, on purpose (Global
+  Constraints: "no count-up animations; big numerals only for 30/500").
+  Editing Tripedia's `OutcomeEN`/`OutcomeTH` changes its sheet, not the
+  Signature scene.
+- Tour frames and the Project sheet both read several more properties than
+  the first draft of this table listed (Media, Screenshot, Wash, Status,
+  and — new since lane C merged — ScreenshotPhone); listed in full above.
+- Career's `Period` is still read as the pre-migration fallback wherever
+  `StartDate` is empty (the standalone `/career` page without JavaScript,
+  the home band's time-rail label, and the ⌘K palette hint) — worth
+  keeping filled on rows without dates yet, not just a legacy field to
+  ignore.
+
+**Code-owned copy that spec §7 says belongs in Notion** (By day, Career
+figures, FAQ answers, statuses and alt text already moved there in this
+migration — these two did not):
+
+- **⌘K Ask Preview's canned answers** (`ASK_CANNED` in `src/lib/ask.ts`) —
+  the quoted sources and their answer text for the built-in question set,
+  separate from the FAQ-matching fallback. Recommended default: **keep in
+  code for this release** — the matching logic and the copy are tightly
+  coupled (each entry's `match` regex, decline rules and source quotes
+  would need a schema of their own), and Notion-driving this is a bigger
+  change than this migration's scope.
+- **Footer legal line** (`footerNote` in `src/lib/dictionary.ts`, "Built at
+  night, powered by good coffee."). Recommended default: **keep in code
+  for this release** — it changes rarely and sits beside the auto-computed
+  copyright year and freshness date, which stay code either way.
