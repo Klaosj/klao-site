@@ -278,8 +278,8 @@
 
 /* Unlayered on purpose (K10): Thai marks stack above and below the base
    letter and need more leading than a bare heading's tight arbitrary
-   `leading-[...]` utility gives -- today, only the three 404 h1s (both
-   not-found.tsx files and global-not-found.tsx), which carry no White
+   `leading-[...]` utility gives -- today, only the 404 h1s in
+   [locale]/not-found.tsx and global-not-found.tsx, which carry no White
    Edition type class of their own to bring a Thai line-height along with
    it (the other standalone routes' h1s use `font-display text-3xl`-style
    classes with no `leading-[...]` at all, so this rule never matches

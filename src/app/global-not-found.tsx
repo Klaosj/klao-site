@@ -1,28 +1,31 @@
-// Not wired up yet: Next only loads this file when `experimental.globalNotFound`
-// is on in next.config.ts (Next 15.5.26; the config schema and the dev
-// banner both still list it under "Experiments (use with caution)" --
-// re-check this file's own assumptions on each Next upgrade), which this
-// lane doesn't own -- see the Merge notes in the P5 lane-A report for the
-// exact config diff and why src/app/not-found.tsx can't just be renamed in
-// place. Until that flag lands, this file has no importer and no route;
-// not-found.tsx is what actually runs.
+// The 404 for a path that matches no page anywhere in the app (e.g.
+// /en/nope, /th/nope), and for [locale]/layout.tsx's own notFound() on a
+// segment that is no locale (e.g. /foo.png). Next routes both here because
+// `experimental.globalNotFound` is on in next.config.ts -- still experimental
+// in Next 15.5.26 (the config schema and the dev banner both list it under
+// "Experiments (use with caution)"), so re-check this file's own assumptions
+// on each Next upgrade. A notFound() thrown inside an already-matched
+// [locale] route (e.g. writing/[slug]'s unknown-slug guard) is a different
+// case: it still renders [locale]/not-found.tsx inside the locale layout.
 //
 // Root-cause note (found via Lane B's QA runner, reproduced against a cold
-// `npx next dev`): under webpack dev (never under `next build`), a genuinely
-// unmatched path (e.g. /en/qa-missing-page) crashes with "not-found.tsx
-// doesn't have a root layout" and every later request 500s until a restart.
-// Next's dev-only auto-fix (verifyRootLayout in
-// node_modules/next/dist/lib/verify-root-layout.js) tries to *write* a root
-// layout.tsx for you when one is missing, but its `availableDir` walk pops
-// the page's own path segment off first and never assigns a fallback for a
-// page that sits directly in `app/` (our case: not-found.tsx has zero
-// segments left after that pop) once any *other* layout exists in the tree
-// ([locale]/layout.tsx does) -- so the loop it should run in never executes,
-// `availableDir` stays `undefined`, and it silently gives up instead of
-// throwing or logging. `next build` doesn't hit this at all: it exits before
-// ever trying the dev auto-fix. This is a real Next.js dev-mode gap, not
-// something P0-P4 broke -- it is already present at the P4 merge base
-// (cf64a0f), unrelated to any P5 change.
+// `npx next dev`): before this file was wired up, under webpack dev (never
+// under `next build`), a genuinely unmatched path (e.g. /en/qa-missing-page)
+// crashed with "not-found.tsx doesn't have a root layout" and every later
+// request 500'd until a restart. Next's dev-only auto-fix (verifyRootLayout
+// in node_modules/next/dist/lib/verify-root-layout.js) tries to *write* a
+// root layout.tsx for you when one is missing, but its `availableDir` walk
+// pops the page's own path segment off first and never assigns a fallback
+// for a page that sits directly in `app/` (the former src/app/not-found.tsx
+// had zero segments left after that pop) once any *other* layout exists in
+// the tree ([locale]/layout.tsx does) -- so the loop it should run in never
+// executes, `availableDir` stays `undefined`, and it silently gives up
+// instead of throwing or logging. `next build` doesn't hit this at all: it
+// exits before ever trying the dev auto-fix. This is a real Next.js dev-mode
+// gap, not something P0-P4 broke -- it was already present at the P4 merge
+// base (cf64a0f). The flag commit deleted that root not-found.tsx: with the
+// flag on, nothing routed to it any more, yet it still shipped its own chunk
+// and a second copy of globals.css on every 404.
 //
 // `experimental.globalNotFound` sidesteps the whole "no root layout"
 // problem: this file becomes ITS OWN root boundary and supplies
@@ -56,7 +59,7 @@ import './globals.css';
 import Link from 'next/link';
 import { dict } from '@/lib/dictionary';
 import type { Locale } from '@/lib/models';
-import { THEME_STORAGE_KEY } from '@/lib/theme';
+import { THEME_PREPAINT_SCRIPT } from '@/lib/theme';
 import { eyebrowFont } from '@/lib/typography';
 
 // Kept and exported per PR9 (a pure helper safe to leave orphaned rather
@@ -64,21 +67,27 @@ import { eyebrowFont } from '@/lib/typography';
 // exports) -- nothing in this file calls it any more now that both locale
 // copies always render (see the file-top comment), but it is still
 // directly unit-tested (tests/not-found.test.tsx), and matches the
-// identical helper the two non-global not-found files each keep for the
-// same route-convention-export reason (see not-found.tsx's comment).
+// identical helper [locale]/not-found.tsx keeps for the same
+// route-convention-export reason (see that file's comment).
 export function resolveLocale(pathname: string | null): Locale {
   return pathname?.split('/')[1] === 'th' ? 'th' : 'en';
 }
 
-// Same theme logic as THEME_PREPAINT_SCRIPT (theme.ts), plus one line:
-// sets <html lang> from the real browser pathname before first paint (P1).
-// This page's server HTML always says `lang="en"` with BOTH locale copies
-// present in the body (below) -- only this script, reading the actual URL
-// the visitor is on, can pick the right one before paint; there is no
-// pure-CSS way to read the URL. A Thai visitor with JavaScript disabled
-// therefore sees the English copy -- the same tradeoff the theme toggle
-// already accepts for its own no-JS case (light, the CSS default).
-export const GLOBAL_NOT_FOUND_PREPAINT_SCRIPT = `(function(){var d=document.documentElement;d.classList.add('js');try{var t=window.localStorage.getItem(${JSON.stringify(THEME_STORAGE_KEY)});if(t==='light'||t==='dark')d.setAttribute('data-theme',t);}catch(e){}d.lang=location.pathname.split('/')[1]==='th'?'th':'en';})();`;
+// THEME_PREPAINT_SCRIPT (theme.ts) verbatim, then one more statement that
+// sets <html lang> from the real browser pathname before first paint (P1)
+// and, for Thai, the tab title (review n1). Composed rather than re-typed
+// (review n3), so a later change to the theme logic or its storage key
+// reaches this page too; both halves are strings built on the server, so
+// the reuse ships no extra JS. This page's server HTML always says
+// `lang="en"` with BOTH locale copies present in the body (below) -- only
+// this script, reading the actual URL the visitor is on, can pick the right
+// one before paint; there is no pure-CSS way to read the URL. A Thai
+// visitor with JavaScript disabled therefore sees the English copy -- the
+// same tradeoff the theme toggle already accepts for its own no-JS case
+// (light, the CSS default).
+export const GLOBAL_NOT_FOUND_PREPAINT_SCRIPT = `${THEME_PREPAINT_SCRIPT}(function(){var d=document.documentElement;d.lang=location.pathname.split('/')[1]==='th'?'th':'en';if(d.lang==='th')document.title=${JSON.stringify(
+  `${dict.th.notFoundTitle} · Klao`,
+)};})();`;
 
 // The CSS that shows only the copy matching <html lang>. display:none, not
 // visibility:hidden or an opacity/clip trick (review P1's explicit ask):
@@ -132,21 +141,28 @@ function NotFoundCopy({ locale }: { locale: Locale }) {
 export default function GlobalNotFound() {
   return (
     // suppressHydrationWarning (review I1, mirrors [locale]/layout.tsx:156-159):
-    // THEME_PREPAINT_SCRIPT's logic (folded into the script below) adds `js`
+    // THEME_PREPAINT_SCRIPT (the first half of the script below) adds `js`
     // and may set `data-theme` on <html> before React hydrates, and P1 adds
     // `lang` to that same before-hydration write -- so the client DOM
     // legitimately differs from the server HTML on this one element.
-    // Without this, every root 404 logs a React hydration error once the
-    // flag is on. It only silences attribute warnings for <html> itself,
-    // not its children -- and there is nothing left for it to hide there:
-    // both locale copies below are identical on server and client.
+    // Without this, every root 404 logs a React hydration error. It only
+    // silences attribute warnings for <html> itself, not its children: the
+    // <title> carries its own (below), and the two locale copies in <body>
+    // are identical on server and client.
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Static default; not locale-aware (see the file-top P1 comment) --
-            a much smaller, pre-existing gap than the body-content flash this
-            file's redesign fixes, and not one CSS or the pre-paint script
-            can close without duplicating dictionary copy into raw JS. */}
-        <title>{`${dict.en.notFoundTitle} · Klao`}</title>
+        {/* English is the static default (the page is prerendered once, with
+            no visited URL); the pre-paint script swaps in the Thai title on
+            a /th/ path (review n1). Two props keep that swap past hydration:
+            - itemProp opts this <title> out of React 19's hoisting (see the
+              react.dev <title> page). React re-writes a hoisted title from
+              its props when it hydrates, which put the English title back
+              (seen in dev on 28 Sep). With no itemscope around it, the
+              attribute means nothing to a microdata reader.
+            - suppressHydrationWarning: as a plain element, its text differs
+              from the server's on a Thai path; React then keeps the
+              browser's text instead of throwing a mismatch (#418). */}
+        <title itemProp="name" suppressHydrationWarning>{`${dict.en.notFoundTitle} · Klao`}</title>
         <style dangerouslySetInnerHTML={{ __html: GLOBAL_NOT_FOUND_STYLE }} />
         <script dangerouslySetInnerHTML={{ __html: GLOBAL_NOT_FOUND_PREPAINT_SCRIPT }} />
       </head>

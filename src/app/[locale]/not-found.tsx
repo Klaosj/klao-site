@@ -1,9 +1,10 @@
 'use client';
 
 // This boundary's 404 error document ships without [locale]/layout.tsx's
-// stylesheet link -- layout.tsx is the only other importer of globals.css,
-// so without this import the page renders unstyled. Verified against the
-// production build.
+// stylesheet link -- the only other importers of globals.css are
+// layout.tsx and global-not-found.tsx (a separate document), so without
+// this import the page renders unstyled. Verified against the production
+// build.
 import '../globals.css';
 
 import Link from 'next/link';
@@ -14,9 +15,9 @@ import { eyebrowFont } from '@/lib/typography';
 
 // QA C3 fix (see .superpowers/qa/2026-08-09-QA-SUMMARY.md). Next's built-in
 // 404 shipped with no <html lang>, zero <a> elements and English-only copy
-// on a bilingual site. This file (and src/app/not-found.tsx, its root-level
-// counterpart for a different class of unmatched URL -- see that file's own
-// comment) replaces it.
+// on a bilingual site. This file (and src/app/global-not-found.tsx, its
+// root-level counterpart for a different class of unmatched URL -- see that
+// file's own comment) replaces it.
 //
 // not-found.tsx files deliberately receive NO props -- no `params` -- so
 // the active locale has to be recovered from the URL itself, the same
@@ -33,14 +34,16 @@ export function resolveLocale(pathname: string | null): Locale {
 // mean stubbing next/navigation's router context just to reach the 'th'
 // branch, which nothing else in this repo's test suite does.
 //
-// NOT imported by src/app/not-found.tsx, even though its markup is nearly
-// identical: cross-importing a named export between two Next.js
-// route-convention files was tried first and broke at runtime under
-// Turbopack ("resolveLocale is not a function") -- the app-router loader
-// for page/not-found/layout files doesn't reliably carry extra named
-// exports through its client-reference pipeline, only the conventional
-// default export. That file keeps its own small, self-contained copy
-// instead (see its comment for the full explanation).
+// NOT imported by src/app/global-not-found.tsx, even though its markup is
+// nearly identical: cross-importing a named export between two Next.js
+// route-convention files was tried first (from the former root
+// src/app/not-found.tsx, which global-not-found.tsx replaced) and broke at
+// runtime under Turbopack ("resolveLocale is not a function") -- the
+// app-router loader for page/not-found/layout files doesn't reliably carry
+// extra named exports through its client-reference pipeline, only the
+// conventional default export. Route-convention files are not safe to use
+// as plain shared modules, so global-not-found.tsx keeps its own small,
+// self-contained copy instead.
 export function NotFoundContent({ locale }: { locale: Locale }) {
   const t = dict[locale];
 
@@ -102,7 +105,7 @@ export function NotFoundContent({ locale }: { locale: Locale }) {
 // exact file (`"[locale]/not-found.tsx"`) as the boundary's fallback. It is
 // NOT reached for a path that matches no page at all anywhere in the tree
 // (e.g. /en/nope) -- Next's router never partially renders [locale] for
-// those; see src/app/not-found.tsx for that case instead.
+// those; see src/app/global-not-found.tsx for that case instead.
 export default function NotFound() {
   const pathname = usePathname();
   return <NotFoundContent locale={resolveLocale(pathname)} />;

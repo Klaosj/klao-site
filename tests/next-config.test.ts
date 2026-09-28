@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import nextConfig from '../next.config';
@@ -22,5 +23,24 @@ describe('next.config redirects', () => {
 describe('next.config workspace root', () => {
   it('is this project, not a parent folder that has its own lockfile', () => {
     expect(nextConfig.turbopack?.root).toBe(path.resolve(import.meta.dirname, '..'));
+  });
+});
+
+// P5 flag day: src/app/global-not-found.tsx is the 404 for every path that
+// matches no page, and only because this experimental flag is on. The old
+// root src/app/not-found.tsx is deleted: with the flag on, nothing routed to
+// it, yet it still shipped a chunk and a second globals.css on every 404.
+// The two facts are pinned together: turning the flag off without restoring
+// that file would leave those paths without the site's own 404.
+describe('next.config global not-found', () => {
+  const app = path.resolve(import.meta.dirname, '../src/app');
+
+  it('turns on experimental.globalNotFound', () => {
+    expect(nextConfig.experimental?.globalNotFound).toBe(true);
+  });
+
+  it('keeps global-not-found.tsx and no root not-found.tsx beside it', () => {
+    expect(existsSync(path.join(app, 'global-not-found.tsx'))).toBe(true);
+    expect(existsSync(path.join(app, 'not-found.tsx'))).toBe(false);
   });
 });
