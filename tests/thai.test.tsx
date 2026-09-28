@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 import { cleanup, render } from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import ThaiText from '@/components/ThaiText';
-import { THAI_KEEP, THAI_RE, keepRuns, type Run } from '@/lib/thai';
+import { THAI_KEEP, THAI_RE, glueTail, keepRuns, type Run } from '@/lib/thai';
 
 afterEach(cleanup);
 
@@ -221,6 +221,67 @@ describe('keepRuns display option (master R25)', () => {
       { text: 'CRM', keep: false },
       { text: 'เครื่องมือ', keep: true },
     ]);
+  });
+});
+
+// T18-a (CO-11; P4 re-check f172c73, E2 + E3): glueTail() picks the short
+// bit of text that rides inside AskCard's `.ask-glue { white-space: nowrap }`
+// span with the [n] marker after it. Two ways it could go wrong, neither
+// visible in jsdom (no layout): an EMPTY tail leaves the marker alone in the
+// span, so it can orphan onto its own line again; a tail that is the WHOLE
+// segment puts a Thai clause inside a nowrap span, which overflows at 320px.
+// Each row: [segment, locale, tail with Intl.Segmenter, tail without it].
+// head + tail must always give back the segment, character for character.
+const GLUE_CASES: [segment: string, locale: 'en' | 'th', tail: string, fallbackTail: string][] = [
+  // Only the last word -- never the clause (kills the "whole segment" mutation).
+  ['โปรเจกต์ใหญ่สุดคือติดตั้งจอในร้านทั่วประเทศ', 'th', 'ประเทศ', 'ศ'],
+  ['และ Aje เป็น prototype ที่ใช้งานได้', 'th', 'ได้', 'ได้'],
+  ['a working prototype.', 'en', 'prototype.', 'prototype.'],
+  // A segment ending in a keep run glues the whole run, never half of it.
+  ['ประเมิน SOM ไว้ 37 ล้านบาท', 'th', '37 ล้านบาท', '37 ล้านบาท'],
+  // E2: trailing whitespace goes back onto the tail instead of emptying it.
+  ['37 ล้านบาท ', 'th', '37 ล้านบาท ', '37 ล้านบาท '],
+  ['ค้าปลีก ', 'th', 'ค้าปลีก ', 'ค้าปลีก '],
+  ['ทั่วประเทศ ', 'th', 'ประเทศ ', 'ศ '],
+  ['live ', 'en', 'live ', 'live '],
+  // E2: punctuation after the last word or keep run reaches back to it...
+  ['ติดตั้งจอในร้านค้าปลีก.', 'th', 'ค้าปลีก.', 'ค้าปลีก.'],
+  ['word …', 'en', 'word …', 'word …'],
+  // ...and a segment with no word at all glues whole (it is short by nature).
+  ['...', 'en', '...', '...'],
+  // Nit: an emoji is one code point pair -- never split into lone surrogates.
+  ['ok 🙂', 'en', 'ok 🙂', 'ok 🙂'],
+];
+
+describe('glueTail (T18-a, CO-11)', () => {
+  it.each(GLUE_CASES)('%s (%s) -> tail %j', (segment, locale, tail) => {
+    const cut = glueTail(segment, locale);
+    expect(cut.tail).toBe(tail);
+    expect(cut.head + cut.tail).toBe(segment);
+  });
+
+  it('gives a blank segment nothing to glue, and loses nothing', () => {
+    expect(glueTail('', 'en')).toEqual({ head: '', tail: '' });
+    expect(glueTail('   ', 'th')).toEqual({ head: '   ', tail: '' });
+  });
+
+  // The defensive floor for a runtime with no Intl.Segmenter: a Latin word is
+  // still found by its spaces, but Thai has none, so only its last syllable
+  // (leading vowel + consonant + marks) glues -- short, never a clause.
+  describe('without Intl.Segmenter', () => {
+    const saved = Intl.Segmenter;
+    beforeEach(() => {
+      (Intl as { Segmenter?: unknown }).Segmenter = undefined;
+    });
+    afterEach(() => {
+      (Intl as { Segmenter?: unknown }).Segmenter = saved;
+    });
+
+    it.each(GLUE_CASES)('%s (%s) -> tail %j', (segment, locale, _tail, fallbackTail) => {
+      const cut = glueTail(segment, locale);
+      expect(cut.tail).toBe(fallbackTail);
+      expect(cut.head + cut.tail).toBe(segment);
+    });
   });
 });
 

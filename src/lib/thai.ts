@@ -35,12 +35,6 @@ import type { Locale } from './models';
 
 export const THAI_RE = /[฀-๿]/;
 
-// Thai vowel signs and tone marks that only ever attach to the character
-// before them -- same set as palette-index.ts's matchBounds fallback (not
-// imported from there: that module depends on this one, not the reverse).
-// Used only by glueTail()'s no-Intl.Segmenter floor, below.
-const THAI_MARK = /[ัิ-ฺ็-๎]/;
-
 /** The prototype's KEEP array, verbatim and in its order (longest first, so
  *  the alternation below prefers the longer compound), plus words the fix wave found the
  *  prototype's own list missed: "ตอนนี้" (P3 finding 7 -- it split as "ตอน / นี้" around 900px,
@@ -189,33 +183,70 @@ export function keepRuns(text: string, options?: { display?: boolean }): Run[] {
  *   2. Otherwise, only the LAST word-like unit of the trailing plain run
  *      (Intl.Segmenter, dictionary-based so it also finds Thai word
  *      boundaries with no spaces to go on) plus any punctuation after it.
- *  Falls back to the trailing non-space run, capped at the last grapheme
- *  (never a bare combining mark), when Intl.Segmenter itself is missing --
- *  it ships in every browser and Node version this app targets, so this is
- *  a defensive floor, not a path expected to run. */
+ *
+ *  T18-a (CO-11, P4 re-check E2/E3): a segment that isn't blank always gets
+ *  a non-empty tail -- an empty one left the marker alone in its span, free
+ *  to orphan again. Trailing whitespace is set aside first and handed back
+ *  on the tail ("37 ล้านบาท " used to glue nothing), and a trailing run with
+ *  no word in it (just punctuation) reaches back to the keep run before it
+ *  ("ค้าปลีก." glues whole), or to the whole segment when there is no word
+ *  anywhere ("..."). `head` and `tail` are always two slices of the input
+ *  at one index, so `head + tail === segment`.
+ *
+ *  Where Intl.Segmenter is missing it falls back to spaces: a Latin word or
+ *  number back to the space before it, and for Thai (no spaces inside a
+ *  clause) just the last syllable -- leading vowel, consonant, and whatever
+ *  follows it. Intl.Segmenter ships in every browser and Node version this
+ *  app targets, so this is a defensive floor, not a path expected to run. */
 export function glueTail(segment: string, locale: Locale): { head: string; tail: string } {
-  if (!segment) return { head: '', tail: '' };
-  const runs = keepRuns(segment);
-  const last = runs[runs.length - 1];
-  const head = segment.slice(0, segment.length - last.text.length);
-  if (last.keep) return { head, tail: last.text };
-  const cut = lastWordCut(last.text, locale);
-  return { head: head + last.text.slice(0, cut), tail: last.text.slice(cut) };
+  const body = segment.trimEnd();
+  if (!body) return { head: segment, tail: '' };
+  const at = tailStart(body, locale);
+  return { head: segment.slice(0, at), tail: segment.slice(at) };
 }
 
-// Index within `plain` (a trailing run with no keep-run left in it) where
-// the last word-like unit starts.
-function lastWordCut(plain: string, locale: Locale): number {
+// Index within `body` (no trailing whitespace) where the glued tail starts.
+// Walks keepRuns() from the end: a keep run glues whole; a plain run glues
+// from its last word, or -- if it holds no word -- hands over to the run
+// before it (adjacent plain runs are always merged, so that is a keep run).
+// Run lengths line up with `body` because the only character keepRuns ever
+// drops is `|`, which AskCard's answers have already lost to unbreak().
+function tailStart(body: string, locale: Locale): number {
+  const runs = keepRuns(body);
+  let end = body.length;
+  for (let i = runs.length - 1; i >= 0; i--) {
+    const start = Math.max(0, end - runs[i].text.length);
+    if (runs[i].keep) return start;
+    const word = lastWordStart(body.slice(start, end), locale);
+    if (word !== null) return start + word;
+    end = start;
+  }
+  return 0; // no word anywhere ("..."): the whole segment, short by nature
+}
+
+// Index within `plain` where its last word-like unit starts, or null when it
+// holds none (only spaces, punctuation or symbols).
+function lastWordStart(plain: string, locale: Locale): number | null {
   if (typeof Intl !== 'undefined' && typeof Intl.Segmenter === 'function') {
     const segs = [...new Intl.Segmenter(locale, { granularity: 'word' }).segment(plain)];
     for (let k = segs.length - 1; k >= 0; k--) {
       if (segs[k].isWordLike) return segs[k].index;
     }
-    return plain.length; // no word-like unit at all (pure spaces/punctuation) -- nothing to glue
+    return null;
   }
-  const m = /\S+$/.exec(plain);
-  if (!m) return plain.length;
-  let s = plain.length - 1;
-  while (s > m.index && THAI_MARK.test(plain[s])) s--;
-  return s;
+  // The last letter or digit (Thai vowel signs and tone marks are \p{M},
+  // so they ride along after it as "what follows").
+  const last = /[\p{L}\p{N}](?=[^\p{L}\p{N}]*$)/u.exec(plain);
+  if (!last) return null;
+  if (THAI_RE.test(last[0])) {
+    // Thai: back to its syllable's consonant, and the leading vowel
+    // (เ แ โ ใ ไ) written before it, if any.
+    return /[เ-ไ]?[ก-ฮ][^ก-ฮ\s]*$/.exec(plain)?.index ?? last.index;
+  }
+  // A Latin word or a number: back to the space (or Thai text) before it.
+  // Stepping over every non-space code unit keeps an emoji's surrogate pair
+  // together.
+  let i = last.index;
+  while (i > 0 && !/[\s฀-๿]/.test(plain[i - 1])) i--;
+  return i;
 }
