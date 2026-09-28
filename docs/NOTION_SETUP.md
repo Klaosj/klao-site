@@ -372,7 +372,8 @@ The six "By day" chapters (`#story`), one row each. New in September 2026.
 in `**double asterisks**`. `RuleEN/TH` is the short rule beside the icon
 (`Scope it honestly.` / `ประเมินตามจริง`). `Icon` and `Sketch` pick the
 chapter's icon and line drawing — spell the option exactly as listed. The
-sixth chapter has no `Sketch` (leave it blank); its caption still works.
+last chapter has no `Sketch` — leave it blank; the site shows the five
+launch phases in that place.
 `Order` runs 1–6.
 
 Until `NOTION_DB_STORY` is set, the page shows the bundled chapters
@@ -502,7 +503,11 @@ and the code that is live before the White Edition merge ignores
 properties it doesn't know. Don't rename or delete an existing property:
 that code still reads them.
 
-Work top to bottom; tick as you go.
+Work top to bottom; tick as you go. Finish steps 1–9 before the White
+Edition merge — once a Notion Profile row exists, `Prologue`, `ClosingLine`,
+`BasedIn` and `WorkingIn` have no fixture fallback: until step 4 is done, By
+day has no prologue and its closing line falls back to the headline, and
+Contact has no Based in / Working in facts.
 
 1. **Projects — add the twelve properties** from the Projects table
    (StatusKey, StatusEN, StatusTH, KickerEN, KickerTH, Media, Wash, Tour,
@@ -521,15 +526,15 @@ Work top to bottom; tick as you go.
    | GoNai | live | Live · since Aug 2026 | win | gonai | ✓ | 2 | Tripedia |
    | klao-site | live | Live · since Aug 2026 | notion | site | ✓ | 3 | — |
 
-   **If Klao has confirmed replacing the old screenshots (Gate b, pending
-   decision):** the Aje and GoNai rows' `Screenshot` files in Notion today
-   are the pre-White-Edition captures (1600×900, with the browser
-   scrollbar visible) — drag in the current `public/images/aje.jpg` and
-   `gonai.jpg` (1580×900, no scrollbar, within the 250 KB budget) instead.
-   klao-site's dark-theme shot stops appearing on its own, once step 1's
-   `Media` select is set to `notion` for that row. If Klao hasn't decided
-   yet, leave the files as they are — the Gate a preview shows the old
-   captures either way, which is expected, not a bug.
+   **Optional:** replace the Aje and GoNai rows' `Screenshot` files — the
+   ones in Notion today are the pre-White-Edition captures (1600×900, with
+   the browser scrollbar visible) — with the current `public/images/aje.jpg`
+   and `gonai.jpg` (1580×900, no scrollbar, within the 250 KB budget). This
+   rewrites a property `main`'s production code already reads
+   (`notion-mappers.ts`), so the live site's pictures change too, within
+   the hour — harmless, same 16:9 frame, better capture. klao-site's
+   dark-theme shot stops appearing on its own once this row's `Media` is
+   set to `notion` (the table above, this step).
 3. **Career — add the seven properties** (StartDate, EndDate, FigureValue,
    FigureLabelEN/TH, FigureNoteEN/TH). Fill StartDate/EndDate on every row
    (`src/content/fixtures/career.json` has them) and the one figure with a
@@ -559,11 +564,11 @@ Work top to bottom; tick as you go.
    content edits reach production within about an hour, through ISR.
 10. **Just before the White Edition merge:** untick Published on the
     AISecretary and DailyBrief rows (they're no longer part of the site),
-    and rewrite `OutcomeEN`/`OutcomeTH` as one receipt per line (step 2).
-    Doing either earlier shows on the *current* production site — today's
-    code still renders both `Published` rows and the old single-line
+    and rewrite `OutcomeEN`/`OutcomeTH` as one receipt per line. Doing
+    either earlier shows on the *current* production site — today's code
+    still renders both `Published` rows and the old single-line
     `OutcomeEN`/`OutcomeTH` — so this step is timed to land right before
-    the merge, not before.
+    the merge, not earlier.
 
 ## Why images don't break
 
