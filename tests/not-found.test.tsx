@@ -2,6 +2,7 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { dict } from '@/lib/dictionary';
+import { THEME_PREPAINT_SCRIPT } from '@/lib/theme';
 
 // No RTL auto-cleanup is wired up in this project (no setupFiles in
 // vitest.config.ts) -- same pattern as tests/cv-band.test.tsx and friends.
@@ -216,5 +217,20 @@ describe('RootNotFound (src/app/not-found.tsx)', () => {
     render(<RootNotFound />);
     const title = document.querySelector('title');
     expect(title?.textContent).toBe(`${dict.en.notFoundTitle} · Klao`);
+  });
+
+  it('inlines the theme pre-paint script (N9/CO-13): this boundary has no <head> of its own -- Next wraps it in a layout-less shell (see the top-of-file comment) -- so a saved dark/light choice would otherwise only take effect after hydration, a frame too late for "no flash of the wrong theme"', async () => {
+    usePathname.mockReturnValue('/en/nope');
+    const { default: RootNotFound } = await import('@/app/not-found');
+    const { container } = render(<RootNotFound />);
+    const script = container.querySelector('script');
+    expect(script?.innerHTML).toBe(THEME_PREPAINT_SCRIPT);
+  });
+
+  it('renders the pre-paint script before the visible content, so it runs first', async () => {
+    usePathname.mockReturnValue('/en/nope');
+    const { default: RootNotFound } = await import('@/app/not-found');
+    const { container } = render(<RootNotFound />);
+    expect(container.firstElementChild?.tagName).toBe('SCRIPT');
   });
 });
