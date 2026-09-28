@@ -3,10 +3,14 @@
 // Playwright is deliberately NOT a project dependency (Global Constraints: no
 // new dependencies); loadChromium() finds a copy outside the repo instead.
 //
-// pageInit, readPerf, scrollThrough, themeState, collect and contrastIssues
-// run INSIDE the page. Playwright serialises each function's source, so they
-// must not reach for anything else in this module — every input arrives as
-// an argument, and helpers are declared inside the function that uses them.
+// pageInit, readPerf, scrollThrough, themeState, collect, contrastIssues and
+// overflowBleed run INSIDE the page. Playwright serialises each function's
+// source, so they must not reach for anything else in this module — every
+// input arrives as an argument, and helpers are declared inside the function
+// that uses them. That is also why overflowBleed's algorithm is copied
+// verbatim inside collect() and scrollThrough() rather than called from
+// them: a page.evaluate(fn) only ships fn's own source text, never anything
+// else this module defines.
 import { existsSync, readdirSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
@@ -123,41 +127,120 @@ export function readPerf() {
 }
 
 /**
+ * Horizontal bleed past the viewport's right edge (R28; Lane B review I1).
+ * Combines two measurements because each misses a real case the other
+ * catches:
+ *   - document scrollWidth/clientWidth: sees a bare nowrap text run or a
+ *     `::after` bleed (neither is an Element, so a per-element walk can't
+ *     find them) and a `position: absolute` element that escapes a
+ *     *static* ancestor's overflow-x clip (a well-known CSS escape — the
+ *     absolute box paints past that ancestor's clip, and scrollWidth
+ *     correctly follows the paint).
+ *   - a per-element walk: sees a `position: fixed` bleed, which
+ *     scrollWidth structurally cannot — fixed boxes are excluded from the
+ *     document's scrollable-overflow region in every engine, so something
+ *     cut off at the viewport edge (real, visible, but not "scrollable")
+ *     never moves scrollWidth at all.
+ * An ancestor's overflow-x only clips an element if that ancestor is
+ * actually in its containing-block chain: a `position: absolute` element
+ * escapes every *static* ancestor up to its first positioned one; a
+ * `position: fixed` element escapes everything up to the first ancestor
+ * with a transform, filter or `contain` (the CSS containing-block escape
+ * hatches) — or the viewport, if none exists. Getting this wrong either
+ * way was the actual defect: treating a static ancestor's clip as if it
+ * applied to an absolutely-positioned descendant wrongly exempted a real
+ * bleed.
+ */
+export function overflowBleed() {
+  const de = document.documentElement;
+  const clientWidth = de.clientWidth;
+  const scrollBleed = Math.max(0, de.scrollWidth - clientWidth);
+
+  const clipsX = (n) => /^(hidden|clip|scroll|auto)$/.test(getComputedStyle(n).overflowX);
+  const makesContainingBlock = (n) => {
+    const cs = getComputedStyle(n);
+    return (cs.transform && cs.transform !== 'none') || (cs.filter && cs.filter !== 'none') || (cs.contain && cs.contain !== 'none');
+  };
+  const clippedByAncestor = (el, position) => {
+    let n = el.parentElement;
+    if (position === 'absolute') {
+      while (n && getComputedStyle(n).position === 'static') n = n.parentElement;
+    } else if (position === 'fixed') {
+      while (n && !makesContainingBlock(n)) n = n.parentElement;
+    }
+    for (; n; n = n.parentElement) if (clipsX(n)) return true;
+    return false;
+  };
+  const describe = (el) => {
+    const cls =
+      typeof el.className === 'string'
+        ? el.className.trim().split(/\s+/).filter(Boolean).slice(0, 2).map((c) => '.' + c).join('')
+        : '';
+    const text = (el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 30);
+    return `${el.tagName.toLowerCase()}${el.id ? '#' + el.id : ''}${cls}${text ? ` "${text}"` : ''}`;
+  };
+
+  let elementBleed = 0;
+  const found = [];
+  for (const el of document.querySelectorAll('*')) {
+    if (!el.getClientRects().length) continue;
+    const position = getComputedStyle(el).position;
+    if (clippedByAncestor(el, position)) continue;
+    const bleed = el.getBoundingClientRect().right - clientWidth;
+    if (bleed > 0) {
+      found.push([bleed, el]);
+      if (bleed > elementBleed) elementBleed = bleed;
+    }
+  }
+  found.sort((a, b) => b[0] - a[0]);
+  const bleeders = found.slice(0, 5).map(([b, el]) => `${describe(el)} +${Math.round(b)}px`);
+  return { overflow: Math.round(Math.max(scrollBleed, elementBleed)), bleeders };
+}
+
+/**
  * Scrolls the whole page so reveals fire and lazy images load; returns the
- * worst per-element bleed past the viewport's right edge seen at any scroll
- * position (R28). scrollWidth/clientWidth alone can miss a bleed only a
- * `transform` creates (Global Constraints: only transform/opacity animate,
- * and a transform never changes scrollWidth) and can wrongly catch one a
- * clipping ancestor already absorbs — see the per-element walk in collect().
+ * worst overflowBleed() reading seen at any scroll position. Duplicates
+ * overflowBleed()'s algorithm (see the file header) rather than a simplified
+ * version of it: a bug that only showed up mid-scroll must be as catchable
+ * here as it is in collect()'s snapshot at rest.
  */
 export async function scrollThrough() {
   const de = document.documentElement;
   const step = Math.round(window.innerHeight * 0.6);
   const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
   const clipsX = (n) => /^(hidden|clip|scroll|auto)$/.test(getComputedStyle(n).overflowX);
-  const worstBleed = () => {
+  const makesContainingBlock = (n) => {
+    const cs = getComputedStyle(n);
+    return (cs.transform && cs.transform !== 'none') || (cs.filter && cs.filter !== 'none') || (cs.contain && cs.contain !== 'none');
+  };
+  const clippedByAncestor = (el, position) => {
+    let n = el.parentElement;
+    if (position === 'absolute') {
+      while (n && getComputedStyle(n).position === 'static') n = n.parentElement;
+    } else if (position === 'fixed') {
+      while (n && !makesContainingBlock(n)) n = n.parentElement;
+    }
+    for (; n; n = n.parentElement) if (clipsX(n)) return true;
+    return false;
+  };
+  const bleedNow = () => {
     const clientWidth = de.clientWidth;
-    let worst = 0;
+    const scrollBleed = Math.max(0, de.scrollWidth - clientWidth);
+    let elementBleed = 0;
     for (const el of document.querySelectorAll('*')) {
       if (!el.getClientRects().length) continue;
-      let clipped = false;
-      for (let n = el.parentElement; n; n = n.parentElement) {
-        if (clipsX(n)) {
-          clipped = true;
-          break;
-        }
-      }
-      if (clipped) continue;
-      const right = el.getBoundingClientRect().right;
-      if (right > clientWidth) worst = Math.max(worst, right - clientWidth);
+      const position = getComputedStyle(el).position;
+      if (clippedByAncestor(el, position)) continue;
+      const bleed = el.getBoundingClientRect().right - clientWidth;
+      if (bleed > elementBleed) elementBleed = bleed;
     }
-    return worst;
+    return Math.max(scrollBleed, elementBleed);
   };
   let worst = 0;
   for (let y = 0; y <= de.scrollHeight; y += step) {
     window.scrollTo({ top: y, behavior: 'instant' });
     await wait(120);
-    worst = Math.max(worst, worstBleed());
+    worst = Math.max(worst, bleedNow());
   }
   window.scrollTo({ top: 0, behavior: 'instant' });
   await wait(200);
@@ -183,41 +266,6 @@ export function collect(opts) {
   const de = document.documentElement;
   const vh = window.innerHeight;
   const bodyBg = getComputedStyle(document.body).backgroundColor;
-
-  // Per-element horizontal overflow (R28): scrollWidth/clientWidth can miss
-  // a bleed only a `transform` creates (Global Constraints: only transform/
-  // opacity animate, and scrollWidth ignores transforms) and can wrongly
-  // catch one a clipping ancestor already absorbs (a deliberate full-bleed
-  // picture, say). Walk every rendered element and flag one whose right
-  // edge passes the viewport, unless an ancestor's overflow-x hides, clips
-  // or scrolls it — that element can never widen the page itself.
-  const clipsX = (n) => /^(hidden|clip|scroll|auto)$/.test(getComputedStyle(n).overflowX);
-  const clippedByAncestor = (el) => {
-    for (let n = el.parentElement; n; n = n.parentElement) if (clipsX(n)) return true;
-    return false;
-  };
-  let overflow = 0;
-  for (const el of document.querySelectorAll('*')) {
-    if (!el.getClientRects().length || clippedByAncestor(el)) continue;
-    const right = el.getBoundingClientRect().right;
-    if (right > de.clientWidth) overflow = Math.max(overflow, right - de.clientWidth);
-  }
-
-  const out = {
-    len: Number((de.scrollHeight / vh).toFixed(2)),
-    overflow: Math.round(overflow),
-    theme: de.getAttribute('data-theme') || 'auto',
-    bg: bodyBg === 'rgba(0, 0, 0, 0)' ? getComputedStyle(de).backgroundColor : bodyBg,
-    js: de.classList.contains('js'),
-    sections: {},
-    missing: [],
-    empty: [],
-    hidden: [],
-    smallText: [],
-    smallTargets: [],
-    thaiBreaks: [],
-    nwWraps: [],
-  };
 
   const describe = (el) => {
     const cls =
@@ -248,6 +296,58 @@ export function collect(opts) {
       if ((cs.position === 'absolute' || cs.position === 'fixed') && n.getBoundingClientRect().width <= 1) return true;
     }
     return false;
+  };
+
+  // Horizontal overflow (R28; review I1) — see overflowBleed()'s doc
+  // comment for why this combines scrollWidth with a containing-block-aware
+  // per-element walk. Duplicated here rather than called, per the file
+  // header: page.evaluate(collect) only ships collect's own source.
+  const clientWidth = de.clientWidth;
+  const scrollBleed = Math.max(0, de.scrollWidth - clientWidth);
+  const clipsX = (n) => /^(hidden|clip|scroll|auto)$/.test(getComputedStyle(n).overflowX);
+  const makesContainingBlock = (n) => {
+    const cs = getComputedStyle(n);
+    return (cs.transform && cs.transform !== 'none') || (cs.filter && cs.filter !== 'none') || (cs.contain && cs.contain !== 'none');
+  };
+  const clippedByAncestor = (el, position) => {
+    let n = el.parentElement;
+    if (position === 'absolute') {
+      while (n && getComputedStyle(n).position === 'static') n = n.parentElement;
+    } else if (position === 'fixed') {
+      while (n && !makesContainingBlock(n)) n = n.parentElement;
+    }
+    for (; n; n = n.parentElement) if (clipsX(n)) return true;
+    return false;
+  };
+  let elementBleed = 0;
+  const bleeders = [];
+  for (const el of document.querySelectorAll('*')) {
+    if (!el.getClientRects().length) continue;
+    const position = getComputedStyle(el).position;
+    if (clippedByAncestor(el, position)) continue;
+    const bleed = el.getBoundingClientRect().right - clientWidth;
+    if (bleed > 0) {
+      bleeders.push([bleed, el]);
+      if (bleed > elementBleed) elementBleed = bleed;
+    }
+  }
+  bleeders.sort((a, b) => b[0] - a[0]);
+
+  const out = {
+    len: Number((de.scrollHeight / vh).toFixed(2)),
+    overflow: Math.round(Math.max(scrollBleed, elementBleed)),
+    bleeders: bleeders.slice(0, 5).map(([b, el]) => `${describe(el)} +${Math.round(b)}px`),
+    theme: de.getAttribute('data-theme') || 'auto',
+    bg: bodyBg === 'rgba(0, 0, 0, 0)' ? getComputedStyle(de).backgroundColor : bodyBg,
+    js: de.classList.contains('js'),
+    sections: {},
+    missing: [],
+    empty: [],
+    hidden: [],
+    smallText: [],
+    smallTargets: [],
+    thaiBreaks: [],
+    nwWraps: [],
   };
 
   for (const id of opts.sectionIds) {

@@ -19,6 +19,7 @@ import {
   collect,
   contrastIssues,
   launch,
+  overflowBleed,
   pageInit,
   readPerf,
   scrollThrough,
@@ -139,7 +140,7 @@ async function runCombo(browser, c) {
     const overBudget = budget !== undefined && m.len > budget;
     const lenExempt = overBudget && (c.locale === 'th' || !c.motion);
     if (overBudget && !lenExempt) p.push(`page length ${m.len} screens > ${budget}`);
-    if (overflow > 0) p.push(`horizontal overflow ${overflow}px`);
+    if (overflow > 0) p.push(`horizontal overflow ${overflow}px${m.bleeders.length ? ': ' + m.bleeders.join(', ') : ''}`);
     for (const e of errors) p.push(`console: ${e}`);
     if (m.theme !== c.theme) p.push(`data-theme "${m.theme}", stored "${c.theme}"`);
     if (perf.firstFrameTheme !== c.theme) p.push(`first frame painted as "${perf.firstFrameTheme}" — flash of the wrong theme`);
@@ -374,8 +375,8 @@ async function pages(browser) {
           for (const e of errors) if (!(missingPage && /404/.test(e))) p.push(`console: ${e}`);
           const s = await page.evaluate(themeState);
           if (s.bg !== CANVAS[theme]) p.push(`canvas ${s.bg}, expected ${CANVAS[theme]}`);
-          const overflow = await page.evaluate(() => Math.max(0, document.documentElement.scrollWidth - document.documentElement.clientWidth));
-          if (overflow) p.push(`horizontal overflow ${overflow}px`);
+          const ov = await page.evaluate(overflowBleed); // I1 — same combined measure as the home matrix, named element(s) included.
+          if (ov.overflow > 0) p.push(`horizontal overflow ${ov.overflow}px${ov.bleeders.length ? ': ' + ov.bleeders.join(', ') : ''}`);
           if (path === '/en/career') {
             const u = new URL(page.url());
             if (u.pathname !== '/en' || u.hash !== '#career') p.push(`landed on ${u.pathname}${u.hash}, expected /en#career (C7 redirect)`);
