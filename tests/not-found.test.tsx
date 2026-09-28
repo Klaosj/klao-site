@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from '@testing-library/react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { dict } from '@/lib/dictionary';
 import { THEME_PREPAINT_SCRIPT } from '@/lib/theme';
@@ -232,5 +233,70 @@ describe('RootNotFound (src/app/not-found.tsx)', () => {
     const { default: RootNotFound } = await import('@/app/not-found');
     const { container } = render(<RootNotFound />);
     expect(container.firstElementChild?.tagName).toBe('SCRIPT');
+  });
+});
+
+// --- src/app/global-not-found.tsx: not wired up yet ----------------------
+// Only loads once `experimental.globalNotFound` is set in next.config.ts
+// (out of this lane's ownership -- see the P5 lane-A report's Merge notes).
+// Tested here anyway so the component itself is covered and doesn't bit-rot
+// before that flag lands: unlike not-found.tsx, this file supplies its own
+// <html>/<body>, so `lang` is correct on the very first render -- no
+// post-hydration useEffect correction needed (verified against a real
+// cold `next dev` with the flag on locally, then reverted -- see the report).
+//
+// renderToStaticMarkup, not RTL's render(): a component whose root element
+// is <html> genuinely cannot nest inside RTL's own container <div> (real
+// HTML nesting rules, not a component bug) -- React silently drops the
+// <html>/<head>/<body> wrapper and warns "In HTML, <html> cannot be a child
+// of <div>", so container.querySelector('html') always misses. Rendering to
+// a markup string sidesteps the DOM-nesting question entirely, the same way
+// tests/smoke.test.tsx checks full-page server components.
+describe('GlobalNotFound (src/app/global-not-found.tsx)', () => {
+  it('sets <html lang> directly from the URL, with no correction effect needed', async () => {
+    usePathname.mockReturnValue('/th/nope');
+    const { default: GlobalNotFound } = await import('@/app/global-not-found');
+    const html = renderToStaticMarkup(<GlobalNotFound />);
+    expect(html).toMatch(/^<html lang="th">/);
+  });
+
+  it('sets <html lang="en"> for the English case', async () => {
+    usePathname.mockReturnValue('/en/nope');
+    const { default: GlobalNotFound } = await import('@/app/global-not-found');
+    const html = renderToStaticMarkup(<GlobalNotFound />);
+    expect(html).toMatch(/^<html lang="en">/);
+  });
+
+  it('inlines the same theme pre-paint script inside a real <head>', async () => {
+    usePathname.mockReturnValue('/en/nope');
+    const { default: GlobalNotFound } = await import('@/app/global-not-found');
+    const html = renderToStaticMarkup(<GlobalNotFound />);
+    const head = /<head>([\s\S]*?)<\/head>/.exec(html)?.[1] ?? '';
+    expect(head).toContain(`<script>${THEME_PREPAINT_SCRIPT}</script>`);
+  });
+
+  it('renders the Thai title and body copy for a /th/... path that matched nothing', async () => {
+    usePathname.mockReturnValue('/th/nope');
+    const { default: GlobalNotFound } = await import('@/app/global-not-found');
+    const html = renderToStaticMarkup(<GlobalNotFound />);
+    expect(html).toContain(`<title>${dict.th.notFoundTitle} · Klao</title>`);
+    expect(html).toContain(dict.th.notFoundBody);
+  });
+
+  it('links to the three real English destination routes, locale-prefixed', async () => {
+    usePathname.mockReturnValue('/en/nope');
+    const { default: GlobalNotFound } = await import('@/app/global-not-found');
+    const html = renderToStaticMarkup(<GlobalNotFound />);
+    const hrefs = [...html.matchAll(/<nav[^>]*>[\s\S]*?<\/nav>/g)]
+      .flatMap((m) => [...m[0].matchAll(/href="([^"]+)"/g)])
+      .map((m) => m[1]);
+    expect(hrefs).toEqual(['/en/projects', '/en/writing', '/en/career']);
+  });
+
+  it('falls back to English when the path carries no recognizable locale', async () => {
+    usePathname.mockReturnValue(null);
+    const { default: GlobalNotFound } = await import('@/app/global-not-found');
+    const html = renderToStaticMarkup(<GlobalNotFound />);
+    expect(html).toMatch(/^<html lang="en">/);
   });
 });
