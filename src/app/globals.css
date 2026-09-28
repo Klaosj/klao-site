@@ -65,19 +65,16 @@
      screenshots legible. */
   --glass-nav: rgb(255 255 255 / .78);
   --glass-pill: rgb(255 255 255 / .80);
-  /* Fix wave finding 11: glass-ctl repeats ctl's value here and in both dark
-     blocks below rather than becoming var(--ctl) once, on :root only.
-     Runtime-wise a :root-only version would still resolve correctly in
-     dark mode too (custom-property lookup follows the cascade, same as any
-     other property) -- but tests/theme.test.ts's "defines the same
-     variables in light and dark" check reads each block's raw CSS text and
-     requires the same variable names in every block, so a :root-only
-     version would go missing from both dark blocks' text and fail that
-     parity check. Left triplicated on purpose; change the value in all
-     three places together. */
-  --glass-ctl: rgb(236 237 241 / .72);
-  /* --ctl is the prototype's name for --glass-ctl; both stay, same value. */
+  /* --ctl is the prototype's name for the same small-glass-control colour
+     --glass-ctl uses; both stay, one value (CO-15). Declared in every block
+     below too, not just here on :root: tests/theme.test.ts's "defines the
+     same variables in light and dark" check reads each block's raw CSS
+     text and requires the same variable names in every block, so a
+     :root-only version would go missing from both dark blocks' text and
+     fail that parity check, even though the cascade would still resolve it
+     correctly at runtime. */
   --ctl: rgb(236 237 241 / .72);
+  --glass-ctl: var(--ctl);
   --glass-rim: rgb(20 26 44 / .07);
   --glass-hi: rgb(255 255 255 / .9);
   --glass-edge: rgb(20 26 44 / .04);
@@ -118,8 +115,8 @@
     --curtain: rgb(0 0 0 / .56);
     --glass-nav: rgb(28 30 33 / .78);
     --glass-pill: rgb(28 30 33 / .82);
-    --glass-ctl: rgb(58 60 66 / .60);
     --ctl: rgb(58 60 66 / .60);
+    --glass-ctl: var(--ctl);
     --glass-rim: rgb(255 255 255 / .08);
     --glass-hi: rgb(255 255 255 / .10);
     --glass-edge: rgb(0 0 0 / .2);
@@ -160,8 +157,8 @@
   --curtain: rgb(0 0 0 / .56);
   --glass-nav: rgb(28 30 33 / .78);
   --glass-pill: rgb(28 30 33 / .82);
-  --glass-ctl: rgb(58 60 66 / .60);
   --ctl: rgb(58 60 66 / .60);
+  --glass-ctl: var(--ctl);
   --glass-rim: rgb(255 255 255 / .08);
   --glass-hi: rgb(255 255 255 / .10);
   --glass-edge: rgb(0 0 0 / .2);
@@ -221,32 +218,11 @@
   --font-sans: "Anuphan Thai", -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Leelawadee UI", Thonburi, "Noto Sans Thai UI", "Noto Sans Thai", sans-serif;
 }
 
-/* LEGACY NAMES -- P5 deletes this block once `grep` finds no usage.
-   The dark-era sections (AboutBand, CraftBand, WorkDeck,
-   QuestionsBand, SkillsBand, CvBand, ContactBand, SiteNav, SiteFooter) and the
-   four untouched routes still spell colours with the old names. Pointing each
-   old name at its White Edition role makes every one of them render light (or
-   dark, with the theme) until its own phase replaces it: surfaces become
-   canvas/mist, text becomes ink, the periwinkle accent becomes Kram. `line`
-   and `card` need no alias -- the new block above already defines them.
-   `--font-display` / `--font-thai` keep the old `font-display` / `font-thai`
-   utilities working; both now resolve to the one stack above. */
+/* `--font-display` / `--font-thai`: aliases the standalone routes' own
+   headings still read (K10) -- /projects, /writing, /career and
+   typography.ts -- both resolving to the one stack above. Not colour names,
+   so the P5 Task 7 sweep (tests/no-legacy-tokens.test.ts) leaves them be. */
 @theme inline static {
-  --color-dark: var(--canvas);
-  --color-deep: var(--mist);
-  --color-light: var(--canvas);
-  --color-peri: var(--kram);
-  --color-peri-deep: var(--link);
-  --color-on-dark: var(--ink-1);
-  --color-on-dark-soft: var(--ink-2);
-  --color-on-dark-faint: var(--line);
-  --color-on-dark-mid: var(--ink-3);
-  --color-on-light: var(--ink-1);
-  --color-on-light-soft: var(--ink-2);
-  --color-on-light-faint: var(--line);
-  --color-paper: var(--canvas);
-  --color-ink: var(--ink-1);
-  --color-soft: var(--ink-2);
   --font-display: var(--font-sans);
   --font-thai: var(--font-sans);
 }
@@ -299,29 +275,17 @@
   [tabindex="-1"]:focus { outline: none; }
 }
 
-/* LEGACY, unlayered on purpose (unlayered CSS outranks Tailwind's utilities
-   layer). The dark-era primary pills paired `bg-light` with `text-dark`: a
-   light fill with dark text on a dark band. With both names now pointing at
-   canvas they would read white on white, so the pair becomes the White
-   Edition primary button instead: Kram fill, on-Kram text. Covers Hero,
-   ContactBand and WorkDeck CTAs, both not-found pages and the SiteNav
-   monogram. P5 deletes it with the legacy names. */
-.bg-light.text-dark {
-  background-color: var(--kram);
-  color: var(--on-kram);
-}
-
-/* LEGACY, unlayered (P5 deletes it with the legacy names, D3): Thai marks
-   stack above and below the base letter and need more leading than the old
-   headings' tight `leading-[1.08]` utilities give (MaskedHeading headings in
-   the dark-era sections). The White Edition type classes carry their own
-   Thai line-heights, so they are excluded.
+/* Unlayered on purpose (K10): Thai marks stack above and below the base
+   letter and need more leading than a bare heading's tight arbitrary
+   `leading-[...]` utility gives -- the standalone routes' own h1/h2/h3 (no
+   layout redesign in P5, spec §75), which carry no White Edition type class
+   of their own to bring a Thai line-height along with it. The White Edition
+   type classes (.t-h1, .t-h2, ...) carry their own, so they are excluded.
    Fix wave finding 3: the `:not(...)` list above named only the five type
    classes that existed when this rule was written, so any new heading --
-   P1-P4's own, none of them a MaskedHeading and none needing this leading
-   -- was caught the moment it used h1/h2/h3 at all. Scoped instead to what
-   the legacy headings actually share: the same tight arbitrary Tailwind
-   utility this rule exists to loosen. */
+   P1-P4's own -- was caught the moment it used h1/h2/h3 at all. Scoped
+   instead to what a bare heading actually needs this for: the same tight
+   arbitrary Tailwind utility this rule exists to loosen. */
 :lang(th) :is(h1, h2, h3)[class*="leading-["] {
   line-height: 1.5;
 }

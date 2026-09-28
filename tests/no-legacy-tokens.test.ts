@@ -20,9 +20,9 @@ const PREFIX = 'bg|text|border(?:-[trblxyse])?|divide|ring(?:-offset)?|outline|f
 const UTILITY = new RegExp(`(?<![\\w-])(?:${PREFIX})-(?:${LEGACY})(?![\\w-])`, 'g');
 const CSS_VAR = new RegExp(`--color-(?:${LEGACY})(?![\\w-])`, 'g');
 
-// Widened task by task in P5: routes (Task 5) → components and lib (Task 6)
-// → all of src/, globals.css included (Task 7).
-const SCAN = ['src/app/[locale]', 'src/app/not-found.tsx', 'src/components', 'src/lib'];
+// All of src/, globals.css included: the repoint is gone (P5 Task 7), so a
+// legacy name anywhere is a bug.
+const SCAN = ['src'];
 
 function files(p: string): string[] {
   if (!statSync(p).isDirectory()) return [p];
