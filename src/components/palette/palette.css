@@ -214,6 +214,15 @@
   .ask-a:lang(th) {
     line-height: 28px;
   }
+  /* Minor E, re-review round 2: the last word (or keep run) before a [n]
+     marker, plus the marker itself, wrapped together (AskCard.tsx's
+     withMarkers/glueTail) -- an explicit nowrap span, unlike round 1's
+     U+2060 WORD JOINER, is what actually stops Chrome breaking before the
+     marker's inline-block <sup>. Verified live: 0 orphaned markers, 0
+     overflow, 320-440px, EN and TH. */
+  .ask-glue {
+    white-space: nowrap;
+  }
   .ask-a sup button {
     min-width: 24px;
     min-height: 24px;

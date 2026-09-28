@@ -295,7 +295,13 @@ describe('CommandPalette', () => {
   // Re-review round 1, Minor E: a [n] marker with no preceding text to glue
   // to could wrap onto its own line (e.g. a lone "1" starting the next
   // line). U+2060 WORD JOINER right before the marker forbids a break there.
-  it('glues each [n] marker to the word before it (re-review Minor E)', () => {
+  // Re-review round 2 (Minor E reopened): U+2060 WORD JOINER doesn't stop
+  // Chrome breaking before an inline-block <sup> -- verified live, 314/3388
+  // markers still started a new line in a 320-440px sweep. An explicit
+  // `.ask-glue { white-space: nowrap }` span around [tail word + marker]
+  // does (re-verified live: 0 orphans, 0 overflow, 320-440px, EN and TH).
+  // jsdom has no layout, so this checks the structure the CSS then protects.
+  it('glues each [n] marker to the word before it inside a nowrap span (re-review Minor E, round 2)', () => {
     const box = open();
     type(box, 'has he done a startup?');
     fireEvent.keyDown(box, { key: 'Enter' });
@@ -303,9 +309,27 @@ describe('CommandPalette', () => {
     const sups = card.querySelectorAll('.ask-a sup');
     expect(sups.length).toBeGreaterThan(0);
     for (const sup of Array.from(sups)) {
-      const preceding = sup.previousSibling?.textContent ?? '';
-      expect(preceding.endsWith('⁠'), preceding).toBe(true);
+      const glue = sup.closest('.ask-glue');
+      expect(glue, 'every marker sits inside .ask-glue').not.toBeNull();
+      expect(glue!.contains(sup)).toBe(true);
+      // The span holds the word it's glued to as well as the marker's own
+      // digit -- not just the bare number by itself.
+      expect(glue!.textContent!.length).toBeGreaterThan((sup.textContent ?? '').length);
     }
+  });
+
+  // Minor E's keep-run case: Tripedia/Talatify's TH quote/answer ends
+  // "...37 ล้านบาท[2]" -- a UNIT keep run (src/lib/thai.ts). glueTail()
+  // takes the WHOLE run rather than re-splitting it (splitting it would
+  // defeat the keep-run mechanism that protects it elsewhere on the page).
+  it('glues the whole keep run to its marker, never splitting it (re-review Minor E, round 2)', () => {
+    const box = open('th');
+    type(box, 'เคยทำสตาร์ทอัพไหม');
+    fireEvent.keyDown(box, { key: 'Enter' });
+    const card = screen.getByRole('region', { name: dict.th.askTitle });
+    const sup2 = Array.from(card.querySelectorAll('.ask-a sup')).find((s) => s.textContent === '2');
+    const glue = sup2?.closest('.ask-glue');
+    expect(glue?.querySelector('.nw')?.textContent).toBe('37 ล้านบาท');
   });
 
   it('has no network API anywhere in the palette source', () => {
@@ -491,6 +515,11 @@ describe('CommandPalette', () => {
     fireEvent.keyDown(box, { key: 'Escape', isComposing: true });
     fireEvent(dialog, new Event('cancel', { cancelable: true }));
     expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('.ask-glue is white-space: nowrap (re-review Minor E, round 2)', () => {
+    const css = readFileSync('src/components/palette/palette.css', 'utf8');
+    expect(css).toMatch(/\.ask-glue\s*\{[^}]*white-space:\s*nowrap;/);
   });
 
   it('phone Ask is a bottom sheet: full width, content-height capped, safe-area padding (fix round 2 #1)', () => {

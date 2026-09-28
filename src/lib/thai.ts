@@ -31,7 +31,15 @@
  *  line break, so that half of disp() has no port here (fix wave finding
  *  4 -- doc only, not a gap to close). */
 
+import type { Locale } from './models';
+
 export const THAI_RE = /[฀-๿]/;
+
+// Thai vowel signs and tone marks that only ever attach to the character
+// before them -- same set as palette-index.ts's matchBounds fallback (not
+// imported from there: that module depends on this one, not the reverse).
+// Used only by glueTail()'s no-Intl.Segmenter floor, below.
+const THAI_MARK = /[ัิ-ฺ็-๎]/;
 
 /** The prototype's KEEP array, verbatim and in its order (longest first, so
  *  the alternation below prefers the longer compound). Used by the default
@@ -153,4 +161,52 @@ function displayRuns(text: string): Run[] {
 export function keepRuns(text: string, options?: { display?: boolean }): Run[] {
   if (!THAI_RE.test(text)) return [{ text, keep: false }];
   return options?.display ? displayRuns(text) : defaultRuns(text);
+}
+
+/** Re-review round 1, Minor E (second pass): where AskCard's withMarkers()
+ *  should cut a text segment so its tail -- glued to the [n] marker right
+ *  after it in a `white-space: nowrap` span -- can never wrap onto its own
+ *  line, without ever swallowing a whole Thai clause (which would overflow
+ *  at 320px on its own). U+2060 WORD JOINER doesn't stop Chrome breaking
+ *  before an inline-block <sup>; an explicit nowrap wrapper does, but only
+ *  the short trailing bit needs to be inside it.
+ *
+ *  Two cases, exactly as verified live (headless Chrome, 320-440px sweep,
+ *  0 orphaned markers / 0 overflow either way):
+ *   1. The segment ends in a protected keep run (defaultRuns()'s last Run
+ *      has `keep: true` -- a THAI_KEEP compound, a unit like "37 ล้านบาท",
+ *      or a date) -- the whole run glues, since it's already short by
+ *      construction and splitting it would defeat keepRuns' own point.
+ *   2. Otherwise, only the LAST word-like unit of the trailing plain run
+ *      (Intl.Segmenter, dictionary-based so it also finds Thai word
+ *      boundaries with no spaces to go on) plus any punctuation after it.
+ *  Falls back to the trailing non-space run, capped at the last grapheme
+ *  (never a bare combining mark), when Intl.Segmenter itself is missing --
+ *  it ships in every browser and Node version this app targets, so this is
+ *  a defensive floor, not a path expected to run. */
+export function glueTail(segment: string, locale: Locale): { head: string; tail: string } {
+  if (!segment) return { head: '', tail: '' };
+  const runs = keepRuns(segment);
+  const last = runs[runs.length - 1];
+  const head = segment.slice(0, segment.length - last.text.length);
+  if (last.keep) return { head, tail: last.text };
+  const cut = lastWordCut(last.text, locale);
+  return { head: head + last.text.slice(0, cut), tail: last.text.slice(cut) };
+}
+
+// Index within `plain` (a trailing run with no keep-run left in it) where
+// the last word-like unit starts.
+function lastWordCut(plain: string, locale: Locale): number {
+  if (typeof Intl !== 'undefined' && typeof Intl.Segmenter === 'function') {
+    const segs = [...new Intl.Segmenter(locale, { granularity: 'word' }).segment(plain)];
+    for (let k = segs.length - 1; k >= 0; k--) {
+      if (segs[k].isWordLike) return segs[k].index;
+    }
+    return plain.length; // no word-like unit at all (pure spaces/punctuation) -- nothing to glue
+  }
+  const m = /\S+$/.exec(plain);
+  if (!m) return plain.length;
+  let s = plain.length - 1;
+  while (s > m.index && THAI_MARK.test(plain[s])) s--;
+  return s;
 }

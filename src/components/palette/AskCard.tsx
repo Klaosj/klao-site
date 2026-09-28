@@ -8,6 +8,7 @@ import { dict } from '@/lib/dictionary';
 import { fill } from '@/lib/format';
 import { mailto } from '@/lib/link-target';
 import type { Locale } from '@/lib/models';
+import { glueTail } from '@/lib/thai';
 
 // Subject line on the "Something wrong?" mail (prototype). This string
 // exists only here (preflight C14): ask.ts's canned answers carry no mail
@@ -97,7 +98,7 @@ export default function AskCard({
       ) : (
         <>
           <p className="ask-a" lang={answer.lang}>
-            {withMarkers(answer.text, answer.sources, a.askSourceN, onGo)}
+            {withMarkers(answer.text, answer.sources, a.askSourceN, answer.lang, onGo)}
           </p>
           <div className="ask-srcs">
             <h3>{t.askSources}</h3>
@@ -130,38 +131,59 @@ export default function AskCard({
 
 // "…GoNai is live[2] and…" → each [n] becomes a small button that jumps to
 // source n. split() with a capture group puts the numbers at odd indexes.
+//
+// Minor E, re-review round 2 (Minor E was reopened): U+2060 WORD JOINER
+// (round-1 fix) doesn't stop Chrome breaking before an inline-block <sup> --
+// verified live, 314/3388 markers still started a new line in a 320-440px
+// sweep. glueTail() (src/lib/thai.ts) finds the short tail -- the segment's
+// last keep run, or just its last word -- that should move with the marker
+// instead; that tail and the <sup> render together inside one
+// `.ask-glue { white-space: nowrap }` span (palette.css), which a browser
+// genuinely cannot break inside. Everything before the tail (`head`) keeps
+// wrapping normally. Re-verified live: 0 orphaned markers, 0 overflow,
+// 320-440px, EN and TH.
 function withMarkers(
   text: string,
   sources: AskSource[],
   labelTemplate: string,
+  lang: Locale,
   onGo: (target: string) => void,
 ): ReactNode[] {
-  const parts = text.split(/\[(\d+)\]/);
-  return parts.map((part, i) => {
-    // I-1 (fix wave finding 2): the plain-text segments between [n] markers
-    // are Thai answer copy and need the same keep-run treatment every other
-    // Thai body text on the page gets -- a bare string here let the browser
-    // break mid-word.
-    if (i % 2 === 0) {
-      // Minor E (re-review round 1): a marker with no preceding text to
-      // glue to could wrap onto its own line ("...installation." then a
-      // lone "1" starting the next line). U+2060 WORD JOINER right before
-      // the marker's <sup> forbids a break there without adding any
-      // visible width -- the last word and its marker now wrap together.
-      // Only a segment actually followed by a marker gets one (the final,
-      // marker-less trailing segment, if any, needs no glue).
-      const glue = i < parts.length - 1 ? '⁠' : '';
-      return <ThaiText key={i} text={`${part}${glue}`} />;
-    }
-    const n = Number(part);
+  const nodes: ReactNode[] = [];
+  const re = /\[(\d+)\]/g;
+  let at = 0;
+  let m: RegExpExecArray | null;
+  let key = 0;
+  while ((m = re.exec(text)) !== null) {
+    const segment = text.slice(at, m.index);
+    at = m.index + m[0].length;
+    const n = Number(m[1]);
     const src = sources[n - 1];
-    if (!src) return null;
-    return (
-      <sup key={i}>
+    const marker = src && (
+      <sup key={`m${key}`}>
         <button type="button" aria-label={fill(labelTemplate, { n })} onClick={() => onGo(src.target)}>
           {n}
         </button>
       </sup>
     );
-  });
+    if (!marker) {
+      // No source for this number -- same as before, the segment still
+      // renders (I-1: through ThaiText) but the dangling marker is dropped.
+      if (segment) nodes.push(<ThaiText key={`h${key}`} text={segment} />);
+      key++;
+      continue;
+    }
+    const { head, tail } = glueTail(segment, lang);
+    if (head) nodes.push(<ThaiText key={`h${key}`} text={head} />);
+    nodes.push(
+      <span className="ask-glue" key={`g${key}`}>
+        {tail && <ThaiText text={tail} />}
+        {marker}
+      </span>,
+    );
+    key++;
+  }
+  const rest = text.slice(at);
+  if (rest) nodes.push(<ThaiText key={`t${key}`} text={rest} />);
+  return nodes;
 }
