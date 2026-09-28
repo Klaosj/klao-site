@@ -136,12 +136,23 @@ function withMarkers(
   labelTemplate: string,
   onGo: (target: string) => void,
 ): ReactNode[] {
-  return text.split(/\[(\d+)\]/).map((part, i) => {
+  const parts = text.split(/\[(\d+)\]/);
+  return parts.map((part, i) => {
     // I-1 (fix wave finding 2): the plain-text segments between [n] markers
     // are Thai answer copy and need the same keep-run treatment every other
     // Thai body text on the page gets -- a bare string here let the browser
     // break mid-word.
-    if (i % 2 === 0) return <ThaiText key={i} text={part} />;
+    if (i % 2 === 0) {
+      // Minor E (re-review round 1): a marker with no preceding text to
+      // glue to could wrap onto its own line ("...installation." then a
+      // lone "1" starting the next line). U+2060 WORD JOINER right before
+      // the marker's <sup> forbids a break there without adding any
+      // visible width -- the last word and its marker now wrap together.
+      // Only a segment actually followed by a marker gets one (the final,
+      // marker-less trailing segment, if any, needs no glue).
+      const glue = i < parts.length - 1 ? '⁠' : '';
+      return <ThaiText key={i} text={`${part}${glue}`} />;
+    }
     const n = Number(part);
     const src = sources[n - 1];
     if (!src) return null;

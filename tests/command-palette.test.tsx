@@ -292,6 +292,22 @@ describe('CommandPalette', () => {
     expect(card.querySelector('.ask-srcs em .nw')?.textContent).toBe('30 ทีม');
   });
 
+  // Re-review round 1, Minor E: a [n] marker with no preceding text to glue
+  // to could wrap onto its own line (e.g. a lone "1" starting the next
+  // line). U+2060 WORD JOINER right before the marker forbids a break there.
+  it('glues each [n] marker to the word before it (re-review Minor E)', () => {
+    const box = open();
+    type(box, 'has he done a startup?');
+    fireEvent.keyDown(box, { key: 'Enter' });
+    const card = screen.getByRole('region', { name: dict.en.askTitle });
+    const sups = card.querySelectorAll('.ask-a sup');
+    expect(sups.length).toBeGreaterThan(0);
+    for (const sup of Array.from(sups)) {
+      const preceding = sup.previousSibling?.textContent ?? '';
+      expect(preceding.endsWith('⁠'), preceding).toBe(true);
+    }
+  });
+
   it('has no network API anywhere in the palette source', () => {
     for (const f of ['src/components/palette/CommandPalette.tsx', 'src/components/palette/AskCard.tsx']) {
       expect(readFileSync(f, 'utf8'), f).not.toMatch(/\bfetch\s*\(|XMLHttpRequest|sendBeacon|WebSocket|EventSource/);
