@@ -454,7 +454,29 @@ export function collect(opts) {
   return out;
 }
 
-/** WCAG 1.4.3 text contrast inside <main>; skips text over pictures or gradients. */
+/**
+ * WCAG 1.4.3 text contrast inside <main>; skips text over pictures or
+ * gradients. The backdrop is resolved by walking el's own ancestor chain
+ * (as before) PLUS, at every level, that level's DOM siblings for a
+ * decorative indicator painted behind it (Lane B review I2): a selected
+ * control's real colour can come from a `.seg` thumb, or career's
+ * `.car-detent`/`.car-rmark`, sliding under the checked option — a sibling,
+ * not an ancestor, of the text — which a plain ancestor walk never sees.
+ * That sibling is matched purely by geometry (position: absolute/fixed +
+ * its rect containing el's centre point), not by hit-testing
+ * (elementsFromPoint): a first attempt at this used elementsFromPoint and
+ * broke two different ways in review — (1) elementsFromPoint only hits the
+ * CURRENTLY PAINTED viewport, so anything below the first screenful needs
+ * scrolling first, and scrolling an element that sits inside a sticky
+ * scroll-linked scene (Signature's `.sig-stage`) does not reliably land it
+ * where the math predicts, because its viewport position is not a simple
+ * function of scrollY while pinned; (2) the sibling itself is routinely
+ * given `pointer-events: none` (so it never intercepts a click meant for
+ * the control in front of it), which elementsFromPoint respects and so
+ * skips it — backwards for a paint question. Pure rect-overlap has neither
+ * problem: it reads correctly at whatever scroll position the page is
+ * already at, sticky or not, and pointer-events plays no part in it.
+ */
 export function contrastIssues() {
   const parse = (s) => {
     const m = /^rgba?\(([^)]+)\)$/.exec(s);
@@ -478,17 +500,46 @@ export function contrastIssues() {
   const bodyBg = parse(getComputedStyle(document.body).backgroundColor);
   const base = bodyBg && bodyBg.a >= 1 ? bodyBg : parse(getComputedStyle(document.documentElement).backgroundColor) || { r: 255, g: 255, b: 255, a: 1 };
   const backdrop = (el) => {
+    const target = el.getBoundingClientRect();
+    const cx = target.left + target.width / 2;
+    const cy = target.top + target.height / 2;
+    const overlapsCentre = (n) => {
+      const r = n.getBoundingClientRect();
+      return r.width > 0 && r.height > 0 && cx >= r.left && cx <= r.right && cy >= r.top && cy <= r.bottom;
+    };
     const layers = [];
-    for (let n = el; n && n !== document.documentElement; n = n.parentElement) {
+    let opaque = false;
+    for (let n = el; n && n !== document.documentElement && !opaque; n = n.parentElement) {
       const cs = getComputedStyle(n);
       if (cs.backgroundImage !== 'none') return null; // pictures and gradients can't be judged from colours
       const c = parse(cs.backgroundColor);
       if (c && c.a > 0) {
         layers.push(c);
-        if (c.a >= 1) break;
+        if (c.a >= 1) {
+          opaque = true;
+          break;
+        }
+      }
+      if (!n.parentElement) continue;
+      for (const sib of n.parentElement.children) {
+        if (sib === n) continue;
+        const scs = getComputedStyle(sib);
+        if (scs.position !== 'absolute' && scs.position !== 'fixed') continue;
+        if (!overlapsCentre(sib)) continue;
+        if (scs.backgroundImage !== 'none') return null;
+        const sc = parse(scs.backgroundColor);
+        if (sc && sc.a > 0) {
+          layers.push(sc);
+          if (sc.a >= 1) {
+            opaque = true;
+            break;
+          }
+        }
       }
     }
     let acc = base.a >= 1 ? base : { r: 255, g: 255, b: 255, a: 1 };
+    // Nearest (el's own colour, or the sibling found at its level) was
+    // pushed first; reverse so compositing goes back-to-front.
     for (const layer of layers.reverse()) acc = over(layer, acc);
     return acc;
   };

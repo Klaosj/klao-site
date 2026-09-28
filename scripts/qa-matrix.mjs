@@ -128,6 +128,7 @@ async function runCombo(browser, c) {
       thai: c.locale === 'th',
       reduced: !c.motion,
     });
+    const contrast = await page.evaluate(contrastIssues); // I2 — the home matrix now checks contrast like every other page.
     await page.screenshot({ path: join(OUT, `${name}.png`), fullPage: true });
     const overflow = Math.max(m.overflow, scrollOverflow);
     const p = [];
@@ -154,6 +155,7 @@ async function runCombo(browser, c) {
     for (const x of m.smallTargets) p.push(`target under 24×24: ${x}`);
     for (const x of m.thaiBreaks) p.push(`Thai line starts with a dependent mark: ${x}`);
     for (const x of m.nwWraps) p.push(`keep-span wraps inside: ${x}`);
+    for (const x of contrast) p.push(`contrast ${x}`);
     const lenNote = lenExempt ? ` [R15: over budget, report to Klao — do not cut spacing]` : '';
     report(name, p, `len=${m.len}vh${lenNote} overflow=${overflow} errors=${errors.length} cls=${perf.cls} lcp=${perf.lcp}ms`);
     log(`     sections ${Object.entries(m.sections).map(([k, v]) => `${k}=${v}`).join(' ')}`);
