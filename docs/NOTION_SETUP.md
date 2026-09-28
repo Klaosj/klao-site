@@ -75,12 +75,13 @@ common long words, dates and number + unit pairs from splitting.
 | LineageOf | Relation → Projects | |
 | AltEN | Text | |
 | AltTH | Text | |
+| ScreenshotPhone | Files & media | |
 | Published | Checkbox | (see above) |
 
 `Featured` + `Published` decide which projects appear in the home page's
 Projects index (`#work`); there is no cap. `Order` controls display order
-everywhere (lower first). The twelve properties added in September 2026 are
-explained under "White Edition fields" at the end of this section.
+everywhere (lower first). The thirteen properties added in September 2026
+are explained under "White Edition fields" at the end of this section.
 
 `Type` decides which column of the home page's Projects index the project
 sits in (Business or Build), and which group it joins on /projects.
@@ -123,12 +124,13 @@ never see).
 
 #### White Edition fields (September 2026)
 
-All twelve may stay empty — the site falls back to a sensible default for
+All thirteen may stay empty — the site falls back to a sensible default for
 each (Media: `img` when the row has a Screenshot, otherwise `win`; Wash:
 `none`; Tour: until any row is ticked, every row with a Screenshot plays,
 by `Order` — after that only ticked rows, and a ticked row needs a
 Screenshot or `Media` = `notion`; LineageOf: no pair, no Signature scene
-and no lineage card), so they can be added in any order.
+and no lineage card; ScreenshotPhone: the phone hero tour centre-crops
+`Screenshot` instead), so they can be added in any order.
 
 | Property | What it does | Example |
 |---|---|---|
@@ -141,6 +143,7 @@ and no lineage card), so they can be added in any order.
 | TourOrder | Tour order, lower first — fill it on every Tour row | `1` |
 | LineageOf | The earlier idea this project grew from; the Signature scene and the "Same idea, four years apart" card read it | GoNai → Tripedia |
 | AltEN / AltTH | What the picture shows, for screen readers — never just the project name, which is already on screen | `GoNai home screen: plan a full day out and know every baht before you leave.` |
+| ScreenshotPhone | An optional phone-only capture (780×650, 6:5) for the project's hero-tour slide on narrow screens — read whenever `Screenshot` is (the `notion` vignette has no photo to crop, so it's never read there). Empty: the phone tour centre-crops `Screenshot` instead | a 780×650 JPEG of the same screen as `Screenshot` |
 
 The page is designed around one lineage pair (GoNai → Tripedia).
 
@@ -335,7 +338,11 @@ developer who builds his own tools."). `BasedInEN/TH` and `WorkingInEN/TH`
 fill the Based in / Working in facts in the closing Contact block
 (`Bangkok, TH` · `TH / EN`). Leave `WorkingInTH` empty and the English line
 is reused on /th, same fallback as `BasedInTH`. Any of them may stay empty
-while you migrate; the page still renders.
+while you migrate; the page still renders. **If a bare `WorkingIn`
+property already exists** (its name before this September 2026 change),
+simply rename it to `WorkingInEN` — the mapper still reads the old name as
+the English value either way, so nothing breaks if you don't, but renaming
+keeps one property instead of two.
 
 Create exactly **one row**. Unlike every other database, **Profile has
 no Published property** — do not add one, and don't expect a Published
@@ -501,7 +508,9 @@ databases. **The mappers tolerate every new field being empty, so add
 properties in any order** — the live site keeps rendering at every step,
 and the code that is live before the White Edition merge ignores
 properties it doesn't know. Don't rename or delete an existing property:
-that code still reads them.
+that code still reads them — the one deliberate exception is renaming a
+bare `WorkingIn` to `WorkingInEN` in step 4, which both names still work
+for.
 
 Work top to bottom; tick as you go. Finish steps 1–9 before the White
 Edition merge — once a Notion Profile row exists, `Prologue`, `ClosingLine`,
@@ -509,11 +518,11 @@ Edition merge — once a Notion Profile row exists, `Prologue`, `ClosingLine`,
 day has no prologue and its closing line falls back to the headline, and
 Contact has no Based in / Working in facts.
 
-1. **Projects — add the twelve properties** from the Projects table
+1. **Projects — add the thirteen properties** from the Projects table
    (StatusKey, StatusEN, StatusTH, KickerEN, KickerTH, Media, Wash, Tour,
-   TourOrder, LineageOf, AltEN, AltTH). Create the select options exactly
-   as written (lowercase). `LineageOf` is a relation to the Projects
-   database itself.
+   TourOrder, LineageOf, AltEN, AltTH, ScreenshotPhone). Create the select
+   options exactly as written (lowercase). `LineageOf` is a relation to the
+   Projects database itself.
 2. **Projects — fill the five lineup rows.** Values from the approved
    prototype; the Thai text, kickers and alt text are in
    `src/content/fixtures/projects.json`:
@@ -526,22 +535,27 @@ Contact has no Based in / Working in facts.
    | GoNai | live | Live · since Aug 2026 | win | gonai | ✓ | 2 | Tripedia |
    | klao-site | live | Live · since Aug 2026 | notion | site | ✓ | 3 | — |
 
-   **Optional:** replace the Aje and GoNai rows' `Screenshot` files — the
-   ones in Notion today are the pre-White-Edition captures (1600×900, with
-   the browser scrollbar visible) — with the current `public/images/aje.jpg`
+   **Replace the Aje and GoNai rows' `Screenshot` files** — the ones in
+   Notion today are the pre-White-Edition captures (1600×900, with the
+   browser scrollbar visible) — with the current `public/images/aje.jpg`
    and `gonai.jpg` (1580×900, no scrollbar, within the 250 KB budget). This
    rewrites a property `main`'s production code already reads
    (`notion-mappers.ts`), so the live site's pictures change too, within
    the hour — harmless, same 16:9 frame, better capture. klao-site's
    dark-theme shot stops appearing on its own once this row's `Media` is
-   set to `notion` (the table above, this step).
+   set to `notion` (the table above, this step). **Also upload the phone
+   captures** into `ScreenshotPhone` on the same two rows —
+   `public/images/aje-phone.jpg` and `gonai-phone.jpg` (780×650). Without
+   them the phone hero tour centre-crops the desktop `Screenshot` instead,
+   which still works, just less tightly framed on a phone.
 3. **Career — add the seven properties** (StartDate, EndDate, FigureValue,
    FigureLabelEN/TH, FigureNoteEN/TH). Fill StartDate/EndDate on every row
    (`src/content/fixtures/career.json` has them) and the one figure with a
    receipt: Casetify — `THB 1.1M`, "My personal monthly sales target",
    "Target met".
 4. **Profile — add the eight properties** (PrologueEN/TH, ClosingLineEN/TH,
-   BasedInEN/TH, WorkingInEN/TH) and fill them from
+   BasedInEN/TH, WorkingInEN/TH — rename an existing bare `WorkingIn` to
+   `WorkingInEN` instead of adding a new one, see above) and fill them from
    `src/content/fixtures/profile.json`.
 5. **Create the Story database** (section 2), add the six chapters from
    `src/content/fixtures/story.json` with Order 1–6, tick Published.

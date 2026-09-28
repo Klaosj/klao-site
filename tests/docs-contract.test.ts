@@ -9,8 +9,10 @@ import { STORY_ICONS, STORY_SKETCHES } from '@/lib/story';
 // read — silently. The names below are the master plan's contract C5.
 // Profile lists WorkingInEN/TH, not a bare WorkingIn (PR1, 2026-09-28
 // preflight refresh N6): it mirrors BasedInEN/TH so Klao can localise it.
+// Projects lists ScreenshotPhone (T18-f, CO-06): the optional phone-only
+// tour capture; empty falls back to a centre-crop of Screenshot.
 const NEW_PROPERTIES: Record<string, string[]> = {
-  Projects: ['StatusKey', 'StatusEN', 'StatusTH', 'KickerEN', 'KickerTH', 'Media', 'Wash', 'Tour', 'TourOrder', 'LineageOf', 'AltEN', 'AltTH'],
+  Projects: ['StatusKey', 'StatusEN', 'StatusTH', 'KickerEN', 'KickerTH', 'Media', 'Wash', 'Tour', 'TourOrder', 'LineageOf', 'AltEN', 'AltTH', 'ScreenshotPhone'],
   Career: ['StartDate', 'EndDate', 'FigureValue', 'FigureLabelEN', 'FigureLabelTH', 'FigureNoteEN', 'FigureNoteTH'],
   Profile: ['PrologueEN', 'PrologueTH', 'ClosingLineEN', 'ClosingLineTH', 'BasedInEN', 'BasedInTH', 'WorkingInEN', 'WorkingInTH'],
   Story: ['TitleEN', 'TitleTH', 'BodyEN', 'BodyTH', 'RuleEN', 'RuleTH', 'Icon', 'Sketch', 'Order', 'Published'],
