@@ -341,6 +341,43 @@ describe('CommandPalette', () => {
     expect(assign).toHaveBeenCalledWith('/th');
   });
 
+  // M3 (fix wave finding 6): Enter used to just run the row listed first
+  // (rows[0]), which follows the fixed group display order -- not score
+  // order. A query that matches an earlier group's row only weakly, and a
+  // later group's row strongly, used to run the weak match.
+  it('Enter runs the best-scoring row, not just whichever group lists first (M3)', () => {
+    const assign = vi.fn();
+    vi.stubGlobal('location', { assign, pathname: '/', href: '/' });
+    const withLangFaq: PaletteInput = {
+      ...input,
+      faq: [...input.faq, { id: 'fx-faq-lang', question: { en: 'Which languages does he work in?', th: 'ทำงานได้กี่ภาษา?' } }],
+    };
+    render(
+      <CommandPalette
+        entries={buildPaletteIndex(withLangFaq, 'en')}
+        faq={faq}
+        email="real@example.com"
+        locale="en"
+        initialQuery=""
+        onClose={onClose}
+      />,
+    );
+    const box = screen.getByRole('combobox') as HTMLInputElement;
+    type(box, 'ภาษา');
+    const options = screen.getAllByRole('option');
+    // Display order is unchanged -- the FAQ row (group 'faq') still lists
+    // before the language switch (group 'prefs').
+    expect(options[0].textContent).toContain('Which languages');
+    // But the language switch is the one that's actually highlighted
+    // (its EN label 'Switch to ภาษาไทย' has a word starting with the
+    // query -- a closer match than the FAQ row's Thai substring hit) --
+    // and the one Enter runs.
+    const langOption = options.find((o) => o.textContent?.includes('ภาษาไทย'))!;
+    expect(langOption.getAttribute('aria-selected')).toBe('true');
+    fireEvent.keyDown(box, { key: 'Enter' });
+    expect(assign).toHaveBeenCalledWith('/th');
+  });
+
   it('closes on a backdrop click -- the dialog element itself, not its content', () => {
     open();
     fireEvent.click(screen.getByRole('dialog'));

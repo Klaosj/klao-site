@@ -3,6 +3,7 @@ import { dict } from '@/lib/dictionary';
 import { faqAnchorId } from '@/lib/link-target';
 import {
   PALETTE_GROUPS,
+  bestScoreIndex,
   buildPaletteIndex,
   fold,
   highlight,
@@ -215,6 +216,55 @@ describe('searchPalette', () => {
   it('forgives one typo in a Latin query of four or more letters', () => {
     expect(searchPalette(entries, 'resme').map((e) => e.id)).toContain('suggested:resume');
     expect(searchPalette(entries, 'zzzq')).toEqual([]);
+  });
+});
+
+// M3 (fix wave finding 6): Enter used to just run rows[0] -- searchPalette's
+// fixed PALETTE_GROUPS order, not score order, so a weaker match in an
+// earlier group could beat the actual best match. bestScoreIndex fixes the
+// selection itself; the alias/description scoring split (score(), above)
+// and the restored Career alias make the ranking underneath it trustworthy.
+describe('bestScoreIndex (M3)', () => {
+  // A second FAQ item, its Thai question containing 'ภาษา' as a substring
+  // (like the real content fixture's "ทำงานได้กี่ภาษา?") -- gives both the
+  // FAQ row (tier 2, an included substring) and Preferences' language row
+  // (tier 1 via its keywords on /th, tier 3 via its EN label 'Switch to
+  // ภาษาไทย' on /en) something to match.
+  const withLangFaq: PaletteInput = {
+    ...input,
+    faq: [...input.faq, { id: 'fx-faq-lang', question: { en: 'Which languages does he work in?', th: 'ทำงานได้กี่ภาษา?' } }],
+  };
+
+  it('picks the FAQ row for "ภาษา" on /th', () => {
+    const entries = buildPaletteIndex(withLangFaq, 'th');
+    const rows = searchPalette(entries, 'ภาษา');
+    expect(rows[bestScoreIndex(rows, 'ภาษา')].id).toBe('faq:fx-faq-lang');
+  });
+
+  it('picks Preferences over the FAQ row for "ภาษา" on /en, even though FAQ lists first (group order != score order)', () => {
+    const entries = buildPaletteIndex(withLangFaq, 'en');
+    const rows = searchPalette(entries, 'ภาษา');
+    // Display order is unchanged (still fixed by PALETTE_GROUPS) -- 'faq'
+    // lists before 'prefs' regardless of which one actually matches better.
+    expect(rows[0].group).toBe('faq');
+    // But pref:lang's EN label ('Switch to ภาษาไทย') has a word that starts
+    // with the query (tier 3); the FAQ row only contains it as a substring
+    // of its Thai alt (tier 2) -- pref:lang is the true best match.
+    expect(rows[bestScoreIndex(rows, 'ภาษา')].id).toBe('pref:lang');
+  });
+
+  it('picks GoNai first for the typo "gonia"', () => {
+    const entries = buildPaletteIndex(input, 'en');
+    const rows = searchPalette(entries, 'gonia');
+    expect(rows[bestScoreIndex(rows, 'gonia')].label).toBe('GoNai');
+  });
+
+  it('finds Actmedia for "retail" and "ค้าปลีก" via the restored alias (M3, ruling: generic words only)', () => {
+    const entries = buildPaletteIndex(input, 'en');
+    for (const q of ['retail', 'ค้าปลีก']) {
+      const rows = searchPalette(entries, q);
+      expect(rows[bestScoreIndex(rows, q)].id).toBe('career:actmedia');
+    }
   });
 });
 

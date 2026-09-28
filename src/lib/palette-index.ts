@@ -64,6 +64,12 @@ const SECTIONS: readonly { id: string; label: UiStringKey; icon: IconName; keywo
   { id: 'contact', label: 'navContact', icon: 'envelope-duotone', keywords: 'contact email ติดต่อ' },
 ];
 
+// M3 (fix wave finding 6): the prototype's one per-row alias (index.html:1774,
+// commands()'s `add('car', …)`), restored -- generic industry words, never a
+// client name or figure (Global Constraint: the repo is public). No other
+// Career row carries one; Klao's current Career database only has this one.
+const CAREER_ALIAS: Record<string, string> = { actmedia: 'retail media bd ค้าปลีก' };
+
 const THEMES: readonly { pref: ThemePref; label: UiStringKey; icon: IconName }[] = [
   { pref: 'auto', label: 'themeAuto', icon: 'circle-half' },
   { pref: 'light', label: 'themeLight', icon: 'sun' },
@@ -171,7 +177,7 @@ export function buildPaletteIndex(input: PaletteInput, locale: Locale): PaletteE
       label: c.company,
       alt: '',
       hint: c.period,
-      keywords: unbreak(`${c.role.en} ${c.role.th}`),
+      keywords: unbreak(`${c.role.en} ${c.role.th}`) + (CAREER_ALIAS[c.key] ? ` ${CAREER_ALIAS[c.key]}` : ''),
       icon: 'arrow-right',
       action: { type: 'target', target: `career:${c.key}` },
     });
@@ -280,8 +286,12 @@ export function oneEdit(a: string, b: string): boolean {
 }
 
 // Prototype score(): 3 = a name or word starts with the query, 2 = a name
-// contains it, 1 = a keyword matches, 0.5 = one typo away (Latin, 4+ letters
-// only — Thai has no spaces to anchor a typo on).
+// contains it, 1 = a curated keyword/alias word starts with the query, 0.5 =
+// one typo away (Latin, 4+ letters only — Thai has no spaces to anchor a
+// typo on). M3 (fix wave finding 6) adds 0.75, below every curated-word hit:
+// a project's `keywords` is its full bilingual description (not a short
+// alias like Career's), so a bare substring match anywhere in that blob is
+// real but weaker signal than a word actually starting with the query.
 function score(entry: PaletteEntry, q: string): number {
   const names = [fold(entry.label), fold(entry.alt)].filter(Boolean);
   const words = names.join(' ').split(/\s+/).filter(Boolean);
@@ -289,7 +299,8 @@ function score(entry: PaletteEntry, q: string): number {
   const kwWords = kw.split(/\s+/).filter(Boolean);
   if (names.some((n) => n.startsWith(q)) || words.some((w) => w.startsWith(q))) return 3;
   if (names.some((n) => n.includes(q))) return 2;
-  if (kwWords.some((w) => w.startsWith(q)) || kw.includes(q)) return 1;
+  if (kwWords.some((w) => w.startsWith(q))) return 1;
+  if (kw.includes(q)) return 0.75;
   if (
     q.length >= 4 &&
     !THAI.test(q) &&
@@ -311,6 +322,30 @@ export function searchPalette(entries: PaletteEntry[], query: string): PaletteEn
     .filter((x) => x.s > 0)
     .sort((a, b) => b.s - a.s || a.index - b.index);
   return PALETTE_GROUPS.flatMap((g) => scored.filter((x) => x.entry.group === g).map((x) => x.entry));
+}
+
+// M3 (fix wave finding 6): the index of the best-scoring row in `rows` (a
+// searchPalette() result, in fixed group order -- 'faq' can list before
+// 'prefs' even though a 'prefs' row scores higher for a given query). Enter
+// on the palette's default selection used to just run rows[0], whatever that
+// group order happened to put first; CommandPalette now starts (and resets,
+// on every keystroke) the selection here instead, so Enter always runs the
+// row that actually matched best. 0 for an empty query (no scoring to do --
+// the first Suggested row, same as before) and 0 when nothing scores above 0
+// (rows is then either empty or just the "Ask Klao" row appended after).
+export function bestScoreIndex(rows: readonly PaletteEntry[], query: string): number {
+  const q = fold(query.trim());
+  if (!q || rows.length === 0) return 0;
+  let bestIndex = 0;
+  let bestScore = 0;
+  rows.forEach((entry, i) => {
+    const s = score(entry, q);
+    if (s > bestScore) {
+      bestScore = s;
+      bestIndex = i;
+    }
+  });
+  return bestIndex;
 }
 
 // Thai vowel signs and tone marks that only ever attach to the character

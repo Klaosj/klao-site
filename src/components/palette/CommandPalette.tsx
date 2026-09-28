@@ -12,7 +12,7 @@ import { goToTarget } from '@/lib/deep-link';
 import { dict, type UiStringKey } from '@/lib/dictionary';
 import { fill } from '@/lib/format';
 import type { FaqItem, Locale } from '@/lib/models';
-import { highlight, searchPalette, type PaletteEntry, type PaletteGroup } from '@/lib/palette-index';
+import { bestScoreIndex, highlight, searchPalette, type PaletteEntry, type PaletteGroup } from '@/lib/palette-index';
 import { readThemePref, writeThemePref } from '@/lib/theme';
 import AskCard from './AskCard';
 import './palette.css';
@@ -86,7 +86,13 @@ export default function CommandPalette({ entries, faq, email, locale, initialQue
   const inputRef = useRef<HTMLInputElement>(null);
   const escHandled = useRef(false);
   const [query, setQuery] = useState(initialQuery);
-  const [sel, setSel] = useState(0);
+  const raw = query.trim();
+  const results = useMemo(() => searchPalette(entries, raw), [entries, raw]);
+  // M3 (fix wave finding 6): the initial selection is the best-scoring row,
+  // not just rows[0] -- searchPalette's `results` (and so `rows` below) are
+  // in fixed group order, not score order, so a weaker match in an earlier
+  // group could otherwise win Enter's default action.
+  const [sel, setSel] = useState(() => bestScoreIndex(results, raw));
   const [answer, setAnswer] = useState<AskAnswer | null>(null);
   const [status, setStatus] = useState('');
   // Fix round 1 #4: `ok` travels with the id now, so a failed copy can show
@@ -102,8 +108,6 @@ export default function CommandPalette({ entries, faq, email, locale, initialQue
     if (emailCopyTimer.current) clearTimeout(emailCopyTimer.current);
   }, []);
 
-  const raw = query.trim();
-  const results = useMemo(() => searchPalette(entries, raw), [entries, raw]);
   // Prototype rule: offer "Ask Klao" from 3 characters, when nothing matched
   // or when the query reads like a question (has a space or ends with "?").
   const showAsk = raw.length >= 3 && (results.length === 0 || /\s/.test(raw) || /[?？]$/.test(raw));
@@ -398,8 +402,13 @@ export default function CommandPalette({ entries, faq, email, locale, initialQue
               spellCheck={false}
               value={query}
               onChange={(e) => {
-                setQuery(e.target.value);
-                setSel(0);
+                const value = e.target.value;
+                setQuery(value);
+                // M3: re-selects the new query's best-scoring row, computed
+                // fresh here rather than read from `results` (last render's
+                // query, one keystroke behind by the time this runs).
+                const q = value.trim();
+                setSel(bestScoreIndex(searchPalette(entries, q), q));
                 setCopyResult(null);
               }}
               onKeyDown={onInputKeyDown}
