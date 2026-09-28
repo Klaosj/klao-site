@@ -98,6 +98,8 @@ export function mapProject(page: NotionPage): Project | null {
     tourOrder: numOrNull(page.properties.TourOrder),
     lineageOf: relationFirst(page.properties.LineageOf),
     alt: optLocalized(text(page.properties.AltEN), text(page.properties.AltTH)),
+    // P5 T18-f: optional, served through the same image proxy as Screenshot.
+    screenshotPhone: fileProxy(page, 'ScreenshotPhone'),
     outcomes: { en: outcomesEn, th: outcomesTh.length ? outcomesTh : [...outcomesEn] },
   };
 }
@@ -155,8 +157,8 @@ export function mapProfile(page: NotionPage): Profile | null {
     clients: multi(page.properties.Clients),
     // Optional rich text, same `text()` helper and null-default treatment
     // as the other optional text fields above: a Profile database without a
-    // `NameNative` property maps to null, and the /th particle wordmark
-    // falls back to the Latin word (see src/app/[locale]/page.tsx).
+    // `NameNative` property maps to null (nothing renders it today; see
+    // Profile.nameNative in models.ts).
     nameNative: text(page.properties.NameNative) || null,
     // White Edition P3: optional rich text, same additive treatment as
     // NameNative -- a Profile database without these properties maps to
@@ -172,7 +174,15 @@ export function mapProfile(page: NotionPage): Profile | null {
     basedIn: text(page.properties.BasedInEN)
       ? localized(text(page.properties.BasedInEN), text(page.properties.BasedInTH))
       : null,
-    workingIn: text(page.properties.WorkingIn) || null,
+    // Master R29 (P5 T18-d): WorkingInEN + WorkingInTH, the same pair and
+    // the same rules as BasedIn. A bare `WorkingIn` -- the property's name
+    // before R29 -- still counts as the English value, so a row set up
+    // under the old name keeps rendering, with Thai falling back to it
+    // until WorkingInTH is added.
+    workingIn: optLocalized(
+      text(page.properties.WorkingInEN) || text(page.properties.WorkingIn),
+      text(page.properties.WorkingInTH),
+    ),
   };
 }
 
@@ -190,10 +200,10 @@ export function mapSkill(page: NotionPage): Skill | null {
   if (!name) return skip('Skills', page, 'missing Name');
   const tier = tierOf(page);
   // Missing Tier and an unrecognised Tier value are the same failure here:
-  // SkillsBand's whole layout (which visual tier a skill lands in) is
-  // driven by this one field, so there is no safe default to fall back to
-  // the way Category falls back to 'biz' below -- an unreadable Tier drops
-  // the row, same as a blank Name.
+  // the tier decides whether a skill is in the toolbox's Methods column
+  // (tier 'top', career.ts) and where it sorts (content.ts's getSkills), so
+  // there is no safe default to fall back to the way Category falls back to
+  // 'biz' below -- an unreadable Tier drops the row, same as a blank Name.
   if (!tier) return skip('Skills', page, 'missing or unrecognised Tier');
   return {
     id: page.id,
@@ -202,8 +212,8 @@ export function mapSkill(page: NotionPage): Skill | null {
     // Optional Select; a Skills database without a Category property (or an
     // empty one) maps to 'biz' rather than failing the row -- same additive
     // treatment as CareerEntry.RoleTH/Profile.Clients elsewhere in this
-    // file, just with a non-empty default instead of ''/[]/null, since
-    // SkillsBand always needs *some* category to pick a dot color.
+    // file, just with a non-empty default instead of ''/[]/null, so every
+    // Skill carries some category (nothing renders it today; see models.ts).
     category: selectOf(page.properties.Category) || 'biz',
     order: num(page.properties.Order),
   };

@@ -105,27 +105,42 @@ describe('askPreview', () => {
 // through the real askPreview() -- canned matchers AND the bestFaq()
 // fallback -- against the real faq.json fixture. `outcome` identifies which
 // canned entry (by name) or FAQ item produced the answer, so each row pins
-// the exact result, not just "an answer of some kind". Rows 24-26 and 39
-// stay WRONG and 13-14 stay a MISS on purpose: they're inherited from the
-// prototype, not part of this fix (Minor F, P5 candidates) -- fixing them
-// risks a regression Important A's own patch was verified NOT to cause.
-describe('askPreview 47-question table (fix wave finding 4 + re-review Important A)', () => {
-  const ENTRY_NAME = [
-    'decline-pay',
-    'decline-social',
-    'right-now',
-    'startup',
-    'retail',
-    'business',
-    'language',
-    'build',
-  ] as const;
+// the exact result, not just "an answer of some kind".
+//
+// T18-b (CO-10, ruling PR5): the six rows the prototype also got wrong
+// (Minor F: 13, 14, 24, 25, 26, 39) now land where PR5 put them, and the
+// reviewer's 20 re-check questions (66793b1) follow the 47 -- one of them,
+// "featured in the media", was a confident retail answer and now declines.
+// Every other row keeps its earlier outcome: 0 regressions across all 67.
+//
+// Lane C review (I1-I3, m1-m5): the reviewer's 46 fresh questions are
+// pinned here too, next to the rows each fix needed. The rule from here on:
+// any change to an Ask matcher runs against this whole table, and no row
+// that was right may change. Where the page has no sensible answer, the
+// expected outcome is a decline.
+describe('askPreview pinned question table (fix wave finding 4, re-review Important A, T18-b/b2, lane C review)', () => {
+  // Each canned answer is named by how its English text starts, so adding a
+  // decline entry or a second entry with the same answer (PR5's "code in /
+  // โค้ด" check gives the build answer) never shifts a name.
+  const ANSWER_NAME: [start: string, name: string][] = [
+    ['Klao has been Senior Business Development', 'right-now'],
+    ['Yes. He co-founded two.', 'startup'],
+    ['Yes. At Actmedia he opens', 'retail'],
+    ['Yes. He founded A Bun Dance', 'business'],
+    ['Thai, and English at a conversational level', 'language'],
+    ['Yes, on nights and weekends', 'build'],
+  ];
+  const nameOf = (en: string) => ANSWER_NAME.find(([start]) => en.startsWith(start))?.[1];
+
+  it('names every canned answer', () => {
+    for (const c of ASK_CANNED) if (!c.decline) expect(nameOf(c.answer.en), c.answer.en).toBeDefined();
+  });
 
   function outcome(query: string, locale: 'en' | 'th'): string {
     const answer = askPreview(query, faq, locale);
     if (answer.kind === 'decline') return 'decline';
-    const i = ASK_CANNED.findIndex((c) => !c.decline && answer.text === c.answer[answer.lang]);
-    if (i >= 0) return ENTRY_NAME[i];
+    const canned = ASK_CANNED.find((c) => !c.decline && answer.text === c.answer[answer.lang]);
+    if (canned && !canned.decline) return nameOf(canned.answer.en)!;
     // Not a canned match: the bestFaq() fallback. Its first source is
     // always the FAQ item itself, id faqAnchorId()'d ('faq-xxx').
     return `faq:${(answer.sources[0]?.target ?? '').replace(/^faq-/, '')}`;
@@ -146,8 +161,8 @@ describe('askPreview 47-question table (fix wave finding 4 + re-review Important
     ['Which retailers has he worked with?', 'en', 'retail', 'plural: retailers (round-1 regression)'],
     ['Is he paying for Claude?', 'en', 'decline', 'verb: paying'],
     ['Is he a developer?', 'en', 'build', 'noun: developer (round-1 regression)'],
-    ['Has he built a chatbot?', 'en', 'decline', 'verb: built (inherited miss, Minor F)'],
-    ['Has he founded anything?', 'en', 'decline', 'verb: founded (inherited miss, Minor F)'],
+    ['Has he built a chatbot?', 'en', 'build', 'verb: built (Minor F -> build, PR5)'],
+    ['Has he founded anything?', 'en', 'startup', 'verb: founded (Minor F -> startup, PR5)'],
     ['Does he build apps himself?', 'en', 'build', ''],
     ['Does he write code?', 'en', 'build', ''],
     ["What's he working on right now?", 'en', 'right-now', ''],
@@ -157,9 +172,9 @@ describe('askPreview 47-question table (fix wave finding 4 + re-review Important
     ['Has he run his own business?', 'en', 'business', ''],
     ['Did he start a startup?', 'en', 'startup', ''],
     ['Does he speak English?', 'en', 'language', ''],
-    ['Which languages does he code in?', 'en', 'language', 'inherited WRONG (Minor F, P5)'],
-    ["What's the business model of GoNai?", 'en', 'business', 'inherited WRONG (Minor F, P5)'],
-    ['Can I call him today?', 'en', 'right-now', 'inherited WRONG (Minor F, P5)'],
+    ['Which languages does he code in?', 'en', 'build', 'code in: before language (Minor F, PR5)'],
+    ["What's the business model of GoNai?", 'en', 'decline', 'business model: not published (Minor F, PR5)'],
+    ['Can I call him today?', 'en', 'decline', 'bare "today" is not current work (Minor F, PR5)'],
     ['How do I reach him?', 'en', 'faq:fx-faq-contact', ''],
     ['What is Actmedia?', 'en', 'retail', ''],
     ['ตอนนี้ทำงานอะไรอยู่', 'th', 'right-now', ''],
@@ -172,7 +187,7 @@ describe('askPreview 47-question table (fix wave finding 4 + re-review Important
     ['งานพัฒนาธุรกิจที่ทำอยู่คืออะไร', 'th', 'retail', 'TH "business development" (named bug, TH)'],
     ['นักพัฒนาธุรกิจทำอะไรบ้าง', 'th', 'retail', "TH BD, site's own role word (named bug, TH)"],
     ['ทำสื่อโซเชียลเป็นไหม', 'th', 'decline', 'TH "social media" (named bug, TH)'],
-    ['เขียนโค้ดภาษาอะไร', 'th', 'language', 'inherited WRONG (Minor F, P5)'],
+    ['เขียนโค้ดภาษาอะไร', 'th', 'build', 'โค้ด: before language (Minor F, PR5)'],
     ['ติดต่อยังไง', 'th', 'faq:fx-faq-contact', ''],
     ['เคยทำ startup ไหม', 'th', 'startup', 'mixed'],
     ['ทำappอะไรบ้าง', 'th', 'build', 'mixed, no spaces'],
@@ -181,7 +196,163 @@ describe('askPreview 47-question table (fix wave finding 4 + re-review Important
     ['ขอ salary expectation หน่อย', 'th', 'decline', 'mixed pay'],
     ['ทำงานกับ retailers เจ้าไหนบ้าง', 'th', 'retail', 'mixed plural (round-1 regression)'],
     ['ใช้ Claude เขียน code ไหม', 'th', 'build', 'mixed'],
+    // The reviewer's 20 re-check questions (re-check 66793b1, row A).
+    ['Does he use social media?', 'en', 'decline', 'social'],
+    ['Which social media platforms is he on?', 'en', 'decline', 'social'],
+    ['Is he a social person?', 'en', 'decline', 'social, no "media"'],
+    ['Has he been featured in the media?', 'en', 'decline', 'press: not published (Minor F, PR5)'],
+    ['Does he have media sales experience?', 'en', 'retail', 'media'],
+    ['Is he a product developer?', 'en', 'build', 'developer'],
+    ['Does he work with developers?', 'en', 'build', 'developers'],
+    ['Did he develop GoNai alone?', 'en', 'build', 'develop'],
+    ['Is he good at business development?', 'en', 'retail', 'BD'],
+    ['Has he worked for a retailer?', 'en', 'retail', 'retailer'],
+    ['Is he a founder?', 'en', 'startup', 'founder: startup since PR5 (business before; both acceptable)'],
+    ['Has he pitched a startup?', 'en', 'startup', ''],
+    ['What is his take on social media strategy?', 'en', 'decline', 'social'],
+    ['ทำงานด้านพัฒนาธุรกิจมากี่ปี', 'th', 'retail', 'TH BD'],
+    ['เคยทำโซเชียลมีเดียไหม', 'th', 'decline', 'TH social'],
+    ['มีโซเชียลอะไรบ้าง', 'th', 'decline', 'TH socials'],
+    ['เคยทำงานสื่อไหม', 'th', 'retail', 'TH media'],
+    ['เคยพัฒนาแอปเองไหม', 'th', 'build', 'TH develop app'],
+    ['ธุรกิจที่เคยทำมีอะไรบ้าง', 'th', 'business', 'TH business'],
+    ['ทำ media มาก่อนไหม', 'th', 'retail', 'mixed media'],
+    // T18-b2 (controller ruling): the Thai press questions decline like
+    // "featured in the media" -- while สื่อ in the retail-media sense
+    // (in-store media, running ads in a store) still gets the retail answer.
+    ['เคยออกสื่อไหม', 'th', 'decline', 'TH press: ออกสื่อ (T18-b2)'],
+    ['มีผลงานออกสื่อบ้างไหม', 'th', 'decline', 'TH press: ออกสื่อ (T18-b2)'],
+    ['เคยให้สัมภาษณ์สื่อไหม', 'th', 'decline', 'TH press: ให้สัมภาษณ์ (T18-b2)'],
+    ['เคยลงข่าวเรื่องงานสื่อไหม', 'th', 'decline', 'TH press: ลงข่าว (T18-b2)'],
+    ['ทำสื่อในร้านค้าปลีกไหม', 'th', 'retail', 'TH in-store media stays retail (T18-b2)'],
+    ['ช่วยออกสื่อโฆษณาในร้านได้ไหม', 'th', 'retail', 'ออกสื่อโฆษณา = running ads, not press (T18-b2)'],
+    ['เคยทำ retail media ในร้านไหม', 'th', 'retail', 'mixed retail media stays retail (T18-b2)'],
+    // Lane C review I1: PR5's founded/founder must not pull a question about
+    // his burger shop, or about Actmedia the company, onto the startup answer.
+    ['Is he the founder of a burger shop?', 'en', 'business', 'review #14, I1'],
+    ['Who founded A Bun Dance?', 'en', 'faq:fx-faq-business', 'review #15, I1'],
+    ['Has he founded a business?', 'en', 'business', 'review #16, I1'],
+    ['Is he a co-founder?', 'en', 'startup', 'review #17'],
+    ['When was Actmedia founded?', 'en', 'decline', 'review #18, I1: not published, no sensible answer'],
+    ['เป็นfounderร้านเบอร์เกอร์ไหม', 'th', 'business', 'review #34, I1'],
+    ['When was A Bun Dance founded?', 'en', 'faq:fx-faq-business', 'I1 guard: his own venture still answers'],
+    ['When was his burger shop founded?', 'en', 'business', 'I1 guard: his own venture still answers'],
+    ['Who founded Actmedia?', 'en', 'decline', 'I1: not published'],
+    ['Is he a founder at Actmedia?', 'en', 'decline', 'I1: he is not; the retail answer would say "Yes."'],
+    ['When was GoNai founded?', 'en', 'decline', 'I1: founding dates are not published'],
+    ['What year was Aje founded?', 'en', 'decline', 'I1: founding dates are not published'],
+    ['Who founded GoNai?', 'en', 'decline', 'I1: "who founded" is not the startup answer'],
+    ['Was Actmedia founded by him?', 'en', 'decline', 'I1: he is not its founder'],
+    ['Has he founded a restaurant?', 'en', 'business', 'I1 guard: restaurant'],
+    // Lane C review I2: "built" is also a BD verb -- partnerships, pipelines,
+    // teams are not the build answer.
+    ['Has he built partnerships with suppliers?', 'en', 'decline', 'review #23, I2'],
+    ['Has he built a sales pipeline?', 'en', 'decline', 'review #24, I2'],
+    ['Has he built anything?', 'en', 'build', 'review #43'],
+    ['What is he building at night?', 'en', 'build', 'I2: "building" alone still answers build'],
+    ['Does he build things himself?', 'en', 'build', 'I2: "build" alone still answers build'],
+    ['Is he building a sales team?', 'en', 'decline', 'review #44, I2 (the guard covers build/building too)'],
+    ['Does he build apps for sales teams?', 'en', 'build', 'I2 guard: "apps" still answers build'],
+    ['Has he built relationships with brands?', 'en', 'decline', 'I2 guard: relationships'],
+    ['Has he built a network of suppliers?', 'en', 'decline', 'I2 guard: network'],
+    ['Has he built new channels?', 'en', 'faq:fx-faq-day', 'I2 guard: channels -- opening new channels is his day job (FAQ)'],
+    ['Has he built up sales before?', 'en', 'decline', 'I2 guard: sales'],
+    ['Has he built a deal pipeline?', 'en', 'decline', 'I2 guard: pipeline'],
+    ['Has he built a team before?', 'en', 'decline', 'I2 guard: team'],
+    // Lane C review I3: English and mixed press questions decline like their
+    // Thai twin (T18-b2). A question about working in media is still the
+    // retail answer.
+    ['Has he been in the media?', 'en', 'decline', 'review #1, I3'],
+    ['Any media coverage of GoNai?', 'en', 'decline', 'review #2, I3'],
+    ['Has he given media interviews?', 'en', 'decline', 'review #3, I3'],
+    ['Was GoNai featured on TV?', 'en', 'decline', 'review #4'],
+    ['Has he been in the news?', 'en', 'decline', 'review #5'],
+    ['Did the press write about Aje?', 'en', 'decline', 'review #6'],
+    ['Does he sell in-store media to brands?', 'en', 'retail', 'review #7'],
+    ['How does in-store screen advertising work at his job?', 'en', 'retail', 'review #8'],
+    ['Has he worked in the media industry?', 'en', 'retail', 'review #9, I3: media as a job stays retail'],
+    ['มี media coverage ไหม', 'th', 'decline', 'review #35, I3'],
+    ['เคยให้ interview สื่อไหม', 'th', 'decline', 'review #38, I3'],
+    ['ทำ in-store media ที่ Actmedia ใช่ไหม', 'th', 'retail', 'review #39'],
+    ['เคยถูก featured in magazine ไหม', 'th', 'decline', 'review #40'],
+    ['Has he appeared in the media?', 'en', 'decline', 'I3: appeared in the media'],
+    ['Has he been in the news for his retail work?', 'en', 'decline', 'I3: in the news'],
+    ['Has his in-store work appeared in the press?', 'en', 'decline', 'I3: in the press'],
+    ['Any media mentions of his retail work?', 'en', 'decline', 'I3: media mentions'],
+    ['Any press coverage of his in-store work?', 'en', 'decline', 'I3: press coverage'],
+    ['Was he interviewed about retail media?', 'en', 'decline', 'I3: interviewed'],
+    ['Has he been in the media industry?', 'en', 'retail', 'I3 lookahead: media industry is a job'],
+    ['Has he been in the media business?', 'en', 'retail', 'I3 lookahead: media business is a job'],
+    ['Has he been in the media sales side?', 'en', 'retail', 'I3 lookahead: media sales is a job'],
+    // Review m5 (MD): "featured on/by" -- each with a retail word, so only
+    // the decline stands between it and the retail answer.
+    ['Was his retail media work featured on TV?', 'en', 'decline', 'm5: featured on'],
+    ['Was his in-store work featured by a magazine?', 'en', 'decline', 'm5: featured by'],
+    // Review m1: bare "today" left right-now in PR5, but a question about
+    // his work today is still a current-work question.
+    ["What's he doing today?", 'en', 'right-now', 'review #10, m1'],
+    ['Where does he work today?', 'en', 'right-now', 'review #11, m1'],
+    ['Is he free today for a call?', 'en', 'decline', 'review #12, m1: no work word'],
+    ['What does he do for a living today?', 'en', 'right-now', 'review #13, m1'],
+    ['today ทำงานที่ไหน', 'th', 'right-now', 'review #37, m1 (mixed)'],
+    ['Tell me where he works today', 'en', 'right-now', 'm1: works'],
+    ['Which job does he have today?', 'en', 'right-now', 'm1: job'],
+    ['วันนี้ว่างไหม', 'th', 'decline', 'review #29'],
+    // Review m2: ออกสื่อ in the in-store sense (in a store, a mall, a branch,
+    // a supermarket) keeps the retail answer; the press sense declines.
+    ['ช่วยออกสื่อในห้างได้ไหม', 'th', 'retail', 'review #27, m2: in a mall'],
+    ['เคยออกสื่อในร้านค้าไหม', 'th', 'retail', 'review #46, m2/m5 (MC): in a store'],
+    ['ช่วยออกสื่อที่สาขาได้ไหม', 'th', 'retail', 'm2: at a branch'],
+    ['ออกสื่อในซูเปอร์ได้ไหม', 'th', 'retail', 'm2: in a supermarket'],
+    ['เคยออกทีวีไหม', 'th', 'decline', 'review #25'],
+    ['มีข่าวเกี่ยวกับเขาไหม', 'th', 'decline', 'review #26'],
+    ['ขายสื่อในร้านค้าปลีกไหม', 'th', 'retail', 'review #28'],
+    // Review m3: programming-language questions get the build answer, not
+    // the spoken-language one; the site's own languages stay language.
+    ['What programming languages does he know?', 'en', 'build', 'review #19, m3'],
+    ['Does he code in Python?', 'en', 'build', 'review #20'],
+    ['What language is GoNai written in?', 'en', 'build', 'review #21, m3'],
+    ['Can he code in TypeScript?', 'en', 'build', 'review #22'],
+    ['เขียนโปรแกรมภาษาอะไรได้บ้าง', 'th', 'build', 'review #31, m3'],
+    ['ทำแอปด้วยภาษาอะไร', 'th', 'build', 'review #32, m3'],
+    ['code in ภาษาอะไร', 'th', 'build', 'review #36'],
+    ['Did he code in his last job?', 'en', 'build', 'review #45'],
+    ['Is the site written in Thai?', 'en', 'language', 'm3: written in Thai/English is the site language'],
+    ['เขียนเว็บด้วยภาษาอะไร', 'th', 'build', 'm3: writing a site "in" a language'],
+    ['คุยด้วยภาษาอะไรได้บ้าง', 'th', 'language', 'm3: speaking in a language stays language'],
+    // Review m4: the Thai word for founder, under the same guard as I1.
+    ['เป็นผู้ก่อตั้งอะไรบ้าง', 'th', 'startup', 'review #30, m4'],
+    ['เป็นผู้ก่อตั้งร้านอะไร', 'th', 'business', 'm4 guard: a shop is A Bun Dance'],
+    // The rest of the reviewer's 46.
+    ['เคยเป็นเจ้าของร้านไหม', 'th', 'business', 'review #33'],
+    ['Which projects are featured on this site?', 'en', 'decline', 'review #41'],
+    ['What tools are featured in his toolbox?', 'en', 'decline', 'review #42'],
+    // Lane C re-check (23484ba), questions #47-60. R1: Thai founder
+    // questions about Actmedia decline like the English ones.
+    ['ใครเป็นผู้ก่อตั้ง Actmedia', 'th', 'decline', 're-check #49, R1'],
+    ['Actmedia ก่อตั้งเมื่อไหร่', 'th', 'decline', 're-check #50, R1'],
+    ['What has he founded outside Actmedia?', 'en', 'decline', 're-check #48, R4: a safe decline, on purpose'],
+    // R2: the Thai terms for "programming language" are a build question.
+    ['ถนัดภาษาโปรแกรมอะไร', 'th', 'build', 're-check #51, R2'],
+    ['ถนัดโปรแกรมมิ่งภาษาอะไร', 'th', 'build', 'R2: โปรแกรมมิ่ง'],
+    ['ใช้โปรแกรมอะไรทำงานบ้าง', 'th', 'decline', 're-check #52: using software is not coding'],
+    // R3: "written in which language" is build only for an app or a site.
+    ['บทความเขียนด้วยภาษาอะไร', 'th', 'language', 're-check #56, R3: posts, not code'],
+    ['เขียนแอปด้วยภาษาอะไร', 'th', 'build', 'R3: writing an app'],
+    // R5: "Can he start work today?" is not a current-work question.
+    ['Can he start work with us today?', 'en', 'faq:fx-faq-contact', 're-check #53, R5: how to reach him'],
+    ['Can I book him for a job today?', 'en', 'decline', 'R5: "can I"'],
+    ['Can we discuss a job today?', 'en', 'decline', 'R5: "can we"'],
+    ['What is this site written in?', 'en', 'build', 're-check #54'],
+    ['Is his resume written in English?', 'en', 'language', 're-check #55'],
+    ['Has he built any tools for his sales work?', 'en', 'decline', 're-check #57'],
+    ['Who were his co-founders at Tripedia?', 'en', 'startup', 're-check #58'],
+    ['Can I interview him for a role?', 'en', 'decline', 're-check #60'],
   ];
+
+  it('covers every pinned question', () => {
+    expect(ROWS).toHaveLength(173);
+  });
 
   it.each(ROWS)('%s (%s) -> %s [%s]', (query, locale, expected) => {
     expect(outcome(query, locale)).toBe(expected);

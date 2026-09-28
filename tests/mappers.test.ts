@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, it, expect, vi } from 'vitest';
 import { mapProject, mapCareerEntry, mapProfile, mapSkill, mapQuestion, mapStoryChapter } from '@/lib/notion-mappers';
 import { slugKey } from '@/lib/format';
@@ -139,6 +140,7 @@ describe('mapProject — White Edition fields (C5)', () => {
       AltTH: rich('หน้าแรกของ GoNai'),
       OutcomeEN: rich('Live since Aug 2026\nNotion as the only CMS'),
       OutcomeTH: rich('ออนไลน์ตั้งแต่ ส.ค. 2026\nNotion เป็น CMS เดียว'),
+      ScreenshotPhone: { files: [{ file: { url: 'https://s3.example/phone.jpg' } }] },
     },
   };
 
@@ -153,6 +155,9 @@ describe('mapProject — White Edition fields (C5)', () => {
       tourOrder: 2,
       lineageOf: 'tripedia-id',
       alt: { en: 'GoNai home screen.', th: 'หน้าแรกของ GoNai' },
+      // T18-f (Q1 = A): the phone tour frame, through the same image proxy
+      // as Screenshot.
+      screenshotPhone: '/api/img/page/gonai-id/ScreenshotPhone',
       outcomes: {
         en: ['Live since Aug 2026', 'Notion as the only CMS'],
         th: ['ออนไลน์ตั้งแต่ ส.ค. 2026', 'Notion เป็น CMS เดียว'],
@@ -173,8 +178,16 @@ describe('mapProject — White Edition fields (C5)', () => {
       tourOrder: null,
       lineageOf: null,
       alt: null,
+      screenshotPhone: null,
       outcomes: { en: [], th: [] },
     });
+  });
+
+  // T18-f: an empty Files property is "no phone frame" too, so the stage
+  // centre-crops the desktop Screenshot as before.
+  it('maps an empty ScreenshotPhone to null', () => {
+    const page = { ...projectPage, properties: { ...projectPage.properties, ScreenshotPhone: { files: [] } } };
+    expect(mapProject(page)!.screenshotPhone).toBeNull();
   });
 
   it("defaults media to 'win' on a pre-migration row without a screenshot", () => {
@@ -639,5 +652,19 @@ describe('mapStoryChapter', () => {
     expect(mapStoryChapter(page)).toBeNull();
     expect(warn).toHaveBeenCalled();
     warn.mockRestore();
+  });
+});
+
+// T18-e (CO-17 and CO-19, this lane's files): the comments in these lib
+// files describe the code as it is today. The site spells the company
+// "Actmedia", and a component the White Edition retired (SkillsBand, the
+// old ContactBand, the particle wordmark) is named only as history, on a
+// line that says it is retired.
+describe('lib comments name the live code (T18-e)', () => {
+  const RETIRED = /SkillsBand|ContactBand|ParticleField|particle wordmark|CvBand|AboutBand|CraftBand|HeroMonument/;
+  it.each(['src/lib/models.ts', 'src/lib/notion-mappers.ts', 'src/lib/career.ts'])('%s', (file) => {
+    const lines = readFileSync(file, 'utf8').split('\n');
+    expect(lines.filter((l) => /ActMedia/.test(l))).toEqual([]);
+    expect(lines.filter((l) => RETIRED.test(l) && !/\bretired\b/.test(l))).toEqual([]);
   });
 });

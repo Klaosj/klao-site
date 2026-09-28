@@ -93,6 +93,9 @@ export interface Project {
   tourOrder: number | null; // TourOrder; null sorts after every numbered project
   lineageOf: string | null; // LineageOf relation: Project.id of the earlier idea (GoNai -> Tripedia)
   alt: Localized | null; // AltEN/TH: what the picture shows; null falls back to image-alt.ts
+  // P5 T18-f (Q1 = A): ScreenshotPhone (Files), the hero tour's own 6:5 phone
+  // capture of the same screen. null = the phone stage centre-crops imageSrc.
+  screenshotPhone: string | null;
   outcomes: { en: string[]; th: string[] }; // OutcomeEN/TH one per line (th falls back to en); `outcome` stays for the old pages
 }
 
@@ -166,14 +169,14 @@ export interface Profile {
   resumeUrl: string | null;
   // Companies and brands the owner has actually worked with, most
   // recognisable first. Seeded from his own career.json -- employers plus the
-  // accounts he names in his own ActMedia wins -- never invented. Locale
+  // accounts he names in his own Actmedia wins -- never invented. Locale
   // invariant: these are proper nouns and render identically in both
   // languages, the same reasoning `company` above already relies on.
   clients: string[];
-  // Native-script display name (Thai, for this owner). Drives the /th
-  // particle wordmark in src/app/[locale]/page.tsx -- rasterised via
-  // ParticleField's canvas renderer, not plain DOM text. null falls back to
-  // the Latin wordmark (profile.name's first word) on both locales.
+  // Native-script display name (Thai, for this owner). Nothing renders it
+  // today -- its last reader, the /th home wordmark, was retired with the
+  // old hero in P0 -- but the Notion NameNative property still maps here.
+  // null when the property is missing or blank.
   nameNative: string | null;
   // White Edition P3 (C5): By day's owner-side story (one **bold** clause,
   // rendered by BoldText) and the section's closing line (Thai may carry a
@@ -182,21 +185,21 @@ export interface Profile {
   prologue: Localized | null;
   closingLine: Localized | null;
   // P4 (spec §7, contract C5): the close band's "Based in" / "Working in"
-  // facts, moved out of the old ContactBand's hard-coded constants so Klao
-  // edits them in Notion. basedIn is Localized (the prototype reads
-  // "Bangkok, TH" / "กรุงเทพฯ"); workingIn is one locale-invariant string per
-  // C5. null = property missing or blank, and that fact simply doesn't render.
+  // facts (CloseBand), which Klao edits in Notion. Both are Localized: the
+  // prototype reads "Bangkok, TH" / "กรุงเทพฯ" and "TH / EN" / "ไทย / อังกฤษ"
+  // (workingIn was one locale-invariant string until master R29, P5 T18-d).
+  // null = no English value in Notion, and that fact simply doesn't render.
   basedIn: Localized | null;
-  workingIn: string | null;
+  workingIn: Localized | null;
 }
 
-// "How real is it" -- a Skill's visual prominence on SkillsBand (the
-// Toolbox band) is driven entirely by which of these five buckets it sits
-// in, from "reach for daily, ship with it" down to "still learning, not yet
-// dependable." Ordered biggest/brightest -> smallest/quietest on purpose:
-// this literal declaration order is the single source of truth SKILL_TIERS
-// (below) captures as an array, the same way LOCALES above is the single
-// source of truth for locale order.
+// "How real is it" -- five buckets, from "reach for daily, ship with it"
+// down to "still learning, not yet dependable." The toolbox (career.ts's
+// toolboxColumns) lists the 'top' bucket as its Methods column; every
+// bucket sets where a skill sorts in getSkills. Ordered strongest ->
+// weakest on purpose: this literal declaration order is the single source
+// of truth SKILL_TIERS (below) captures as an array, the same way LOCALES
+// above is the single source of truth for locale order.
 export type SkillTier = 'top' | 'daily' | 'working' | 'basic' | 'learning';
 
 // Single source of truth for two things that must never drift apart: (1)
@@ -218,10 +221,10 @@ export interface Skill {
   name: string;
   tier: SkillTier;
   // Free-form Notion Select value (tech/biz/data/fin/human, per
-  // docs/NOTION_SETUP.md) -- not a union here, since SkillsBand only uses
-  // this to pick a muted dot color and quietly falls back to one default
-  // color for any value it doesn't recognise, rather than needing the type
-  // system to enumerate every category a future Skills row might carry.
+  // docs/NOTION_SETUP.md) -- not a union here, so the type system need not
+  // enumerate every category a future Skills row might carry. Nothing
+  // renders it today (the retired SkillsBand used it for a dot colour); the
+  // mapper still reads it, with 'biz' for a blank one.
   category: string;
   order: number;
 }
