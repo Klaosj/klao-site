@@ -180,10 +180,10 @@ export default async function RootLayout({
         </a>
         <SiteNav locale={l} profile={profile} />
         {/* Unconstrained, unlike the old boxed `max-w-3xl` column: the
-            redesigned home route's bands (Hero, AboutBand, ...) are meant to
-            span the full viewport, with each element capping its own
-            reading width internally (e.g. AboutBand's `max-w-[68ch]`
-            prose). The four untouched routes (projects/writing/career/
+            redesigned home route's bands (HeroTour, ByDay, ...) are meant to
+            span the full viewport, with each band capping its own reading
+            width internally instead (the shared `.wrap`/`.wrap-wide`
+            classes, C9). The four untouched routes (projects/writing/career/
             writing/[slug]) now carry that same `max-w-3xl` column on their
             own root element instead, plus top padding to clear this header
             now that it's fixed rather than sitting in normal document

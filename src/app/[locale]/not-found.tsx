@@ -28,7 +28,7 @@ export function resolveLocale(pathname: string | null): Locale {
 
 // Split from the default export so tests can render it directly with an
 // explicit `locale` prop -- every other section component in this codebase
-// (ContactBand, CvBand, SiteNav, ...) takes `locale` as a prop rather than
+// (CloseBand, CareerBand, SiteNav, ...) takes `locale` as a prop rather than
 // resolving it internally, and testing the default export directly would
 // mean stubbing next/navigation's router context just to reach the 'th'
 // branch, which nothing else in this repo's test suite does.

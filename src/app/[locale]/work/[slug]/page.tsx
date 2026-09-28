@@ -179,7 +179,7 @@ export default async function WorkStoryPage({
           inside the same flex row where it read as a third, unstyled
           control. Type-gated exactly as before: a business story never shows
           a stack, even if its Notion row still carries Stack values -- the
-          same invariant ProjectCard and WorkDeck enforce -- and the length
+          same invariant ProjectCard enforces -- and the length
           gate keeps an empty <p> from rendering. */}
       {showStack && <p className="mt-10 text-xs text-ink-2">{story.stack.join(' · ')}</p>}
       {/* Live site is the promoted action here (finding 25): on a case-study

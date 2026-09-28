@@ -75,8 +75,8 @@ export default async function WritingPage({ params }: { params: Promise<{ locale
       {/* Say so, rather than rendering an empty <ul>. Both fixture posts were
           placeholder stubs and were pulled on 2026-08-09, which left this page
           as a heading above nothing -- a visitor cannot tell that apart from a
-          page that failed to load. Same treatment CvBand already gives an
-          unpopulated Career database. */}
+          page that failed to load. Same treatment CareerBand already gives
+          an unpopulated Career database. */}
       {posts.length === 0 && (
         <p className="mt-6 text-[14.5px] text-ink-2">{dict[locale].writingUnpublished}</p>
       )}
