@@ -345,9 +345,21 @@
        bottom-anchored (margin: auto 0 0 lets the fixed-inset dialog's auto
        top margin absorb the remaining space, matching .sheet's own phone
        anchoring). Replaces the older, narrower border-radius-only override. */
+    /* M5 (fix wave finding 8): the previous value here, with the dialog's
+       fixed inset (top:0/bottom:0 from the UA stylesheet's dialog:modal
+       rule) both non-auto, resolved per the CSS box-position equation by
+       stretching the sheet's height to fill the gap -- margin-top: auto
+       never got a chance to absorb any space, because that only happens
+       once height itself is no longer the one being solved for. The sheet
+       was therefore always ~97% tall (clamped only by max-height below),
+       never sized to its own content. fit-content makes height the
+       definite one, so margin-top: auto is what settles instead --
+       bottom-anchored, sized to content, capped by max-height. Verified
+       with headless Chrome at 390x844: 97.1% of the viewport before this
+       change, 52.7% (content height) after. */
     .ck:has(> .ask) {
       width: 100%;
-      height: auto;
+      height: fit-content;
       max-height: calc(100dvh - 24px);
       margin: auto 0 0;
       border-radius: 24px 24px 0 0;

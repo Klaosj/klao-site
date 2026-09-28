@@ -481,7 +481,12 @@ describe('CommandPalette', () => {
     const phone = css.slice(start, end);
     const askOverride = /\.ck:has\(>\s*\.ask\)\s*\{([^}]*)\}/.exec(phone)?.[1] ?? '';
     expect(askOverride, 'the phone .ck:has(> .ask) override').toContain('width: 100%');
-    expect(askOverride).toContain('height: auto');
+    // M5 (fix wave finding 8): `height: auto` here, with the dialog's inset
+    // (top:0/bottom:0) both non-auto, stretched to fill the gap instead of
+    // letting `margin-top: auto` push a content-sized box to the bottom --
+    // the sheet was always ~97% tall. `fit-content` is what content-sizes it.
+    expect(askOverride).not.toContain('height: auto');
+    expect(askOverride).toContain('height: fit-content');
     expect(askOverride).toContain('max-height: calc(100dvh - 24px)');
     expect(askOverride).toContain('margin: auto 0 0');
     expect(askOverride).toContain('border-radius: 24px 24px 0 0');
