@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import CommandPalette from '@/components/palette/CommandPalette';
+import { setReadingAnchor } from '@/lib/active-section';
 import { copyShortcutHint } from '@/lib/clipboard';
 import { dict } from '@/lib/dictionary';
 import { fill } from '@/lib/format';
@@ -404,6 +405,21 @@ describe('CommandPalette', () => {
     fireEvent.keyDown(box, { key: 'Enter' });
     expect(onClose).toHaveBeenCalledWith({ restoreFocus: false });
     expect(assign).toHaveBeenCalledWith('/th');
+  });
+
+  // Klao decision 6: the language command keeps the band being read, like the toggle.
+  it('carries the reading anchor into the other locale', () => {
+    const assign = vi.fn();
+    vi.stubGlobal('location', { assign, pathname: '/en', href: '/en' });
+    setReadingAnchor('career');
+    try {
+      const box = open();
+      type(box, 'language');
+      fireEvent.keyDown(box, { key: 'Enter' });
+      expect(assign).toHaveBeenCalledWith('/th#career');
+    } finally {
+      setReadingAnchor(null);
+    }
   });
 
   // M3 (fix wave finding 6): Enter used to just run the row listed first

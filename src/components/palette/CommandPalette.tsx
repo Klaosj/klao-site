@@ -6,6 +6,7 @@ import { Icon } from '@/components/icons';
 // (preflight ruling), so its href logic (switchLocaleHref) is imported from
 // there rather than re-declared as a second `swapLocale` in link-target.ts.
 import { switchLocaleHref } from '@/components/LocaleToggle';
+import { getReadingAnchor } from '@/lib/active-section';
 import { askPreview, type AskAnswer } from '@/lib/ask';
 import { copyShortcutHint, copyText } from '@/lib/clipboard';
 import { goToTarget } from '@/lib/deep-link';
@@ -203,7 +204,8 @@ export default function CommandPalette({ entries, faq, email, locale, initialQue
         return;
       case 'locale':
         onClose({ restoreFocus: false });
-        window.location.assign(switchLocaleHref(window.location.pathname, action.locale));
+        // Klao decision 6: like the toggle, keep the band being read.
+        window.location.assign(switchLocaleHref(window.location.pathname, action.locale, getReadingAnchor()));
         return;
       case 'href':
         if (action.external) {
