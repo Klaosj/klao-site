@@ -11,6 +11,35 @@ const text = (prop: any): string =>
     .map((t) => t?.plain_text ?? '')
     .join('')
     .trim();
+// For the fields BoldText renders (Profile PrologueEN/TH, Story BodyEN/TH),
+// whose one key clause is marked **…**. The Notion editor turns a typed
+// **…** into bold formatting as you type, and the API returns that clause as
+// a run with `annotations.bold` and no asterisks, so `text()` above would
+// silently drop the emphasis. This joins the runs the same way and puts the
+// markers back: adjacent bold runs (Notion splits one clause wherever another
+// annotation changes inside it) become one pair, spaces a bold run carries
+// stay outside the markers ("foo **bar** baz", as the copy is written), and a
+// whitespace-only bold run stays plain. Asterisks that arrive as characters
+// pass through untouched. Every other field keeps `text()`: it renders
+// through ThaiText, where ** would show literally.
+export const boldText = (prop: any): string => {
+  const stretches: { bold: boolean; text: string }[] = [];
+  for (const t of (prop?.title ?? prop?.rich_text ?? []) as any[]) {
+    const bold = t?.annotations?.bold === true;
+    const last = stretches[stretches.length - 1];
+    if (last && last.bold === bold) last.text += t?.plain_text ?? '';
+    else stretches.push({ bold, text: t?.plain_text ?? '' });
+  }
+  return stretches
+    .map(({ bold, text: s }) => {
+      const core = s.trim();
+      if (!bold || !core) return s;
+      const start = s.indexOf(core);
+      return `${s.slice(0, start)}**${core}**${s.slice(start + core.length)}`;
+    })
+    .join('')
+    .trim();
+};
 const num = (prop: any): number => (typeof prop?.number === 'number' ? prop.number : 0);
 const check = (prop: any): boolean => prop?.checkbox === true;
 const urlOf = (prop: any): string | null => prop?.url ?? null;
@@ -162,9 +191,10 @@ export function mapProfile(page: NotionPage): Profile | null {
     nameNative: text(page.properties.NameNative) || null,
     // White Edition P3: optional rich text, same additive treatment as
     // NameNative -- a Profile database without these properties maps to
-    // null rather than failing.
-    prologue: text(page.properties.PrologueEN)
-      ? localized(text(page.properties.PrologueEN), text(page.properties.PrologueTH))
+    // null rather than failing. The prologue renders through BoldText, so it
+    // reads Notion bold as **…** (boldText above).
+    prologue: boldText(page.properties.PrologueEN)
+      ? localized(boldText(page.properties.PrologueEN), boldText(page.properties.PrologueTH))
       : null,
     closingLine: text(page.properties.ClosingLineEN)
       ? localized(text(page.properties.ClosingLineEN), text(page.properties.ClosingLineTH))
@@ -258,7 +288,8 @@ export function mapStoryChapter(page: NotionPage): StoryChapter | null {
   return {
     id: page.id,
     title: localized(titleEn, text(page.properties.TitleTH)),
-    body: localized(text(page.properties.BodyEN), text(page.properties.BodyTH)),
+    // BoldText renders the body, so its bold clause comes back as **…**.
+    body: localized(boldText(page.properties.BodyEN), boldText(page.properties.BodyTH)),
     rule: localized(text(page.properties.RuleEN), text(page.properties.RuleTH)),
     icon: selectOf(page.properties.Icon) ?? '',
     sketch: selectOf(page.properties.Sketch) ?? '',
