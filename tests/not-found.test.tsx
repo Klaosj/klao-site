@@ -267,6 +267,18 @@ describe('GlobalNotFound (src/app/global-not-found.tsx)', () => {
     expect(html).toMatch(/^<html lang="en">/);
   });
 
+  it('sets suppressHydrationWarning on <html> (review I1): THEME_PREPAINT_SCRIPT legitimately changes its attributes before hydration, and without this every root 404 logged a React hydration error once the flag was on', async () => {
+    usePathname.mockReturnValue('/en/nope');
+    const { default: GlobalNotFound } = await import('@/app/global-not-found');
+    // Calling the component directly (not via JSX/render) inspects the real
+    // React element's props -- renderToStaticMarkup strips this attribute
+    // from its string output entirely (it's a hydration-only hint, invisible
+    // to any HTML serialization), so only this technique can pin it.
+    const element = GlobalNotFound();
+    expect(element.type).toBe('html');
+    expect(element.props.suppressHydrationWarning).toBe(true);
+  });
+
   it('inlines the same theme pre-paint script inside a real <head>', async () => {
     usePathname.mockReturnValue('/en/nope');
     const { default: GlobalNotFound } = await import('@/app/global-not-found');

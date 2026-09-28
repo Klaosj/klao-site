@@ -60,7 +60,14 @@ export default function GlobalNotFound() {
   ];
 
   return (
-    <html lang={locale}>
+    // suppressHydrationWarning (review I1, mirrors [locale]/layout.tsx:156-159):
+    // THEME_PREPAINT_SCRIPT adds `js` and may set `data-theme` on <html>
+    // before React hydrates, so the client DOM legitimately differs from the
+    // server HTML on this one element. Without this, every root 404 logs a
+    // React hydration error once the flag is on (verified: 32 flagged dev
+    // loads, one per width/theme combination). It only silences attribute
+    // warnings for <html> itself, not its children.
+    <html lang={locale} suppressHydrationWarning>
       <head>
         {/* Same script [locale]/layout.tsx inlines, and the reasoning
             not-found.tsx's fragment-based workaround explains (N9/CO-13) --
