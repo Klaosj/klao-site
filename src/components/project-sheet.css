@@ -31,6 +31,15 @@
      the button would otherwise now take, so `.smedia` still starts exactly where it did before. */
   .sheet-close { position: sticky; top: 16px; z-index: 5; float: none; display: grid; place-items: center; width: 36px; height: 36px; margin: 16px 16px -52px auto; border-radius: 50%; font-size: 16px; }
   .sheet-close::after { content: ""; position: absolute; inset: -4px; }
+  /* Re-review N2 (edge regression from finding 3): the negative bottom margin above assumes
+     `.smedia` follows -- SheetMedia renders null for a pre-migration row with no screenshot
+     (Two-layer content rule), so there is no next sibling to pull up into, and a long name could
+     slide under the button instead. `:not(:has(+ .smedia))` restores the pre-fix float here,
+     only for that case. One unconditional rule covers both breakpoints: its specificity (0,2,0
+     -- `.sheet-close` plus `:has()`'s own argument specificity, itself class-level) beats the
+     plain `.sheet-close` at (0,1,0) in both the base rule above and the phone override below,
+     regardless of media-query source order. */
+  .sheet-close:not(:has(+ .smedia)) { float: right; margin-bottom: 0; }
   .sbody { display: grid; grid-template-columns: 7fr 5fr; gap: 40px; padding: 40px; }
   .sheet-name { margin: 6px 0 0; font-size: 40px; line-height: 44px; font-weight: 600; letter-spacing: 0; }
   /* Ruling C-9 (Global Constraint "Thai is one size step smaller than English everywhere"):

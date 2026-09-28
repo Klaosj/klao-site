@@ -145,6 +145,14 @@ describe('project-sheet.css', () => {
     expect(css).not.toMatch(/\.sheet-close\s*\{[^}]*float:\s*right/);
   });
 
+  // Re-review N2 (edge regression from finding 3): SheetMedia renders null for a pre-migration
+  // row (Two-layer content rule), so the negative bottom margin above has no `.smedia` to pull
+  // up into, and a long name could slide under the button. This restores the pre-fix float only
+  // when there is no `.smedia` sibling right after the button.
+  it('floats the close button right when there is no media to pull up into (fix wave N2)', () => {
+    expect(css).toContain('.sheet-close:not(:has(+ .smedia)) { float: right; margin-bottom: 0; }');
+  });
+
   // Fix wave finding 4 (I1): `.smedia-draw` was a content-sized grid row, so its SVG (and the
   // caption drawn near the bottom of its viewBox) never filled -- let alone reached the bottom
   // of -- `.smedia`'s own aspect-ratio box. Taking it out of grid flow with `inset: 0` sizes it
