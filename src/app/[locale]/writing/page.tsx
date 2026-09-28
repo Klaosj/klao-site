@@ -75,10 +75,10 @@ export default async function WritingPage({ params }: { params: Promise<{ locale
       {/* Say so, rather than rendering an empty <ul>. Both fixture posts were
           placeholder stubs and were pulled on 2026-08-09, which left this page
           as a heading above nothing -- a visitor cannot tell that apart from a
-          page that failed to load. Same treatment CvBand already gives an
-          unpopulated Career database. */}
+          page that failed to load. Same treatment CareerBand already gives
+          an unpopulated Career database. */}
       {posts.length === 0 && (
-        <p className="mt-6 text-[14.5px] text-soft">{dict[locale].writingUnpublished}</p>
+        <p className="mt-6 text-[14.5px] text-ink-2">{dict[locale].writingUnpublished}</p>
       )}
       <ul className="mt-6 space-y-5">
         {posts.map((post) => (
@@ -86,7 +86,7 @@ export default async function WritingPage({ params }: { params: Promise<{ locale
             <Link href={`/${locale}/writing/${post.slug}`} className="font-medium hover:underline">
               {post.title[locale] || post.title.en}
             </Link>
-            <p className="mt-1 text-xs text-soft">
+            <p className="mt-1 text-xs text-ink-2">
               {formatDate(post.date, locale)}
               {post.tags.length > 0 && <> · {post.tags.join(' · ')}</>}
             </p>

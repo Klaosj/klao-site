@@ -155,7 +155,7 @@ export default async function WorkStoryPage({
       <p className="text-sm">
         {/* aria-hidden arrow (QA finding 18): the link's accessible name is
             just "Back", not "left arrow Back". */}
-        <Link href={`/${locale}#work`} className="text-soft hover:text-ink">
+        <Link href={`/${locale}#work`} className="text-ink-2 hover:text-ink-1">
           <span aria-hidden="true">←</span> {dict[locale].back}
         </Link>
       </p>
@@ -167,7 +167,7 @@ export default async function WorkStoryPage({
       <SectionLabel text={story.name} locale={locale} className="mt-4" />
       <h1 className="mt-2 font-display text-3xl">{story.question?.[locale] ?? story.name}</h1>
       {origin && (
-        <p className="mt-3 text-xs text-soft">
+        <p className="mt-3 text-xs text-ink-2">
           {dict[locale].askedOn} {formatDate(origin.date, locale)}
         </p>
       )}
@@ -179,13 +179,13 @@ export default async function WorkStoryPage({
           inside the same flex row where it read as a third, unstyled
           control. Type-gated exactly as before: a business story never shows
           a stack, even if its Notion row still carries Stack values -- the
-          same invariant ProjectCard and WorkDeck enforce -- and the length
+          same invariant ProjectCard enforces -- and the length
           gate keeps an empty <p> from rendering. */}
-      {showStack && <p className="mt-10 text-xs text-soft">{story.stack.join(' · ')}</p>}
+      {showStack && <p className="mt-10 text-xs text-ink-2">{story.stack.join(' · ')}</p>}
       {/* Live site is the promoted action here (finding 25): on a case-study
           page the reader has just finished the story, so "go see the thing"
           outranks "read the source". Pills share ProjectCard's spec --
-          on-dark-mid border (finding 5) and the house 300ms ease
+          ink-3 border, ≥ 3:1 (finding 5) and the house 300ms ease
           (finding 14). */}
       {showLinks && (
         <p className={`${showStack ? 'mt-3' : 'mt-10'} flex flex-wrap gap-3`}>
@@ -194,7 +194,7 @@ export default async function WorkStoryPage({
               href={story.liveUrl}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center rounded-full border border-peri-deep px-4 py-2 text-[12px] font-semibold text-peri transition-colors duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:bg-peri hover:text-dark"
+              className="inline-flex items-center rounded-full border border-link px-4 py-2 text-[12px] font-semibold text-kram transition-colors duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:bg-kram hover:text-on-kram"
             >
               {dict[locale].liveSite}
             </a>
@@ -204,7 +204,7 @@ export default async function WorkStoryPage({
               href={story.repoUrl}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center rounded-full border border-on-dark-mid px-4 py-2 text-[12px] font-medium transition-colors duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:border-peri hover:text-peri"
+              className="inline-flex items-center rounded-full border border-ink-3 px-4 py-2 text-[12px] font-medium transition-colors duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:border-kram hover:text-kram"
             >
               {dict[locale].viewCode}
             </a>

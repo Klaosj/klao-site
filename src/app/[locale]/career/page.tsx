@@ -71,7 +71,7 @@ export default async function CareerPage({ params }: { params: Promise<{ locale:
       <div className="flex items-center justify-between">
         <h1 className="font-display text-3xl">{t.career}</h1>
         {profile.resumeUrl && (
-          <a href={profile.resumeUrl} className="text-sm underline hover:text-soft">
+          <a href={profile.resumeUrl} className="text-sm underline hover:text-ink-2">
             ↓ {t.resume}
           </a>
         )}
@@ -83,9 +83,9 @@ export default async function CareerPage({ params }: { params: Promise<{ locale:
               {/* Localized as of the 2026-08-09 QA pass; falls back th -> en
                   at the mapper, so an untranslated title still renders. */}
               {entry.role[locale]}
-              {entry.company && <span className="font-normal text-soft"> · {entry.company}</span>}
+              {entry.company && <span className="font-normal text-ink-2"> · {entry.company}</span>}
             </h2>
-            {entry.period && <p className="mt-1 text-xs text-soft">{entry.period}</p>}
+            {entry.period && <p className="mt-1 text-xs text-ink-2">{entry.period}</p>}
             {entry.wins[locale].length > 0 && (
               <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
                 {entry.wins[locale].map((win, i) => (

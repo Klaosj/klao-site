@@ -45,24 +45,14 @@ describe('Tailwind mapping (C1)', () => {
     expect(theme[name]).toBe(value);
   });
 
-  it.each([
-    ['color-dark', 'var(--canvas)'],
-    ['color-deep', 'var(--mist)'],
-    ['color-light', 'var(--canvas)'],
-    ['color-peri', 'var(--kram)'],
-    ['color-peri-deep', 'var(--link)'],
-    ['color-on-dark', 'var(--ink-1)'],
-    ['color-on-dark-soft', 'var(--ink-2)'],
-    ['color-on-dark-faint', 'var(--line)'],
-    ['color-on-dark-mid', 'var(--ink-3)'],
-    ['color-on-light', 'var(--ink-1)'],
-    ['color-on-light-soft', 'var(--ink-2)'],
-    ['color-on-light-faint', 'var(--line)'],
-    ['color-paper', 'var(--canvas)'],
-    ['color-ink', 'var(--ink-1)'],
-    ['color-soft', 'var(--ink-2)'],
-  ])('legacy --%s is repointed to %s until P5 deletes it', (name, value) => {
-    expect(theme[name]).toBe(value);
+  it('deletes the legacy colour repoint entirely (P5 Task 7) -- none of these 15 names is declared any more', () => {
+    const legacyNames = [
+      'color-dark', 'color-deep', 'color-light', 'color-peri', 'color-peri-deep',
+      'color-on-dark', 'color-on-dark-soft', 'color-on-dark-faint', 'color-on-dark-mid',
+      'color-on-light', 'color-on-light-soft', 'color-on-light-faint',
+      'color-paper', 'color-ink', 'color-soft',
+    ];
+    for (const name of legacyNames) expect(theme[name], `--${name}`).toBeUndefined();
   });
 
   it('holds no literal colour in any Tailwind colour token -- every one follows the theme', () => {
@@ -119,10 +109,6 @@ describe('no dark-era surface survives', () => {
   it('has no film grain, ambient glow or nav-on-light inversion left', () => {
     expect(CODE).not.toMatch(/feTurbulence|radial-gradient|nav-on-light|#17171a|#101013/i);
     expect(stripComments(NAV_CSS)).not.toMatch(/rgba\(23, 23, 26|nav-on-light/);
-  });
-
-  it('turns the old bg-light + text-dark primary pills into Kram buttons instead of white-on-white', () => {
-    expect(CSS).toMatch(/\.bg-light\.text-dark \{[^}]*background-color: var\(--kram\);[^}]*color: var\(--on-kram\);/);
   });
 
   it('removes the hero annotation pills entirely, leaving the shared .pill chip as the only name', () => {

@@ -12,8 +12,8 @@ type Props = {
   className?: string;
 };
 
-// Server-safe (no hooks, no 'use client'): WorkDeck and ProjectCard are server
-// components and render this directly.
+// Server-safe (no hooks, no 'use client'): ProjectCard is a server component
+// and renders this directly.
 export default function ProjectFrame({ project, title, priority = false, className = '' }: Props) {
   // A frame is a window onto a real screen. A project with no screenshot shows
   // no image block at all (owner's call 2026-09-11) rather than a stand-in --

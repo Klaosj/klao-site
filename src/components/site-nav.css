@@ -13,8 +13,6 @@
    opacity animate: the active pill slides with transform, its width snaps,
    and the Contact pill's fill changes without a colour transition. */
 @layer components {
-  html { scroll-padding-top: 76px; }
-
   .sn-wrap {
     position: fixed; top: 0; left: 0; right: 0; z-index: 50;
     display: flex; justify-content: center;

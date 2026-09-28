@@ -11,6 +11,7 @@ import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { dict } from '@/lib/dictionary';
 import type { Locale } from '@/lib/models';
+import { THEME_PREPAINT_SCRIPT } from '@/lib/theme';
 import { eyebrowFont } from '@/lib/typography';
 
 // QA C3 fix (see .superpowers/qa/2026-08-09-QA-SUMMARY.md). This is the
@@ -66,35 +67,44 @@ export default function RootNotFound() {
   ];
 
   return (
-    <section className="flex min-h-[70vh] flex-col items-center justify-center bg-deep px-6 py-[16vh] text-center">
-      <title>{`${t.notFoundTitle} · Klao`}</title>
+    <>
+      {/* N9/CO-13: this boundary has no <head> of its own -- Next wraps it in
+          a layout-less shell (see the top-of-file comment), so
+          [locale]/layout.tsx's copy of this same script never runs here.
+          Without it, a saved dark/light choice only takes effect after
+          hydration's useEffect below -- one frame too late for "no flash
+          of the wrong theme" -- and system-dark visitors are unaffected
+          either way (globals.css's prefers-color-scheme block covers that
+          case on its own). Rendered first so the browser executes it before
+          the section below. */}
+      <script dangerouslySetInnerHTML={{ __html: THEME_PREPAINT_SCRIPT }} />
+      <section className="flex min-h-[70vh] flex-col items-center justify-center bg-canvas px-6 py-[16vh] text-center">
+        <title>{`${t.notFoundTitle} · Klao`}</title>
 
-      <p className={`mb-5 text-[9.5px] uppercase text-on-dark-soft ${eyebrowFont(locale, 'tracking-[0.24em]')}`}>
-        404
-      </p>
-      <h1 className="max-w-[20ch] text-[clamp(28px,4.6vw,52px)] font-bold leading-[1.15] tracking-[-0.025em] text-on-dark">
-        {t.notFoundTitle}
-      </h1>
-      <p className="mt-5 max-w-[46ch] text-[14.5px] leading-[1.7] text-on-dark-soft">{t.notFoundBody}</p>
+        <p className={`mb-5 text-[9.5px] uppercase text-ink-2 ${eyebrowFont(locale, 'tracking-[0.24em]')}`}>
+          404
+        </p>
+        <h1 className="max-w-[20ch] text-[clamp(28px,4.6vw,52px)] font-bold leading-[1.15] tracking-[-0.025em] text-ink-1">
+          {t.notFoundTitle}
+        </h1>
+        <p className="mt-5 max-w-[46ch] text-[14.5px] leading-[1.7] text-ink-2">{t.notFoundBody}</p>
 
-      <Link
-        href={`/${locale}`}
-        className="btn mt-10 inline-flex items-center gap-3 rounded-full bg-light px-8 py-4 text-[13.5px] font-semibold text-dark"
-      >
-        {t.backHome} <span aria-hidden="true">→</span>
-      </Link>
+        <Link href={`/${locale}`} className="btn btn-fill mt-10 inline-flex items-center gap-3">
+          {t.backHome} <span aria-hidden="true">→</span>
+        </Link>
 
-      <nav className="mt-12 flex flex-wrap justify-center gap-8 text-[12.5px]">
-        {moreLinks.map((l) => (
-          <Link
-            key={l.href}
-            href={l.href}
-            className="text-on-dark-soft underline underline-offset-4 transition-colors hover:text-on-dark"
-          >
-            {l.label}
-          </Link>
-        ))}
-      </nav>
-    </section>
+        <nav className="mt-12 flex flex-wrap justify-center gap-8 text-[12.5px]">
+          {moreLinks.map((l) => (
+            <Link
+              key={l.href}
+              href={l.href}
+              className="text-ink-2 underline underline-offset-4 transition-colors hover:text-ink-1"
+            >
+              {l.label}
+            </Link>
+          ))}
+        </nav>
+      </section>
+    </>
   );
 }

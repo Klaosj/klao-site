@@ -28,7 +28,7 @@ export function resolveLocale(pathname: string | null): Locale {
 
 // Split from the default export so tests can render it directly with an
 // explicit `locale` prop -- every other section component in this codebase
-// (ContactBand, CvBand, SiteNav, ...) takes `locale` as a prop rather than
+// (CloseBand, CareerBand, SiteNav, ...) takes `locale` as a prop rather than
 // resolving it internally, and testing the default export directly would
 // mean stubbing next/navigation's router context just to reach the 'th'
 // branch, which nothing else in this repo's test suite does.
@@ -55,7 +55,7 @@ export function NotFoundContent({ locale }: { locale: Locale }) {
   ];
 
   return (
-    <section className="flex min-h-[70vh] flex-col items-center justify-center bg-deep px-6 py-[16vh] text-center">
+    <section className="flex min-h-[70vh] flex-col items-center justify-center bg-canvas px-6 py-[16vh] text-center">
       {/* React 19's built-in <title> hoisting (Next 15 App Router renders it
           directly, same as any other host element) -- gives this specific
           boundary a real, locale-correct title instead of silently
@@ -64,21 +64,17 @@ export function NotFoundContent({ locale }: { locale: Locale }) {
           has no generateMetadata hook of its own to override. */}
       <title>{`${t.notFoundTitle} · Klao`}</title>
 
-      <p className={`mb-5 text-[9.5px] uppercase text-on-dark-soft ${eyebrowFont(locale, 'tracking-[0.24em]')}`}>
+      <p className={`mb-5 text-[9.5px] uppercase text-ink-2 ${eyebrowFont(locale, 'tracking-[0.24em]')}`}>
         404
       </p>
-      <h1 className="max-w-[20ch] text-[clamp(28px,4.6vw,52px)] font-bold leading-[1.15] tracking-[-0.025em] text-on-dark">
+      <h1 className="max-w-[20ch] text-[clamp(28px,4.6vw,52px)] font-bold leading-[1.15] tracking-[-0.025em] text-ink-1">
         {t.notFoundTitle}
       </h1>
-      <p className="mt-5 max-w-[46ch] text-[14.5px] leading-[1.7] text-on-dark-soft">{t.notFoundBody}</p>
+      <p className="mt-5 max-w-[46ch] text-[14.5px] leading-[1.7] text-ink-2">{t.notFoundBody}</p>
 
-      {/* .btn opts this capsule into the site's magnetic-pointer effect
-          (globals.css), same idiom as ContactBand's mailto CTA and CvBand's
-          resume link. */}
-      <Link
-        href={`/${locale}`}
-        className="btn mt-10 inline-flex items-center gap-3 rounded-full bg-light px-8 py-4 text-[13.5px] font-semibold text-dark"
-      >
+      {/* `.btn btn-fill` is the site's primary pill (C9: 44 px, kram fill) --
+          the same control as the Close band's Start a conversation. */}
+      <Link href={`/${locale}`} className="btn btn-fill mt-10 inline-flex items-center gap-3">
         {t.backHome} <span aria-hidden="true">→</span>
       </Link>
 
@@ -87,7 +83,7 @@ export function NotFoundContent({ locale }: { locale: Locale }) {
           <Link
             key={l.href}
             href={l.href}
-            className="text-on-dark-soft underline underline-offset-4 transition-colors hover:text-on-dark"
+            className="text-ink-2 underline underline-offset-4 transition-colors hover:text-ink-1"
           >
             {l.label}
           </Link>

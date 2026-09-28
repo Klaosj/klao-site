@@ -97,7 +97,7 @@ export default async function SiteFooter({ locale = 'en' }: { locale?: Locale } 
                   <li key={l.href}>
                     {/* Repo convention for an outbound target="_blank" link
                         is rel="noreferrer" (NavMenu's LinkedIn/GitHub rows,
-                        WorkDeck, ProjectTour, PostBody, SignatureScene). */}
+                        PostBody, SignatureScene, ProjectCard, ...). */}
                     <a href={l.href} target="_blank" rel="noreferrer">
                       <Icon name={l.icon} /> {l.label}
                     </a>

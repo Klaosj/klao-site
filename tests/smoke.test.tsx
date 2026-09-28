@@ -22,24 +22,24 @@ const p = (locale: Locale) => ({ params: Promise.resolve({ locale }) });
 // for e.g. `<Link href="...">{t.back}</Link>` (text passed literally as
 // `children`) but could never see anything rendered *inside* a capitalized
 // component that takes its text via a named prop instead of `children`
-// (Hero's `profile.headline`, WorkDeck's `project.name`, CvBand's stats --
-// none of them pass `children`). A real render, by contrast, actually calls
-// every component function the way React would, so it sees straight through
-// Hero/AboutBand/CraftBand/WorkDeck/CvBand/ContactBand -- this project's
-// home route composes nothing else. renderToStaticMarkup never runs
-// useEffect (only the render-phase function body), so the 'use client'
-// hook-using descendants it also passes through -- Reveal, MaskedHeading,
-// CopyEmail, ParticleField, next/link's Link -- render their initial
-// synchronous markup without needing jsdom, matchMedia, or
+// (HeroTour's `profile.headline`, ProjectsIndex's `project.name`, CareerBand's
+// stats -- none of them pass `children`). A real render, by contrast, actually
+// calls every component function the way React would, so it sees straight
+// through HeroTour/Signature/ProjectsIndex/CareerBand/ByDay/FaqBand/CloseBand
+// -- this project's home route composes nothing else. renderToStaticMarkup
+// never runs useEffect (only the render-phase function body), so the
+// 'use client' hook-using descendants it also passes through -- Reveal,
+// CopyEmail, next/link's Link -- render their initial synchronous markup
+// without needing jsdom, matchMedia, or
 // IntersectionObserver stubs (verified empirically: no such stub is set up
 // anywhere in this file, and the suite is green).
 //
-// One consequence worth flagging for future assertions here: MaskedHeading
-// splits its `text` prop into one <span> per word, so a multi-word heading
-// (e.g. t.aboutHeading) is NOT a contiguous substring of the rendered HTML
-// -- each word is separated by closing/opening span tags. Assertions below
-// stick to plain, unsplit text (eyebrow labels, profile prose, list items)
-// for exactly this reason.
+// One consequence worth flagging for future assertions here: ThaiText
+// (display mode) splits Thai copy into one <span> per keep-run, so a
+// multi-word Thai heading is NOT a contiguous substring of the rendered
+// HTML -- keep-runs interrupt it with span tags (see the ProjectsIndex/
+// CareerBand notes below). Assertions below stick to plain, unsplit text
+// (eyebrow labels, profile prose, list items) for exactly this reason.
 function collectText(node: ReactElement): string {
   return renderToStaticMarkup(node)
     .replace(/&quot;/g, '"')
@@ -80,14 +80,14 @@ describe('smoke: pages render in both locales (fixture mode)', () => {
       const other = dict[locale === 'en' ? 'th' : 'en'];
       const home = await HomePage(p(locale));
       const homeText = collectText(home);
-      // The redesigned home route has no writing section at all (spec's
-      // page structure is Hero/About/Craft/Work/CV/Contact) -- the old
-      // dict.selectedProjects/dict.latestWriting assertions here had
+      // The redesigned home route has no writing section at all (C7's page
+      // structure is top/tour/signature/work/career/story/faq/contact) --
+      // the old dict.selectedProjects/dict.latestWriting assertions here had
       // nowhere to land and were deleted, not weakened. These four replace
       // them with text that is genuinely rendered by the new page, one
       // string per band composed in page.tsx, none of it routed through
-      // MaskedHeading (see the collectText comment above for why that
-      // matters here).
+      // ThaiText's keep-spans (see the collectText comment above for why
+      // that matters here).
       // ProjectsIndex's door: only the index renders it. th-only on /en (fix wave finding 5
       // routed it through ThaiText, and its string contains "ดีล", already on THAI_KEEP --
       // KEEP_SOURCE has no word boundary of its own, so it matches inside "ดีลสื่อ"/"หนึ่งดีล"
