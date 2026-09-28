@@ -134,19 +134,21 @@ export const ASK_CANNED: readonly Canned[] = [
   // Lane C review I1: who founded a company, and when, isn't published
   // either -- "When was Actmedia founded?" read as a startup question. His
   // own ventures are left out (their answers carry the dates), and any
-  // founder question about Actmedia declines: he is not its founder, and
-  // the retail answer opens with "Yes."
+  // founder question about Actmedia declines, in English or Thai (ก่อตั้ง,
+  // lane C re-check R1): he is not its founder, and the retail answer opens
+  // with "Yes."
   {
     match:
-      /^(?!.*(?:\bbun dance\b|\bburgers?\b|\btripedia\b|\btalatify\b|ร้าน|เบอร์เกอร์)).*\b(?:when|what year|who)\b.*\bfounded\b|\bactmedia\b.*\bfound(?:ed|er)\b|\bfound(?:ed|er)\b.*\bactmedia\b/i,
+      /^(?!.*(?:\bbun dance\b|\bburgers?\b|\btripedia\b|\btalatify\b|ร้าน|เบอร์เกอร์)).*\b(?:when|what year|who)\b.*\bfounded\b|\bactmedia\b.*(?:\bfound(?:ed|er)\b|ก่อตั้ง)|(?:\bfound(?:ed|er)\b|ก่อตั้ง).*\bactmedia\b/i,
     decline: true,
   },
   {
     // Lane C review m1: bare "today" is not a current-work question ("Can I
     // call him today?"), but his work today is: a work word before it, or
-    // ทำงาน after it in a mixed question.
+    // ทำงาน after it in a mixed question. A "can he / can I / can we"
+    // question about today is a request, not his current work (re-check R5).
     match:
-      /\bright now\b|\bworking on\b|\bcurrently\b|\bthese days\b|\b(?:doing|work|works|job|living)\b[^.?!]*\btoday\b|\btoday\b[^.?!]*ทำงาน|ตอนนี้|ทำอะไรอยู่|ช่วงนี้/i,
+      /\bright now\b|\bworking on\b|\bcurrently\b|\bthese days\b|^(?!.*\bcan (?:he|i|we)\b).*\b(?:doing|work|works|job|living)\b[^.?!]*\btoday\b|\btoday\b[^.?!]*ทำงาน|ตอนนี้|ทำอะไรอยู่|ช่วงนี้/i,
     answer: {
       en: 'Klao has been Senior Business Development at Actmedia since March 2026, opening new channels with Modern Trade retailers and project-managing live in-store rollouts; the largest is a nationwide in-store screen installation.[1] Outside work he builds AI tools: GoNai is live[2] and Aje is a working prototype.[3]',
       th: 'ตั้งแต่ มี.ค. 2026 Klao เป็น Senior Business Development ที่ Actmedia หาช่องทางใหม่กับค้าปลีก Modern Trade และคุมโปรเจกต์ที่รันอยู่ โปรเจกต์ใหญ่สุดคือติดตั้งจอในร้านทั่วประเทศ[1] นอกเวลางานเขาสร้างเครื่องมือ AI เอง GoNai เปิดใช้งานแล้ว[2] และ Aje เป็น prototype ที่ใช้งานได้[3]',
@@ -224,11 +226,13 @@ export const ASK_CANNED: readonly Canned[] = [
   // T18-b: programming languages are a build question -- checked before the
   // spoken-language entry below, with the same answer as the last entry.
   // Lane C review m3: "programming", "written in" (but not "written in
-  // Thai/English", the site's own languages), เขียนโปรแกรม, and making an
-  // app or a site ด้วยภาษา ("in" a language).
+  // Thai/English", the site's own languages), เขียนโปรแกรม, ภาษาโปรแกรม /
+  // โปรแกรมมิ่ง (re-check R2), and making or writing an app or a site ด้วยภาษา
+  // ("in" a language) -- writing anything else in a language, such as a post,
+  // is the language question (re-check R3).
   {
     match:
-      /\bcode in\b|\bprogramming\b|\bwritten in\b(?! (?:thai|english)\b)|โค้ด|เขียนโปรแกรม|(?:ทำ|เขียน|สร้าง)(?:แอป|เว็บ)?ด้วยภาษา/i,
+      /\bcode in\b|\bprogramming\b|\bwritten in\b(?! (?:thai|english)\b)|โค้ด|เขียนโปรแกรม|ภาษาโปรแกรม|โปรแกรมมิ่ง|(?:ทำ|สร้าง)(?:แอป|เว็บ)?ด้วยภาษา|เขียน(?:แอป|เว็บ)ด้วยภาษา/i,
     answer: BUILD_ANSWER,
     sources: BUILD_SOURCES,
   },

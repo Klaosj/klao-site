@@ -327,10 +327,31 @@ describe('askPreview pinned question table (fix wave finding 4, re-review Import
     ['เคยเป็นเจ้าของร้านไหม', 'th', 'business', 'review #33'],
     ['Which projects are featured on this site?', 'en', 'decline', 'review #41'],
     ['What tools are featured in his toolbox?', 'en', 'decline', 'review #42'],
+    // Lane C re-check (23484ba), questions #47-60. R1: Thai founder
+    // questions about Actmedia decline like the English ones.
+    ['ใครเป็นผู้ก่อตั้ง Actmedia', 'th', 'decline', 're-check #49, R1'],
+    ['Actmedia ก่อตั้งเมื่อไหร่', 'th', 'decline', 're-check #50, R1'],
+    ['What has he founded outside Actmedia?', 'en', 'decline', 're-check #48, R4: a safe decline, on purpose'],
+    // R2: the Thai terms for "programming language" are a build question.
+    ['ถนัดภาษาโปรแกรมอะไร', 'th', 'build', 're-check #51, R2'],
+    ['ถนัดโปรแกรมมิ่งภาษาอะไร', 'th', 'build', 'R2: โปรแกรมมิ่ง'],
+    ['ใช้โปรแกรมอะไรทำงานบ้าง', 'th', 'decline', 're-check #52: using software is not coding'],
+    // R3: "written in which language" is build only for an app or a site.
+    ['บทความเขียนด้วยภาษาอะไร', 'th', 'language', 're-check #56, R3: posts, not code'],
+    ['เขียนแอปด้วยภาษาอะไร', 'th', 'build', 'R3: writing an app'],
+    // R5: "Can he start work today?" is not a current-work question.
+    ['Can he start work with us today?', 'en', 'faq:fx-faq-contact', 're-check #53, R5: how to reach him'],
+    ['Can I book him for a job today?', 'en', 'decline', 'R5: "can I"'],
+    ['Can we discuss a job today?', 'en', 'decline', 'R5: "can we"'],
+    ['What is this site written in?', 'en', 'build', 're-check #54'],
+    ['Is his resume written in English?', 'en', 'language', 're-check #55'],
+    ['Has he built any tools for his sales work?', 'en', 'decline', 're-check #57'],
+    ['Who were his co-founders at Tripedia?', 'en', 'startup', 're-check #58'],
+    ['Can I interview him for a role?', 'en', 'decline', 're-check #60'],
   ];
 
   it('covers every pinned question', () => {
-    expect(ROWS).toHaveLength(157);
+    expect(ROWS).toHaveLength(173);
   });
 
   it.each(ROWS)('%s (%s) -> %s [%s]', (query, locale, expected) => {
