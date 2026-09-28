@@ -104,7 +104,8 @@ const BUILD_SOURCES: CannedSource[] = [
 //  - bare "today" left the right-now entry: "Can I call him today?" is not
 //    a current-work question (row 26); it now declines.
 //  - "founded"/"founder" answer with the startups (row 14), "built" with
-//    the build answer (row 13).
+//    the build answer (row 13) -- each guarded against the business and
+//    BD nouns that made them steal other questions (lane C review I1, I2).
 //  - "code in" / โค้ด is checked before the language entry, so "Which
 //    languages does he code in?" / เขียนโค้ดภาษาอะไร get the build answer,
 //    not the spoken-language one (rows 24 and 39).
@@ -121,6 +122,16 @@ export const ASK_CANNED: readonly Canned[] = [
   // ออกสื่อโฆษณา / ออกสื่อในร้าน mean running ads or in-store media, so
   // those still fall through to retail.
   { match: /\bbusiness models?\b|\bfeatured (in|on|by)\b|ออกสื่อ(?!โฆษณา|ในร้าน)|ให้สัมภาษณ์|ลงข่าว/i, decline: true },
+  // Lane C review I1: who founded a company, and when, isn't published
+  // either -- "When was Actmedia founded?" read as a startup question. His
+  // own ventures are left out (their answers carry the dates), and any
+  // founder question about Actmedia declines: he is not its founder, and
+  // the retail answer opens with "Yes."
+  {
+    match:
+      /^(?!.*(?:\bbun dance\b|\bburgers?\b|\btripedia\b|\btalatify\b|ร้าน|เบอร์เกอร์)).*\b(?:when|what year|who)\b.*\bfounded\b|\bactmedia\b.*\bfound(?:ed|er)\b|\bfound(?:ed|er)\b.*\bactmedia\b/i,
+    decline: true,
+  },
   {
     match: /\bright now\b|\bworking on\b|\bcurrently\b|\bthese days\b|ตอนนี้|ทำอะไรอยู่|ช่วงนี้/i,
     answer: {
@@ -130,7 +141,13 @@ export const ASK_CANNED: readonly Canned[] = [
     sources: [ACTMEDIA, GONAI, AJE],
   },
   {
-    match: /\bstartups?\b|\bstart-ups?\b|สตาร์ทอัพ|\btripedia\b|\btalatify\b|\bpitch(ed|es)?\b|\bfounded\b|\bfounder\b/i,
+    // Lane C review I1: PR5's founded/founder only when the question names
+    // no shop or business -- "Is he the founder of a burger shop?" is the
+    // A Bun Dance question (the business entry below), not this one. (The
+    // reviewer's guard also listed Actmedia; a founder question about
+    // Actmedia never gets here, the decline entry above takes it.)
+    match:
+      /\bstartups?\b|\bstart-ups?\b|สตาร์ทอัพ|\btripedia\b|\btalatify\b|\bpitch(ed|es)?\b|^(?!.*(?:\bbusiness\b|\bshops?\b|\bburgers?\b|\brestaurants?\b|\bbun dance\b|ร้าน|เบอร์เกอร์)).*\bfound(?:ed|er)\b/i,
     answer: {
       en: 'Yes. He co-founded two. Tripedia, a trip-planning platform, made the final 30 of 500 teams at KATALYST Startup Launchpad 2022.[1] Talatify, a fresh-market delivery platform, was pitched at the TEP startup screening round in 2025, with SOM sized at THB 37M.[2]',
       th: 'เคยครับ Klao เป็น Co-founder สองโปรเจกต์ Tripedia แพลตฟอร์มวางแผนทริป เข้ารอบ 30 ทีมสุดท้ายจาก 500 ทีมใน KATALYST Startup Launchpad 2022[1] และ Talatify แพลตฟอร์มส่งของสดจากตลาด ที่นำเสนอในรอบคัดเลือก TEP ปี 2025 และประเมิน SOM ไว้ 37 ล้านบาท[2]',
@@ -213,7 +230,11 @@ export const ASK_CANNED: readonly Canned[] = [
     // /\bdevelops?\b|\bdeveloped\b|\bdeveloping\b/ verb-only set dropped
     // "Is he a developer?"). "development" stays out on purpose -- it's
     // business development's word, not this row's.
-    match: /\bbuilds?\b|\bbuilding\b|\bbuilt\b|\bcodes?\b|\bcoding\b|\bapps?\b|\bdevelop(s|ed|ing|ers?)?\b|สร้าง|แอป|โค้ด/i,
+    // Lane C review I2: build/building/built are BD verbs too ("built a
+    // sales pipeline", "building a sales team"), so they count only when
+    // the question names none of those BD nouns; "apps" etc. still match.
+    match:
+      /^(?!.*\b(?:partnerships?|pipelines?|relationships?|teams?|networks?|channels?|sales)\b).*\b(?:builds?|building|built)\b|\bcodes?\b|\bcoding\b|\bapps?\b|\bdevelop(s|ed|ing|ers?)?\b|สร้าง|แอป|โค้ด/i,
     answer: BUILD_ANSWER,
     sources: BUILD_SOURCES,
   },

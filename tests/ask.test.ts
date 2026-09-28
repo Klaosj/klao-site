@@ -112,27 +112,35 @@ describe('askPreview', () => {
 // reviewer's 20 re-check questions (66793b1) follow the 47 -- one of them,
 // "featured in the media", was a confident retail answer and now declines.
 // Every other row keeps its earlier outcome: 0 regressions across all 67.
-describe('askPreview 47 + 20 + 7 question table (fix wave finding 4, re-review Important A, T18-b, T18-b2)', () => {
-  // One name per ASK_CANNED index. 'build' appears twice: PR5's "code in /
-  // โค้ด" check runs ahead of the language entry and gives the build answer.
-  const ENTRY_NAME = [
-    'decline-pay',
-    'decline-social',
-    'decline-unpublished',
-    'right-now',
-    'startup',
-    'retail',
-    'business',
-    'build',
-    'language',
-    'build',
-  ] as const;
+//
+// Lane C review (I1-I3, m1-m5): the reviewer's 46 fresh questions are
+// pinned here too, next to the rows each fix needed. The rule from here on:
+// any change to an Ask matcher runs against this whole table, and no row
+// that was right may change. Where the page has no sensible answer, the
+// expected outcome is a decline.
+describe('askPreview pinned question table (fix wave finding 4, re-review Important A, T18-b/b2, lane C review)', () => {
+  // Each canned answer is named by how its English text starts, so adding a
+  // decline entry or a second entry with the same answer (PR5's "code in /
+  // โค้ด" check gives the build answer) never shifts a name.
+  const ANSWER_NAME: [start: string, name: string][] = [
+    ['Klao has been Senior Business Development', 'right-now'],
+    ['Yes. He co-founded two.', 'startup'],
+    ['Yes. At Actmedia he opens', 'retail'],
+    ['Yes. He founded A Bun Dance', 'business'],
+    ['Thai, and English at a conversational level', 'language'],
+    ['Yes, on nights and weekends', 'build'],
+  ];
+  const nameOf = (en: string) => ANSWER_NAME.find(([start]) => en.startsWith(start))?.[1];
+
+  it('names every canned answer', () => {
+    for (const c of ASK_CANNED) if (!c.decline) expect(nameOf(c.answer.en), c.answer.en).toBeDefined();
+  });
 
   function outcome(query: string, locale: 'en' | 'th'): string {
     const answer = askPreview(query, faq, locale);
     if (answer.kind === 'decline') return 'decline';
-    const i = ASK_CANNED.findIndex((c) => !c.decline && answer.text === c.answer[answer.lang]);
-    if (i >= 0) return ENTRY_NAME[i];
+    const canned = ASK_CANNED.find((c) => !c.decline && answer.text === c.answer[answer.lang]);
+    if (canned && !canned.decline) return nameOf(canned.answer.en)!;
     // Not a canned match: the bestFaq() fallback. Its first source is
     // always the FAQ item itself, id faqAnchorId()'d ('faq-xxx').
     return `faq:${(answer.sources[0]?.target ?? '').replace(/^faq-/, '')}`;
@@ -219,10 +227,42 @@ describe('askPreview 47 + 20 + 7 question table (fix wave finding 4, re-review I
     ['ทำสื่อในร้านค้าปลีกไหม', 'th', 'retail', 'TH in-store media stays retail (T18-b2)'],
     ['ช่วยออกสื่อโฆษณาในร้านได้ไหม', 'th', 'retail', 'ออกสื่อโฆษณา = running ads, not press (T18-b2)'],
     ['เคยทำ retail media ในร้านไหม', 'th', 'retail', 'mixed retail media stays retail (T18-b2)'],
+    // Lane C review I1: PR5's founded/founder must not pull a question about
+    // his burger shop, or about Actmedia the company, onto the startup answer.
+    ['Is he the founder of a burger shop?', 'en', 'business', 'review #14, I1'],
+    ['Who founded A Bun Dance?', 'en', 'faq:fx-faq-business', 'review #15, I1'],
+    ['Has he founded a business?', 'en', 'business', 'review #16, I1'],
+    ['Is he a co-founder?', 'en', 'startup', 'review #17'],
+    ['When was Actmedia founded?', 'en', 'decline', 'review #18, I1: not published, no sensible answer'],
+    ['เป็นfounderร้านเบอร์เกอร์ไหม', 'th', 'business', 'review #34, I1'],
+    ['When was A Bun Dance founded?', 'en', 'faq:fx-faq-business', 'I1 guard: his own venture still answers'],
+    ['When was his burger shop founded?', 'en', 'business', 'I1 guard: his own venture still answers'],
+    ['Who founded Actmedia?', 'en', 'decline', 'I1: not published'],
+    ['Is he a founder at Actmedia?', 'en', 'decline', 'I1: he is not; the retail answer would say "Yes."'],
+    ['When was GoNai founded?', 'en', 'decline', 'I1: founding dates are not published'],
+    ['What year was Aje founded?', 'en', 'decline', 'I1: founding dates are not published'],
+    ['Who founded GoNai?', 'en', 'decline', 'I1: "who founded" is not the startup answer'],
+    ['Was Actmedia founded by him?', 'en', 'decline', 'I1: he is not its founder'],
+    ['Has he founded a restaurant?', 'en', 'business', 'I1 guard: restaurant'],
+    // Lane C review I2: "built" is also a BD verb -- partnerships, pipelines,
+    // teams are not the build answer.
+    ['Has he built partnerships with suppliers?', 'en', 'decline', 'review #23, I2'],
+    ['Has he built a sales pipeline?', 'en', 'decline', 'review #24, I2'],
+    ['Has he built anything?', 'en', 'build', 'review #43'],
+    ['What is he building at night?', 'en', 'build', 'I2: "building" alone still answers build'],
+    ['Does he build things himself?', 'en', 'build', 'I2: "build" alone still answers build'],
+    ['Is he building a sales team?', 'en', 'decline', 'review #44, I2 (the guard covers build/building too)'],
+    ['Does he build apps for sales teams?', 'en', 'build', 'I2 guard: "apps" still answers build'],
+    ['Has he built relationships with brands?', 'en', 'decline', 'I2 guard: relationships'],
+    ['Has he built a network of suppliers?', 'en', 'decline', 'I2 guard: network'],
+    ['Has he built new channels?', 'en', 'faq:fx-faq-day', 'I2 guard: channels -- opening new channels is his day job (FAQ)'],
+    ['Has he built up sales before?', 'en', 'decline', 'I2 guard: sales'],
+    ['Has he built a deal pipeline?', 'en', 'decline', 'I2 guard: pipeline'],
+    ['Has he built a team before?', 'en', 'decline', 'I2 guard: team'],
   ];
 
-  it('covers all 74 questions', () => {
-    expect(ROWS).toHaveLength(74);
+  it('covers every pinned question', () => {
+    expect(ROWS).toHaveLength(102);
   });
 
   it.each(ROWS)('%s (%s) -> %s [%s]', (query, locale, expected) => {
