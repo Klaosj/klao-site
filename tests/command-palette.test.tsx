@@ -162,6 +162,41 @@ describe('CommandPalette', () => {
     expect(screen.getByText(dict.en.navWork)).toBeTruthy();
   });
 
+  // T12 m1: the footer and the screen-reader count said "1 results".
+  it('counts one row as "1 result" and several as "n results", in the footer and the live status', async () => {
+    const box = open();
+    const foot = () => document.querySelector('.ck-foot')!.textContent;
+    const status = () => screen.getByRole('status').textContent;
+    const all = screen.getAllByRole('option').length;
+    expect(all).toBeGreaterThan(1);
+    expect(foot()).toContain(`${all} results`);
+    type(box, 'gonai');
+    expect(screen.getAllByRole('option')).toHaveLength(1);
+    expect(foot()).toContain('1 result');
+    expect(foot()).not.toContain('1 results');
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 350)); // the status is debounced 300 ms
+    });
+    expect(status()).toBe('1 result');
+  });
+
+  it('announces a one-source answer as "1 source" (T12 m1)', () => {
+    const box = open();
+    type(box, 'what languages does he speak?');
+    fireEvent.keyDown(box, { key: 'End' });
+    fireEvent.keyDown(box, { key: 'Enter' });
+    const card = screen.getByRole('region', { name: dict.en.askTitle });
+    expect(within(card).getAllByRole('button', { name: /^Source \d$/ })).toHaveLength(1);
+    expect(screen.getByRole('status').textContent).toBe('Answer ready, 1 source');
+  });
+
+  it('keeps the Thai count and ready line as they were: Thai has no plural (T12 m1)', () => {
+    const box = open('th');
+    type(box, 'gonai');
+    expect(screen.getAllByRole('option')).toHaveLength(1);
+    expect(document.querySelector('.ck-foot')!.textContent).toContain('พบ 1 รายการ');
+  });
+
   it('Enter on a Career row closes first, then opens that pill (C8)', async () => {
     document.body.insertAdjacentHTML('beforeend', '<section id="career"><h2>Career</h2></section>');
     const heard = vi.fn();

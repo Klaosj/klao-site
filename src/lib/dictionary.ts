@@ -206,6 +206,7 @@ const en = {
   palNone: 'No results for “{q}”',
   palAsk: 'Ask Klao: “{q}”',
   palCount: '{n} results',
+  palCountOne: '{n} result', // T12 m1: fillCount() picks it for exactly one
   palMove: '↑↓ move',
   palOpen: '↵ open',
   palClose: 'esc close',
@@ -219,6 +220,7 @@ const en = {
   askSources: 'Sources',
   askSourceN: 'Source {n}',
   askReady: 'Answer ready, {n} sources',
+  askReadyOne: 'Answer ready, {n} source',
   askDeclined: 'That isn’t in Klao’s published content, so I won’t guess. You can ask him directly at {email}.',
   askWrong: 'Something wrong? Tell Klao',
 
@@ -381,6 +383,7 @@ const th: typeof en = {
   palNone: 'ไม่พบ “{q}”',
   palAsk: 'ถาม Klao: “{q}”',
   palCount: 'พบ {n} รายการ',
+  palCountOne: 'พบ {n} รายการ', // Thai has no plural: the same sentence
   palMove: '↑↓ เลื่อน',
   palOpen: '↵ เปิด',
   palClose: 'esc ปิด',
@@ -394,6 +397,7 @@ const th: typeof en = {
   askSources: 'ที่มา',
   askSourceN: 'ที่มา {n}',
   askReady: 'ได้คำตอบแล้ว มีที่มา {n} แห่ง',
+  askReadyOne: 'ได้คำตอบแล้ว มีที่มา {n} แห่ง',
   askDeclined: 'เรื่องนี้ไม่มีในเนื้อหาที่ Klao เผยแพร่ไว้ เลยขอไม่เดาครับ ถาม Klao ตรงๆ ได้ที่ {email}',
   askWrong: 'ตอบผิด? บอก Klao',
 

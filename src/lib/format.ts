@@ -54,3 +54,11 @@ export function mailtoHref(email: string): string {
 export function fill(template: string, vars: Record<string, string | number>): string {
   return template.replace(/\{(\w+)\}/g, (slot, name: string) => (Object.hasOwn(vars, name) ? String(vars[name]) : slot));
 }
+
+// A count sentence (T12 m1: the palette said "1 results"). English has a
+// singular for exactly one; Thai says both the same way. The dictionary owns
+// both forms per locale -- Thai's are simply identical -- so code only picks
+// one by the count and never builds a plural itself.
+export function fillCount(n: number, other: string, one: string): string {
+  return fill(n === 1 ? one : other, { n });
+}

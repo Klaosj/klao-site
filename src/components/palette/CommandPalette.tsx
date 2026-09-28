@@ -11,7 +11,7 @@ import { askPreview, type AskAnswer } from '@/lib/ask';
 import { copyShortcutHint, copyText } from '@/lib/clipboard';
 import { goToTarget } from '@/lib/deep-link';
 import { dict, type UiStringKey } from '@/lib/dictionary';
-import { fill } from '@/lib/format';
+import { fill, fillCount } from '@/lib/format';
 import type { FaqItem, Locale } from '@/lib/models';
 import { bestScoreIndex, highlight, searchPalette, type PaletteEntry, type PaletteGroup } from '@/lib/palette-index';
 import { readThemePref, writeThemePref } from '@/lib/theme';
@@ -156,9 +156,9 @@ export default function CommandPalette({ entries, faq, email, locale, initialQue
   // letter by letter (prototype: 300 ms).
   useEffect(() => {
     if (answer) return;
-    const id = setTimeout(() => setStatus(fill(t.palCount, { n: rows.length })), 300);
+    const id = setTimeout(() => setStatus(fillCount(rows.length, t.palCount, t.palCountOne)), 300);
     return () => clearTimeout(id);
-  }, [answer, rows.length, t.palCount]);
+  }, [answer, rows.length, t.palCount, t.palCountOne]);
 
   function leave(target: string) {
     onClose({ restoreFocus: false });
@@ -186,7 +186,7 @@ export default function CommandPalette({ entries, faq, email, locale, initialQue
     if (row.kind === 'ask') {
       const next = askPreview(raw, faq, locale);
       setAnswer(next);
-      setStatus(next.kind === 'answer' ? fill(t.askReady, { n: next.sources.length }) : t.askTitle);
+      setStatus(next.kind === 'answer' ? fillCount(next.sources.length, t.askReady, t.askReadyOne) : t.askTitle);
       return;
     }
     const { action } = row.entry;
@@ -470,7 +470,7 @@ export default function CommandPalette({ entries, faq, email, locale, initialQue
             <span>{t.palMove}</span>
             <span>{t.palOpen}</span>
             <span>{t.palClose}</span>
-            <span>{fill(t.palCount, { n: rows.length })}</span>
+            <span>{fillCount(rows.length, t.palCount, t.palCountOne)}</span>
           </div>
         </>
       )}

@@ -110,10 +110,23 @@ describe('dictionary', () => {
       expect(dict[l].palNone, l).toContain('{q}');
       expect(dict[l].palAsk, l).toContain('{q}');
       expect(dict[l].palCount, l).toContain('{n}');
+      expect(dict[l].palCountOne, l).toContain('{n}');
+      expect(dict[l].askReadyOne, l).toContain('{n}');
       expect(dict[l].askSourceN, l).toContain('{n}');
       expect(dict[l].askReady, l).toContain('{n}');
       expect(dict[l].askDeclined, l).toContain('{email}');
     }
+  });
+
+  // T12 m1: "1 results" / "1 sources". English takes a singular for one; Thai has no plural,
+  // so its one-form is the same sentence.
+  it('says one result and one source in the singular in English, the same sentence in Thai', () => {
+    expect(dict.en.palCount).toBe('{n} results');
+    expect(dict.en.palCountOne).toBe('{n} result');
+    expect(dict.en.askReady).toBe('Answer ready, {n} sources');
+    expect(dict.en.askReadyOne).toBe('Answer ready, {n} source');
+    expect(dict.th.palCountOne).toBe(dict.th.palCount);
+    expect(dict.th.askReadyOne).toBe(dict.th.askReady);
   });
 
   it('never promises instant updates (the site refreshes through ISR, about an hour)', () => {
