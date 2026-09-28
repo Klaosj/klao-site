@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import HomePage from '@/app/[locale]/page';
 
 const params = (locale: 'en' | 'th') => ({ params: Promise.resolve({ locale }) });
@@ -44,5 +44,39 @@ describe('home page order (contract C7)', () => {
       const matches = html.match(/aria-labelledby="sheet-name"/g) ?? [];
       expect(matches).toHaveLength(1);
     }
+  });
+});
+
+// Master plan C7, the whole sequence. `toolbox` is the anchor inside Career
+// that FAQ deep links target. Every <section> with an id counts too, so a
+// band slipped back in — ClientsBand's #clients stays in the code, unrendered
+// (spec §4), and the fixtures DO carry client names — fails here.
+const C7 = ['top', 'tour', 'signature', 'work', 'career', 'toolbox', 'story', 'faq', 'contact'];
+
+function pageIds(html: string): string[] {
+  const ids: string[] = [];
+  for (const [, tag, id] of html.matchAll(/<([a-z][a-z0-9]*)\b[^>]*?\sid="([^"]+)"/g)) {
+    if (tag === 'section' || C7.includes(id)) ids.push(id);
+  }
+  return ids;
+}
+
+describe('home page order — the finished page (C7, P5)', () => {
+  beforeEach(() => {
+    // Fixture mode: the order must hold with no Notion at all.
+    vi.stubEnv('NOTION_TOKEN', '');
+  });
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('reads section ids the way the order test relies on', () => {
+    const html = '<section class="x" id="top"></section><div id="toolbox"></div><div id="note"></div><section id="clients"></section>';
+    expect(pageIds(html)).toEqual(['top', 'toolbox', 'clients']);
+  });
+
+  it.each(['en', 'th'] as const)('renders exactly the C7 sections, in order, on /%s', async (locale) => {
+    const html = renderToStaticMarkup(await HomePage({ params: Promise.resolve({ locale }) }));
+    expect(pageIds(html)).toEqual(C7);
   });
 });
