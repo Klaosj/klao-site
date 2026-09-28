@@ -326,9 +326,11 @@ export default function SignatureScene({ copy }: { copy: SignatureCopy }) {
           </div>
           <div className="sig-card" data-sig-part="card">
             <p className="t-cap sig-card-kick">{copy.cardKicker}</p>
+            {/* Fix wave finding 5 (I2): display mode -- a heading-length line, like the prototype's
+                own disp() treatment, not the short default keep-list runs. */}
             {copy.cardQuestion && (
               <p className="sig-card-q">
-                <ThaiText text={copy.cardQuestion} />
+                <ThaiText text={copy.cardQuestion} display />
               </p>
             )}
             <p className="t-stat sig-stat">
@@ -351,10 +353,13 @@ export default function SignatureScene({ copy }: { copy: SignatureCopy }) {
             ))}
           </div>
           <div className="sig-cap sig-cap-a glass glass-pill" data-sig-part="capA">
+            {/* Fix wave finding 5 (I2): display mode -- a heading-length line. */}
             <p className="sig-cap-t1">
-              <ThaiText text={copy.capTitle} />
+              <ThaiText text={copy.capTitle} display />
             </p>
-            <p className="sig-cap-t2">{copy.capSub}</p>
+            <p className="sig-cap-t2">
+              <ThaiText text={copy.capSub} />
+            </p>
           </div>
           {copy.frameSrc && (
             <div className="sig-frame" data-sig-part="frame">
@@ -363,8 +368,13 @@ export default function SignatureScene({ copy }: { copy: SignatureCopy }) {
           )}
           <div className="sig-cap sig-cap-b glass glass-pill" data-sig-part="capB">
             <div>
-              <p className="sig-cap-t1">{copy.endTitle}</p>
-              <p className="sig-cap-t2">{copy.endSub}</p>
+              {/* Fix wave finding 5 (I2). */}
+              <p className="sig-cap-t1">
+                <ThaiText text={copy.endTitle} />
+              </p>
+              <p className="sig-cap-t2">
+                <ThaiText text={copy.endSub} />
+              </p>
             </div>
             {copy.openHref && (
               <a className="sig-open" href={copy.openHref} target="_blank" rel="noreferrer">

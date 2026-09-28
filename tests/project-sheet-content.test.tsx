@@ -168,6 +168,24 @@ describe('ProjectSheet content', () => {
     }
   });
 
+  // Fix wave finding 5 (I2): description, outcomes and lineage cells now route through ThaiText,
+  // like the .sbody h3 headings above -- each assertion below leans on fixture Thai copy that
+  // already carries a THAI_KEEP/date/unit match, rather than monkey-patching the dictionary.
+  it('routes the description through ThaiText keep-runs on /th (GoNai: "งบประมาณ")', () => {
+    const dialog = openAt('gonai', 'th');
+    expect(texts(dialog, '.sheet-desc .nw')).toContain('งบประมาณ');
+  });
+
+  it('routes each outcome through ThaiText keep-runs on /th (Talatify: "37 ล้านบาท")', () => {
+    const dialog = openAt('talatify', 'th');
+    expect(texts(dialog, '.sheet-list li .nw')).toContain('37 ล้านบาท');
+  });
+
+  it('routes the lineage cells through ThaiText keep-runs on /th (Result row: "ส.ค. 2026")', () => {
+    const dialog = openAt('gonai', 'th');
+    expect(texts(dialog, '.lin td .nw')).toContain('ส.ค. 2026');
+  });
+
   it('a pre-migration row (no kicker, status, outcomes or screenshot) still opens whole', () => {
     const bare = makeProject({ id: 'fx-bare', name: 'Bare', imageSrc: null, media: 'win', description: { en: 'Only the old fields.', th: 'มีแค่ฟิลด์เดิม' } });
     const dialog = openAt('bare', 'en', [bare]);

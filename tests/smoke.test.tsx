@@ -88,7 +88,12 @@ describe('smoke: pages render in both locales (fixture mode)', () => {
       // string per band composed in page.tsx, none of it routed through
       // MaskedHeading (see the collectText comment above for why that
       // matters here).
-      expect(homeText).toContain(t.workDoor); // ProjectsIndex's door: only the index renders it
+      // ProjectsIndex's door: only the index renders it. th-only on /en (fix wave finding 5
+      // routed it through ThaiText, and its string contains "ดีล", already on THAI_KEEP --
+      // KEEP_SOURCE has no word boundary of its own, so it matches inside "ดีลสื่อ"/"หนึ่งดีล"
+      // too, same trap as CareerBand's headline below: the th string is no longer a contiguous
+      // substring of the HTML once ThaiText's keep-spans land inside it).
+      if (locale === 'en') expect(homeText).toContain(t.workDoor);
       // CareerBand (P3): the section, its toolbox anchor and -- on /en --
       // the headline (Thai headings go through ThaiText keep-spans, so only
       // the Latin string is a contiguous substring of the HTML).

@@ -213,6 +213,29 @@ describe('SignatureScene: markup', () => {
   });
 });
 
+// Fix wave finding 5 (I2): every caption routes through ThaiText now, not raw text -- default
+// mode (.nw) for capSub/endTitle/endSub, display mode (.kt) for cardQuestion/capTitle (a
+// heading-length line, like the prototype's own disp()).
+describe('SignatureScene routes captions through ThaiText keep-runs (fix wave finding 5, I2)', () => {
+  it('capSub, endTitle and endSub keep a `|`-marked run whole, in default mode', () => {
+    const html = renderToStaticMarkup(
+      <SignatureScene copy={{ ...COPY, capSub: 'คำถามเดิม|เครื่องมือใหม่', endTitle: 'เดินเอง|ได้แล้ว', endSub: 'ใช้เวลา|สามปี' }} />,
+    );
+    expect(html).toContain('class="nw">คำถามเดิม</span>');
+    expect(html).toContain('class="nw">เครื่องมือใหม่</span>');
+    expect(html).toContain('class="nw">เดินเอง</span>');
+    expect(html).toContain('class="nw">ได้แล้ว</span>');
+    expect(html).toContain('class="nw">ใช้เวลา</span>');
+    expect(html).toContain('class="nw">สามปี</span>');
+  });
+
+  it('cardQuestion and capTitle keep every Thai token whole, in display mode', () => {
+    const html = renderToStaticMarkup(<SignatureScene copy={{ ...COPY, cardQuestion: 'ทำไมต้องรอ', capTitle: 'สี่ปีต่อมา' }} />);
+    expect(html).toContain('class="kt">ทำไมต้องรอ</span>');
+    expect(html).toContain('class="kt">สี่ปีต่อมา</span>');
+  });
+});
+
 describe('SignatureScene: motion modes', () => {
   it('stays the static stack under reduced motion, with no scroll work even in view', () => {
     reduce = true;

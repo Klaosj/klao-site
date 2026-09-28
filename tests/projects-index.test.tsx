@@ -85,6 +85,16 @@ describe('ProjectsIndex', () => {
     expect(trip.querySelector('.pi-q')?.textContent).toBe(TRIPEDIA.question!.th.replace(/\|/g, ''));
   });
 
+  // Fix wave finding 5 (I2): .pi-q now routes through ThaiText (default mode) instead of
+  // unbreak() -- Tripedia's `|` marks the one allowed break, so each side becomes its own
+  // keep-run (unlike unbreak(), which only stripped the `|` without protecting either side).
+  it('keeps each side of the | break mark whole in .pi-q (fix wave finding 5)', () => {
+    const { container } = render(<ProjectsIndex projects={LINEUP} locale="th" />);
+    const q = rowOf(container, 'tripedia').querySelector('.pi-q')!;
+    expect(Array.from(q.querySelectorAll('.nw')).map((n) => n.textContent)).toEqual(['ทำไมวางแผนทริปเดียว', 'ต้องใช้ตั้งห้าแอป?']);
+    expect(q.querySelector('wbr')).not.toBeNull();
+  });
+
   it('thumbnails: the screenshot for builds, a line drawing for business plays, the Notion vignette for this site', () => {
     const { container } = render(<ProjectsIndex projects={LINEUP} locale="en" />);
     const thumb = (key: string) => thumbOf(container, key);
@@ -131,6 +141,15 @@ describe('ProjectsIndex', () => {
     expect(labels).toEqual([dict.th.workTypeBusiness, dict.th.workTypeBuild]);
     expect(container.querySelector('a.pi-door')?.textContent).toBe(dict.th.workDoor);
     expect(container.textContent).not.toContain(dict.en.workDoor);
+  });
+
+  // Fix wave finding 5 (I2): the door text now routes through ThaiText too. dict.th.workDoor
+  // already contains "ดีล" (THAI_KEEP) inside "ดีลสื่อ"/"หนึ่งดีล" -- KEEP_SOURCE has no word
+  // boundary of its own, so it matches there too (same trap the smoke test documents).
+  it('routes the door text through ThaiText keep-runs on /th (fix wave finding 5)', () => {
+    const { container } = render(<ProjectsIndex projects={LINEUP} locale="th" />);
+    const runs = Array.from(container.querySelectorAll('a.pi-door .nw')).map((n) => n.textContent);
+    expect(runs).toContain('ดีล');
   });
 
   it('server HTML carries every row, the door and a closed sheet, with nothing hidden inline (Review Focus #4)', () => {
