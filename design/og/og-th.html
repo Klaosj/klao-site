@@ -5,9 +5,10 @@
 <title>OG image — TH (1200x630)</title>
 <style>
   /* Source for public/og/og-th.png. Regenerate: see design/og/README.md
-     Thai has no Georgia glyphs, so the display face falls back to a Thai
-     sans. Sizes are tuned down from the EN board because Thai ascenders +
-     tone marks need more line-height at the same optical weight. */
+     Latin on this board (KLAO, domain, project names) is the site's system
+     stack, same as the EN board -- Georgia is gone from both files. Sizes
+     here stay tuned down from the EN board because Thai ascenders + tone
+     marks need more line-height at the same optical weight. */
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { width: 1200px; height: 630px; overflow: hidden; }
   body {
@@ -27,9 +28,9 @@
     padding: 76px 68px 68px 56px;
     display: flex; flex-direction: column; justify-content: center; gap: 20px;
   }
-  /* KLAO stays Latin serif in both locales — it is the wordmark, not copy. */
+  /* KLAO stays Latin in both locales -- it is the wordmark, not copy. */
   .wordmark {
-    font-family: Georgia, "Times New Roman", serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     font-size: 25px; font-weight: 700; letter-spacing: 0.14em;
   }
   /* 43px, not the EN board's 62px: "นัก Business Development" must sit on one
@@ -42,7 +43,10 @@
   }
   .rule { width: 84px; height: 3px; background: #111111; margin: 28px 0 22px; }
   .byline { font-size: 19px; color: #666666; line-height: 1.6; }
-  .domain { font-family: Georgia, serif; font-size: 17px; letter-spacing: 0.04em; }
+  .domain {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 17px; letter-spacing: 0.04em;
+  }
   .label {
     font-size: 13px; color: #666666; letter-spacing: 0.1em; margin-bottom: 4px;
   }
@@ -65,7 +69,7 @@
         <div class="rule"></div>
         <p class="byline">กรุงเทพฯ · BD × Data Analytics<br>สร้างแอปด้วย AI</p>
       </div>
-      <span class="domain">klao.dev</span>
+      <span class="domain">klao-site.vercel.app</span>
     </div>
     <div class="right">
       <div class="label">ผลงานเด่น</div>

@@ -23,17 +23,25 @@
     padding: 76px 68px 68px 56px;
     display: flex; flex-direction: column; justify-content: center; gap: 20px;
   }
+  /* Latin is the site's system stack (spec §5.2) -- no font files shipped
+     for Latin, so this board renders in whatever the OS gives (SF Pro on
+     Apple, Segoe UI on Windows). Serif/Georgia is gone from this file. */
   .wordmark {
-    font-family: Georgia, "Times New Roman", serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     font-size: 25px; font-weight: 700; letter-spacing: 0.14em;
   }
   .headline {
-    font-family: Georgia, "Times New Roman", serif;
-    font-size: 62px; line-height: 1.1; letter-spacing: -0.015em; font-weight: 400;
+    /* 600 (semibold), matching the site's own .t-hero weight and the TH
+       board's headline -- not the old serif's regular 400. */
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 58px; line-height: 1.14; letter-spacing: -0.015em; font-weight: 600;
   }
   .rule { width: 84px; height: 3px; background: #111111; margin: 26px 0 22px; }
   .byline { font-size: 20px; color: #666666; line-height: 1.45; }
-  .domain { font-family: Georgia, serif; font-size: 17px; letter-spacing: 0.04em; }
+  .domain {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 17px; letter-spacing: 0.04em;
+  }
   .label {
     font-size: 12px; color: #666666; letter-spacing: 0.16em;
     text-transform: uppercase; margin-bottom: 4px;
@@ -53,7 +61,7 @@
         <div class="rule"></div>
         <p class="byline">Bangkok · BD × Data Analytics<br>shipping apps with AI</p>
       </div>
-      <span class="domain">klao.dev</span>
+      <span class="domain">klao-site.vercel.app</span>
     </div>
     <div class="right">
       <div class="label">Selected work</div>
