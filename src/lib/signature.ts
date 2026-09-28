@@ -99,13 +99,20 @@ export interface SigInput {
   height: number; // stage clientHeight (100vh / 100svh)
   cardWidth: number; // the pitch card as laid out under `.sig.pin`
   cardHeight: number;
+  // Fix wave finding 7 (gate 4): stage.clientWidth excludes the scrollbar's own band, so right
+  // at the 734px breakpoint it can read a few px narrower than the viewport width the `(max-
+  // width: 734px)` media query (and every phone-only CSS rule) actually used. Passing the
+  // media query's own answer keeps this decision in sync with the CSS instead of re-deriving it
+  // from a slightly different number. Optional and defaults to the old `W <= 734` when omitted,
+  // so every existing caller (and test) is unaffected.
+  phone?: boolean;
 }
 
 type Offset = readonly [number, number, number]; // x, y, deg from the card's centre
 
 /** Port of the prototype's `layout()`: every position the scene uses, from four measurements. */
-export function sigGeometry({ width: W, height: H, cardWidth, cardHeight }: SigInput): SigGeometry {
-  const phone = W <= 734;
+export function sigGeometry({ width: W, height: H, cardWidth, cardHeight, phone: phoneOverride }: SigInput): SigGeometry {
+  const phone = phoneOverride ?? W <= 734;
   const hw = cardWidth / 2;
   const hh = cardHeight / 2;
   const cx = W / 2;

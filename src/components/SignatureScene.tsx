@@ -221,7 +221,15 @@ export default function SignatureScene({ copy }: { copy: SignatureCopy }) {
       if (pin) {
         // Read after `.pin` applies: the card's pinned width is what the tiles orbit.
         cardBaseline = card.offsetHeight;
-        geo = sigGeometry({ width: stage.clientWidth, height: stage.clientHeight, cardWidth: card.offsetWidth, cardHeight: cardBaseline });
+        // Fix wave finding 7 (gate 4): the media query, not stage.clientWidth (which excludes
+        // the scrollbar band and can disagree with it right at the 734px edge).
+        geo = sigGeometry({
+          width: stage.clientWidth,
+          height: stage.clientHeight,
+          cardWidth: card.offsetWidth,
+          cardHeight: cardBaseline,
+          phone: matchMedia('(max-width: 734px)').matches,
+        });
         place(geo);
         measure();
         paint(true);

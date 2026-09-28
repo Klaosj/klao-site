@@ -111,6 +111,24 @@ describe('sigGeometry', () => {
     [-128, -64, 0, 64, 128].forEach((d, i) => expect(ringX[i]).toBeCloseTo(195 + d - 28, 6));
     expect(new Set(PHONE.tiles.map((t) => t.ring.y.toFixed(3))).size).toBe(1);
   });
+
+  // Fix wave finding 7 (gate 4): an explicit `phone` overrides the `width <= 734` default --
+  // stage.clientWidth (the caller's `width`) excludes the scrollbar band, so it can disagree
+  // with the `(max-width: 734px)` media query right at the edge; the override lets the caller
+  // hand sigGeometry the media query's own answer instead of re-deriving a slightly different one.
+  it('lets an explicit phone override the width <= 734 default (fix wave finding 7)', () => {
+    // A wide stage (never phone by width) forced into phone layout.
+    const forcedPhone = sigGeometry({ width: 900, height: 900, cardWidth: 350, cardHeight: 260, phone: true });
+    expect(forcedPhone.phone).toBe(true);
+    expect(forcedPhone.frame.width).toBe(900); // phone rule: frame.width === W, not min(1280, W-160)
+    // A narrow stage (phone by width) forced into desktop layout.
+    const forcedDesktop = sigGeometry({ width: 700, height: 900, cardWidth: 440, cardHeight: 240, phone: false });
+    expect(forcedDesktop.phone).toBe(false);
+    expect(forcedDesktop.frame.width).toBe(540); // desktop rule: min(1280, W-160) = 700-160
+    // Omitting `phone` keeps the old width-only behaviour (DESK/PHONE above already cover this,
+    // but pinned here too so the override's default is provably the same value).
+    expect(sigGeometry({ width: 1440, height: 900, cardWidth: 440, cardHeight: 240 }).phone).toBe(false);
+  });
 });
 
 describe('sigYear', () => {
