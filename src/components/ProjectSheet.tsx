@@ -90,7 +90,7 @@ function runShotTransition(before: HTMLElement | null, change: () => boolean, fi
   before.style.viewTransitionName = 'shot';
   let after: HTMLElement | null = null;
   const transition = document.startViewTransition(() => {
-    // Only one element may carry a given view-transition-name at the instant the "after"
+    // Only one element may carry a given view-transition-name at the moment the "after"
     // snapshot is taken; clearing `before` here (rather than after `change`) guarantees that
     // even if `before` is also `change`'s target for removal, the name never collides with
     // whatever `findAfter` returns.
