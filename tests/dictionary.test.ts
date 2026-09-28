@@ -73,6 +73,12 @@ describe('dictionary', () => {
     expect(dict.en.resumeLink).toBe('Résumé (PDF) ↗');
     expect(dict.en.storyEyebrow).toBe('By day');
     expect(dict.th.storyEyebrow).toBe('ตอนกลางวัน');
+    // Klao's wording for the Short/Full control (2026-09-28).
+    expect([dict.th.storyShort, dict.th.storyFull, dict.th.storyDetailLabel]).toEqual([
+      'ย่อ',
+      'เต็ม',
+      'ระดับรายละเอียด',
+    ]);
     expect(dict.en.monthsShort).toHaveLength(12);
     expect(dict.th.monthsShort).toHaveLength(12);
     expect(dict.th.monthsShort[2]).toBe('มี.ค.');

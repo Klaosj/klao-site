@@ -405,10 +405,10 @@ const th: typeof en = {
   backToTour: 'Aje · GoNai · klao-site ↑',
   // A10: the polish lab's reference implementation only gave this control
   // English copy (Short/Full, aria-label "Detail") -- there is no Thai
-  // wording to carry over, so this is our own translation, ตาม amendment
-  // A10's own fallback instruction ("otherwise use สั้น / เต็ม").
-  storyDetailLabel: 'รายละเอียด',
-  storyShort: 'สั้น',
+  // wording to carry over. Klao chose ย่อ / เต็ม and "ระดับรายละเอียด"
+  // on 2026-09-28 (over A10's fallback สั้น / เต็ม).
+  storyDetailLabel: 'ระดับรายละเอียด',
+  storyShort: 'ย่อ',
   storyFull: 'เต็ม',
 
   faqTitle: 'คำถามที่เจอบ่อย',
