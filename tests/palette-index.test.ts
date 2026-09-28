@@ -45,6 +45,8 @@ const input: PaletteInput = {
       company: 'Actmedia',
       role: { en: 'Senior Business Development', th: 'นักพัฒนาธุรกิจอาวุโส' },
       period: 'MAR 2026 – Present',
+      start: '2026-03',
+      end: null,
     },
   ],
   faq: [{ id: 'fx-faq-contact', question: { en: 'How do I reach him?', th: 'ติดต่อยังไง?' } }],
@@ -125,7 +127,10 @@ describe('buildPaletteIndex', () => {
   it('opens each Career pill and each FAQ answer', () => {
     const e = byId('th');
     expect(e.get('career:actmedia')?.action).toEqual({ type: 'target', target: 'career:actmedia' });
-    expect(e.get('career:actmedia')?.hint).toBe('MAR 2026 – Present');
+    // M4 (fix wave finding 7): the hint is now pillYears()'s localised short
+    // form ('2026 – <nowWord>'), not the hand-typed, untranslated `period`
+    // string -- see the dedicated describe block below for the full case.
+    expect(e.get('career:actmedia')?.hint).toBe(`2026 – ${dict.th.careerNow}`);
     const faq = e.get('faq:fx-faq-contact')!;
     expect(faq.label).toBe('ติดต่อยังไง?');
     expect(faq.alt).toBe('How do I reach him?');
@@ -152,7 +157,15 @@ describe('buildPaletteIndex', () => {
         ...input,
         career: [
           ...input.career,
-          { id: 'c2', key: '', company: 'ร้านขนมจีบ', role: { en: 'Owner', th: 'เจ้าของ' }, period: '2024' },
+          {
+            id: 'c2',
+            key: '',
+            company: 'ร้านขนมจีบ',
+            role: { en: 'Owner', th: 'เจ้าของ' },
+            period: '2024',
+            start: null,
+            end: null,
+          },
         ],
       },
       'en',
@@ -160,6 +173,34 @@ describe('buildPaletteIndex', () => {
     const career = entries.filter((e) => e.group === 'career');
     expect(career).toHaveLength(1);
     expect(career[0].id).toBe('career:actmedia');
+  });
+
+  // M4 (fix wave finding 7): the hand-typed `period` string ("MAR 2026 –
+  // Present") is English regardless of locale, so it leaked untranslated
+  // into the Thai palette. pillYears() -- the same helper the Career pill
+  // itself uses -- gives a short, localised form instead; `period` is now
+  // only a fallback for a pre-migration row with no StartDate at all.
+  describe('career hint uses pillYears, localised, falling back to period (M4)', () => {
+    it('shows "<year> – <nowWord>" for an ongoing role, in both languages', () => {
+      expect(byId('en').get('career:actmedia')?.hint).toBe(`2026 – ${dict.en.careerNow}`);
+      expect(byId('th').get('career:actmedia')?.hint).toBe(`2026 – ${dict.th.careerNow}`);
+    });
+
+    it('shows "<start> – <end>" for a finished role', () => {
+      const entries = buildPaletteIndex(
+        { ...input, career: [{ ...input.career[0], start: '2021-05', end: '2022-12' }] },
+        'en',
+      );
+      expect(entries.find((e) => e.group === 'career')?.hint).toBe('2021 – 2022');
+    });
+
+    it('falls back to the raw `period` string for a pre-migration row with no StartDate', () => {
+      const entries = buildPaletteIndex(
+        { ...input, career: [{ ...input.career[0], period: 'Since 2019', start: null, end: null }] },
+        'en',
+      );
+      expect(entries.find((e) => e.group === 'career')?.hint).toBe('Since 2019');
+    });
   });
 
   // Ledger ruling (preflight C13): Notion copy may carry the '|' break mark

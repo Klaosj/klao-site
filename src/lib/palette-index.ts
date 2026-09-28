@@ -1,4 +1,5 @@
 import type { IconName } from '@/components/icons';
+import { pillYears } from './career';
 import { dict, type UiStringKey } from './dictionary';
 import { CONTACT_SUBJECT, faqAnchorId, mailto } from './link-target';
 import type { CareerEntry, FaqItem, Locale, Profile, Project } from './models';
@@ -46,7 +47,7 @@ export interface PaletteEntry {
 export interface PaletteInput {
   profile: Pick<Profile, 'email' | 'resumeUrl' | 'linkedin' | 'github'>;
   projects: Pick<Project, 'id' | 'name' | 'slug' | 'type' | 'kicker' | 'description'>[];
-  career: Pick<CareerEntry, 'id' | 'key' | 'company' | 'role' | 'period'>[];
+  career: Pick<CareerEntry, 'id' | 'key' | 'company' | 'role' | 'period' | 'start' | 'end'>[];
   faq: Pick<FaqItem, 'id' | 'question'>[];
 }
 
@@ -176,7 +177,13 @@ export function buildPaletteIndex(input: PaletteInput, locale: Locale): PaletteE
       // mark and both skip unbreak() (fix round 1, minor).
       label: c.company,
       alt: '',
-      hint: c.period,
+      // M4 (fix wave finding 7): the raw `period` string is hand-typed
+      // English ("MAR 2026 – Present"), so it leaked into the Thai palette
+      // untranslated. pillYears() gives the same quiet '2024 – 2026' /
+      // '2026 – <nowWord>' short form the Career pill itself shows,
+      // localised through t.careerNow -- falling back to `period` only for
+      // a pre-migration row with no StartDate (pillYears returns null).
+      hint: pillYears(c, t.careerNow) ?? c.period,
       keywords: unbreak(`${c.role.en} ${c.role.th}`) + (CAREER_ALIAS[c.key] ? ` ${CAREER_ALIAS[c.key]}` : ''),
       icon: 'arrow-right',
       action: { type: 'target', target: `career:${c.key}` },

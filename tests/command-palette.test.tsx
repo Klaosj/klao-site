@@ -42,6 +42,8 @@ const input: PaletteInput = {
       company: 'Actmedia',
       role: { en: 'Senior Business Development', th: 'นักพัฒนาธุรกิจอาวุโส' },
       period: 'MAR 2026 – Present',
+      start: '2026-03',
+      end: null,
     },
   ],
   faq,
