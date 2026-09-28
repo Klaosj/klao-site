@@ -66,9 +66,19 @@ export default function PaletteHost({
       // keyboard *layout* produces, not the physical key -- on a Thai
       // layout, the K/slash keys produce Thai letters, not 'k'/'/', so
       // Cmd+K and "/" alone did nothing at all. e.code names the physical
-      // key regardless of layout (KeyK, Slash); either check passing opens
-      // the palette, so a Latin layout (where they usually agree) is unaffected.
-      if ((e.metaKey || e.ctrlKey) && (e.key.toLowerCase() === 'k' || e.code === 'KeyK')) {
+      // key regardless of layout (KeyK, Slash).
+      //
+      // Re-review round 1, Minor C: an unconditional e.code fallback opened
+      // the palette on US Shift+Slash ('?', a real, unrelated shortcut
+      // elsewhere) and on a German layout's own Slash-position key ('-') --
+      // both produce e.code === 'Slash' regardless of what e.key actually
+      // is. The fallback now applies only when e.key is NOT a printable
+      // ASCII character at all (a genuinely non-Latin layout, e.g. Thai's
+      // ก/ื/ฝ/ฟ); a Latin layout, where e.key and e.code already agree, is
+      // unaffected either way. "/" also requires no Shift held, since "/"
+      // itself is never typed with Shift on any layout this app targets.
+      const nonLatin = !/^[\x20-\x7e]$/.test(e.key);
+      if ((e.metaKey || e.ctrlKey) && (e.key.toLowerCase() === 'k' || (e.code === 'KeyK' && nonLatin))) {
         e.preventDefault();
         if (openRef.current) close();
         else show('');
@@ -77,7 +87,7 @@ export default function PaletteHost({
       // "/" is the prototype's second shortcut — never while typing, never
       // over another dialog (a project sheet, the phone menu).
       if (
-        (e.key === '/' || e.code === 'Slash') &&
+        (e.key === '/' || (e.code === 'Slash' && nonLatin && !e.shiftKey)) &&
         !openRef.current &&
         !isTyping(e.target) &&
         !document.querySelector('dialog[open]')

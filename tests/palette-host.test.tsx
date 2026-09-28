@@ -118,6 +118,38 @@ describe('PaletteHost', () => {
     expect(await screen.findByRole('combobox')).toBeTruthy();
   });
 
+  // Re-review round 1, Minor C: e.code === 'Slash' alone doesn't mean a
+  // non-Latin layout -- it also fires for US Shift+Slash ('?') and for a
+  // German layout's own Slash-position key ('-'). The e.code fallback now
+  // requires e.key to be non-ASCII too (a genuinely non-Latin layout), and
+  // "/" additionally requires no Shift.
+  it('does not open on Shift+Slash ("?", a real US shortcut elsewhere) (Minor C)', () => {
+    mount();
+    press({ key: '?', code: 'Slash', shiftKey: true });
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('does not open on a German layout\'s Slash-position key ("-") (Minor C)', () => {
+    mount();
+    press({ key: '-', code: 'Slash' });
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('does not open ⌘K on a German layout\'s KeyK-position key with a Latin e.key (Minor C)', () => {
+    mount();
+    // Not a real German ⌘-combo (German QWERTZ's K key is still 'k'), but
+    // guards the same rule for the KeyK path: e.code alone is never enough
+    // when e.key is printable ASCII.
+    press({ key: '-', code: 'KeyK', metaKey: true });
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('does not open on Shift held with a non-Latin e.key and code "Slash" (Minor C, "/" also requires no Shift)', () => {
+    mount();
+    press({ key: 'ก', code: 'Slash', shiftKey: true });
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
   it('hands focus back to whatever opened it', async () => {
     const trigger = document.createElement('button');
     document.body.appendChild(trigger);
