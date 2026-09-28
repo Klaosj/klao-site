@@ -6,15 +6,26 @@ import PaletteButton from '@/components/PaletteButton';
 import { CAREER_EVENT, PALETTE_EVENT, followTarget, goToTarget, openPalette } from '@/lib/deep-link';
 import { stubMatchMedia } from './helpers/media';
 
+// T18-c (CO-26): jsdom can't leave the document -- a real navigation (a link
+// followed, location.assign, window.open) only prints "Not implemented" to
+// stderr while the test still passes. Every navigation here is stubbed or
+// stopped, and this spy keeps it that way: any such line fails the test.
+let consoleError: ReturnType<typeof vi.spyOn>;
+
 beforeEach(() => {
   stubMatchMedia();
   vi.stubGlobal('IntersectionObserver', class { observe() {} unobserve() {} disconnect() {} });
   // jsdom has no layout (window.scrollTo is "not implemented"); the spy
   // records the jump instead.
   vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+  consoleError = vi.spyOn(console, 'error');
 });
 
-afterEach(() => {
+afterEach(async () => {
+  // A followed link navigates on a later task, so let one run first.
+  await new Promise((r) => setTimeout(r, 0));
+  const notImplemented = consoleError.mock.calls.map((args) => args.map(String).join(' ')).filter((m) => /Not implemented/.test(m));
+  expect(notImplemented).toEqual([]);
   cleanup();
   document.body.innerHTML = '';
   history.replaceState(null, '', '/');
@@ -90,7 +101,17 @@ describe('DeepLink', () => {
     document.body.innerHTML = '<section id="career"><h2>Career</h2></section>';
     const heard = listen(CAREER_EVENT);
     render(<DeepLink target="career:abundance" locale="en">Career</DeepLink>);
-    expect(fireEvent.click(screen.getByRole('link'), { metaKey: true })).toBe(true);
+    // Stands in for the browser (T18-c, CO-26): records whether DeepLink left
+    // the click alone, then stops jsdom from trying to open another page.
+    let leftToBrowser: boolean | undefined;
+    const browser = (e: Event) => {
+      leftToBrowser = !e.defaultPrevented;
+      e.preventDefault();
+    };
+    document.addEventListener('click', browser);
+    fireEvent.click(screen.getByRole('link'), { metaKey: true });
+    document.removeEventListener('click', browser);
+    expect(leftToBrowser).toBe(true);
     expect(heard).not.toHaveBeenCalled();
     window.removeEventListener(CAREER_EVENT, heard);
   });

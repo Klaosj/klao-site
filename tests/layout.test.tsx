@@ -2,6 +2,9 @@ import { readFileSync, statSync } from 'node:fs';
 import { isValidElement, type ReactElement, type ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
 import RootLayout from '@/app/[locale]/layout';
+import PaletteHost from '@/components/palette/PaletteHost';
+import { getCareer, getFaq, getFeaturedProjects, getProfile } from '@/lib/content';
+import { buildPaletteIndex } from '@/lib/palette-index';
 import { THEME_PREPAINT_SCRIPT } from '@/lib/theme';
 
 // RootLayout is an async server component; awaiting it returns the element
@@ -18,6 +21,11 @@ type Props = {
   as?: string;
   type?: string;
   crossOrigin?: string;
+  // PaletteHost's props (T18-c, CO-25).
+  entries?: unknown;
+  faq?: unknown;
+  email?: string;
+  locale?: string;
 };
 
 function childrenOf(el: ReactElement<Props>): ReactElement<Props>[] {
@@ -80,5 +88,28 @@ describe('RootLayout: fonts', () => {
     expect(font.subarray(0, 4).toString('latin1')).toBe('wOF2');
     expect(statSync('public/fonts/anuphan-thai.woff2').size).toBeLessThan(40 * 1024);
     expect(readFileSync('public/fonts/OFL.txt', 'utf8')).toContain('SIL Open Font License');
+  });
+});
+
+// T18-c (CO-25, P4 T14 minor): the one place ⌘K gets its data is this mount.
+// It is built on the server from the same cache()-wrapped getters the page
+// uses (fixtures here: no NOTION_TOKEN in tests), so each prop is compared
+// with what those getters give for the same locale -- a hard-coded locale,
+// an empty FAQ, a blank email or an index built for the other language
+// fails here instead of only in a browser.
+describe('RootLayout: ⌘K palette host', () => {
+  it.each(['en', 'th'] as const)('mounts PaletteHost with the %s index, the FAQ and the profile email', async (locale) => {
+    const body = childrenOf(await renderLayout(locale)).find((c) => c.type === 'body');
+    const host = body && childrenOf(body).find((c) => c.type === PaletteHost);
+    if (!host) throw new Error('RootLayout rendered no PaletteHost in <body>');
+    const [profile, projects, career, faq] = await Promise.all([getProfile(), getFeaturedProjects(), getCareer(), getFaq()]);
+    expect(profile.email).not.toBe('');
+    expect(faq.length).toBeGreaterThan(0);
+    expect(host.props).toEqual({
+      entries: buildPaletteIndex({ profile, projects, career, faq }, locale),
+      faq,
+      email: profile.email,
+      locale,
+    });
   });
 });
