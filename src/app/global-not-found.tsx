@@ -113,7 +113,10 @@ function NotFoundCopy({ locale }: { locale: Locale }) {
   return (
     <div data-gnf-locale={locale}>
       <section className="flex min-h-[70vh] flex-col items-center justify-center bg-canvas px-6 py-[16vh] text-center">
-        <p className={`mb-5 text-[9.5px] uppercase text-ink-2 ${eyebrowFont(locale, 'tracking-[0.24em]')}`}>
+        {/* T12 m3: the site's eyebrow size (.t-eyebrow, spec §5.2: 21/25, phone 17/21, Thai
+            leading 28/23), not the old 9.5 px label whisper. eyebrowFont and mb-5 are utilities, so
+            they still win over the class's own tracking and margin. */}
+        <p className={`t-eyebrow mb-5 uppercase text-ink-2 ${eyebrowFont(locale, 'tracking-[0.24em]')}`}>
           404
         </p>
         <h1 className="max-w-[20ch] text-[clamp(28px,4.6vw,52px)] font-bold leading-[1.15] tracking-[-0.025em] text-ink-1">

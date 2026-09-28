@@ -370,3 +370,28 @@ describe('resolveLocale (src/app/global-not-found.tsx)', () => {
     expect(resolveLocale('/xx/nope')).toBe('en');
   });
 });
+
+// T12 m3: the "404" eyebrow on both 404s was a 9.5 px whisper -- the pre-2026-08-15 label size,
+// under the 14 px phone floor the QA runner holds the home page to. It now takes the site's
+// eyebrow class (spec §5.2: 21/25, phone 17/21; Thai 21/28, phone 23 leading) instead of its own
+// arbitrary size; eyebrowFont still picks mono for English and the Thai stack for Thai.
+describe('404 eyebrow is the site eyebrow size (T12 m3)', () => {
+  it.each(['en', 'th'] as const)('nested 404 (%s)', (locale) => {
+    const { container } = render(<NotFoundContent locale={locale} />);
+    const eyebrow = container.querySelector('p') as HTMLElement;
+    expect(eyebrow.textContent).toBe('404');
+    expect(eyebrow.classList.contains('t-eyebrow')).toBe(true);
+    expect(eyebrow.className).not.toMatch(/\btext-\[/);
+  });
+
+  it('root 404, both locale copies', async () => {
+    const { default: GlobalNotFound } = await import('@/app/global-not-found');
+    const html = renderToStaticMarkup(<GlobalNotFound />);
+    const eyebrows = [...html.matchAll(/<p class="([^"]*)">404<\/p>/g)].map((m) => m[1]);
+    expect(eyebrows).toHaveLength(2);
+    for (const cls of eyebrows) {
+      expect(cls.split(' ')).toContain('t-eyebrow');
+      expect(cls).not.toMatch(/\btext-\[/);
+    }
+  });
+});
