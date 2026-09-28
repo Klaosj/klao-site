@@ -34,7 +34,8 @@
 export const THAI_RE = /[฀-๿]/;
 
 /** The prototype's KEEP array, verbatim and in its order (longest first, so
- *  the alternation below prefers the longer compound). Used by the default
+ *  the alternation below prefers the longer compound), plus words the fix wave found the
+ *  prototype's own list missed (appended below it, not reordered in). Used by the default
  *  mode only -- display mode keeps every Thai token regardless of this list. */
 export const THAI_KEEP: readonly string[] = [
   'เบอร์เกอร์คราฟต์',
@@ -51,6 +52,12 @@ export const THAI_KEEP: readonly string[] = [
   'ค้าปลีก',
   'ไอเดีย',
   'ดีล',
+  // Fix wave finding 6 (M1, ruling): spec criterion 4 is 0 mid-word breaks; a keep-list entry
+  // is the smallest fix for each. P3's fix wave adds 'ตอนนี้' to this same list in the main
+  // checkout -- both additions union at merge (see the implementer report's merge notes).
+  'เครือข่าย',
+  'เท่าไหร่',
+  'คนเดียว',
 ];
 
 export interface Run {
