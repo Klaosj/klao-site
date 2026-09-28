@@ -146,7 +146,7 @@ const en = {
   resumeLink: 'Résumé (PDF) ↗',
   // Describes public/suwichak-jarunopratamp-resume.pdf. Update it in the same
   // commit whenever that PDF is rebuilt (spec §3: rebuilt at ship time).
-  resumeMeta: '2 pages · updated Aug 2026',
+  resumeMeta: '2 pages · updated Sep 2026',
   careerNow: 'Now',
   careerPresent: 'Present',
   careerMonthsUnit: 'mo',
@@ -336,7 +336,7 @@ const th: typeof en = {
   resumePdf: 'เรซูเม่ (PDF) ›',
 
   resumeLink: 'เรซูเม่ (PDF) ↗',
-  resumeMeta: '2 หน้า · อัปเดต ส.ค. 2026',
+  resumeMeta: '2 หน้า · อัปเดต ก.ย. 2026',
   careerNow: 'ปัจจุบัน',
   careerPresent: 'ปัจจุบัน',
   careerMonthsUnit: 'เดือน',
