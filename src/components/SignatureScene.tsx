@@ -319,7 +319,30 @@ export default function SignatureScene({ copy }: { copy: SignatureCopy }) {
     reduce.addEventListener?.('change', layout);
     layout();
 
+    // N3 (T12 follow-up): a web font that lands after this first layout -- the Thai face
+    // re-wrapping the lead or the card question -- changes the very heights the geometry was built
+    // from. The fallback path's ResizeObserver catches that; the CSS path has no observer, so
+    // without this it kept the fallback font's geometry (360x656 TH: lift 140 px instead of 111).
+    // Checked once fonts are ready and again on each `loadingdone` (a face that lands later), in a
+    // frame: two reads, and a relayout only when the card or the head block really changed height.
+    const fonts: FontFaceSet | undefined = document.fonts;
+    let fontRaf = 0;
+    let disposed = false;
+    const refit = () => {
+      if (fontRaf || disposed) return;
+      fontRaf = requestAnimationFrame(() => {
+        fontRaf = 0;
+        if (!geo) return;
+        if (card.offsetHeight !== cardBaseline || headBlock.offsetHeight !== headBaseline) layout();
+      });
+    };
+    fonts?.ready?.then(refit);
+    fonts?.addEventListener?.('loadingdone', refit);
+
     return () => {
+      disposed = true;
+      fonts?.removeEventListener?.('loadingdone', refit);
+      if (fontRaf) cancelAnimationFrame(fontRaf);
       io?.disconnect();
       ro?.disconnect();
       window.removeEventListener('scroll', onScroll);

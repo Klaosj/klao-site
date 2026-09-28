@@ -314,6 +314,126 @@ describe('SignatureScene wires the head’s bottom into sigGeometry (T12 F2)', (
   });
 });
 
+// N3 (T12 follow-up): the CSS scroll-timeline path (Chrome, Safari) has no ResizeObserver, so a
+// web font landing after hydration -- the Thai face re-wrapping the lead or the card question --
+// left the geometry built from the fallback font's sizes. The scene re-checks once fonts are
+// ready and on every `loadingdone`, and relays out only when the card or the head block really
+// changed height: a read in a frame, a write only on a change.
+describe('SignatureScene re-fits when a web font lands late (N3)', () => {
+  type Listener = () => void;
+  const stubFonts = () => {
+    let resolveReady: () => void = () => {};
+    const ready = new Promise<void>((r) => (resolveReady = r));
+    const listeners = new Set<Listener>();
+    const fonts = {
+      ready,
+      addEventListener: vi.fn((type: string, fn: Listener) => type === 'loadingdone' && listeners.add(fn)),
+      removeEventListener: vi.fn((type: string, fn: Listener) => type === 'loadingdone' && listeners.delete(fn)),
+    };
+    Object.defineProperty(document, 'fonts', { value: fonts, configurable: true });
+    return {
+      fonts,
+      resolveReady: async () => {
+        resolveReady();
+        await act(async () => {
+          await ready;
+        });
+      },
+      loadingdone: () => act(() => listeners.forEach((fn) => fn())),
+      listenerCount: () => listeners.size,
+    };
+  };
+  // Heights the scene measures: the head block and the card, changeable mid-test like a font swap.
+  const sizes = { head: 210, card: 238 };
+  const stubSizes = () => {
+    sizes.head = 210;
+    sizes.card = 238;
+    vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockImplementation(function (this: HTMLElement) {
+      if (this.classList.contains('sig-head')) return sizes.head;
+      return this.dataset.sigPart === 'card' ? sizes.card : 0;
+    });
+    vi.spyOn(HTMLElement.prototype, 'offsetTop', 'get').mockImplementation(function (this: HTMLElement) {
+      return this.classList.contains('sig-head') ? 80 : 0;
+    });
+  };
+  const cssPath = () => {
+    vi.stubGlobal('CSS', { supports: (q: string) => q.includes('animation-timeline') });
+    stubMatchMedia((q) => q.includes('max-width: 734px') || q.includes('no-preference'));
+    // A real frame is async; the file's synchronous stub returns a truthy id after already
+    // running the callback, which would read as "a frame is still pending" forever.
+    vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
+      cb(0);
+      return 0;
+    });
+  };
+  afterEach(() => {
+    delete (document as { fonts?: unknown }).fonts;
+  });
+
+  it('with scroll timelines: fonts ready with nothing re-wrapped does not relayout (no thrash)', async () => {
+    cssPath();
+    stubSizes();
+    const f = stubFonts();
+    const { container } = render(<SignatureScene copy={COPY} />);
+    const root = sectionOf(container);
+    expect(root.classList.contains('pin')).toBe(true);
+    const toggle = vi.spyOn(root.classList, 'toggle');
+    await f.resolveReady();
+    f.loadingdone();
+    expect(toggle).not.toHaveBeenCalled();
+  });
+
+  it('with scroll timelines: a head re-wrapped by a late font relayouts once, and --lift follows it', async () => {
+    cssPath();
+    stubSizes();
+    sizes.head = 239; // the fallback font wraps the lead one line longer
+    const f = stubFonts();
+    const { container } = render(<SignatureScene copy={COPY} />);
+    const root = sectionOf(container);
+    const card = root.querySelector<HTMLElement>('.sig-card')!;
+    const liftBefore = card.style.getPropertyValue('--lift');
+    vi.mocked(sigGeometry).mockClear();
+    const toggle = vi.spyOn(root.classList, 'toggle');
+    sizes.head = 210; // the Thai face arrives: one line shorter
+    f.loadingdone();
+    expect(toggle).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(sigGeometry).mock.calls.at(-1)![0].headBottom).toBe(290);
+    const liftAfter = card.style.getPropertyValue('--lift');
+    expect(liftAfter).not.toBe(liftBefore);
+    expect(liftAfter).toBe(`${(vi.mocked(sigGeometry).mock.results.at(-1)!.value.lift as number).toFixed(1)}px`);
+    toggle.mockClear();
+    f.loadingdone(); // the same sizes again: nothing to do
+    expect(toggle).not.toHaveBeenCalled();
+  });
+
+  it('with scroll timelines: a card re-wrapped by the time fonts are ready relayouts too', async () => {
+    cssPath();
+    stubSizes();
+    const f = stubFonts();
+    const { container } = render(<SignatureScene copy={COPY} />);
+    const root = sectionOf(container);
+    const toggle = vi.spyOn(root.classList, 'toggle');
+    sizes.card = 270; // the card question re-wrapped
+    await f.resolveReady();
+    expect(toggle).toHaveBeenCalledTimes(1);
+  });
+
+  it('lets go of the fonts on unmount: no listener left, and a late ready does nothing', async () => {
+    cssPath();
+    stubSizes();
+    const f = stubFonts();
+    const { container, unmount } = render(<SignatureScene copy={COPY} />);
+    const root = sectionOf(container);
+    expect(f.listenerCount()).toBe(1);
+    const toggle = vi.spyOn(root.classList, 'toggle');
+    unmount();
+    expect(f.listenerCount()).toBe(0);
+    sizes.head = 260;
+    await f.resolveReady();
+    expect(toggle.mock.calls.filter(([cls, on]) => cls === 'pin' && on === true)).toHaveLength(0);
+  });
+});
+
 describe('SignatureScene: motion modes', () => {
   it('stays the static stack under reduced motion, with no scroll work even in view', () => {
     reduce = true;
