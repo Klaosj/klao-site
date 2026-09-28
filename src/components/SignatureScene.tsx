@@ -213,6 +213,15 @@ export default function SignatureScene({ copy }: { copy: SignatureCopy }) {
         ro?.disconnect();
       }
     };
+    // The head block's used `top` (12vh on desktop, 80px + safe area on a phone), not offsetTop:
+    // offsetTop rounds to a whole pixel, and at 1536x864 that rounding alone (103.68 -> 104) read a
+    // 0.2 px clearance as a collision and lifted a frame that was already clear (N1). The used
+    // value is a layout value, so the Reveal's transform doesn't move it either. offsetTop only
+    // where there is no computed style (jsdom).
+    const headTop = () => {
+      const top = parseFloat(getComputedStyle(headBlock).top);
+      return Number.isFinite(top) ? top : headBlock.offsetTop;
+    };
     const layout = () => {
       // `document.documentElement.clientHeight`, not `window.innerHeight` (fix round 1,
       // Important): mobile Safari/Chrome resize the window whenever their toolbar collapses or
@@ -241,7 +250,7 @@ export default function SignatureScene({ copy }: { copy: SignatureCopy }) {
           cardWidth: card.offsetWidth,
           cardHeight: cardBaseline,
           phone: matchMedia('(max-width: 734px)').matches,
-          headBottom: headBlock.offsetTop + headBaseline,
+          headBottom: headTop() + headBaseline,
         });
         place(geo);
         measure();

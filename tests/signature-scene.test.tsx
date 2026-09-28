@@ -294,6 +294,24 @@ describe('SignatureScene wires the head’s bottom into sigGeometry (T12 F2)', (
     expect(sigGeometry).toHaveBeenCalled();
     expect(vi.mocked(sigGeometry).mock.calls.at(-1)![0].headBottom).toBe(290);
   });
+
+  // N1: at 1536x864 the head's `top: 12vh` is 103.68 px; offsetTop rounds it to 104, and that half
+  // pixel alone turned a 0.2 px clearance into a collision. The used `top` keeps the fraction.
+  it('uses the head block\u2019s exact used top, not the rounded offsetTop (N1)', () => {
+    vi.mocked(sigGeometry).mockClear();
+    const real = window.getComputedStyle.bind(window);
+    vi.spyOn(window, 'getComputedStyle').mockImplementation((el: Element, pseudo?: string | null) =>
+      el.classList.contains('sig-head') ? ({ top: '103.68px' } as CSSStyleDeclaration) : real(el, pseudo),
+    );
+    vi.spyOn(HTMLElement.prototype, 'offsetTop', 'get').mockImplementation(function (this: HTMLElement) {
+      return this.classList.contains('sig-head') ? 104 : 0;
+    });
+    vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockImplementation(function (this: HTMLElement) {
+      return this.classList.contains('sig-head') ? 173 : 0;
+    });
+    render(<SignatureScene copy={COPY} />);
+    expect(vi.mocked(sigGeometry).mock.calls.at(-1)![0].headBottom).toBeCloseTo(276.68, 6);
+  });
 });
 
 describe('SignatureScene: motion modes', () => {

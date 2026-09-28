@@ -136,7 +136,7 @@ describe('sigGeometry', () => {
 // T12 F2: at real phone browser heights (the toolbars take ~180 px of an 844 px screen) the
 // opening frame put the scattered tiles, the year chip and the card's top under the head's lead.
 // Card and head sizes below are measured in Chrome on the dev build (EN / TH).
-describe('sigGeometry opens below the head on a short phone (T12 F2)', () => {
+describe('sigGeometry opens below the head where they would collide (T12 F2, N1)', () => {
   const HEAD_GAP = 12;
   const SHORT_EN = { width: 390, height: 664, cardWidth: 350, cardHeight: 220, headBottom: 242 };
   const SHORT_TH = { width: 390, height: 664, cardWidth: 350, cardHeight: 238, headBottom: 290 };
@@ -193,9 +193,42 @@ describe('sigGeometry opens below the head on a short phone (T12 F2)', () => {
     expect(openingTop(g)).toBeGreaterThan(input.headBottom + HEAD_GAP);
   });
 
-  it('leaves desktop alone even where its head would collide (1280×800, measured)', () => {
-    const input = { width: 1280, height: 800, cardWidth: 440, cardHeight: 236, headBottom: 255 };
+  // N1 (T12 follow-up): desktop collides too at laptop browser heights -- 22/27 px at 1280×800,
+  // up to 62 px lower down. The same opening lift applies; head and card sizes measured in Chrome.
+  const DESK_EN = { width: 1280, height: 800, cardWidth: 440, cardHeight: 236, headBottom: 255 };
+  const DESK_TH = { width: 1280, height: 800, cardWidth: 440, cardHeight: 218, headBottom: 269 };
+  const LAPTOP_EN = { width: 1366, height: 657, cardWidth: 440, cardHeight: 236, headBottom: 238 };
+
+  it.each([
+    ['1280×800 EN', DESK_EN],
+    ['1280×800 TH', DESK_TH],
+    ['1366×657 EN', LAPTOP_EN],
+  ])('%s (desktop): the opening clears the head by exactly the gap, and only the opening moves', (_name, input) => {
     const g = sigGeometry(input);
+    const old = without(input);
+    expect(g.phone).toBe(false);
+    expect(g.lift).toBeGreaterThan(0);
+    expect(openingTop(g)).toBeCloseTo(input.headBottom + HEAD_GAP, 6);
+    expect(g.card).toEqual(old.card);
+    expect(g.chip).toEqual(old.chip);
+    expect(g.frame).toEqual(old.frame);
+    g.tiles.forEach((t, i) => {
+      expectPoint(t.ring, old.tiles[i].ring);
+      expectPoint(t.pile, old.tiles[i].pile);
+      expectPoint(t.scatter, { ...old.tiles[i].scatter, y: old.tiles[i].scatter.y + g.lift });
+    });
+  });
+
+  // N1 ruling: a viewport that was already collision-free stays pixel-identical -- even when it
+  // clears the head by less than the gap. Only a real collision moves the opening.
+  it.each([
+    ['1440×900 EN (clears by 20 px)', { width: 1440, height: 900, cardWidth: 440, cardHeight: 236, headBottom: 267 }],
+    ['1440×900 TH (clears by 15 px)', { width: 1440, height: 900, cardWidth: 440, cardHeight: 218, headBottom: 281 }],
+    ['1440×860 EN (clears by 3.6 px)', { width: 1440, height: 860, cardWidth: 440, cardHeight: 236, headBottom: 262 }],
+    ['390×844 TH (clears by 9.7 px)', { width: 390, height: 844, cardWidth: 350, cardHeight: 238, headBottom: 290 }],
+  ])('%s: already clear of the head, so nothing moves', (_name, input) => {
+    const g = sigGeometry(input);
+    expect(openingTop(g)).toBeGreaterThanOrEqual(input.headBottom);
     expect(g.lift).toBe(0);
     expect(g).toEqual({ ...without(input), lift: 0 });
   });

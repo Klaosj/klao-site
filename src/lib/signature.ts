@@ -94,8 +94,8 @@ export interface SigGeometry {
   phone: boolean;
   card: { left: number; top: number }; // settled: where the card rings, piles and opens the frame
   chip: { left: number; top: number };
-  // T12 F2: how far below its settled place the opening frame starts the card, the chip and the
-  // scattered tiles, so they clear the head on a short phone. 0 on desktop and on tall phones.
+  // T12 F2 / N1: how far below its settled place the opening frame starts the card, the chip and
+  // the scattered tiles, so they clear the head. 0 wherever they already clear it.
   lift: number;
   frame: { width: number; left: number; top: number; scale0: number; dx: number; dy: number };
   tiles: SigTile[];
@@ -114,7 +114,8 @@ export interface SigInput {
   // so every existing caller (and test) is unaffected.
   phone?: boolean;
   // T12 F2: the head block's bottom edge in stage px -- its layout box, which no transform moves.
-  // On a phone the opening frame starts low enough to clear it. Optional: omitted, nothing lifts.
+  // Where the opening frame would reach into it, it starts low enough to clear it. Optional:
+  // omitted, nothing lifts.
   headBottom?: number;
 }
 
@@ -146,15 +147,19 @@ export function sigGeometry({ width: W, height: H, cardWidth, cardHeight, phone:
   const pile: Offset[] = [[0, 0, 0], [5, 4, 5], [-5, 6, -6], [8, 9, 9], [-8, 10, -10]];
   const at = ([x, y, r]: Offset): SigPoint => ({ x: cx + x - TILE / 2, y: cy + y - TILE / 2, r });
 
-  // T12 F2: a phone's real browser height (390x664 with Safari's toolbars, not the 844 screen)
-  // leaves too little room under the head: the opening frame's top -- a scattered tile's rotated
-  // corner, the chip or the card, whichever is highest above the card's centre -- sat up to 63 px
-  // under the lead. Fitting the whole scene lower instead would push the ring under caption A and
-  // the thumb bar later on, so only the opening moves: it starts `lift` px down, and the card, chip
-  // and tiles rise into their settled places on the gather's own glide (sigFrame; sig-card and
-  // sig-chip in signature.css), finishing before caption A comes in. Desktop is left as it was.
+  // T12 F2 + N1: real browser heights -- a phone's 390x664 with Safari's toolbars, not its 844
+  // screen; a laptop's 1280x800 or 1366x768 -- leave too little room under the head: the opening
+  // frame's top (a scattered tile's rotated corner, the chip or the card, whichever is highest
+  // above the card's centre) sat up to 63 px under the lead. Fitting the whole scene lower instead
+  // would push the ring under caption A and the thumb bar later on, so only the opening moves: it
+  // starts `lift` px down, and the card, chip and tiles rise into their settled places on the
+  // gather's own glide (sigFrame; sig-card and sig-chip in signature.css), finishing before
+  // caption A comes in. A frame that already clears the head -- even by less than HEAD_GAP -- is
+  // left exactly as it was (N1 ruling: a collision-free viewport stays pixel-identical); one that
+  // would collide clears the lead by HEAD_GAP.
   const reach = Math.max(hh + 48, ...scatter.map(([, y, r]) => -y + halfSpan(r))); // chip top, tile corners
-  const lift = phone && headBottom !== undefined ? Math.max(0, headBottom + HEAD_GAP + reach - cy) : 0;
+  const clearance = headBottom === undefined ? Infinity : cy - reach - headBottom;
+  const lift = clearance < 0 ? HEAD_GAP - clearance : 0;
 
   return {
     phone,
