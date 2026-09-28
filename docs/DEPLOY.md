@@ -172,9 +172,12 @@ live, Notion variables included, even though the code technically reads
 
 `NOTION_DB_QUESTIONS`, `NOTION_DB_STORY` and `NOTION_DB_FAQ` may follow
 later: until they're set, the open question hides itself and By day / FAQ
-show the bundled copy. Scope every Notion variable to **Production and
-Preview** — a preview built without them runs on the bundled copy, which
-hides whether the Notion side works.
+show the bundled copy. **For Story and FAQ, fill and publish the rows in
+Notion before setting the ID** — once it's set, the site shows only the
+published rows, so an empty or fully-unpublished database empties the
+section instead of falling back (`docs/NOTION_SETUP.md` §6). Scope every
+Notion variable to **Production and Preview** — a preview built without
+them runs on the bundled copy, which hides whether the Notion side works.
 
 **Don't trust the page looking right as proof it worked.** The bundled
 sample content is Klao's real name, headline, LinkedIn, email, and project

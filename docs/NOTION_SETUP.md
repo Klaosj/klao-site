@@ -264,12 +264,13 @@ the five values, or the row disappears with no visible error.
 | Date | Date | |
 | Published | Checkbox | (see above) |
 
-The home page's open-questions band shows the newest 3 rows whose `Status`
-is `wondering` or `building`, sorted by `Date` descending. `Status` accepts
-exactly those two values plus `answered`; a typo, an unrecognised value, or
-a blank cell reads as `wondering` instead — the safe-default treatment
-(same idea as Skills' `Category` above), not the drop-the-row treatment
-`Question` itself gets. An `answered` row leaves the band entirely; instead
+The closing Contact block shows one open question — the newest row whose
+`Status` is `wondering` or `building`, sorted by `Date` descending — and
+only when Profile's `Email` is filled. `Status` accepts exactly those two
+values plus `answered`; a typo, an unrecognised value, or a blank cell
+reads as `wondering` instead — the safe-default treatment (same idea as
+Skills' `Category` above), not the drop-the-row treatment `Question`
+itself gets. An `answered` row is never shown as an open question; instead
 its `LinkSlug` powers the case page's "Asked …" line — fill `LinkSlug` with
 the `/work/` slug once the question becomes a shipped case study, the same
 value you'd put in a Project's own `Slug`. There's no reward for pre-loading
@@ -287,9 +288,10 @@ bottom of every page: that line now reads the newer of the newest `Post`
 date and the newest `Question` date, so logging or dating a question can
 move it forward even on a day nothing else on the site changed.
 
-An empty band (no `wondering`/`building` rows — including while
-`NOTION_DB_QUESTIONS` isn't set yet, see below) simply doesn't render, same
-as Clients on Profile below: nothing breaks, the section just isn't there.
+With no `wondering`/`building` row (including while `NOTION_DB_QUESTIONS`
+isn't set yet, see below) or no Profile `Email`, the open question simply
+doesn't render, same as Clients on Profile below: nothing breaks, it just
+isn't there.
 **A row with a blank `Question` is silently dropped**, same mechanism as
 Name on Projects and Role on Career above.
 
@@ -374,7 +376,9 @@ sixth chapter has no `Sketch` (leave it blank); its caption still works.
 `Order` runs 1–6.
 
 Until `NOTION_DB_STORY` is set, the page shows the bundled chapters
-(`src/content/fixtures/story.json`) — never an empty section.
+(`src/content/fixtures/story.json`). Once it is set, the site shows only
+the published rows — an empty database empties the section. Fill and
+publish the six chapters first, then set the ID (§6 steps 5–8).
 
 ### FAQ
 
@@ -385,11 +389,14 @@ Until `NOTION_DB_STORY` is set, the page shows the bundled chapters
 |---|---|---|
 | QuestionEN | Title | **Yes** |
 | QuestionTH | Text | |
-| AnswerEN | Text | |
+| AnswerEN | Text | **Yes** |
 | AnswerTH | Text | |
 | Links | Text | |
 | Order | Number | |
 | Published | Checkbox | (see above) |
+
+**A row with a blank `QuestionEN` or `AnswerEN` is silently dropped**, same
+mechanism as Name on Projects above.
 
 `Links` holds the answer's deep links, **one per line**, as
 `LabelEN|LabelTH|target` — keep both `|` even when the two labels match:
@@ -410,7 +417,9 @@ Projects|โปรเจกต์|work
 
 If you add "What work is he open to?", leave it unpublished until its answer
 is written. Until `NOTION_DB_FAQ` is set, the page shows the bundled answers
-(`src/content/fixtures/faq.json`).
+(`src/content/fixtures/faq.json`). Once it is set, the site shows only the
+published rows — an empty database empties the section. Fill and publish
+the questions first, then set the ID (§6 steps 6–8).
 
 ## 3. Share each database with the integration
 
@@ -470,7 +479,10 @@ fallback to sample content, not a visible connection error.
   render.
 - With `NOTION_DB_STORY` or `NOTION_DB_FAQ` left blank, `getStory()` /
   `getFaq()` return the bundled chapters and answers
-  (`src/content/fixtures/story.json`, `faq.json`) — never an empty section.
+  (`src/content/fixtures/story.json`, `faq.json`). Once the ID is set, the
+  site shows only the published rows from that database — an empty or
+  fully-unpublished one empties the section. Fill and publish the rows
+  before setting the ID (§6 steps 5–8).
 
 This is deliberate — the owner adds Vercel env vars in a separate step from
 code deploys, so these three may sit unset without degrading anything else.
@@ -533,9 +545,10 @@ Work top to bottom; tick as you go.
 7. **Share Story and FAQ with the integration** (`•••` → Connections → add
    `klao-site`, as in section 3). Without this the site keeps showing the
    bundled copy and looks correct — the quiet failure described below.
-8. **Set the two IDs**, `NOTION_DB_STORY` and `NOTION_DB_FAQ`, in
-   `.env.local` and on Vercel for Production and Preview (and Development),
-   then redeploy the White Edition **preview** (Vercel → the
+8. **Set the two IDs** (only after steps 5–7 — filling and sharing the rows
+   first means the preview never shows an empty section), `NOTION_DB_STORY`
+   and `NOTION_DB_FAQ`, in `.env.local` and on Vercel for Production and
+   Preview (and Development), then redeploy the White Edition **preview** (Vercel → the
    `feat/white-edition` deployment → Redeploy) — `docs/DEPLOY.md` step 5: a
    saved variable doesn't reach a deployment that already exists. Production
    runs the old code until the merge and ignores these two IDs, so there is
