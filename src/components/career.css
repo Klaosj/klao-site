@@ -46,6 +46,18 @@
   .car-ryears span[data-first="true"] { transform: none; }
   .car-ryears span[data-now="true"] { transform: translateX(-100%); }
 
+  /* Spec 2026-10-01 §2.2: the rail draws itself once (CareerDetent sets data-draw after mount;
+     no attribute = the finished rail, which is what no-JS and reduced motion get). */
+  .car-rline { position: absolute; inset: 0; transform-origin: left center; }
+  @media (prefers-reduced-motion: no-preference) {
+    .car-rail[data-draw="ready"] .car-rline { transform: scaleX(0); }
+    .car-rail[data-draw="ready"] .car-ryears span { opacity: .55; }
+    .car-rail[data-draw="ready"] .car-rmark { opacity: .55; }
+    .car-rail[data-draw="go"] .car-rline { transition: transform 900ms var(--ease-drift); }
+    .car-rail[data-draw="go"] .car-ryears span { transition: opacity var(--dur-enter) var(--ease-settle); transition-delay: calc(500ms + var(--k, 0) * 70ms); }
+    .car-rail[data-draw="go"] .car-rmark { transition: transform var(--dur-ui) var(--ease-settle), opacity var(--dur-enter) var(--ease-settle) 900ms; }
+  }
+
   /* Pills + detent + panel */
   .car-grid { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 40px; margin-top: 28px; align-items: start; }
   .car-pills { position: relative; display: flex; flex-direction: column; gap: 8px; }

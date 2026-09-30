@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import CareerDetent from '@/components/CareerDetent';
 import { CAREER_EVENT, railLabelOffset } from '@/lib/career';
@@ -249,5 +250,112 @@ describe('CareerDetent', () => {
   it('renders nothing for an empty career list', () => {
     const { container } = render(<CareerDetent entries={[]} locale="en" now="2026-09" />);
     expect(container.innerHTML).toBe('');
+  });
+});
+
+describe('rail draws once (spec 2026-10-01 §2.2)', () => {
+  let fire: (hit: boolean) => void = () => {};
+  let disconnected = false;
+  let rootMargin: string | undefined;
+  const props = { entries, locale: 'en' as const, now: '2026-09' };
+
+  function stubMotion(allowed: boolean) {
+    // 'prefers-reduced-motion' contains 'reduce', so match the no-preference query exactly.
+    stubMatchMedia((q) => allowed && q.includes('no-preference'));
+  }
+  function stubIO() {
+    disconnected = false;
+    vi.stubGlobal(
+      'IntersectionObserver',
+      class {
+        constructor(
+          private cb: IntersectionObserverCallback,
+          opts?: IntersectionObserverInit,
+        ) {
+          rootMargin = opts?.rootMargin;
+          fire = (hit) => this.cb([{ isIntersecting: hit } as IntersectionObserverEntry], this as never);
+        }
+        observe() {}
+        unobserve() {}
+        disconnect() {
+          disconnected = true;
+        }
+      },
+    );
+  }
+  function railTop(top: number) {
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      const isRail = this.classList.contains('car-rail');
+      return {
+        top: isRail ? top : 0,
+        bottom: isRail ? top + 64 : 0,
+        left: 0,
+        right: 358,
+        width: isRail ? 358 : 0,
+        height: 64,
+        x: 0,
+        y: 0,
+        toJSON() {},
+      } as DOMRect;
+    });
+  }
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  it('ships the drawn rail in the server HTML (no data-draw)', () => {
+    const html = renderToStaticMarkup(<CareerDetent {...props} />);
+    expect(html).toContain('class="car-rail"');
+    expect(html).not.toContain('data-draw');
+    expect(html).toContain('class="car-rline"');
+  });
+
+  it('sets ready below the fold, then go when it crosses the 85 % line, then stops watching', () => {
+    stubMotion(true);
+    stubIO();
+    railTop(5000);
+    const { container } = render(<CareerDetent {...props} />);
+    const rail = container.querySelector('.car-rail') as HTMLElement;
+    expect(rail.dataset.draw).toBe('ready');
+    expect(rootMargin).toBe('0px 0px -15% 0px');
+    act(() => fire(false));
+    expect(rail.dataset.draw).toBe('ready');
+    act(() => fire(true));
+    expect(rail.dataset.draw).toBe('go');
+    expect(disconnected).toBe(true);
+  });
+
+  it('leaves the rail drawn when it is already on screen at mount (deep link / reload)', () => {
+    stubMotion(true);
+    stubIO();
+    railTop(120);
+    const { container } = render(<CareerDetent {...props} />);
+    expect((container.querySelector('.car-rail') as HTMLElement).dataset.draw).toBeUndefined();
+  });
+
+  it('never dims anything under reduced motion', () => {
+    stubMotion(false);
+    stubIO();
+    railTop(5000);
+    const { container } = render(<CareerDetent {...props} />);
+    expect((container.querySelector('.car-rail') as HTMLElement).dataset.draw).toBeUndefined();
+  });
+
+  it('never dims anything without IntersectionObserver', () => {
+    stubMotion(true);
+    vi.stubGlobal('IntersectionObserver', undefined);
+    railTop(5000);
+    const { container } = render(<CareerDetent {...props} />);
+    expect((container.querySelector('.car-rail') as HTMLElement).dataset.draw).toBeUndefined();
+  });
+
+  it('wraps the track and every segment in .car-rline, and numbers the year labels with --k', () => {
+    const { container } = render(<CareerDetent {...props} />);
+    const line = container.querySelector('.car-rail > .car-rline') as HTMLElement;
+    expect(line.querySelector('.car-rtrack')).not.toBeNull();
+    expect(line.querySelectorAll('.car-rseg').length).toBe(container.querySelectorAll('.car-rseg').length);
+    const years = [...container.querySelectorAll('.car-ryears span')] as HTMLElement[];
+    years.forEach((s, i) => expect(s.style.getPropertyValue('--k')).toBe(String(i)));
   });
 });

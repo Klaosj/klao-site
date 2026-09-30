@@ -141,6 +141,8 @@ Rim 1 px `rgb(20 26 44 / .07)` + top highlight. Glass turns solid under `prefers
 
 Headlines fade and rise once when they reach 85 % of the viewport, with the prototype's values (16 px rise, 24 px for big headlines; 600 ms rise, 800 ms fade; drift easing). *Amended 26 Sep:* the earlier "30 px, 0.9 s glide" line was superseded by the reviewed prototype. Only `transform` and `opacity` animate. One scroll-linked loop on the page (signature). Reduced motion: tour shows ‹ › buttons and does not autoplay; signature becomes a static stack with every caption; reveals are off; content is never hidden.
 
+2026-10-01 (Klao 2A, spec 2026-10-01-frame-rhythm): the Career rail draws itself once at the 85 % line (line scaleX from the left 900 ms, years and marker brighten from .55). One-shot, not scroll-linked.
+
 ## 6. Components
 
 **Nav (`SiteNav` rewrite).** Floating capsule, always visible, glass. Links with a sliding active pill driven by an IntersectionObserver on sections. Right side: ⌘K button, EN/ไทย segmented link (keeps `/en` ↔ `/th` routes and hreflang), Contact pill. Phone: brand + EN/ไทย + Menu; Menu opens a panel (search, section links, Start a conversation, Copy email, Résumé, Language, Appearance Auto/Light/Dark, LinkedIn, GitHub). The old `nav-on-light` scroll logic is deleted.

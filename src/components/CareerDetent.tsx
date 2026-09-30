@@ -14,6 +14,7 @@ import {
   splitFigureValue,
 } from '@/lib/career';
 import { dict } from '@/lib/dictionary';
+import { motionAllowed } from '@/lib/motion';
 import type { CareerEntry, Locale } from '@/lib/models';
 
 type Props = {
@@ -40,6 +41,7 @@ export default function CareerDetent({ entries, locale, now }: Props) {
   const detent = useRef<HTMLSpanElement | null>(null);
   const railEl = useRef<HTMLDivElement | null>(null);
   const rlabEl = useRef<HTMLSpanElement | null>(null);
+  const [draw, setDraw] = useState<'ready' | 'go' | null>(null);
 
   const select = useCallback((index: number, focus: boolean) => {
     setSelected(index);
@@ -111,6 +113,30 @@ export default function CareerDetent({ entries, locale, now }: Props) {
     return () => window.removeEventListener(CAREER_EVENT, onCareer);
   }, [entries, select]);
 
+  // Spec 2026-10-01 §2.2: the rail draws itself once when it crosses the 85 % line. Only after
+  // mount (the server HTML is the drawn rail), only when motion is allowed and an observer
+  // exists, and never when the rail is already on screen (a #career link or a reload), so
+  // nothing flashes back to an empty line.
+  const hasRail = Boolean(rail);
+  useEffect(() => {
+    const el = railEl.current;
+    if (!el || !motionAllowed() || typeof IntersectionObserver === 'undefined') return;
+    const r = el.getBoundingClientRect();
+    if (r.top < window.innerHeight * 0.85 && r.bottom > 0) return;
+    setDraw('ready');
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setDraw('go');
+          io.disconnect();
+        }
+      },
+      { rootMargin: '0px 0px -15% 0px' },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [hasRail]);
+
   if (entries.length === 0) return null;
 
   const current = entries[Math.min(selected, entries.length - 1)];
@@ -140,16 +166,18 @@ export default function CareerDetent({ entries, locale, now }: Props) {
       {rail && (
         // Decorative: the pills below carry the same choice for keyboard and
         // screen readers.
-        <div className="car-rail" aria-hidden="true" ref={railEl}>
-          <span className="car-rtrack" />
-          {rail.segments.map((segment) => (
-            <span
-              key={segment.index}
-              className="car-rseg"
-              data-on={segment.index === selected}
-              style={{ left: `${segment.left}%`, width: `calc(${segment.width}% - 3px)` }}
-            />
-          ))}
+        <div className="car-rail" aria-hidden="true" ref={railEl} data-draw={draw ?? undefined}>
+          <span className="car-rline">
+            <span className="car-rtrack" />
+            {rail.segments.map((segment) => (
+              <span
+                key={segment.index}
+                className="car-rseg"
+                data-on={segment.index === selected}
+                style={{ left: `${segment.left}%`, width: `calc(${segment.width}% - 3px)` }}
+              />
+            ))}
+          </span>
           {center !== null && current.start && (
             <span className="car-rmark" style={{ ['--mx' as string]: `${center}%` }}>
               <i />
@@ -159,12 +187,17 @@ export default function CareerDetent({ entries, locale, now }: Props) {
             </span>
           )}
           <div className="car-ryears">
-            {rail.ticks.map((tick) => (
-              <span key={tick.year} data-first={tick.first} data-alt={tick.alt} style={{ left: `${tick.left}%` }}>
+            {rail.ticks.map((tick, i) => (
+              <span
+                key={tick.year}
+                data-first={tick.first}
+                data-alt={tick.alt}
+                style={{ left: `${tick.left}%`, ['--k' as string]: String(i) }}
+              >
                 {tick.year}
               </span>
             ))}
-            <span data-now="true" style={{ left: '100%' }}>
+            <span data-now="true" style={{ left: '100%', ['--k' as string]: String(rail.ticks.length) }}>
               {t.careerNow}
             </span>
           </div>
