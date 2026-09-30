@@ -197,5 +197,46 @@
       "en": ["Live since Aug 2026", "Notion as the only CMS", "EN/TH", "400+ automated tests"],
       "th": ["ออนไลน์ตั้งแต่ ส.ค. 2026", "Notion เป็น CMS เดียว", "EN/TH", "เทสต์อัตโนมัติ 400+ ข้อ"]
     }
+  },
+  {
+    "id": "fx-cafenista",
+    "name": "Cafénista",
+    "description": {
+      "en": "A learning project: what an independent café owner could see on one screen. Sales from the POS, machine temperatures over MQTT, and brew notes tied to each bean. It runs on simulated data and hasn’t been tried in a real café yet.",
+      "th": "โปรเจกต์ฝึกมือ: เจ้าของคาเฟ่อิสระควรเห็นอะไรบนจอเดียว ยอดขายจาก POS อุณหภูมิเครื่องผ่าน MQTT และบันทึกการชงผูกกับแต่ละเมล็ด ตอนนี้ใช้ข้อมูลจำลอง ยังไม่ได้ลองกับร้านจริง"
+    },
+    "stack": ["Next.js", "Postgres", "MQTT", "Playwright"],
+    "liveUrl": null,
+    "repoUrl": null,
+    "imageSrc": "/images/cafenista.jpg",
+    "featured": true,
+    "order": 6,
+    "type": "build",
+    "outcome": {
+      "en": "M0–M4 built · 500 unit + 105 browser tests · Simulated data, no real café yet",
+      "th": "สร้างครบ M0–M4 · เทสต์ unit 500 + browser 105 ข้อ · ข้อมูลจำลอง ยังไม่มีร้านจริง"
+    },
+    "question": {
+      "en": "Can one screen tell an owner who’s away how the machine, the bar and the till are doing?",
+      "th": "จอเดียวบอกเจ้าของที่ไม่อยู่ร้านได้ไหม ว่าเครื่อง บาร์ และยอดขายเป็นยังไง?"
+    },
+    "slug": null,
+    "statusKey": "proto",
+    "status": { "en": "Prototype · simulated data", "th": "Prototype · ข้อมูลจำลอง" },
+    "kicker": { "en": "Build · Prototype", "th": "สร้างเอง · Prototype" },
+    "media": "img",
+    "wash": "none",
+    "tour": false,
+    "tourOrder": null,
+    "lineageOf": null,
+    "alt": {
+      "en": "Cafénista’s owner screen for today: a red “machine running cold” alert above the day’s net sales.",
+      "th": "จอ “วันนี้” ของเจ้าของร้านใน Cafénista: แจ้งเตือนสีแดง “เครื่องชงเย็นกว่าปกติ” เหนือยอดสุทธิของวัน"
+    },
+    "screenshotPhone": null,
+    "outcomes": {
+      "en": ["M0–M4 built", "500 unit + 105 browser tests", "Simulated data, no real café yet"],
+      "th": ["สร้างครบ M0–M4", "เทสต์ unit 500 + browser 105 ข้อ", "ข้อมูลจำลอง ยังไม่มีร้านจริง"]
+    }
   }
 ]

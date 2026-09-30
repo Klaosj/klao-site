@@ -2,8 +2,8 @@ import type { Project } from '@/lib/models';
 import { makeProject } from './project';
 
 // The prototype's five-project lineup (design/white-edition/prototype/index.html, `P` and
-// `STATUS`), shaped as the P1 Project model. Test data only -- every string here is public
-// prototype copy.
+// `STATUS`), shaped as the P1 Project model, plus Cafénista (below). Test data only -- every
+// string here is public copy from the prototype or the bundled fixture.
 //
 // Built on P1's makeProject/P1_DEFAULTS (tests/helpers/project.ts) rather than a second
 // BASE (preflight ruling D-3): P1's bare-row default is a screenshot ('img' + a proxy
@@ -156,4 +156,36 @@ export const KLAO_SITE = makeProject({
   },
 });
 
-export const LINEUP: Project[] = [TALATIFY, TRIPEDIA, AJE, GONAI, KLAO_SITE];
+// Added 30 Sep 2026, after the prototype: a sixth row, matching the bundled fixture. A plain
+// screenshot build ('img', no wash, not in the tour) -- the first row with a product clip
+// (src/lib/project-clips.ts), so the clip tests can open it from the same lineup.
+export const CAFENISTA = makeProject({
+  id: 'fx-cafenista',
+  name: 'Cafénista',
+  type: 'build',
+  order: 6,
+  description: {
+    en: 'A learning project: what an independent café owner could see on one screen. Sales from the POS, machine temperatures over MQTT, and brew notes tied to each bean. It runs on simulated data and hasn’t been tried in a real café yet.',
+    th: 'โปรเจกต์ฝึกมือ: เจ้าของคาเฟ่อิสระควรเห็นอะไรบนจอเดียว ยอดขายจาก POS อุณหภูมิเครื่องผ่าน MQTT และบันทึกการชงผูกกับแต่ละเมล็ด ตอนนี้ใช้ข้อมูลจำลอง ยังไม่ได้ลองกับร้านจริง',
+  },
+  question: {
+    en: 'Can one screen tell an owner who’s away how the machine, the bar and the till are doing?',
+    th: 'จอเดียวบอกเจ้าของที่ไม่อยู่ร้านได้ไหม ว่าเครื่อง บาร์ และยอดขายเป็นยังไง?',
+  },
+  statusKey: 'proto',
+  status: { en: 'Prototype · simulated data', th: 'Prototype · ข้อมูลจำลอง' },
+  kicker: { en: 'Build · Prototype', th: 'สร้างเอง · Prototype' },
+  media: 'img',
+  imageSrc: '/images/cafenista.jpg',
+  stack: ['Next.js', 'Postgres', 'MQTT', 'Playwright'],
+  alt: {
+    en: 'Cafénista’s owner screen for today: a red “machine running cold” alert above the day’s net sales.',
+    th: 'จอ “วันนี้” ของเจ้าของร้านใน Cafénista: แจ้งเตือนสีแดง “เครื่องชงเย็นกว่าปกติ” เหนือยอดสุทธิของวัน',
+  },
+  outcomes: {
+    en: ['M0–M4 built', '500 unit + 105 browser tests', 'Simulated data, no real café yet'],
+    th: ['สร้างครบ M0–M4', 'เทสต์ unit 500 + browser 105 ข้อ', 'ข้อมูลจำลอง ยังไม่มีร้านจริง'],
+  },
+});
+
+export const LINEUP: Project[] = [TALATIFY, TRIPEDIA, AJE, GONAI, KLAO_SITE, CAFENISTA];

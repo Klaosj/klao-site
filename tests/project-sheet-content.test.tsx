@@ -6,7 +6,7 @@ import { dict } from '@/lib/dictionary';
 import type { Locale, Project } from '@/lib/models';
 import { stubDialog } from './helpers/dialog';
 import { installFakeIO } from './helpers/io';
-import { AJE, GONAI, KLAO_SITE, LINEUP, TALATIFY, TRIPEDIA, makeProject } from './helpers/lineup';
+import { AJE, CAFENISTA, GONAI, KLAO_SITE, LINEUP, TALATIFY, TRIPEDIA, makeProject } from './helpers/lineup';
 import { stubMatchMedia } from './helpers/media';
 import { stubViewTransition } from './helpers/view-transition';
 
@@ -125,6 +125,24 @@ describe('ProjectSheet content', () => {
     expect(img.getAttribute('width')).toBe('1580');
     expect(img.getAttribute('height')).toBe('900');
     expect(media.style.getPropertyValue('--wash')).toBe('var(--w-aje)');
+  });
+
+  // Added 30 Sep: the accented name reaches its sheet through slugKey ("Cafénista" -> "cafenista").
+  it('Cafénista: #work/cafenista opens a plain screenshot with its alt, outcomes and stack, and no links', () => {
+    const dialog = openAt('cafenista');
+    expect(dialog.querySelector('h2#sheet-name')?.textContent).toBe('Cafénista');
+    expect(dialog.querySelector('.sheet-kick')?.textContent).toBe(CAFENISTA.kicker!.en);
+    const media = dialog.querySelector<HTMLElement>('[data-media="img"]')!;
+    expect(media.querySelector('.sheet-bar')).toBeNull();
+    const img = media.querySelector('img')!;
+    expect(img.getAttribute('src')).toBe('/images/cafenista.jpg');
+    expect(img.getAttribute('alt')).toBe(CAFENISTA.alt!.en);
+    expect(img.getAttribute('width')).toBe('1580');
+    expect(img.getAttribute('height')).toBe('900');
+    expect(texts(dialog, '.sheet-list li')).toEqual(CAFENISTA.outcomes.en);
+    expect(texts(dialog, '.sheet-chips span')).toEqual(['Next.js', 'Postgres', 'MQTT', 'Playwright']);
+    expect(dialog.querySelector('.sheet-links')).toBeNull();
+    expect(dialog.querySelector('.lin')).toBeNull();
   });
 
   it('links the long-form story when the project has a slug', () => {

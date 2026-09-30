@@ -29,6 +29,8 @@ describe('image alt map', () => {
 
   it('reaches the curated sentence for a Notion-served image via the project name', () => {
     expect(imageAlt('/api/img/page/abc/Screenshot', 'GoNai')).toBe(IMAGE_ALT['/images/gonai.jpg']);
+    // The accented name is the key exactly as Notion's Name carries it (precomposed é).
+    expect(imageAlt('/api/img/page/abc/Screenshot', 'Cafénista')).toBe(IMAGE_ALT['/images/cafenista.jpg']);
   });
 
   it('falls back to the generic sentence for a project with no curated description', () => {

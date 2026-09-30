@@ -5,6 +5,7 @@ import projects from '@/content/fixtures/projects.json';
 import type { Project } from '@/lib/models';
 import { PROJECT_MEDIA, PROJECT_STATUS_KEYS, PROJECT_WASHES } from '@/lib/models';
 import { mapProject } from '@/lib/notion-mappers';
+import { parseSheetHash, projectKey, sheetHash } from '@/lib/sheet-url';
 
 const fixtures = projects as Project[];
 
@@ -21,10 +22,31 @@ function jpegSize(buf: Buffer): { width: number; height: number } | null {
 }
 const byName = (name: string) => fixtures.find((p) => p.name === name)!;
 
-describe('projects fixture (the 24-Sep lineup)', () => {
+describe('projects fixture (the 24-Sep lineup, plus Cafénista on 30 Sep)', () => {
   it('is the approved lineup, in page order', () => {
     const ordered = [...fixtures].sort((a, b) => a.order - b.order).map((p) => p.name);
-    expect(ordered).toEqual(['Talatify', 'Tripedia', 'Aje', 'GoNai', 'klao-site']);
+    expect(ordered).toEqual(['Talatify', 'Tripedia', 'Aje', 'GoNai', 'klao-site', 'Cafénista']);
+  });
+
+  // The accented name has no Slug, so its sheet key comes from slugKey: NFKD drops the accent.
+  // A key with the é left in would fail sheet-url's strict [a-z0-9-] parse and open nothing.
+  it('gives Cafénista a working sheet link, #work/cafenista', () => {
+    const cafe = byName('Cafénista');
+    expect(cafe.slug).toBeNull();
+    expect(projectKey(cafe)).toBe('cafenista');
+    expect(sheetHash(projectKey(cafe))).toBe('#work/cafenista');
+    expect(parseSheetHash('#work/cafenista')).toBe('cafenista');
+  });
+
+  // The sheet reserves a 1580x900 box for every screenshot (ProjectSheet's <img width/height>),
+  // so a new screenshot has to be exactly that size or the box and the picture disagree.
+  it("gives Cafénista's screenshot the sheet's exact 1580x900 box, at most 250 KB", () => {
+    const cafe = byName('Cafénista');
+    expect(cafe.media).toBe('img');
+    expect(cafe.tour).toBe(false);
+    const file = readFileSync(join('public', cafe.imageSrc!));
+    expect(file.length).toBeLessThanOrEqual(250 * 1024);
+    expect(jpegSize(file)).toEqual({ width: 1580, height: 900 });
   });
 
   it('carries exactly the fields the Notion mapper produces — the two-layer rule', () => {

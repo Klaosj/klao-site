@@ -95,9 +95,9 @@ describe('content API (fixture mode)', () => {
     await expect(getQuestions()).resolves.toEqual([]);
   });
 
-  it('carries the 24-Sep lineup: three builds led by Aje, two business plays', async () => {
+  it('carries the lineup: four builds led by Aje (Cafénista last, added 30 Sep), two business plays', async () => {
     const featured = await getFeaturedProjects();
-    expect(featured.filter((p) => p.type === 'build').map((p) => p.name)).toEqual(['Aje', 'GoNai', 'klao-site']);
+    expect(featured.filter((p) => p.type === 'build').map((p) => p.name)).toEqual(['Aje', 'GoNai', 'klao-site', 'Cafénista']);
     expect(featured.filter((p) => p.type === 'business').map((p) => p.name)).toEqual(['Talatify', 'Tripedia']);
     const aje = featured.find((p) => p.name === 'Aje')!;
     expect(aje.outcome?.en).toContain('Working prototype');

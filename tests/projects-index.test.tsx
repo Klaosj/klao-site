@@ -66,7 +66,7 @@ describe('ProjectsIndex', () => {
     expect(groups[0].querySelector('h3')?.textContent).toBe(dict.en.workTypeBusiness);
     expect(groups[1].querySelector('h3')?.textContent).toBe(dict.en.workTypeBuild);
     expect(keysIn(groups[0])).toEqual(['talatify', 'tripedia']);
-    expect(keysIn(groups[1])).toEqual(['aje', 'gonai', 'klao-site']);
+    expect(keysIn(groups[1])).toEqual(['aje', 'gonai', 'klao-site', 'cafenista']);
   });
 
   it('makes every row a real link to #work/<key>, which works without JavaScript', () => {

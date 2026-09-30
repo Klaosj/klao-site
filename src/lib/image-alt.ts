@@ -12,6 +12,10 @@ const GONAI =
   'A white landing-page hero with an airplane-and-Thai-flag logomark, a bold headline about planning a full day out and knowing every baht before leaving, a budget search field, a black "start planning" button, and small floating cards noting fares from official tables and a BTS fare between two stations.';
 const AJE =
   'A dark blue idea-review screen with a four-step tracker (Describe, Review, Test, Learn) at "Level 2 of 9", a Thai-language business idea with three side-by-side panels for the idea, its biggest uncertainty and the next test to run, a bulleted list of ways the idea could fail, and a bottom tab bar for ideas, review, frameworks and forecast.';
+// Cafénista's owner screen (the M4 "Today" render, Thai UI). Describes only the top of the
+// screen the sheet shows: the alert card and the net-sales card under it.
+const CAFENISTA =
+  'A café owner’s screen for today, in Thai: a red urgent alert that the coffee machine is running colder than normal, with an acknowledge button, above the day’s net sales in large figures.';
 const KLAO_SITE =
   'A dark portfolio homepage hero with a circular profile photo, a bold headline reading "Business developer who builds his own tools", a location and skills subheading, a "Start a conversation" button next to an email address, and floating tag pills reading Business Development, Builds the systems too, and Bangkok.';
 
@@ -19,6 +23,7 @@ export const IMAGE_ALT: Record<string, string> = {
   '/images/gonai.jpg': GONAI,
   '/images/aje.jpg': AJE,
   '/images/klao-site.jpg': KLAO_SITE,
+  '/images/cafenista.jpg': CAFENISTA,
 };
 
 // The live site serves screenshots through /api/img/page/<row-id>/Screenshot — a URL that
@@ -30,6 +35,7 @@ export const IMAGE_ALT_BY_PROJECT: Record<string, string> = {
   Aje: AJE,
   GoNai: GONAI,
   'klao-site': KLAO_SITE,
+  'Cafénista': CAFENISTA,
 };
 
 // Fallback for images with no curated entry (e.g. a future Notion-sourced
