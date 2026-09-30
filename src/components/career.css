@@ -54,7 +54,7 @@
     .car-rail[data-draw="ready"] .car-ryears span { opacity: .55; }
     .car-rail[data-draw="ready"] .car-rmark { opacity: .55; }
     .car-rail[data-draw="go"] .car-rline { transition: transform 900ms var(--ease-drift); }
-    .car-rail[data-draw="go"] .car-ryears span { transition: opacity var(--dur-enter) var(--ease-settle); transition-delay: calc(500ms + var(--k, 0) * 70ms); }
+    .car-rail[data-draw="go"] .car-ryears span { transition: opacity var(--dur-enter) var(--ease-settle); transition-delay: calc(500ms + var(--k, 0) * 420ms); }
     .car-rail[data-draw="go"] .car-rmark { transition: transform var(--dur-ui) var(--ease-settle), opacity var(--dur-enter) var(--ease-settle) 900ms; }
   }
 

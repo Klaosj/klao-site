@@ -334,6 +334,14 @@ describe('rail draws once (spec 2026-10-01 §2.2)', () => {
     expect((container.querySelector('.car-rail') as HTMLElement).dataset.draw).toBeUndefined();
   });
 
+  it('leaves the rail drawn when its top is below the 85 % line but inside the viewport', () => {
+    stubMotion(true);
+    stubIO();
+    railTop(window.innerHeight * 0.9);
+    const { container } = render(<CareerDetent {...props} />);
+    expect((container.querySelector('.car-rail') as HTMLElement).dataset.draw).toBeUndefined();
+  });
+
   it('never dims anything under reduced motion', () => {
     stubMotion(false);
     stubIO();
@@ -356,6 +364,13 @@ describe('rail draws once (spec 2026-10-01 §2.2)', () => {
     expect(line.querySelector('.car-rtrack')).not.toBeNull();
     expect(line.querySelectorAll('.car-rseg').length).toBe(container.querySelectorAll('.car-rseg').length);
     const years = [...container.querySelectorAll('.car-ryears span')] as HTMLElement[];
-    years.forEach((s, i) => expect(s.style.getPropertyValue('--k')).toBe(String(i)));
+    const ks = years.map((s) => Number(s.style.getPropertyValue('--k')));
+    expect(years[0].style.getPropertyValue('--k')).toBe('0');
+    expect(years[years.length - 1].style.getPropertyValue('--k')).toBe('1');
+    ks.forEach((k, i) => {
+      expect(k).toBeGreaterThanOrEqual(0);
+      expect(k).toBeLessThanOrEqual(1);
+      if (i > 0) expect(k).toBeGreaterThan(ks[i - 1]);
+    });
   });
 });

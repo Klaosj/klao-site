@@ -122,7 +122,7 @@ export default function CareerDetent({ entries, locale, now }: Props) {
     const el = railEl.current;
     if (!el || !motionAllowed() || typeof IntersectionObserver === 'undefined') return;
     const r = el.getBoundingClientRect();
-    if (r.top < window.innerHeight * 0.85 && r.bottom > 0) return;
+    if (r.top < window.innerHeight && r.bottom > 0) return;
     setDraw('ready');
     const io = new IntersectionObserver(
       (entries) => {
@@ -192,12 +192,12 @@ export default function CareerDetent({ entries, locale, now }: Props) {
                 key={tick.year}
                 data-first={tick.first}
                 data-alt={tick.alt}
-                style={{ left: `${tick.left}%`, ['--k' as string]: String(i) }}
+                style={{ left: `${tick.left}%`, ['--k' as string]: String(i / rail.ticks.length) }}
               >
                 {tick.year}
               </span>
             ))}
-            <span data-now="true" style={{ left: '100%', ['--k' as string]: String(rail.ticks.length) }}>
+            <span data-now="true" style={{ left: '100%', ['--k' as string]: '1' }}>
               {t.careerNow}
             </span>
           </div>

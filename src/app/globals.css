@@ -738,6 +738,7 @@
     html.js .rvg > * {
       opacity: .55;
       transform: scale(.97);
+      transform-origin: left top;
       transition:
         opacity var(--dur-rise) var(--ease-settle),
         transform var(--dur-sheet) var(--ease-settle);

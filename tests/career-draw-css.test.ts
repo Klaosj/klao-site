@@ -18,6 +18,9 @@ describe('career.css rail draw (spec 2026-10-01 §2.2)', () => {
     expect(css).toMatch(/\[data-draw="ready"\]\s*\.car-ryears span\s*\{[^}]*opacity:\s*\.55/);
     expect(css).toMatch(/\[data-draw="ready"\]\s*\.car-rmark\s*\{[^}]*opacity:\s*\.55/);
   });
+  it('staggers year labels by a 0..1 fraction of 420ms (bounded for any career length)', () => {
+    expect(css).toMatch(/transition-delay:\s*calc\(500ms \+ var\(--k, 0\) \* 420ms\)/);
+  });
   it('only transitions transform and opacity, and keeps the marker slide', () => {
     for (const m of css.matchAll(/\[data-draw="go"\][^{]*\{([^}]*)\}/g)) {
       const t = /transition:\s*([^;]+);/.exec(m[1])?.[1] ?? '';

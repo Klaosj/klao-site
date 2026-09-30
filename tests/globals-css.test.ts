@@ -258,6 +258,7 @@ describe('shared classes (C9)', () => {
     expect(at, 'rvg rule').toBeGreaterThan(-1);
     const block = CODE.slice(at, at + 1000);
     expect(block).toMatch(/html\.js \.rvg > \* \{[^}]*opacity: \.55;[^}]*transform: scale\(\.97\)/);
+    expect(block).toMatch(/html\.js \.rvg > \* \{[^}]*transform-origin: left top/);
     expect(block).toMatch(/html\.js \.rvg > \* \{[^}]*transition-delay: calc\(var\(--o, 0\) \* 75ms\)/);
     expect(block).toMatch(/html\.js \.rvg\.in > \* \{[^}]*opacity: 1;[^}]*transform: none/);
     const guard = CODE.lastIndexOf('@media (prefers-reduced-motion: no-preference)', at);

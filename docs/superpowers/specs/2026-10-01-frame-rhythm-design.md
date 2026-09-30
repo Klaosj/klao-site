@@ -21,7 +21,7 @@ Separately, the three product clips are staged three different ways, because not
 ## 2. What changes (Klao 1A, 2A, 3A; 4A applies to the future film only)
 1. **`design/clips/frame.md`:** the design spec every clip, film and share card follows (tokens copied from the White Edition). This change is documentation only.
 2. **The Career time rail draws itself once.** The rail line grows from the left, and the year labels and the marker brighten after it. It fires when the rail crosses the 85 % line. It is not scroll-linked.
-3. **By day chapters settle in order of importance,** the deal chapter first: order 2, then 4, 1, 3, 5, 6. They settle rather than rise (opacity .55 → 1 and scale .97 → 1), triggered once for the whole list.
+3. **By day chapters settle in order of importance,** the deal chapter first: order 2, then 4, 1, 3, 5, 6. They settle rather than rise (opacity .55 → 1 and scale .97 → 1), triggered once for the whole list. Emphasis follows the Story DB's Order numbers — keep the deal chapter at Order 2 in Notion.
 4. **(4A)** Film titles use `ui-serif` (New York). Recorded in frame.md; nothing on the site changes now.
 
 ## 3. Rules (binding)
@@ -30,7 +30,7 @@ Separately, the three product clips are staged three different ways, because not
 - **Reduced motion or no IntersectionObserver:** nothing moves; the final state shows at once.
 - **No JS:** the server HTML is the final state.
 - **Opacity floor:** text never starts below .55. The decorative rail line may start at `scaleX(0)`.
-- **Already on screen:** if the rail is already past the 85 % line when the page mounts (a `#career` link or a reload), it stays drawn and nothing flashes.
+- **Already on screen:** if any part of the rail is on screen when the page mounts (a `#career` link or a reload), it stays drawn and nothing flashes.
 - **Timing:** each sequence finishes within 1.5 s, and a stagger's total spread stays under 500 ms.
 - **Dependencies:** none new. Component CSS goes in `@layer components`.
 - **Page length:** unchanged (budget: desktop 8.7, phone 12).

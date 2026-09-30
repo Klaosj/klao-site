@@ -24,7 +24,7 @@ radius:
   phone: 36
   card: 14
 shadow:
-  surface: "0 0 0 1px rgba(20,26,44,.05), 0 2px 4px rgba(20,26,44,.04), 0 12px 28px -8px rgba(20,26,44,.12)"   # --e2, one per surface
+  surface: "0 0 0 1px rgba(20,26,44,.05), 0 2px 4px rgba(20,26,44,.04), 0 12px 28px -8px rgba(20,26,44,.12), 0 32px 64px -32px rgba(20,26,44,.18)"   # = --e2 (light); dark renders use the dark --e2; one per surface
 motion:
   arrive: "cubic-bezier(.32,.72,0,1) 420–600 ms"     # --ease-settle
   move: "cubic-bezier(.28,.11,.32,1) 600–1200 ms"    # --ease-drift
