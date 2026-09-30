@@ -3,6 +3,7 @@ import { cleanup, render, screen } from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import Reveal from '@/components/motion/Reveal';
+import RevealGroup from '@/components/motion/RevealGroup';
 
 let observed: Element[] = [];
 let options: IntersectionObserverInit | undefined;
@@ -85,5 +86,32 @@ describe('Reveal', () => {
   it('sets the stagger index as a custom property', () => {
     const { container } = render(<Reveal delayIndex={3}>x</Reveal>);
     expect((container.firstElementChild as HTMLElement).style.getPropertyValue('--i')).toBe('3');
+  });
+});
+
+describe('RevealGroup', () => {
+  it('ships `rvg` in the server HTML with no inline opacity or transform', () => {
+    const html = renderToStaticMarkup(<RevealGroup as="ol"><li>a</li></RevealGroup>);
+    expect(html).toContain('class="rvg"');
+    expect(html).not.toMatch(/opacity|transform|visibility|display:\s*none/);
+  });
+  it('adds `in` once the group crosses the 85 % line', () => {
+    const { container } = render(<RevealGroup as="ol" className="bd-chapters"><li>a</li></RevealGroup>);
+    const el = container.firstElementChild as HTMLElement;
+    expect(el.className).toBe('rvg bd-chapters');
+    expect(options?.rootMargin).toBe('0px 0px -15% 0px');
+    trigger([el]);
+    expect(el.classList.contains('in')).toBe(true);
+  });
+  it('adds `in` at once under reduced motion', () => {
+    // Only a query ending in `reduce)` matches ('no-preference' also contains "reduce").
+    vi.stubGlobal('matchMedia', (q: string) => ({ matches: q.includes('reduce)'), addEventListener() {}, removeEventListener() {} }));
+    const { container } = render(<RevealGroup><li>a</li></RevealGroup>);
+    expect((container.firstElementChild as HTMLElement).classList.contains('in')).toBe(true);
+  });
+  it('adds `in` at once without IntersectionObserver', () => {
+    vi.stubGlobal('IntersectionObserver', undefined);
+    const { container } = render(<RevealGroup><li>a</li></RevealGroup>);
+    expect((container.firstElementChild as HTMLElement).classList.contains('in')).toBe(true);
   });
 });

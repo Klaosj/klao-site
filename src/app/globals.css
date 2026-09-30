@@ -734,6 +734,16 @@
     }
     html.js .rv.big { transform: translateY(24px); }
     html.js .rv.in { opacity: 1; transform: none; }
+    /* Spec 2026-10-01 §2.3: a RevealGroup's children settle (not rise) in their --o order. */
+    html.js .rvg > * {
+      opacity: .55;
+      transform: scale(.97);
+      transition:
+        opacity var(--dur-rise) var(--ease-settle),
+        transform var(--dur-sheet) var(--ease-settle);
+      transition-delay: calc(var(--o, 0) * 75ms);
+    }
+    html.js .rvg.in > * { opacity: 1; transform: none; }
   }
 }
 

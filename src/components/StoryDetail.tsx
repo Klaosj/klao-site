@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import BoldText from '@/components/BoldText';
 import { Icon } from '@/components/icons';
-import Reveal from '@/components/motion/Reveal';
+import RevealGroup from '@/components/motion/RevealGroup';
+import { emphasisRank } from '@/lib/story-emphasis';
 import { Sketch } from '@/components/sketches';
 import ThaiText from '@/components/ThaiText';
 import type { UiDict } from '@/lib/dictionary';
@@ -160,9 +161,9 @@ export default function StoryDetail({ chapters, locale, t }: Props) {
           </button>
         ))}
       </div>
-      <ol className="bd-chapters">
+      <RevealGroup as="ol" className="bd-chapters">
         {chapters.map((chapter, i) => (
-          <Reveal key={chapter.id} as="li" className="bd-ch">
+          <li key={chapter.id} className="bd-ch" style={{ ['--o' as string]: String(emphasisRank(chapter.order)) }}>
             <i className="bd-dot" aria-hidden="true" />
             <div className="bd-ch-l">
               <span className="bd-num">{String(i + 1).padStart(2, '0')}</span>
@@ -197,9 +198,9 @@ export default function StoryDetail({ chapters, locale, t }: Props) {
               </p>
               {i === last && <LaunchPhases t={t} hidden={short} />}
             </div>
-          </Reveal>
+          </li>
         ))}
-      </ol>
+      </RevealGroup>
     </>
   );
 }

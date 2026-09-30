@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef, type ElementType, type ReactNode } from 'react';
+import { useRef, type ElementType, type ReactNode } from 'react';
+import { useRevealIn } from '@/components/motion/useRevealIn';
 
 type Props = {
   children: ReactNode;
@@ -24,29 +25,7 @@ type Props = {
 export default function Reveal({ children, as: Tag = 'div', delayIndex = 0, big = false, className = '' }: Props) {
   const ref = useRef<HTMLElement | null>(null);
 
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const calm = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (calm || typeof IntersectionObserver === 'undefined') {
-      el.classList.add('in');
-      return;
-    }
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) {
-          if (e.isIntersecting) {
-            e.target.classList.add('in');
-            io.unobserve(e.target);
-          }
-        }
-      },
-      // Bottom margin -15 %: "in view" starts at 85 % of the viewport height.
-      { rootMargin: '0px 0px -15% 0px' },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
+  useRevealIn(ref);
 
   const classes = ['rv', big ? 'big' : '', className].filter(Boolean).join(' ');
   return (

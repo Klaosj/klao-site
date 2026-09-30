@@ -253,6 +253,18 @@ describe('shared classes (C9)', () => {
     }
   });
 
+  it('dims .rvg children only under html.js + no-preference, never below .55, and settles with transform/opacity', () => {
+    const at = CODE.indexOf('html.js .rvg > *');
+    expect(at, 'rvg rule').toBeGreaterThan(-1);
+    const block = CODE.slice(at, at + 1000);
+    expect(block).toMatch(/html\.js \.rvg > \* \{[^}]*opacity: \.55;[^}]*transform: scale\(\.97\)/);
+    expect(block).toMatch(/html\.js \.rvg > \* \{[^}]*transition-delay: calc\(var\(--o, 0\) \* 75ms\)/);
+    expect(block).toMatch(/html\.js \.rvg\.in > \* \{[^}]*opacity: 1;[^}]*transform: none/);
+    const guard = CODE.lastIndexOf('@media (prefers-reduced-motion: no-preference)', at);
+    expect(guard).toBeGreaterThan(-1);
+    expect(blockFrom(CODE, guard)).toContain('html.js .rvg > *');
+  });
+
   it('keeps the phone breakpoint at 734 px and phone legal text at 14 px', () => {
     expect(CODE).toMatch(/@media \(max-width: 734px\)[\s\S]*?\.t-hero \{ font-size: 40px; line-height: 44px; \}/);
     expect(CODE).toMatch(/\.t-legal:lang\(th\) \{ font-size: 14px; line-height: 21px; \}/);

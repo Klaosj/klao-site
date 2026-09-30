@@ -143,6 +143,8 @@ Headlines fade and rise once when they reach 85 % of the viewport, with the prot
 
 2026-10-01 (Klao 2A, spec 2026-10-01-frame-rhythm): the Career rail draws itself once at the 85 % line (line scaleX from the left 900 ms, years and marker brighten from .55). One-shot, not scroll-linked.
 
+2026-10-01 (Klao 2A/3A, spec 2026-10-01-frame-rhythm): the By day chapters settle once as a group (opacity .55 → 1, scale .97 → 1), in order of importance (orders 2, 4, 1, 3, 5, 6; 75 ms steps, < 500 ms total).
+
 ## 6. Components
 
 **Nav (`SiteNav` rewrite).** Floating capsule, always visible, glass. Links with a sliding active pill driven by an IntersectionObserver on sections. Right side: ⌘K button, EN/ไทย segmented link (keeps `/en` ↔ `/th` routes and hreflang), Contact pill. Phone: brand + EN/ไทย + Menu; Menu opens a panel (search, section links, Start a conversation, Copy email, Résumé, Language, Appearance Auto/Light/Dark, LinkedIn, GitHub). The old `nav-on-light` scroll logic is deleted.

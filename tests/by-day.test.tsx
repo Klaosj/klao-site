@@ -8,6 +8,7 @@ import ByDay from '@/components/sections/ByDay';
 import profileFixture from '@/content/fixtures/profile.json';
 import storyFixture from '@/content/fixtures/story.json';
 import { dict } from '@/lib/dictionary';
+import { emphasisRank } from '@/lib/story-emphasis';
 import type { Profile, StoryChapter } from '@/lib/models';
 import { stubMatchMedia } from './helpers/media';
 
@@ -188,6 +189,28 @@ describe('ByDay', () => {
     fireEvent.click(screen.getByRole('radio', { name: dict.en.storyShort }));
     expect(body().hidden).toBe(true);
     expect(spacer().hidden).toBe(true);
+  });
+
+  it('renders the chapter list as one RevealGroup, each chapter carrying its emphasis rank (spec 2026-10-01 §2.3)', () => {
+    const { container } = render(<ByDay profile={profile} chapters={chapters} locale="en" />);
+    const ol = container.querySelector('ol.bd-chapters') as HTMLElement;
+    expect(ol.classList.contains('rvg')).toBe(true);
+    const items = [...ol.querySelectorAll(':scope > li')] as HTMLElement[];
+    expect(items).toHaveLength(chapters.length);
+    expect(items.every((li) => !li.classList.contains('rv'))).toBe(true);
+    // The fixture's orders are 1..6, so this is the spec's ['2','0','3','1','4','5'].
+    expect(items.map((li) => li.style.getPropertyValue('--o'))).toEqual(chapters.map((c) => String(emphasisRank(c.order))));
+    expect(items.map((li) => li.style.getPropertyValue('--o'))).toEqual(['2', '0', '3', '1', '4', '5']);
+  });
+
+  it('keeps settled chapters settled when Short/Full is switched (no re-animation)', () => {
+    const { container } = render(<ByDay profile={profile} chapters={chapters} locale="en" />);
+    const ol = container.querySelector('ol.bd-chapters') as HTMLElement;
+    ol.classList.add('in');
+    fireEvent.click(screen.getByRole('radio', { name: dict.en.storyFull }));
+    fireEvent.click(screen.getByRole('radio', { name: dict.en.storyShort }));
+    expect(ol.classList.contains('in')).toBe(true);
+    expect(container.querySelectorAll('ol.bd-chapters > li')).toHaveLength(chapters.length);
   });
 
   it('remembers a Full choice across a remount, via localStorage', () => {
