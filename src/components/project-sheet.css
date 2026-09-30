@@ -73,6 +73,13 @@
      the site's own :focus-visible ring (globals.css); 12px of inset keeps it inside the window's
      clip. (0,2,0) so the size wins over .btn in any stylesheet order. */
   .sheet-win .sheet-replay { position: absolute; right: 12px; bottom: 12px; z-index: 1; min-height: 36px; padding: 0 14px 0 12px; gap: 6px; font-size: 14px; }
+  /* On a phone the picture is ~340px wide and a worded pill would cover a ninth of it (seen at
+     390, Thai "เล่นอีกครั้ง"): the button becomes a 36px circle, and its word stays in the
+     accessibility tree, only visually hidden, so the button keeps its name. */
+  @media (max-width: 734px) {
+    .sheet-win .sheet-replay { width: 36px; padding: 0; justify-content: center; }
+    .sheet-replay-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  }
   @media (prefers-reduced-motion: no-preference) {
     .sheet-clip { transition: opacity 320ms var(--ease-glide); }
     .sheet-win .sheet-replay { animation: sheet-clip-in 320ms var(--ease-drift); }

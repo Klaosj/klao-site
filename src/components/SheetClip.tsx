@@ -125,7 +125,7 @@ export default function SheetClip({ clip, locale, startAfter }: Props) {
       {ended && (
         <button type="button" className="btn ctl sheet-replay" onClick={replay}>
           <ReplayGlyph />
-          {t.sheetClipReplay}
+          <span className="sheet-replay-label">{t.sheetClipReplay}</span>
         </button>
       )}
     </>
