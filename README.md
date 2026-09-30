@@ -37,6 +37,7 @@ replacing the file in Notion changes the live site within the hour — no deploy
   `public/images/`, update that row's `imageSrc` if the filename changed, and describe what
   the picture shows in `src/lib/image-alt.ts` — never the project name, which is already
   visible text beside the image. `tests/image-alt.test.ts` fails if either half is missing.
+- **Product clips** (a ≤ 5 s clip over the screenshot in a sheet) are bundled in `public/clips/`, not Notion: see [`docs/superpowers/specs/2026-09-30-sheet-clips.md`](docs/superpowers/specs/2026-09-30-sheet-clips.md).
 
 ## Checks
 

@@ -696,6 +696,7 @@ in Notion.
 | Signature scene (2022 → 2026) | Projects · the Tripedia row (QuestionEN/TH only) and the GoNai row (Name, StatusKey, DescriptionEN/TH, LiveURL, Screenshot, AltEN/TH), joined by GoNai's `LineageOf`. **The "30 / 500" figure is code** (`SIG_STAT` in `src/lib/signature.ts`), not either row's Outcome — OutcomeEN/TH is not read by this scene at all | `projects.json` |
 | Projects index rows | Projects · Name, Type, QuestionEN/TH, StatusKey, StatusEN/TH, Media, Screenshot, Order | `projects.json` |
 | Project sheet | Projects · Name, Type, KickerEN/TH, QuestionEN/TH, DescriptionEN/TH, StatusKey, StatusEN/TH, OutcomeEN/TH, Stack, LiveURL, RepoURL, Media, Screenshot, Wash, AltEN/TH, LineageOf (and the linked row's Name, QuestionEN/TH), Slug | `projects.json` |
+| Product clip in a project sheet | **code**, not Notion: `src/lib/project-clips.ts` + `public/clips/` (the image proxy serves images only). Keep the row's Screenshot equal to the clip's first frame — see `docs/superpowers/specs/2026-09-30-sheet-clips.md` | `public/clips/` |
 | Career rail, pills and panel | Career · Role, RoleTH, Company, StartDate, EndDate, Period (shown instead of the dates while StartDate is empty), WinsEN/TH, FigureValue, FigureLabelEN/TH, FigureNoteEN/TH | `career.json` |
 | Toolbox — Methods | Skills · Name, Tier (`top` rows) | `skills.json` |
 | Toolbox — Stack and Languages | code: `TOOLBOX_STACK` in `src/lib/career.ts`, `src/lib/dictionary.ts` | — |
