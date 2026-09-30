@@ -10,6 +10,7 @@ import { Sketch } from '@/components/sketches';
 import StatusChip from '@/components/StatusChip';
 import ThaiText from '@/components/ThaiText';
 import { dict } from '@/lib/dictionary';
+import { useEnterOnce } from '@/lib/enter-once';
 import { imageAlt } from '@/lib/image-alt';
 import type { Locale, Project } from '@/lib/models';
 import { motionAllowed } from '@/lib/motion';
@@ -134,8 +135,9 @@ function runShotTransition(before: HTMLElement | null, change: () => boolean, fi
 /**
  * Resolves once the sheet has finished opening: its own CSS entrance (ENTER_MS) and, when the
  * open ran A07's shared-element morph, that View Transition too (whichever ends later). A
- * product clip waits for this before it plays, so its first seconds are never spent under a
- * moving sheet. Module-level, so it is one stable function (SheetClip's effect depends on it).
+ * product clip waits for this before it plays, and a drawn picture before it fills in
+ * (useEnterOnce), so neither is ever spent under a moving sheet. Module-level, so it is one
+ * stable function (SheetClip's and useEnterOnce's effects depend on it).
  */
 function sheetSettled(): Promise<void> {
   const entrance = new Promise<void>((resolve) => window.setTimeout(resolve, ENTER_MS));
@@ -350,15 +352,24 @@ function pictureA11y(alt: string) {
 // null (no media block at all) only for a pre-migration row with no screenshot -- there is
 // nothing to name for the transition either, which runShotTransition already treats as "fall
 // back to the plain exit animation".
-function SheetMedia({ project, locale }: { project: Project; locale: Locale }) {
+//
+// Every sheet moves once (spec 2026-09-30-sheet-clips.md): a screenshot plays its product clip
+// (SheetClip); a drawn picture -- the Notion row, the rings, five apps -> one -- fills in once
+// instead (useEnterOnce's `data-enter`, animated by project-sheet.css), at the same moment.
+// Exported for tests only: its server render is the no-JavaScript contract (the final picture,
+// no `data-enter`), and the dialog never renders a body on the server to check it through.
+export function SheetMedia({ project, locale }: { project: Project; locale: Locale }) {
   const t = dict[locale];
   const alt = project.alt?.[locale] ?? '';
+  const drawn = project.media === 'notion' || project.media === 'rings' || project.media === 'five';
+  const phase = useEnterOnce(sheetSettled, drawn);
+  const enter = phase === 'rest' ? undefined : phase;
 
   // Business plays carry their receipts as line drawings (Talatify's TAM/SAM/SOM rings,
   // Tripedia's five apps -> one), never a stand-in screenshot.
   if (project.media === 'rings' || project.media === 'five') {
     return (
-      <div className="smedia" data-media={project.media} data-vt="shot">
+      <div className="smedia" data-media={project.media} data-vt="shot" data-enter={enter}>
         <div className="smedia-draw" {...pictureA11y(alt)}>
           {/* C-6: the rings drawing gets its own "not to scale" caption (prototype copy); the
               five drawing has none. */}
@@ -380,7 +391,7 @@ function SheetMedia({ project, locale }: { project: Project; locale: Locale }) {
       ] as const
     ).filter(([, value]) => value);
     return (
-      <div className="smedia" data-media="notion" data-vt="shot">
+      <div className="smedia" data-media="notion" data-vt="shot" data-enter={enter}>
         <div className="win sheet-win" {...pictureA11y(alt)}>
           <div className="sheet-bar">
             <i />
@@ -389,8 +400,9 @@ function SheetMedia({ project, locale }: { project: Project; locale: Locale }) {
             <span>Notion · Projects</span>
           </div>
           <div className="sheet-notion">
-            {rows.map(([label, value]) => (
-              <div key={label} className="sheet-notion-row">
+            {/* --i: the row's place in the fill-in stagger (project-sheet.css). */}
+            {rows.map(([label, value], i) => (
+              <div key={label} className="sheet-notion-row" style={{ '--i': String(i) } as CSSProperties}>
                 <b>{label}</b>
                 <span>{value}</span>
               </div>
@@ -493,7 +505,9 @@ function SheetBody({ project, projects, locale, headingRef, onClose }: SheetBody
       <button type="button" className="sheet-close ctl" aria-label={t.sheetClose} onClick={onClose}>
         <Icon name="x" />
       </button>
-      <SheetMedia project={project} locale={locale} />
+      {/* Keyed by the project, so moving from one open sheet straight to another (a hash
+          change) remounts the media and its one-shot motion plays for the new project too. */}
+      <SheetMedia key={projectKey(project)} project={project} locale={locale} />
       <div className="sbody">
         <div>
           {kicker && <p className="sheet-kick">{kicker}</p>}

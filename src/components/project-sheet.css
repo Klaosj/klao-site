@@ -103,6 +103,27 @@
   .sheet-notion-row b { color: #666970; font-size: 13px; font-weight: 500; }
   .sheet-notion-row span { font-size: 14px; line-height: 20px; }
   .sheet-note { position: absolute; left: 0; right: 0; bottom: 14px; margin: 0; padding: 0 16px; color: var(--ink-2); font-size: 14px; text-align: center; }
+  /* Every sheet moves once (spec 2026-09-30-sheet-clips.md). A sheet without a clip -- the Notion
+     row (klao-site), the rings (Talatify), five apps -> one (Tripedia) -- fills its picture in
+     once, at the moment a clip would start: ProjectSheet's useEnterOnce sets data-enter="from"
+     before the first paint, then "go" once the sheet's own open animation has finished. Each part
+     starts dimmed to .55 (the reveal floor: dimmed, never hidden) and a few px off, and settles
+     on the drift curve, staggered by its --i. The server HTML, no JavaScript and reduced motion
+     carry no data-enter, so they show the final picture; the start state is gated on
+     no-preference here too, so turning reduced motion on mid-way lands on the final picture.
+     Totals (last delay + duration), all under 900 ms: rows 3 x 60 + 600 = 780 ms; rings
+     2 x 120 + 600 = 840 ms; five 6 x 60 + 480 = 840 ms. Only opacity and transform animate; an
+     SVG part scales about its own centre (fill-box). */
+  .smedia .sk-step { transform-box: fill-box; transform-origin: center; }
+  .smedia[data-media="notion"] { --enter-step: 60ms; --enter-dur: 600ms; }
+  .smedia[data-media="rings"] { --enter-step: 120ms; --enter-dur: 600ms; }
+  .smedia[data-media="five"] { --enter-step: 60ms; --enter-dur: 480ms; }
+  @media (prefers-reduced-motion: no-preference) {
+    .smedia[data-enter="from"] :is(.sheet-notion-row, .sk-step) { opacity: .55; transform: translateY(6px); }
+    .smedia[data-enter="from"] :is(.sk-ring, .sk-one) { transform: scale(.96); }
+    .smedia[data-enter="from"] .sk-arrow { transform: translateX(-6px); }
+    .smedia[data-enter="go"] :is(.sheet-notion-row, .sk-step) { transition: opacity var(--enter-dur) var(--ease-drift), transform var(--enter-dur) var(--ease-drift); transition-delay: calc(var(--i, 0) * var(--enter-step)); }
+  }
   .sheet-kick { margin: 0; color: var(--ink-2); font-size: 14px; line-height: 20px; font-weight: 600; }
   .sheet-q { margin: 10px 0 0; color: var(--ink-2); font-size: 24px; line-height: 30px; letter-spacing: .009em; text-wrap: balance; }
   :lang(th) .sheet-q { line-height: 34px; letter-spacing: 0; }
