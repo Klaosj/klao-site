@@ -20,6 +20,27 @@ export interface ProjectClip {
 }
 
 export const PROJECT_CLIPS: Readonly<Record<string, ProjectClip>> = {
+  // Placeholder (30 Sep): aje and gonai are 5 s stills of their own screenshots, so the sheet
+  // plays and holds exactly the picture it already shows. The rendered clips replace the four
+  // files in public/clips/ and these two labels, nothing else.
+  aje: {
+    webm: '/clips/aje.webm',
+    mp4: '/clips/aje.mp4',
+    durationMs: 5000,
+    label: {
+      en: 'Clip, 5 seconds: Aje’s Review screen for a sample idea, BikeFix Home, with its readiness level and a one-line summary.',
+      th: 'คลิป 5 วินาที: หน้า Review ของ Aje สำหรับไอเดียตัวอย่าง BikeFix Home พร้อมระดับความพร้อมและสรุปไอเดียในหนึ่งบรรทัด',
+    },
+  },
+  gonai: {
+    webm: '/clips/gonai.webm',
+    mp4: '/clips/gonai.mp4',
+    durationMs: 5000,
+    label: {
+      en: 'Clip, 5 seconds: GoNai’s home screen, Plan a full day out, know every baht before you leave.',
+      th: 'คลิป 5 วินาที: หน้าแรกของ GoNai วางแผนเที่ยวทั้งวัน รู้ทุกบาทก่อนออกจากบ้าน',
+    },
+  },
   cafenista: {
     webm: '/clips/cafenista.webm',
     mp4: '/clips/cafenista.mp4',

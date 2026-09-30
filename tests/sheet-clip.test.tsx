@@ -85,13 +85,17 @@ describe('SheetClip: the still comes first', () => {
   });
 
   it('leaves a project without a clip exactly as it was', () => {
-    const plain = openAt('aje').dialog.querySelector('.smedia')!.outerHTML;
+    // Every screenshot row in the lineup has a clip since 30 Sep (Aje, GoNai, Cafénista), so a
+    // seventh, clip-less screenshot row stands in for "a project added later without one".
+    const PLAIN = makeProject({ id: 'fx-plain', name: 'Plainview', order: 7, imageSrc: '/images/klao-site.jpg' });
+    const list = [...LINEUP, PLAIN];
+    expect(clipFor(PLAIN)).toBeNull();
+    const plain = openAt('plainview', 'en', list).dialog.querySelector('.smedia')!.outerHTML;
     cleanup();
     allowMotion();
-    const moving = openAt('aje').dialog.querySelector('.smedia')!;
+    const moving = openAt('plainview', 'en', list).dialog.querySelector('.smedia')!;
     expect(moving.outerHTML).toBe(plain);
     expect(moving.querySelector('video')).toBeNull();
-    expect(clipFor(LINEUP.find((p) => p.name === 'Aje')!)).toBeNull();
   });
 });
 
@@ -120,6 +124,15 @@ describe('SheetClip: motion allowed', () => {
     expect(video.getAttribute('aria-label')).toBe(clip.label.en);
     // Invisible until it is actually playing (the CSS keys opacity off this attribute).
     expect(video.hasAttribute('data-playing')).toBe(false);
+  });
+
+  it("GoNai ('win'): the clip sits in the window below the address bar, right after the <img>", () => {
+    const { dialog } = openAt('gonai');
+    const win = dialog.querySelector('[data-media="win"] .sheet-win')!;
+    expect(Array.from(win.children).map((el) => el.tagName)).toEqual(['DIV', 'IMG', 'VIDEO']);
+    expect(win.firstElementChild?.className).toBe('sheet-bar');
+    expect(win.querySelector('video')?.className).toBe('sheet-clip');
+    expect(Array.from(win.querySelectorAll('source')).map((el) => el.getAttribute('src'))).toEqual(['/clips/gonai.webm', '/clips/gonai.mp4']);
   });
 
   it('labels the video in Thai on /th', () => {
@@ -235,6 +248,13 @@ describe('the clip registry (src/lib/project-clips.ts)', () => {
   it('keys every clip to a real project', () => {
     expect(entries.length).toBeGreaterThan(0);
     for (const [key] of entries) expect(keys, key).toContain(key);
+  });
+
+  it('gives every screenshot row in the bundled lineup a clip (Aje, GoNai, Cafénista)', () => {
+    expect(Object.keys(PROJECT_CLIPS).sort()).toEqual(['aje', 'cafenista', 'gonai']);
+    const shots = (projects as Project[]).filter((p) => p.media === 'img' || p.media === 'win');
+    expect(shots.map((p) => projectKey(p)).sort()).toEqual(['aje', 'cafenista', 'gonai']);
+    for (const p of shots) expect(clipFor(p), p.name).not.toBeNull();
   });
 
   it.each(entries)('%s: both files exist in public/, each at most 700 KB', (_key, c) => {
