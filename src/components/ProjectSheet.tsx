@@ -14,7 +14,7 @@ import { useEnterOnce } from '@/lib/enter-once';
 import { imageAlt } from '@/lib/image-alt';
 import type { Locale, Project } from '@/lib/models';
 import { motionAllowed } from '@/lib/motion';
-import { clipFor } from '@/lib/project-clips';
+import { PHONE_QUERY, clipFor } from '@/lib/project-clips';
 import { hostOf, lineageFor, unbreak, washVar, type Lineage } from '@/lib/project-view';
 import { parseSheetHash, projectKey, sheetHash } from '@/lib/sheet-url';
 import { SIG_YEARS } from '@/lib/signature';
@@ -421,8 +421,9 @@ export function SheetMedia({ project, locale }: { project: Project; locale: Loca
   // A product clip (src/lib/project-clips.ts) plays over the screenshot, inside the same window.
   // SheetClip renders nothing until after mount, so this markup starts out exactly as before.
   const clip = clipFor(project);
+  const shot = <img src={project.imageSrc} alt={alt || imageAlt(project.imageSrc, project.name)} width={1580} height={900} decoding="async" />;
   return (
-    <div className="smedia" data-media={project.media} data-vt="shot" style={{ '--wash': washVar(project.wash) } as CSSProperties}>
+    <div className="smedia" data-media={project.media} data-square={clip?.square ? '' : undefined} data-vt="shot" style={{ '--wash': washVar(project.wash) } as CSSProperties}>
       <div className="win sheet-win">
         {host && (
           <div className="sheet-bar" aria-hidden="true">
@@ -435,7 +436,14 @@ export function SheetMedia({ project, locale }: { project: Project; locale: Loca
         {/* S-5: the real files (public/images/*.jpg) are 1580x900, not the brief's nominal
             1600x900 -- checked directly, so this reserves the exact box (no CLS). Dark mode's
             dim comes free from globals.css's `.win img { filter: var(--shot-dim); }` (C-5). */}
-        <img src={project.imageSrc} alt={alt || imageAlt(project.imageSrc, project.name)} width={1580} height={900} decoding="async" />
+        {clip?.square ? (
+          <picture>
+            <source media={PHONE_QUERY} srcSet={clip.square.poster} width={1080} height={1080} />
+            {shot}
+          </picture>
+        ) : (
+          shot
+        )}
         {/* Keyed by the clip, so a different project's clip never inherits this one's state. */}
         {clip && <SheetClip key={clip.webm} clip={clip} locale={locale} startAfter={sheetSettled} />}
       </div>

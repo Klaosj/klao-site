@@ -91,6 +91,20 @@
     .sheet-clip { transition: opacity 320ms var(--ease-glide); }
     .sheet-win .sheet-replay { animation: sheet-clip-in 320ms var(--ease-drift); }
   }
+  /* Square cut (phones only; spec 2026-10-01-sheet-stings): a clip with a `square` file gets a
+     <picture> whose phone <source> is a 1:1 poster, and `data-square` on .smedia. The poster,
+     the video and the window are then one square box: .smedia drops its 16:9 box and grows
+     around the window (the same 6% margin above and below, so the page keeps its margins), the
+     poster fixes its own 1 / 1 before it loads (no layout jump), and .sheet-clip is anchored to
+     the window's bottom at the same ratio, so the two boxes are identical. Nothing is cut off
+     any more, so Replay sits a plain 12px from the picture's corner. */
+  @media (max-width: 734px) {
+    .smedia[data-square] { aspect-ratio: auto; padding-bottom: 6%; }
+    .smedia[data-square] picture { display: block; }
+    .smedia[data-square] .sheet-win img { aspect-ratio: 1 / 1; object-fit: cover; }
+    .smedia[data-square] .sheet-clip { aspect-ratio: 1 / 1; }
+    .smedia[data-square] .sheet-win .sheet-replay { bottom: 12px; }
+  }
   @keyframes sheet-clip-in {
     from { opacity: 0; }
   }

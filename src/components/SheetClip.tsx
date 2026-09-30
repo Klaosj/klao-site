@@ -5,7 +5,7 @@ import ReplayGlyph from '@/components/ReplayGlyph';
 import { dict } from '@/lib/dictionary';
 import type { Locale } from '@/lib/models';
 import { motionAllowed, saveDataOn } from '@/lib/motion';
-import type { ProjectClip } from '@/lib/project-clips';
+import { PHONE_QUERY, type ProjectClip } from '@/lib/project-clips';
 
 // A product clip that plays once over a screenshot
 // (spec: docs/superpowers/specs/2026-09-30-sheet-clips.md). The parent renders this inside the
@@ -41,6 +41,9 @@ export default function SheetClip({ clip, locale, startAfter }: Props) {
   const [on, setOn] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [ended, setEnded] = useState(false);
+  // Phones get the square cut when the clip has one. Read once at mount (the server renders
+  // nothing): the files are chosen before the <video> first exists.
+  const [src, setSrc] = useState<{ webm: string; mp4: string }>(clip);
   const videoRef = useRef<HTMLVideoElement>(null);
   // "Should be playing": from the start (or a Replay) until `ended`. A hidden tab pauses without
   // clearing it, so coming back knows whether to resume.
@@ -48,6 +51,8 @@ export default function SheetClip({ clip, locale, startAfter }: Props) {
 
   useEffect(() => {
     if (!motionAllowed() || saveDataOn()) return;
+    const phone = typeof matchMedia === 'function' && matchMedia(PHONE_QUERY).matches;
+    setSrc(phone && clip.square ? clip.square : clip);
     setOn(true);
     // Switching to reduced motion mid-clip removes the video; the still is underneath.
     const mq = matchMedia('(prefers-reduced-motion: reduce)');
@@ -56,7 +61,7 @@ export default function SheetClip({ clip, locale, startAfter }: Props) {
     };
     mq.addEventListener?.('change', onChange);
     return () => mq.removeEventListener?.('change', onChange);
-  }, []);
+  }, [clip]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -117,8 +122,8 @@ export default function SheetClip({ clip, locale, startAfter }: Props) {
           setEnded(true);
         }}
       >
-        <source src={clip.webm} type="video/webm" />
-        <source src={clip.mp4} type="video/mp4" />
+        <source src={src.webm} type="video/webm" />
+        <source src={src.mp4} type="video/mp4" />
       </video>
       {/* Stays once shown, also during a replay: removing the button a keyboard user just
           pressed would drop their focus to the page. Pressing it again restarts the clip. */}

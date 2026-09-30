@@ -4,12 +4,12 @@ import { join } from 'node:path';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest';
-import ProjectSheet from '@/components/ProjectSheet';
+import ProjectSheet, { SheetMedia } from '@/components/ProjectSheet';
 import SheetClip from '@/components/SheetClip';
 import projects from '@/content/fixtures/projects.json';
 import { dict } from '@/lib/dictionary';
 import type { Locale, Project } from '@/lib/models';
-import { PROJECT_CLIPS, clipFor } from '@/lib/project-clips';
+import { PHONE_QUERY, PROJECT_CLIPS, clipFor } from '@/lib/project-clips';
 import { projectKey } from '@/lib/sheet-url';
 import { stubDialog } from './helpers/dialog';
 import { installFakeIO } from './helpers/io';
@@ -26,6 +26,10 @@ let load: MockInstance<HTMLMediaElement['load']>;
 let hidden = false;
 
 const allowMotion = () => stubMatchMedia((q) => q.includes('no-preference'));
+// Exact query strings: 'no-preference' contains the substring 'reduce' in neither direction, but
+// 'reduce' is matched by equality anyway so the two queries never get mixed up.
+const MOTION_QUERY = '(prefers-reduced-motion: no-preference)';
+const phoneAndMotion = () => stubMatchMedia((q) => q === MOTION_QUERY || q === PHONE_QUERY);
 const ENTER_MS = 500; // ProjectSheet's own ENTER_MS (the sheet's CSS entrance)
 const EXIT_MS = 280; // ProjectSheet's own EXIT_MS (the sheet's CSS exit)
 
@@ -107,8 +111,9 @@ describe('SheetClip: motion allowed', () => {
     const win = dialog.querySelector('.sheet-win')!;
     const video = win.querySelector('video')!;
     expect(video).toBeTruthy();
-    // Inside the same window, right after the <img> that stays the poster and the still.
-    expect(video.previousElementSibling?.tagName).toBe('IMG');
+    // Inside the same window, right after the <picture> whose <img> stays the poster and the still.
+    expect(video.previousElementSibling?.tagName).toBe('PICTURE');
+    expect(video.previousElementSibling?.querySelector('img')).toBeTruthy();
     expect(win.querySelector('img')?.getAttribute('alt')).toBe(CAFENISTA.alt!.en);
     expect(video.className).toBe('sheet-clip');
     expect(video.muted).toBe(true);
@@ -129,10 +134,10 @@ describe('SheetClip: motion allowed', () => {
   it("GoNai ('win'): the clip sits in the window below the address bar, right after the <img>", () => {
     const { dialog } = openAt('gonai');
     const win = dialog.querySelector('[data-media="win"] .sheet-win')!;
-    expect(Array.from(win.children).map((el) => el.tagName)).toEqual(['DIV', 'IMG', 'VIDEO']);
+    expect(Array.from(win.children).map((el) => el.tagName)).toEqual(['DIV', 'PICTURE', 'VIDEO']);
     expect(win.firstElementChild?.className).toBe('sheet-bar');
     expect(win.querySelector('video')?.className).toBe('sheet-clip');
-    expect(Array.from(win.querySelectorAll('source')).map((el) => el.getAttribute('src'))).toEqual(['/clips/gonai.webm', '/clips/gonai.mp4']);
+    expect(Array.from(win.querySelectorAll('video source')).map((el) => el.getAttribute('src'))).toEqual(['/clips/gonai.webm', '/clips/gonai.mp4']);
   });
 
   it('labels the video in Thai on /th', () => {
@@ -241,6 +246,73 @@ describe('SheetClip: motion allowed', () => {
   });
 });
 
+describe('SheetClip: the square cut on phones', () => {
+  const sources = (dialog: HTMLElement) => Array.from(dialog.querySelectorAll('video source')).map((el) => el.getAttribute('src'));
+
+  it('plays the square files when the phone query matches', () => {
+    phoneAndMotion();
+    expect(PHONE_QUERY).toBe('(max-width: 734px)');
+    expect(sources(openAt('cafenista').dialog)).toEqual(['/clips/cafenista-1x1.webm', '/clips/cafenista-1x1.mp4']);
+    cleanup();
+    expect(sources(openAt('gonai').dialog)).toEqual(['/clips/gonai-1x1.webm', '/clips/gonai-1x1.mp4']);
+  });
+
+  it('plays the 16:9 files when the phone query does not match', () => {
+    allowMotion();
+    expect(sources(openAt('cafenista').dialog)).toEqual(['/clips/cafenista.webm', '/clips/cafenista.mp4']);
+  });
+
+  it('plays the 16:9 files on a phone when the clip has no square cut', () => {
+    phoneAndMotion();
+    const flat = { ...clip, square: undefined };
+    const { container } = render(<SheetClip clip={flat} locale="en" startAfter={settled} />);
+    expect(Array.from(container.querySelectorAll('source')).map((el) => el.getAttribute('src'))).toEqual(['/clips/cafenista.webm', '/clips/cafenista.mp4']);
+  });
+});
+
+describe('SheetMedia: the square poster', () => {
+  const media = (p: Project) => {
+    const host = document.createElement('div');
+    host.innerHTML = renderToStaticMarkup(<SheetMedia project={p} locale="en" />);
+    return host;
+  };
+
+  it('wraps the screenshot in a <picture> with a phone-only square source, and marks .smedia', () => {
+    const host = media(CAFENISTA);
+    const smedia = host.querySelector('.smedia')!;
+    expect(smedia.hasAttribute('data-square')).toBe(true);
+    const source = host.querySelector('picture > source')!;
+    expect(source.getAttribute('media')).toBe('(max-width: 734px)');
+    expect(source.getAttribute('srcset')).toBe('/images/cafenista-1x1.jpg');
+    expect(source.getAttribute('width')).toBe('1080');
+    expect(source.getAttribute('height')).toBe('1080');
+    const img = host.querySelector('picture > img')!;
+    expect(img.getAttribute('width')).toBe('1580');
+    expect(img.getAttribute('height')).toBe('900');
+    expect(img.getAttribute('src')).toBe('/images/cafenista.jpg');
+  });
+
+  it('a clip-less screenshot has no <picture> and no data-square', () => {
+    const host = media(makeProject({ id: 'fx-plain', name: 'Plainview', order: 7, imageSrc: '/images/klao-site.jpg' }));
+    expect(host.querySelector('picture')).toBeNull();
+    expect(host.querySelector('[data-square]')).toBeNull();
+  });
+
+  it('a clip without a square cut has no <picture> and no data-square', () => {
+    const plain = makeProject({ id: 'fx-flat', name: 'Flat', order: 7, imageSrc: '/images/klao-site.jpg' });
+    const flat = { ...clip, square: undefined };
+    (PROJECT_CLIPS as Record<string, unknown>).flat = flat;
+    try {
+      const host = media(plain);
+      expect(host.querySelector('video, .sheet-clip')).toBeNull(); // SSR renders no video
+      expect(host.querySelector('picture')).toBeNull();
+      expect(host.querySelector('[data-square]')).toBeNull();
+    } finally {
+      delete (PROJECT_CLIPS as Record<string, unknown>).flat;
+    }
+  });
+});
+
 describe('the clip registry (src/lib/project-clips.ts)', () => {
   const entries = Object.entries(PROJECT_CLIPS);
   const keys = new Set((projects as Project[]).map((p) => projectKey(p)));
@@ -264,6 +336,16 @@ describe('the clip registry (src/lib/project-clips.ts)', () => {
     }
     expect(c.webm).toMatch(/^\/clips\/.+\.webm$/);
     expect(c.mp4).toMatch(/^\/clips\/.+\.mp4$/);
+  });
+
+  it.each(entries)('%s: the square cut and its poster exist in public/ (clips at most 700 KB, poster at most 250 KB)', (key, c) => {
+    expect(c.square, key).toEqual({ webm: `/clips/${key}-1x1.webm`, mp4: `/clips/${key}-1x1.mp4`, poster: `/images/${key}-1x1.jpg` });
+    for (const src of [c.square!.webm, c.square!.mp4]) {
+      const size = statSync(join('public', src)).size;
+      expect(size, `${src} is ${size} bytes`).toBeLessThanOrEqual(700 * 1024);
+    }
+    const poster = statSync(join('public', c.square!.poster)).size;
+    expect(poster, `poster is ${poster} bytes`).toBeLessThanOrEqual(250 * 1024);
   });
 
   it.each(entries)('%s: at most 5 s, labelled in both languages, no "|" marks', (_key, c) => {
@@ -304,5 +386,10 @@ describe('project-sheet.css: the clip', () => {
     expect(css).toContain('.sheet-clip[data-playing] { opacity: 1; }');
     expect(css).toMatch(/@media \(prefers-reduced-motion: no-preference\) \{\s*\.sheet-clip \{ transition: opacity 320ms var\(--ease-glide\); \}/);
     expect(css).toMatch(/@keyframes sheet-clip-in \{\s*from \{ opacity: 0; \}\s*\}/);
+  });
+
+  it('on a phone the square cut is one 1 / 1 box for the clip (and the poster)', () => {
+    const phone = css.slice(css.indexOf('/* Square cut'));
+    expect(phone).toMatch(/@media \(max-width: 734px\) \{[\s\S]*\.smedia\[data-square\] \.sheet-clip \{[^}]*aspect-ratio: 1 \/ 1;/);
   });
 });
