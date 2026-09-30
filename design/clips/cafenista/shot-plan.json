@@ -1,0 +1,27 @@
+{
+  "category": "webpage",
+  "duration_s": 5,
+  "fps": 30,
+  "canvas": { "w": 1580, "h": 900, "aspect": "16:9 media box (1580x900)" },
+  "style": "klao-site White Edition: Apple-minimal, calm, understated; no text overlays",
+  "palette": ["#F5F6F8", "#F2F2F7", "#FFFFFF", "rgba(0,0,0,.08)"],
+  "font": "none (no added text; UI text lives in the renders)",
+  "beats": [0.5, 2.4, 4.2],
+  "export": "mp4",
+  "asset_needs": [],
+  "block": null,
+  "customize": {
+    "catalog_search": "browser-device-stage / device-frame-stage / multi-device-splay considered; rejected because they add device chrome the brief forbids. Hand-authored two rounded-rect frames."
+  },
+  "content": {
+    "url": null,
+    "capture": ["assets/owner-today.png", "assets/bar-alert-live.png"],
+    "highlights": [],
+    "shots": [
+      { "id": "hold", "start": 0.0, "end": 0.5, "motion": "none — owner Today screen centred, top of page with red alert card" },
+      { "id": "scroll", "start": 0.5, "end": 2.4, "motion": "inner page translateY to the timeline card (drift ease)" },
+      { "id": "pair", "start": 2.4, "end": 4.2, "motion": "owner frame x-left (drift); bar phone opacity 0→1, y 24→0 (settle)" },
+      { "id": "settle", "start": 4.2, "end": 5.0, "motion": "hold final two-device composition" }
+    ]
+  }
+}

@@ -25,8 +25,8 @@ export const PROJECT_CLIPS: Readonly<Record<string, ProjectClip>> = {
     mp4: '/clips/cafenista.mp4',
     durationMs: 5000,
     label: {
-      en: 'Clip, 5 seconds: the owner’s screen flags a machine running cold and shows the drop on today’s timeline, then the bar screen asks the barista to pull a check shot.',
-      th: 'คลิป 5 วินาที: จอเจ้าของร้านแจ้งว่าเครื่องชงเย็นกว่าปกติและเห็นเส้นตกบนไทม์ไลน์วันนี้ แล้วจอหน้าบาร์ขึ้นให้บาริสต้าชงช็อตตรวจ',
+      en: 'Clip, 5 seconds: the owner’s Today screen scrolls to a timeline where the espresso machine runs colder than normal, then the bar screen appears beside it with the same alert and a button to pull a check shot.',
+      th: 'คลิป 5 วินาที: จอ “วันนี้” ของเจ้าของร้านเลื่อนลงไปที่เส้นเวลาซึ่งเครื่องชงเย็นกว่าปกติ แล้วจอหน้าบาร์ของบาริสต้าขึ้นมาข้าง ๆ พร้อมแจ้งเตือนเดียวกันและปุ่มให้ชงช็อตตรวจ',
     },
   },
 };

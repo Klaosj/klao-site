@@ -1,6 +1,6 @@
 # Sheet clips: a product clip that plays once in the project sheet (2026-09-30)
 
-Status: built on `feat/motion-cafenista`. First user: Cafénista (with placeholder clip files until the final render lands).
+Status: built on `feat/motion-cafenista`. First user: Cafénista (HyperFrames source in `design/clips/cafenista/`).
 Code: `src/lib/project-clips.ts` (registry), `src/components/SheetClip.tsx` (player),
 `src/components/ProjectSheet.tsx` (`SheetMedia`, `sheetSettled`), `src/components/project-sheet.css` (`.sheet-clip`, `.sheet-replay`).
 Tests: `tests/sheet-clip.test.tsx`.

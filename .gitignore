@@ -13,3 +13,10 @@ next-env.d.ts
 # Session worktrees + SDD scratch (superpowers)
 .claude/worktrees/
 .superpowers/
+
+# HyperFrames clip sources: keep the composition, drop the render byproducts
+design/clips/*/renders/
+design/clips/*/out/
+design/clips/*/work/
+design/clips/*/snapshots/
+design/clips/*/node_modules/
