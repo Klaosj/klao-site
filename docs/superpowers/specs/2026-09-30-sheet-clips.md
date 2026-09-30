@@ -71,6 +71,7 @@ frame 0, or the swap from still to video shows a jump.
 
 ## 6. How to add a clip
 
+- Follow `design/clips/frame.md` (the clips' design spec: stage, frames, eases, beats, do/don't).
 1. Source: a HyperFrames composition in `design/clips/<key>/`, where `<key>` is the project's
    sheet key (`projectKey`: its Slug, else `slugKey(Name)`, e.g. `Cafénista` → `cafenista`).
    Render at 1580 × 900, ≤ 5 s, starting on the exact frame of the project's screenshot.

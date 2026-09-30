@@ -2,6 +2,8 @@
 
 The 5-second clip that plays once in Cafénista's project sheet. Built with HyperFrames 0.8.97. Spec: `docs/superpowers/specs/2026-09-30-sheet-clips.md`.
 
+Brand truth: [../frame.md](../frame.md) — every clip follows it.
+
 - `index.html` is the composition. `BRIEF.md` and `shot-plan.json` hold the brief and the timings.
 - `assets/` holds crops of real Cafénista renders. They are cropped and scaled only, never edited.
 - Rebuild the assets with `CAFENISTA_RENDERS=<path to cafenista/design/renders> python3 tools/make_assets.py`.

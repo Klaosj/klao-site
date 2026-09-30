@@ -2,6 +2,8 @@
 
 The 5-second clip that plays once in Aje's project sheet. Built with HyperFrames 0.8.97. Spec: `docs/superpowers/specs/2026-09-30-sheet-clips.md`.
 
+Brand truth: [../frame.md](../frame.md) — every clip follows it.
+
 - `index.html` is the composition. `BRIEF.md` and `shot-plan.json` hold the brief, the story and the timings.
 - `assets/aje.jpg` is `public/images/aje.jpg` byte for byte: frame 0 is the project's screenshot, shown 1:1, so the sheet's still-to-video crossfade shows no jump. If that screenshot ever changes, rebuild the clip.
 - `assets/next-steps-test.png` is a real capture of the Aje prototype (its built-in example idea), cropped and downscaled 2:1. Never edited.
