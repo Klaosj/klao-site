@@ -5,6 +5,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, typ
 import { flushSync } from 'react-dom';
 import './project-sheet.css';
 import { Icon } from '@/components/icons';
+import SheetClip from '@/components/SheetClip';
 import { Sketch } from '@/components/sketches';
 import StatusChip from '@/components/StatusChip';
 import ThaiText from '@/components/ThaiText';
@@ -12,6 +13,7 @@ import { dict } from '@/lib/dictionary';
 import { imageAlt } from '@/lib/image-alt';
 import type { Locale, Project } from '@/lib/models';
 import { motionAllowed } from '@/lib/motion';
+import { clipFor } from '@/lib/project-clips';
 import { hostOf, lineageFor, unbreak, washVar, type Lineage } from '@/lib/project-view';
 import { parseSheetHash, projectKey, sheetHash } from '@/lib/sheet-url';
 import { SIG_YEARS } from '@/lib/signature';
@@ -36,6 +38,7 @@ import { SIG_YEARS } from '@/lib/signature';
 // kind the sheet shows, not only a real screenshot.
 
 const EXIT_MS = 280; // .sheet.closing in project-sheet.css
+const ENTER_MS = 500; // .sheet[open]'s sheet-in in project-sheet.css (--dur-sheet)
 
 function clearSheetHash() {
   if (window.location.hash.startsWith('#work/')) {
@@ -126,6 +129,18 @@ function runShotTransition(before: HTMLElement | null, change: () => boolean, fi
     })
     .catch(() => {});
   return true;
+}
+
+/**
+ * Resolves once the sheet has finished opening: its own CSS entrance (ENTER_MS) and, when the
+ * open ran A07's shared-element morph, that View Transition too (whichever ends later). A
+ * product clip waits for this before it plays, so its first seconds are never spent under a
+ * moving sheet. Module-level, so it is one stable function (SheetClip's effect depends on it).
+ */
+function sheetSettled(): Promise<void> {
+  const entrance = new Promise<void>((resolve) => window.setTimeout(resolve, ENTER_MS));
+  const morph = latestTransition ? latestTransition.finished.catch(() => {}) : Promise.resolve();
+  return Promise.all([entrance, morph]).then(() => {});
 }
 
 type SheetBodyProps = {
@@ -391,6 +406,9 @@ function SheetMedia({ project, locale }: { project: Project; locale: Locale }) {
   // image gets no media block at all. 'win' adds the address bar from the live URL.
   if (!project.imageSrc) return null;
   const host = project.media === 'win' ? hostOf(project.liveUrl) : null;
+  // A product clip (src/lib/project-clips.ts) plays over the screenshot, inside the same window.
+  // SheetClip renders nothing until after mount, so this markup starts out exactly as before.
+  const clip = clipFor(project);
   return (
     <div className="smedia" data-media={project.media} data-vt="shot" style={{ '--wash': washVar(project.wash) } as CSSProperties}>
       <div className="win sheet-win">
@@ -406,6 +424,8 @@ function SheetMedia({ project, locale }: { project: Project; locale: Locale }) {
             1600x900 -- checked directly, so this reserves the exact box (no CLS). Dark mode's
             dim comes free from globals.css's `.win img { filter: var(--shot-dim); }` (C-5). */}
         <img src={project.imageSrc} alt={alt || imageAlt(project.imageSrc, project.name)} width={1580} height={900} decoding="async" />
+        {/* Keyed by the clip, so a different project's clip never inherits this one's state. */}
+        {clip && <SheetClip key={clip.webm} clip={clip} locale={locale} startAfter={sheetSettled} />}
       </div>
     </div>
   );

@@ -245,6 +245,8 @@ const en = {
   sheetStack: 'Built with',
   sheetStatus: 'Status',
   sheetClose: 'Close',
+  // The product clip's button once it has played (SheetClip): plays it again from the start.
+  sheetClipReplay: 'Replay',
   // Promise "within the hour", nothing faster: the site updates through ISR, about an hour.
   sheetNotionNote: 'Edit this row in Notion, and this page follows within the hour.',
   // C-6 ruling: Talatify's TAM/SAM/SOM rings sheet drawing gets its own caption (prototype
@@ -414,6 +416,7 @@ const th: typeof en = {
   sheetStack: 'สร้างด้วย',
   sheetStatus: 'สถานะ',
   sheetClose: 'ปิด',
+  sheetClipReplay: 'เล่นอีกครั้ง',
   sheetNotionNote: 'แก้แถวนี้ใน Notion แล้วหน้านี้จะตามภายในหนึ่งชั่วโมง',
   sheetRingsCaption: 'วิธีคิด ไม่ใช่สัดส่วนจริง',
   lineageTitle: 'ไอเดียเดียวกัน ห่างกันสี่ปี',
