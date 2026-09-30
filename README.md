@@ -68,7 +68,7 @@ Thai), each in light and dark at 1440 and 390. It fails on console errors,
 sideways scroll, text under 14 px on phones, tap targets under 24 px,
 content left hidden, low contrast, layout shift over 0.05, the wrong theme
 or a flash of it, Thai lines that start with a vowel or tone mark, and
-pages longer than 8.6 screens (desktop) or 12 (phone), measured with By day
+pages longer than 8.7 screens (desktop) or 12 (phone), measured with By day
 on Short. A Thai or reduced-motion line over that length doesn't fail: it
 is marked `[R15: …]` and counted on the last line, to be reported rather
 than fixed by cutting space. It prints one line per combination, exits 1

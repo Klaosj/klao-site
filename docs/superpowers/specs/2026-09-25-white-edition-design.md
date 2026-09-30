@@ -17,7 +17,7 @@ Success criteria (all measured on a Vercel preview before merge):
 |---|---|---|
 | 1 | White canvas by default; dark via system or toggle, no flash on load | Manual + QA matrix, both themes |
 | 2 | Type, spacing, radii and CTAs match the Apple-measured scale (§5) | Computed styles vs `design/white-edition/APPLE-SCALE.md` |
-| 3 | Home page ≤ 8.6 screens desktop, ≤ 12 phone | QA matrix `len` (prototype today: 9.66 / 12.52) |
+| 3 | Home page ≤ 8.7 screens desktop, ≤ 12 phone (8.6 until 30 Sep, see §10) | QA matrix `len` (prototype today: 9.66 / 12.52) |
 | 4 | QA matrix green: 1440 + 390 × EN/TH × light/dark × motion/reduced | 16/16, 0 console errors, 0 horizontal overflow, 0 Thai mid-word breaks, phone text ≥ 14 px, targets ≥ 24 px |
 | 5 | AISecretary and DailyBrief appear nowhere | `grep -ri` on `src/`, `public/`, `tests/` = 0 |
 | 6 | Every piece of copy stays editable in Notion (two-layer rule: Notion + fixtures) | Content audit table in the plan |
@@ -198,7 +198,9 @@ Copy marked [DRAFT] in the prototype (By day titles and bodies, Career figure la
 - ISR stays at 1 h. A Notion schema change needs the mapper, the fixtures and `NOTION_SETUP.md` updated in the same commit.
 - Performance budget: LCP ≤ 2.5 s on the preview (mobile, Lighthouse), CLS ≤ 0.05, no long task > 200 ms from our code on load. Removing `PointerFx` frees the main thread on every pointer move.
 
-## 10. Page length: 9.66 → ≤ 8.6 screens (desktop)
+## 10. Page length: 9.66 → ≤ 8.7 screens (desktop)
+
+2026-09-30: raised to 8.7 for the sixth project row (Cafénista), Klao approved. The cuts below were planned against the original 8.6.
 
 Measured on the prototype (desktop, motion on): top 0.99 · signature 2.00 · work 0.62 · career 1.42 · story 2.28 · faq 0.77 · contact 0.80 · footer 0.41.
 

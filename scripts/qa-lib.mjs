@@ -27,8 +27,10 @@ export const TEXT_IDS = ['top', 'signature', 'work', 'career', 'story', 'faq', '
  * 1440 and 390 carry a budget: R15 exempts a Thai or reduced-motion overage
  * from failing the run, and PR2's two narrow widths (360, 320) have no
  * entry here on purpose — their length is only printed, never enforced.
+ * Desktop was 8.6 until 2026-09-30, raised to 8.7 for the sixth project row
+ * (Cafénista), Klao approved (spec §10).
  */
-export const LEN_BUDGET = { 1440: 8.6, 390: 12 };
+export const LEN_BUDGET = { 1440: 8.7, 390: 12 };
 /** Spec §5.1 canvas, exactly as getComputedStyle reports it. */
 export const CANVAS = { light: 'rgb(255, 255, 255)', dark: 'rgb(10, 11, 13)' };
 /** Spec §9. CLS is enforced; LCP is only reported — a local, unthrottled run is not Lighthouse. */
