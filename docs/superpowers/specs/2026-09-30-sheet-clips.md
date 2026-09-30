@@ -127,3 +127,21 @@ motion: no console errors, nothing dimmed or moved at rest, no overlaps, each cl
 its screenshot, Replay 12 px from the visible corner. Also opened from the index rows (the A07
 morph): the drawings start dimmed in the morph and settle after it. `next build`: the `/[locale]`
 route 18.1 → 18.6 kB, First Load 159 → 160 kB, for the two placeholder entries and the fill-in.
+
+## 8. Ship checklist (Klao approved 1 Oct: "ตาม recommendation")
+
+This branch goes live only after `feat/white-edition` is merged. Then, in order:
+
+1. **GoNai P0 first.** The GoNai clip shows `fix/p0-truth-keepalive`'s truthful copy, while the
+   live GoNai still shows the older copy. Merge GoNai P0 before this branch goes live. That branch
+   needs two production-database steps first (Klao runs them). As read on 1 Oct:
+   - `routes` R003/R005 still hold BTS 44/37 ฿ against the code's 64/47 ฿.
+   - The 24 Sep audit rows are still present: 13 users, 4 plans, 50 events.
+2. **Aje clip stays as built** (two ideas on screen; the example keeps its "(example)" header).
+3. **Notion (Website / Projects):**
+   - The Cafénista row exists with Published off. Tick Published at merge.
+   - Add the Stack tags Postgres, MQTT and Playwright by typing them in the row.
+   - When Gate b swaps the Aje and GoNai Screenshot files, upload exactly
+     `public/images/aje.jpg` and `gonai.jpg`, because frame 0 of each clip must match the still.
+4. **On the Vercel preview**, open `#work/aje`, `#work/gonai` and `#work/cafenista`. Check that
+   the still and the clip's first frame match (no jump when the clip fades in).
