@@ -11,6 +11,7 @@ import ThaiText from '@/components/ThaiText';
 import { dict } from '@/lib/dictionary';
 import { imageAlt } from '@/lib/image-alt';
 import type { Locale, Project } from '@/lib/models';
+import { motionAllowed } from '@/lib/motion';
 import { hostOf, lineageFor, unbreak, washVar, type Lineage } from '@/lib/project-view';
 import { parseSheetHash, projectKey, sheetHash } from '@/lib/sheet-url';
 import { SIG_YEARS } from '@/lib/signature';
@@ -35,10 +36,6 @@ import { SIG_YEARS } from '@/lib/signature';
 // kind the sheet shows, not only a real screenshot.
 
 const EXIT_MS = 280; // .sheet.closing in project-sheet.css
-
-function motionAllowed(): boolean {
-  return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: no-preference)').matches;
-}
 
 function clearSheetHash() {
   if (window.location.hash.startsWith('#work/')) {

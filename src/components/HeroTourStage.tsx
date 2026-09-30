@@ -3,10 +3,12 @@
 import { useEffect, useId, useReducer, useRef, useState, type FocusEvent, type KeyboardEvent, type PointerEvent } from 'react';
 import { preload } from 'react-dom';
 import { Icon } from '@/components/icons';
+import ReplayGlyph from '@/components/ReplayGlyph';
 import ThaiText from '@/components/ThaiText';
 import { dict } from '@/lib/dictionary';
 import { fill } from '@/lib/format';
 import type { Locale, ProjectWash } from '@/lib/models';
+import { saveDataOn } from '@/lib/motion';
 import type { TourSlide, TourVignette } from '@/lib/project-tour';
 import { initialTourState, tourReducer } from '@/lib/tour-player';
 import './hero-tour-stage.css';
@@ -36,11 +38,6 @@ const KEY_STEP: Record<string, (index: number, count: number) => number> = {
   Home: () => 0,
   End: (_, count) => count - 1,
 };
-
-function saveDataOn(): boolean {
-  const connection = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
-  return connection?.saveData === true;
-}
 
 type Props = { slides: TourSlide[]; vignette: TourVignette; locale: Locale };
 
@@ -456,21 +453,5 @@ function Vignette({ vignette, beat }: { vignette: TourVignette; beat: VignetteBe
         <small>klao-site · EN / TH</small>
       </div>
     </div>
-  );
-}
-
-/** Replay glyph (prototype, inline: not part of the Phosphor subset). */
-function ReplayGlyph() {
-  return (
-    <svg width="1em" height="1em" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <path
-        d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3M4.5 4v4h4"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
   );
 }
