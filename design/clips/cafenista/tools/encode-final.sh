@@ -7,5 +7,5 @@ mkdir -p out
 ffmpeg -v error -y -framerate 30 -i "$SRC" -vf "$VF" \
   -c:v libx264 -crf 26 -preset veryslow -pix_fmt yuv420p -movflags +faststart -an out/cafenista.mp4
 ffmpeg -v error -y -framerate 30 -i "$SRC" -vf "$VF" \
-  -c:v libvpx-vp9 -b:v 0 -crf 32 -row-mt 1 -pix_fmt yuv420p -an out/cafenista.webm
+  -c:v libvpx-vp9 -b:v 0 -crf 32 -g 150 -force_key_frames 0,4.2 -row-mt 1 -pix_fmt yuv420p -an out/cafenista.webm
 ls -l out/cafenista.mp4 out/cafenista.webm

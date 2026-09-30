@@ -12,5 +12,5 @@ ffmpeg -v error -y -framerate 30 -i "$SRC" -vf "$VF" \
   -c:v libx264 -crf "$X264_CRF" -preset veryslow -x264-params "zones=0,14,q=16" \
   -pix_fmt yuv420p -movflags +faststart -an out/gonai.mp4
 ffmpeg -v error -y -framerate 30 -i "$SRC" -vf "$VF" \
-  -c:v libvpx-vp9 -b:v 0 -crf "$VP9_CRF" -row-mt 1 -pix_fmt yuv420p -an out/gonai.webm
+  -c:v libvpx-vp9 -b:v 0 -crf "$VP9_CRF" -g 150 -force_key_frames 0,4.2 -row-mt 1 -pix_fmt yuv420p -an out/gonai.webm
 ls -l out/gonai.mp4 out/gonai.webm

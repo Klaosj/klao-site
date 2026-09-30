@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1580, height=900" />
+    <title>Aje — review to one useful test</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      :root {
+        --canvas: #f5f6f8;
+        --hairline: rgba(0, 0, 0, 0.08);
+        --shadow-y: 12px;
+        --shadow-blur: 32px;
+        --shadow-c: rgba(0, 0, 0, 0.08);
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1580px;
+        height: 900px;
+        overflow: hidden;
+        background: var(--canvas);
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: var(--canvas);
+      }
+      /* Full-bleed canvas fill as a child, so PNG-sequence renders stay opaque. */
+      #canvas-bg {
+        position: absolute;
+        inset: 0;
+        background: var(--canvas);
+      }
+      .shot {
+        position: absolute;
+        display: block;
+      }
+
+      /* Review window: the project's screenshot (assets/aje.jpg), full-frame at frame 0.
+         Scaled around its top-left corner, so its geometry lives in unscaled (1580x900) px.
+         The frame's radius / hairline / shadow are divided by the final scale (0.76) so they land
+         at 16 px / 1 px / one soft shadow when the window has settled. */
+      #review {
+        left: 0;
+        top: 0;
+        width: 1580px;
+        height: 900px;
+        transform-origin: 0 0;
+      }
+      #review-frame {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        background: url("assets/aje.jpg") 0 0 / 1580px 900px no-repeat;
+        border-radius: 21px;
+        box-shadow:
+          0 0 0 1.32px var(--hairline),
+          0 15.8px 42px var(--shadow-c);
+      }
+      /* The same screenshot with no frame, on top at frame 0 (so frame 0 is the still, pixel for pixel);
+         it fades out while the window eases back, which is how the rounded frame appears. The framed copy
+         paints the same file as a CSS background, so the composition holds one <img> per source. */
+      #review-flat {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+      #review img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 1580px;
+        height: 900px;
+      }
+
+      /* Test window: Aje's example idea, Next steps, the reviewed test. Shown 1:1 (1 px per CSS px). */
+      #test {
+        left: 656px;
+        top: 45px;
+        width: 880px;
+        height: 810px;
+        overflow: hidden;
+        border-radius: 16px;
+        box-shadow:
+          0 0 0 1px var(--hairline),
+          0 var(--shadow-y) var(--shadow-blur) var(--shadow-c);
+        opacity: 0;
+      }
+      #test img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 880px;
+        height: 810px;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="5"
+      data-fps="30"
+      data-width="1580"
+      data-height="900"
+    >
+      <div id="canvas-bg"></div>
+      <div id="review" class="shot">
+        <div id="review-frame"></div>
+        <div id="review-flat"><img src="assets/aje.jpg" alt="" /></div>
+      </div>
+      <div id="test" class="shot">
+        <img src="assets/next-steps-test.png" alt="" />
+      </div>
+    </div>
+    <script>
+      // Deterministic cubic-bezier easing (same math as CSS cubic-bezier()).
+      function cubicBezier(p1x, p1y, p2x, p2y) {
+        const cx = 3 * p1x, bx = 3 * (p2x - p1x) - cx, ax = 1 - cx - bx;
+        const cy = 3 * p1y, by = 3 * (p2y - p1y) - cy, ay = 1 - cy - by;
+        const sx = (t) => ((ax * t + bx) * t + cx) * t;
+        const sy = (t) => ((ay * t + by) * t + cy) * t;
+        const dx = (t) => (3 * ax * t + 2 * bx) * t + cx;
+        function solveX(x) {
+          let t = x;
+          for (let i = 0; i < 8; i++) {
+            const e = sx(t) - x;
+            if (Math.abs(e) < 1e-7) return t;
+            const d = dx(t);
+            if (Math.abs(d) < 1e-6) break;
+            t -= e / d;
+          }
+          let lo = 0, hi = 1;
+          t = x;
+          for (let i = 0; i < 40; i++) {
+            const v = sx(t);
+            if (Math.abs(v - x) < 1e-7) break;
+            if (v < x) lo = t; else hi = t;
+            t = (lo + hi) / 2;
+          }
+          return t;
+        }
+        return (x) => (x <= 0 ? 0 : x >= 1 ? 1 : sy(solveX(x)));
+      }
+      // klao-site motion tokens
+      const drift = cubicBezier(0.28, 0.11, 0.32, 1);
+      const settle = cubicBezier(0.32, 0.72, 0, 1);
+
+      // Layout (px). Review window: full frame -> scale 0.76 at (44, 108), vertically centred.
+      const REVIEW_SCALE = 0.76;
+      const REVIEW_X = 44;
+      const REVIEW_Y = 108;
+      const TEST_SLIDE = 640; // test window enters from this far right (its left edge 1296 -> 656)
+
+      gsap.config({ force3D: false }); // 2D transforms: no composited-layer resampling at frame 0
+      const tl = gsap.timeline({ paused: true });
+      // 0.0–0.5 hold on the still. 0.5–2.4 the review window eases back to the left (drift).
+      tl.fromTo(
+        "#review",
+        { x: 0, y: 0, scale: 1 },
+        { x: REVIEW_X, y: REVIEW_Y, scale: REVIEW_SCALE, duration: 1.9, ease: drift },
+        0.5,
+      );
+      // 0.5–0.9 the unframed copy fades out, so the rounded frame and its shadow come in.
+      tl.fromTo("#review-flat", { opacity: 1 }, { opacity: 0, duration: 0.4, ease: drift }, 0.5);
+      // 1.8–3.9 the test window slides in from the right and settles in front of it (drift: a slow start
+      // and a long, soft landing; peak ~20 px/frame). It starts clear of the review window (left edge 1296,
+      // the review's right edge 1272 at 1.8 s) and is ~90 % opaque (1.8–2.25, drift) before the two first
+      // overlap by more than a few px, so the two screens' text never double-exposes.
+      tl.set("#test", { x: TEST_SLIDE, opacity: 0 }, 0);
+      tl.fromTo("#test", { x: TEST_SLIDE }, { x: 0, duration: 2.1, ease: drift, immediateRender: false }, 1.8);
+      tl.fromTo("#test", { opacity: 0 }, { opacity: 1, duration: 0.45, ease: drift, immediateRender: false }, 1.8);
+      // 3.9–5.0 hold (root data-duration governs length).
+      window.__timelines["main"] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>

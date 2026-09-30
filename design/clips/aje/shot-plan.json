@@ -1,0 +1,27 @@
+{
+  "category": "webpage",
+  "duration_s": 5,
+  "fps": 30,
+  "canvas": { "w": 1580, "h": 900, "aspect": "16:9 media box (1580x900)" },
+  "style": "klao-site White Edition: Apple-minimal, calm, understated; no text overlays",
+  "palette": ["#F5F6F8", "rgba(0,0,0,.08)"],
+  "font": "none (no added text; UI text lives in the captures)",
+  "beats": [0.5, 1.8, 2.4, 3.9],
+  "export": "mp4+webm",
+  "asset_needs": [],
+  "block": null,
+  "customize": {
+    "catalog_search": "browser-device-stage / device-frame-stage / multi-device-splay considered; rejected because they add device chrome the brief forbids. Hand-authored two rounded-rect windows, as in the Cafénista clip."
+  },
+  "content": {
+    "url": "Aje web prototype, local dev server (next dev -p 3210), /app",
+    "capture": ["assets/aje.jpg", "assets/next-steps-test.png"],
+    "highlights": [],
+    "shots": [
+      { "id": "hold", "start": 0.0, "end": 0.5, "motion": "none: the still, Aje's Review screen for BikeFix Home, full frame (= public/images/aje.jpg)" },
+      { "id": "step-back", "start": 0.5, "end": 2.4, "motion": "review window scale 1 -> 0.76, x 0 -> 44, y 0 -> 108 (drift); unframed copy opacity 1 -> 0 over 0.5-0.9 (drift)" },
+      { "id": "test-in", "start": 1.8, "end": 3.9, "motion": "test window (example idea, Next steps, reviewed test) x +640 -> 0 (drift, 2.1 s), opacity 0 -> 1 over 1.8-2.25 (drift)" },
+      { "id": "hold-end", "start": 3.9, "end": 5.0, "motion": "hold the two-window composition; frames from 4.0 s are identical" }
+    ]
+  }
+}
