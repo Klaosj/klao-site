@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 
 /* Line drawings from the approved prototype
    (design/white-edition/prototype/index.html): the five By-day chapter
@@ -18,6 +18,16 @@ const LINE = {
   strokeLinecap: 'round',
   strokeLinejoin: 'round',
 } as const;
+
+/* The parts of the rings and the five-apps strip that fill in, in order, when the project sheet
+   opens (project-sheet.css, "Every sheet moves once"): `sk-step` plus `--i`, its place in the
+   stagger. Inert everywhere else -- the index thumbnails and the server HTML draw the final
+   picture, because no CSS keys anything off these classes outside the sheet's
+   `[data-enter]`. A part that animates is a group of its own with no `transform` attribute:
+   a CSS transform would replace an SVG transform attribute, not add to it. */
+function step(i: number, kind?: string): { className: string; style: CSSProperties } {
+  return { className: kind ? `sk-step ${kind}` : 'sk-step', style: { ['--i' as string]: String(i) } };
+}
 
 /** Every sketch name, in chapter order then the two project drawings. The
  *  Story DB `Sketch` select and story.json must use exactly these literals. */
@@ -190,29 +200,38 @@ export function Sketch({ name, small = false, label, caption, className }: Sketc
         style={{ letterSpacing: 0 }}
         {...a11y}
       >
-        <g fill="none" stroke="currentColor" strokeWidth={1.5}>
-          <circle cx="160" cy={small ? 91 : 125} r={small ? 84 : 105} />
-          <circle cx="160" cy={small ? 111 : 145} r={small ? 62 : 72} />
-        </g>
-        <circle cx="160" cy={small ? 131 : 162} r={small ? 38 : 34} style={{ fill: 'var(--kram)' }} />
-        {!small && (
-          <g fill="currentColor">
-            <text x="160" y="70" textAnchor="middle">
+        {/* One group per ring with its own label, outer to inner (TAM -> SAM -> SOM): the order
+            they fill in on the sheet. Paint order is unchanged where it matters -- no label
+            overlaps a later ring. */}
+        <g {...step(0, 'sk-ring')}>
+          <circle cx="160" cy={small ? 91 : 125} r={small ? 84 : 105} fill="none" stroke="currentColor" strokeWidth={1.5} />
+          {!small && (
+            <text x="160" y="70" textAnchor="middle" fill="currentColor">
               TAM
             </text>
-            <text x="160" y="118" textAnchor="middle">
+          )}
+        </g>
+        <g {...step(1, 'sk-ring')}>
+          <circle cx="160" cy={small ? 111 : 145} r={small ? 62 : 72} fill="none" stroke="currentColor" strokeWidth={1.5} />
+          {!small && (
+            <text x="160" y="118" textAnchor="middle" fill="currentColor">
               SAM
             </text>
+          )}
+        </g>
+        <g {...step(2, 'sk-ring')}>
+          <circle cx="160" cy={small ? 131 : 162} r={small ? 38 : 34} style={{ fill: 'var(--kram)' }} />
+          {!small && (
             <text x="160" y="170" textAnchor="middle" style={{ fill: 'var(--on-kram)' }}>
               SOM
             </text>
-            {caption ? (
-              <text x="160" y="248" textAnchor="middle">
-                {caption}
-              </text>
-            ) : null}
-          </g>
-        )}
+          )}
+        </g>
+        {!small && caption ? (
+          <text x="160" y="248" textAnchor="middle" fill="currentColor">
+            {caption}
+          </text>
+        ) : null}
       </svg>
     );
   }
@@ -222,32 +241,38 @@ export function Sketch({ name, small = false, label, caption, className }: Sketc
     const arrowY = small ? 74 : 90;
     return (
       <svg viewBox={`0 0 390 ${small ? 150 : 182}`} className={className} {...a11y}>
+        {/* Fill-in order on the sheet: the five grey tiles left to right, the arrow, then
+            GoNai (polish A09's five grey apps -> one green GoNai, told once). */}
         {FIVE_APPS.map((app, i) => (
-          <g key={app} transform={`translate(${20 + i * 52} ${y})`}>
-            <rect width="40" height="40" rx="10" stroke="currentColor" strokeWidth={1.25} style={{ fill: 'var(--card)' }} />
-            {!small && (
-              <g transform="translate(8 8)" {...LINE} style={{ stroke: 'var(--ink-2)' }}>
-                {TILE_PATHS[app]}
-              </g>
-            )}
+          <g key={app} {...step(i)}>
+            <g transform={`translate(${20 + i * 52} ${y})`}>
+              <rect width="40" height="40" rx="10" stroke="currentColor" strokeWidth={1.25} style={{ fill: 'var(--card)' }} />
+              {!small && (
+                <g transform="translate(8 8)" {...LINE} style={{ stroke: 'var(--ink-2)' }}>
+                  {TILE_PATHS[app]}
+                </g>
+              )}
+            </g>
           </g>
         ))}
-        <path d={`M290 ${arrowY}h22m-6-6l6 6-6 6`} {...LINE} />
+        <path d={`M290 ${arrowY}h22m-6-6l6 6-6 6`} {...LINE} {...step(FIVE_APPS.length, 'sk-arrow')} />
         {/* GoNai, the one app the five became -- its own green, through --gonai
             rather than a hard-coded hex, so dark mode swaps to the dark-mode
             green too (preflight A6: lineage counts as GoNai's own mark). */}
-        <g transform={`translate(322 ${small ? 50 : 66})`}>
-          <rect width="48" height="48" rx="12" style={{ fill: 'var(--gonai)' }} />
-          {!small && (
-            // Fix wave finding 10: the pin was white-on-green as a literal
-            // #FFFFFF, which stays white even where --canvas (what "on the
-            // tile" means everywhere else on this site) is dark-mode's
-            // near-black -- var(--canvas) through `style`, same as the
-            // rect's own --gonai fill just above.
-            <g transform="translate(12 12)" {...LINE} style={{ stroke: 'var(--canvas)' }}>
-              {TILE_PATHS.pin}
-            </g>
-          )}
+        <g {...step(FIVE_APPS.length + 1, 'sk-one')}>
+          <g transform={`translate(322 ${small ? 50 : 66})`}>
+            <rect width="48" height="48" rx="12" style={{ fill: 'var(--gonai)' }} />
+            {!small && (
+              // Fix wave finding 10: the pin was white-on-green as a literal
+              // #FFFFFF, which stays white even where --canvas (what "on the
+              // tile" means everywhere else on this site) is dark-mode's
+              // near-black -- var(--canvas) through `style`, same as the
+              // rect's own --gonai fill just above.
+              <g transform="translate(12 12)" {...LINE} style={{ stroke: 'var(--canvas)' }}>
+                {TILE_PATHS.pin}
+              </g>
+            )}
+          </g>
         </g>
       </svg>
     );

@@ -47,7 +47,10 @@ describe('Sketch', () => {
 
   it('draws five app tiles collapsing into one GoNai tile, icons only at full size', () => {
     const { container } = render(<Sketch name="five" />);
+    // Six parts (five tiles + GoNai), each a transform-free group around its positioned tile
+    // (the sheet's fill-in transforms the outer group; see the rings/five staging test below).
     expect(container.querySelectorAll('svg > g')).toHaveLength(6);
+    expect(container.querySelectorAll('svg > g > g[transform^="translate"]')).toHaveLength(6);
     // GoNai's own mark, per --gonai (master green rule, preflight A6): styled through the
     // CSS var rather than a hard-coded hex, so dark mode swaps to the dark-mode green too.
     expect(container.querySelector('rect[style*="--gonai"]')).toBeTruthy();
@@ -56,10 +59,50 @@ describe('Sketch', () => {
     // --canvas (what "on the tile" means everywhere else) is near-black.
     expect(container.querySelector('g[style*="--canvas"]')).toBeTruthy();
     expect(container.querySelector('g[stroke="#FFFFFF"], g[stroke="#fff"]')).toBeNull();
-    expect(container.querySelectorAll('svg > g > g').length).toBe(6);
+    // The icons: five app glyphs and GoNai's pin, one level inside each positioned tile.
+    expect(container.querySelectorAll('svg > g > g > g').length).toBe(6);
     cleanup();
     const thumb = render(<Sketch name="five" small />);
-    expect(thumb.container.querySelectorAll('svg > g > g')).toHaveLength(0);
+    expect(thumb.container.querySelectorAll('svg > g > g > g')).toHaveLength(0);
+  });
+
+  // "Every sheet moves once" (spec 2026-09-30-sheet-clips.md): the sheet fills these parts in,
+  // in this order. A CSS transform replaces an SVG transform attribute instead of adding to it,
+  // so a staged part must never carry one itself -- or the fill-in would throw it to the origin.
+  it('stages the rings outer to inner, each ring with its own label', () => {
+    const { container } = render(<Sketch name="rings" caption="Method, not to scale." />);
+    const parts = Array.from(container.querySelectorAll<SVGGElement>('svg > .sk-step'));
+    expect(parts.map((g) => g.getAttribute('class'))).toEqual(['sk-step sk-ring', 'sk-step sk-ring', 'sk-step sk-ring']);
+    expect(parts.map((g) => g.style.getPropertyValue('--i'))).toEqual(['0', '1', '2']);
+    expect(parts.map((g) => g.textContent)).toEqual(['TAM', 'SAM', 'SOM']);
+    expect(parts.map((g) => Number(g.querySelector('circle')!.getAttribute('r')))).toEqual([105, 72, 34]);
+    for (const g of parts) expect(g.hasAttribute('transform')).toBe(false);
+    // The caption is not a part: it never moves.
+    expect(container.querySelector('svg > text')?.textContent).toBe('Method, not to scale.');
+  });
+
+  it('stages five apps -> one as tiles left to right, the arrow, then GoNai', () => {
+    const { container } = render(<Sketch name="five" />);
+    const parts = Array.from(container.querySelectorAll<SVGElement>('svg > .sk-step'));
+    expect(parts.map((el) => el.getAttribute('class'))).toEqual([
+      'sk-step',
+      'sk-step',
+      'sk-step',
+      'sk-step',
+      'sk-step',
+      'sk-step sk-arrow',
+      'sk-step sk-one',
+    ]);
+    expect(parts.map((el) => el.style.getPropertyValue('--i'))).toEqual(['0', '1', '2', '3', '4', '5', '6']);
+    for (const el of parts) expect(el.hasAttribute('transform')).toBe(false);
+    expect(parts[6].querySelector('rect[style*="--gonai"]')).toBeTruthy();
+  });
+
+  it('draws the same final picture in the server HTML: no start state is baked into the markup', () => {
+    for (const name of ['rings', 'five'] as const) {
+      const html = renderToStaticMarkup(<Sketch name={name} />);
+      expect(html).not.toMatch(/opacity|scale\(|data-enter/);
+    }
   });
 
   it('renders nothing, without throwing, for an unknown or empty name (chapter 6 has no sketch)', () => {
