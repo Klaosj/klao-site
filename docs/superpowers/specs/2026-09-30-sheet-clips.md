@@ -1,9 +1,12 @@
 # Sheet clips: a product clip that plays once in the project sheet (2026-09-30)
 
-Status: built on `feat/motion-cafenista`. First user: Cafénista (HyperFrames source in `design/clips/cafenista/`).
+Status: built on `feat/motion-cafenista`. Clips: Cafénista (HyperFrames source in `design/clips/cafenista/`),
+Aje and GoNai (placeholders since 30 Sep: 5 s stills of their screenshots, until the rendered clips land).
+The three sheets without a screenshot move too: see §7.
 Code: `src/lib/project-clips.ts` (registry), `src/components/SheetClip.tsx` (player),
-`src/components/ProjectSheet.tsx` (`SheetMedia`, `sheetSettled`), `src/components/project-sheet.css` (`.sheet-clip`, `.sheet-replay`).
-Tests: `tests/sheet-clip.test.tsx`.
+`src/components/ProjectSheet.tsx` (`SheetMedia`, `sheetSettled`), `src/components/project-sheet.css` (`.sheet-clip`, `.sheet-replay`),
+`src/lib/enter-once.ts` (§7), `src/components/sketches.tsx` (§7's staged parts).
+Tests: `tests/sheet-clip.test.tsx`, `tests/sheet-enter.test.tsx`, `tests/sketches.test.tsx`.
 
 ## 1. Why
 
@@ -85,3 +88,42 @@ frame 0, or the swap from still to video shows a jump.
    is within budget.
 
 A project whose Slug is set later keeps its clip: `clipFor` also tries `slugKey(Name)`.
+
+## 7. Every sheet moves once
+
+Approved 30 Sep ("ตาม recommendation และ motion ในทุกจุด"): every project's sheet gets one quiet
+motion moment, at the same time: once, when the sheet has opened (`sheetSettled`: the 500 ms
+open, and the A07 morph when one ran). Never on scroll, never looping.
+
+| Project | Media | The moment |
+|---|---|---|
+| Aje | `img` | the product clip (§2); a placeholder still until the rendered clip lands |
+| GoNai | `win` | the product clip over the screenshot, below the address bar; a placeholder still for now |
+| Cafénista | `img` | the product clip (§2) |
+| klao-site | `notion` | the Notion row's four fields fill in top to bottom: opacity .55 → 1, 6 px rise, 60 ms apart, 600 ms each (780 ms in all) |
+| Talatify | `rings` | TAM → SAM → SOM, outer to inner: opacity .55 → 1 and scale .96 → 1 about each ring's own centre, 120 ms apart, 600 ms each (840 ms) |
+| Tripedia | `five` | the five grey tiles left to right (6 px rise), the arrow (6 px from the left), then GoNai's green tile (scale .96 → 1), 60 ms apart, 480 ms each (840 ms). Polish A09's five grey apps → one green GoNai had only played in the Signature scroll scene; the sheet's drawing was static until now |
+
+How the three drawings move (`useEnterOnce`, `src/lib/enter-once.ts`; CSS in `project-sheet.css`):
+
+- `.smedia` carries `data-enter`: none on the server, on the first client render, without
+  JavaScript and under reduced motion, so the picture is final and nothing is dimmed.
+- With motion allowed it becomes `from` in a layout effect, before the first paint and before a
+  View Transition's "after" snapshot, so the final picture never flashes first. Parts are dimmed to
+  .55 (the reveal floor: dimmed, never hidden) and a few px off. After `sheetSettled` it becomes
+  `go` and each part transitions to its final state on the drift curve, staggered by its `--i`.
+- Only opacity and transform animate, inside `prefers-reduced-motion: no-preference`, in
+  `@layer components`. An SVG part is a group of its own with no `transform` attribute (a CSS
+  transform replaces one) and scales about its own centre (`transform-box: fill-box`).
+- `SheetMedia` is keyed by project, so moving from one open sheet straight to another plays the
+  new one's moment.
+
+Replay on a `win` window: GoNai's address bar pushes its window past `.smedia`'s bottom edge, which
+clips it (about 17 px at 1440, 38 px on a 390 phone), so Replay sits 12 px above whichever edge is
+higher, the window's or `.smedia`'s (`bottom: calc(12px + max(0px, 100% - 50.25cqw))`).
+
+Checked in Chrome, 30 Sep: all six sheets, EN and TH, 1440 light and 390 dark, motion and reduced
+motion: no console errors, nothing dimmed or moved at rest, no overlaps, each clip within 0.5 px of
+its screenshot, Replay 12 px from the visible corner. Also opened from the index rows (the A07
+morph): the drawings start dimmed in the morph and settle after it. `next build`: the `/[locale]`
+route 18.1 → 18.6 kB, First Load 159 → 160 kB, for the two placeholder entries and the fill-in.
