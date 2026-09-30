@@ -37,8 +37,8 @@ export const PROJECT_CLIPS: Readonly<Record<string, ProjectClip>> = {
     mp4: '/clips/gonai.mp4',
     durationMs: 5000,
     label: {
-      en: 'Clip, 5 seconds: GoNai’s home screen, Plan a full day out, know every baht before you leave.',
-      th: 'คลิป 5 วินาที: หน้าแรกของ GoNai วางแผนเที่ยวทั้งวัน รู้ทุกบาทก่อนออกจากบ้าน',
+      en: 'Clip, 5 seconds: the GoNai home page gives way to a planned day from Lat Phrao to Siam, with the transport, two sample stops and the estimated total against the budget, then the same plan appears as a view-only share on a phone.',
+      th: 'คลิป 5 วินาที: จากหน้าแรกของ GoNai ไปยังแผนเที่ยวหนึ่งวันจากลาดพร้าวไปสยาม มีค่าเดินทาง ร้านตัวอย่างสองที่ และยอดรวมโดยประมาณเทียบกับงบ แล้วแผนเดียวกันขึ้นเป็นหน้าแชร์แบบดูอย่างเดียวบนมือถือ',
     },
   },
   cafenista: {
