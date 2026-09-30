@@ -288,6 +288,17 @@ describe('project-sheet.css: the clip', () => {
     expect(css).toMatch(/\.sheet-clip \{[^}]*filter: var\(--shot-dim\);/);
   });
 
+  // Seen in Chrome at 1440 and 390: GoNai's 'win' window runs past .smedia's bottom edge (its
+  // address bar pushes it down), so a Replay pinned 12px above the window's own bottom was cut
+  // off by .smedia's clip. It now sits 12px above whichever edge is higher.
+  it("keeps Replay 12px above the visible edge, even where .smedia clips the window's bottom", () => {
+    expect(css).toContain('.smedia:is([data-media="img"], [data-media="win"]) { container-type: inline-size; }');
+    expect(css).toMatch(/\.sheet-win \.sheet-replay \{[^}]*bottom: calc\(12px \+ max\(0px, 100% - 50\.25cqw\)\);/);
+    // 50.25cqw = .smedia's 16:9 height (56.25cqw) less the window's 6% margin-top.
+    expect(css).toMatch(/\.smedia \{[^}]*aspect-ratio: 16 \/ 9;/);
+    expect(css).toMatch(/\.sheet-win \{[^}]*margin-top: 6%;/);
+  });
+
   it('keeps the video invisible until playing, and fades only opacity, only with motion allowed', () => {
     expect(css).toMatch(/\.sheet-clip \{[^}]*opacity: 0;/);
     expect(css).toContain('.sheet-clip[data-playing] { opacity: 1; }');

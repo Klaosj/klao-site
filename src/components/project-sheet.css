@@ -71,8 +71,15 @@
   /* Replay: the .btn pill on the .ctl control surface the tour's own Replay and the sheet's close
      button already use (no new glass), made small and pinned to the window's corner. Focus shows
      the site's own :focus-visible ring (globals.css); 12px of inset keeps it inside the window's
-     clip. (0,2,0) so the size wins over .btn in any stylesheet order. */
-  .sheet-win .sheet-replay { position: absolute; right: 12px; bottom: 12px; z-index: 1; min-height: 36px; padding: 0 14px 0 12px; gap: 6px; font-size: 14px; }
+     clip. (0,2,0) so the size wins over .btn in any stylesheet order.
+     The window can run past .smedia's bottom edge, which clips it: GoNai's 'win' window by its
+     30px address bar (about 17px at 1440, 38px on a 390 phone), an 'img' window about 8px on a
+     phone. So the button sits 12px above whichever edge is higher, the window's own or .smedia's:
+     .smedia shows the window's top 50.25cqw (its 16:9 height, 56.25cqw, less the window's 6%
+     margin-top), and `bottom`'s 100% is the window's height. The container is the screenshot
+     media's .smedia; the drawings have no Replay. */
+  .smedia:is([data-media="img"], [data-media="win"]) { container-type: inline-size; }
+  .sheet-win .sheet-replay { position: absolute; right: 12px; bottom: calc(12px + max(0px, 100% - 50.25cqw)); z-index: 1; min-height: 36px; padding: 0 14px 0 12px; gap: 6px; font-size: 14px; }
   /* On a phone the picture is ~340px wide and a worded pill would cover a ninth of it (seen at
      390, Thai "เล่นอีกครั้ง"): the button becomes a 36px circle, and its word stays in the
      accessibility tree, only visually hidden, so the button keeps its name. */
