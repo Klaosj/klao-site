@@ -62,6 +62,8 @@ stage() {
       echo "staged film-$cut/media/$key.mp4 ($size, $((PRE + 150 + POST)) frames) from work/stings/$key-$cut/"
     done
   done
+  # The music cut is git-ignored (licensed track, public repo): a fresh clone has to build it first.
+  [ -f "$FILM/assets/bed.m4a" ] || { echo "missing assets/bed.m4a — run tools/music.sh (README § Music)" >&2; exit 1; }
   for cut in $CUTS; do
     mkdir -p "$FILM/film-$cut/media/fonts"
     cp "$FILM/assets/fonts/anuphan-500.woff2" "$FILM/assets/fonts/anuphan-600.woff2" "$FILM/assets/fonts/OFL.txt" "$FILM/film-$cut/media/fonts/"

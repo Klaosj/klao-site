@@ -113,14 +113,12 @@ from the title, the Signature's last hold and the end hold so the questions can 
 
 ### 3.4 Audio
 
-- A light, original music bed, generated locally with ffmpeg (a slow, soft chord pad).
-- The generator script and the rendered bed are committed under `design/clips/film/`.
-- No third-party track, because no licence question can arise. The HeyGen catalog needs a
-  HeyGen account, which is Klao's to create.
-- Mix:
-  - integrated loudness about −20 LUFS, true peak ≤ −1 dBTP;
-  - 1 s fade in and 2 s fade out ending at 40.0 s;
-  - no sound effects.
+- **Changed 2026-10-01 (Klao):** the original ffmpeg pad did not fit; Klao wants music and left the pick to Claude.
+  The film now uses 40 s of "Ambient Product Background_Ascent" by ummbrella (Pixabay Content License: free, no
+  attribution, no standalone redistribution). The track and the cut are never committed (public repo); only the
+  films are. Source, cut and rebuild steps: `design/clips/film/README.md` § Music, `tools/music.sh`.
+- Mix: integrated loudness about −18 LUFS, true peak ≤ −1 dBTP; the cut is placed so the end card lands on a
+  downbeat where the track's own fade begins; 0.6 s fade in, 0.5 s fade out ending at 40.0 s; no sound effects.
 
 ## 4. B: Entry and player on the site
 

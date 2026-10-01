@@ -11,8 +11,8 @@ spec §3.1.
 design/clips/film/
   film-16x9/     index.html (geometry + type sizes) · scenes.js · scenes.css · hyperframes.json · meta.json · package.json
   film-1x1/      the same, re-composed for 1080×1080 (not cropped)
-  assets/        bed.m4a (the music bed) · fonts/anuphan-500.woff2, anuphan-600.woff2, OFL.txt
-  tools/         build.sh · bed.sh · film-audit.mjs · verify.py
+  assets/        fonts/anuphan-500.woff2, anuphan-600.woff2, OFL.txt · (git-ignored) music/ascent.mp3, bed.m4a
+  tools/         build.sh · music.sh · bed.sh (old pad, fallback) · film-audit.mjs · verify.py
   work/          (git-ignored) sting masters, the Thai check copies, the lossless film masters
 ```
 
@@ -32,7 +32,7 @@ NumPy. Paths are relative to this folder.
 bash tools/build.sh                 # stage → check → render → encode → verify (about 9 min)
 bash tools/build.sh stage           # only media/ (enough for `npx hyperframes@0.8.97 preview film-16x9`)
 bash tools/build.sh check render encode verify   # any subset, in that order
-bash tools/bed.sh                   # only if the music changes (rewrites assets/bed.m4a)
+bash tools/music.sh                 # writes assets/bed.m4a + work/bed/bed.wav from the Pixabay track (see Music)
 ```
 
 - **stage** renders each sting's lossless PNG master from its own source (`../gonai`, `../aje`, `../cafenista`,
@@ -79,17 +79,25 @@ bash tools/bed.sh                   # only if the music changes (rewrites assets
 
 ## Music
 
-`tools/bed.sh` writes an original pad with ffmpeg only: no samples, no third-party track.
-- The chords: Fmaj9 → Am7 → B♭maj7 → C6/9 → Fmaj7, changing on the film's beats (10.04, 18.68, 27.28, 37.26 s)
-  with 2 s cross-fades.
-- Sine roots plus triangle-ish upper voices, each doubled by a ±0.15 % detuned copy. The root is never detuned, so
-  a phone speaker's mono sum does not cancel it.
-- Then a 60 Hz high-pass, a 2.2 kHz low-pass, a short multi-tap echo, a 1 s fade in and a 2 s fade out to 40.0 s,
-  and two-pass linear loudnorm.
-
-Measured on `assets/bed.m4a` (ffmpeg ebur128, 2026-10-01): −19.8 LUFS integrated, LRA 2.1 LU, true peak −10.1 dBFS.
-The composition plays it from 0 to 40 s at volume 1 (`<audio id="bed">`). HyperFrames' own mix of the composition
-measured the same (−19.8 LUFS, −10.2 dBFS), so encode copies the bed's stream rather than re-encoding a mix. The webm's Opus track is encoded from `work/bed/bed.wav` (the lossless bed `tools/bed.sh` writes) when it exists, and from `assets/bed.m4a` otherwise, so a rebuilt webm is not lossy-to-lossy; the committed films were not re-encoded.
+**Track:** "Ambient Product Background_Ascent" by ummbrella, Pixabay
+(https://pixabay.com/music/upbeat-ambient-product-background-ascent-303688/, 1:36, uploaded 2025-02-20), under the
+[Pixabay Content License](https://pixabay.com/service/license-summary/): free to use, attribution not required, no
+redistributing the music on its own. Chosen 2026-10-01 after Klao found the original ffmpeg pad (`tools/bed.sh`)
+did not fit.
+- **Never committed.** The repo is public, so neither the MP3 nor the 40 s cut (`assets/bed.m4a`) is in git
+  (.gitignore). Only the films, with the music inside, are. To rebuild: download the MP3 from the URL above to
+  `assets/music/ascent.mp3`, then `bash tools/music.sh` and `bash tools/build.sh encode`.
+- **Content ID.** Pixabay lists the track as Content ID registered. That does not affect the site; a copy of the
+  film uploaded to YouTube may get a claim, cleared through Pixabay.
+- **The cut** (`tools/music.sh`): track 50.47 → 90.47 s. The track is ~110 BPM (bar 2.18 s). From 50.47 s the end
+  card (film 37.3 s) lands on a downbeat where the track's own fade begins, and the beat changes at 10.0 / 18.7 s
+  sit on beats (≤ 0.05 s), 3.1 / 27.3 s within 0.18 s. A 0.6 s fade in, a 0.5 s fade out to 40.0 s, two-pass linear
+  loudnorm.
+- **Measured** on `assets/bed.m4a` and inside the committed films (ffmpeg ebur128, 2026-10-01): −17.9 LUFS
+  integrated, LRA 2.0 LU, peak −5.5 dBFS (webm −5.3).
+- **Swapping the music** needs no re-render: the 8 films were remuxed with `-c:v copy` (video streams verified
+  byte-identical by md5), the mp4 taking the AAC stream as is and the webm Opus 96 kb/s from `work/bed/bed.wav`.
+  The composition still plays `media/bed.m4a` at volume 1 for previews.
 
 ## Beats
 

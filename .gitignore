@@ -27,3 +27,7 @@ design/clips/work/
 design/clips/film/*/media/
 design/clips/film/*/snapshots/
 design/clips/film/*/renders/
+# The film's music is a licensed Pixabay track (design/clips/film/tools/music.sh). The licence forbids redistributing
+# the music on its own and the repo is public: neither the track nor the 40 s cut is ever committed — only the films.
+design/clips/film/assets/music/
+design/clips/film/assets/bed.m4a
