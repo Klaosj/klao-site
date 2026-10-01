@@ -35,7 +35,7 @@ Plays once, holds the last frame, no audio. Frame 0 is the poster and the reduce
   copy rules, `design/design-tokens.json` 0.4.0.
 - Renders: `design/renders/m1/dashboard-normal`, `m1/dashboard-alert`, `m1/bar-alert-live`,
   `m2/bar-beans`, `m2/bar-saved`, `m2/bar-result`, `m4/owner-today.desktop` (all `.light.png`).
-- klao-site `frame.md` (copied here) is the frame and motion spec.
+- klao-site `../frame.md` is the frame and motion spec.
 
 ## Constraints
 

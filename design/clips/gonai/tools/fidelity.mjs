@@ -1,15 +1,16 @@
 // fidelity.mjs — render the rebuilt components (sting-16x9/ui.css + ui.js) at the same CSS width
 // and DPR as the app captures, and save screenshots + card boxes for tools/fidelity.py.
 //
-//   PLAYWRIGHT=<playwright/index.mjs> node source/tools/fidelity.mjs <captures dir> <out dir>
-// Captures come from tools/capture.mjs (plan-<w>.png/.boxes.json, share-390.png/.boxes.json).
+//   PLAYWRIGHT=<playwright/index.mjs> node tools/fidelity.mjs <captures dir> <out dir>
+// Captures come from tools/capture.mjs (plan-<w>.png/.boxes.json, share-390.png/.boxes.json); this
+// script only writes <out dir>, and tools/fidelity.py reads both.
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const ui = path.join(here, "..", "sting-16x9");
-const [, , CAP, OUT] = process.argv;
+const OUT = process.argv[3]; // argv[2] is the captures dir (read by fidelity.py, not here)
 fs.mkdirSync(OUT, { recursive: true });
 const { chromium } = await import(process.env.PLAYWRIGHT ?? "playwright");
 const browser = await chromium.launch({ channel: process.env.PW_CHANNEL ?? "chrome" });

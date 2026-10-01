@@ -21,6 +21,9 @@ import { PHONE_QUERY, type ProjectClip } from '@/lib/project-clips';
 //   plays once, holds the last frame, and offers Replay. Never loop / controls / autoplay.
 // - A hidden tab pauses it; coming back resumes it. Unmount (the sheet closing) pauses it and
 //   drops its buffered media.
+// - Phones get the clip's square cut. A rotation across the phone breakpoint switches cuts on
+//   the same <video>: it hides until the new cut plays (the <picture> under it already shows
+//   that cut's poster), and plays it from the top only if the clip was playing.
 
 type Props = {
   clip: ProjectClip;
@@ -41,28 +44,54 @@ export default function SheetClip({ clip, locale, startAfter }: Props) {
   const [on, setOn] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [ended, setEnded] = useState(false);
-  // Phones get the square cut when the clip has one. Read once at mount (the server renders
-  // nothing): the files are chosen before the <video> first exists. The square cut may carry its
-  // own label (it tells a shorter story than the 16:9 cut); the clip's label is the fallback.
+  // Phones get the square cut when the clip has one. Chosen at mount (the server renders
+  // nothing), so the files are right before the <video> first exists, and again whenever the
+  // phone query flips (a rotation). The square cut may carry its own label (it tells a shorter
+  // story than the 16:9 cut); the clip's label is the fallback.
   const [src, setSrc] = useState<{ webm: string; mp4: string; label?: Localized }>(clip);
   const videoRef = useRef<HTMLVideoElement>(null);
   // "Should be playing": from the start (or a Replay) until `ended`. A hidden tab pauses without
   // clearing it, so coming back knows whether to resume.
   const wanted = useRef(false);
+  // Set by a rotation, so the commit that renders the other cut's <source>s reloads the video.
+  const switched = useRef(false);
 
   useEffect(() => {
     if (!motionAllowed() || saveDataOn()) return;
-    const phone = typeof matchMedia === 'function' && matchMedia(PHONE_QUERY).matches;
-    setSrc(phone && clip.square ? clip.square : clip);
+    const phoneMq = matchMedia(PHONE_QUERY);
+    const square = clip.square;
+    setSrc(phoneMq.matches && square ? square : clip);
     setOn(true);
     // Switching to reduced motion mid-clip removes the video; the still is underneath.
     const mq = matchMedia('(prefers-reduced-motion: reduce)');
-    const onChange = (e: MediaQueryListEvent) => {
+    const onMotion = (e: MediaQueryListEvent) => {
       if (e.matches) setOn(false);
     };
-    mq.addEventListener?.('change', onChange);
-    return () => mq.removeEventListener?.('change', onChange);
+    // A rotation across the breakpoint mid-clip: the other cut, hidden until it plays. Without
+    // a square cut both sides play the same files, so there is nothing to listen for.
+    const onPhone = (e: MediaQueryListEvent) => {
+      switched.current = true;
+      setSrc(e.matches && square ? square : clip);
+      setPlaying(false);
+    };
+    mq.addEventListener?.('change', onMotion);
+    if (square) phoneMq.addEventListener?.('change', onPhone);
+    return () => {
+      mq.removeEventListener?.('change', onMotion);
+      if (square) phoneMq.removeEventListener?.('change', onPhone);
+    };
   }, [clip]);
+
+  // After a rotation has rendered the other cut's <source>s: load() makes the element pick them
+  // (a <video> never re-reads its sources by itself), then play the new cut from the top only
+  // if the clip was playing. An ended clip stays on the new cut's poster, Replay still offered.
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!switched.current || !video) return;
+    switched.current = false;
+    video.load();
+    if (wanted.current && !document.hidden) playQuietly(video);
+  }, [src]);
 
   useEffect(() => {
     const video = videoRef.current;

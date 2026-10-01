@@ -42,7 +42,7 @@ stops → the budget card, whose bar fills.
   `main`, with no `.env` files and the JSON store in the scratch folder. The script refuses to run unless
   `/api/health` says `"store":"json"` on localhost and aborts on any off-site request. Nothing touched
   Supabase, Vercel or the repo; the server was stopped afterwards.
-- klao-site `public/images/gonai.jpg` (frame 0) and `frame.md` (copied here).
+- klao-site `public/images/gonai.jpg` (frame 0) and `../frame.md`.
 
 ## Constraints
 

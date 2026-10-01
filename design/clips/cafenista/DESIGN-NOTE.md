@@ -1,6 +1,6 @@
 # Cafénista UI sting · design note
 
-Pilot + round 2, 2026-10-01. Follows klao-site `frame.md` (copied next to this file). This note records
+Pilot + round 2, 2026-10-01. Follows klao-site `../frame.md`. This note records
 what this sting uses and where it deliberately departs.
 
 ## Surfaces and tokens

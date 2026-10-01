@@ -5,12 +5,12 @@ Two HyperFrames 0.8.97 compositions that rebuild GoNai's real plan screen in HTM
 Brand truth: [../frame.md](../frame.md) — every clip follows it.
 
 ```
-source/
+design/clips/gonai/
   sting-16x9/   index.html · ui.css · ui.js · fonts/ · assets/landing.jpg   1580×900, desktop sheet
   sting-1x1/    index.html · ui.css · ui.js · fonts/                       1080×1080, phone (re-composed)
   tools/        build.sh · encode.sh · stills.py · quality.py · strip.py
                 capture.mjs · make_ui_css.py · fidelity.mjs · fidelity.py
-  BRIEF.md  README.md  frame.md (klao-site frame spec, copied)
+  BRIEF.md  README.md
 ```
 
 - `ui.css` is GoNai's own compiled CSS (Tailwind v4.3.3 output of `app/globals.css` + the next/font
@@ -24,19 +24,23 @@ source/
 
 Needs Node 22+, ffmpeg with libx264 + libvpx, Python 3 with Pillow + NumPy, macOS (colour emoji).
 
+Paths below are relative to this folder, `design/clips/gonai/`.
+
 ```bash
-bash source/tools/build.sh        # from the deliverables folder: check + render both cuts, encode, stills, PSNR lines
+bash tools/build.sh        # check + render both cuts, encode, stills, PSNR lines
 ```
 
-Deliverables are written next to `source/`; masters (lossless PNG) go to `$WORK`
-(default `../work/build/<cut>/`, outside the deliverables).
+The script finds its folders from its own path, so it runs from any directory. Deliverables are written to
+`design/clips/` (the folder above this one); masters (lossless PNG) go to `$WORK` (default `design/work/build/<cut>/`).
+Neither is committed: the site serves its own copies from `public/clips/` and `public/images/`.
 
 To rebuild the inputs (only needed if the app changes): export GoNai `main` with `git archive` into a
 scratch folder (no `.env*`), copy `node_modules`, run
 `env -i PATH=… HOME=… GN_DATA_FILE=<scratch>/store.json next dev -p 3240` there, then
-`GONAI_URL=http://localhost:3240 PLAYWRIGHT=<playwright/index.mjs> OUT=<dir> node source/tools/capture.mjs`
-(it refuses anything but localhost + the JSON store), `python3 source/tools/make_ui_css.py <dir>/app.css
-source/sting-16x9/ui.css`, copy the fonts it lists from `/_next/static/media/`, stop the server.
+`GONAI_URL=http://localhost:3240 PLAYWRIGHT=<playwright/index.mjs> OUT=<dir> node tools/capture.mjs` from this folder
+(it refuses anything but localhost + the JSON store), `python3 tools/make_ui_css.py <dir>/app.css
+sting-16x9/ui.css` (then copy it to `sting-1x1/ui.css`; the two are identical), copy the fonts it lists from
+`/_next/static/media/`, stop the server.
 `fidelity.mjs` + `fidelity.py` then diff the rebuilt cards against the app's own renders.
 
 ## Beats

@@ -26,3 +26,29 @@ describe('design/clips/frame.md (spec 2026-10-01 §2.1)', () => {
     }
   });
 });
+
+// Final review (A): the source folders were copied in from a staging layout (`out/source/`,
+// `source/`), so their READMEs pointed at paths that do not exist here, and each carried a copy
+// of frame.md plus HyperFrames scaffold notes. The folders are the layout now.
+describe('design/clips/<key>/ source folders', () => {
+  const dirs = readdirSync('design/clips', { withFileTypes: true })
+    .filter((d) => d.isDirectory())
+    .map((d) => d.name);
+
+  it.each(dirs)('%s: its README names only paths that exist, relative to the folder', (key) => {
+    const dir = join('design/clips', key);
+    const readme = readFileSync(join(dir, 'README.md'), 'utf8');
+    expect(readme).not.toMatch(/\b(?:out\/)?source\//);
+    const paths = [...readme.matchAll(/\b((?:tools\/[\w.-]+)|(?:sting-(?:16x9|1x1)(?:\/[\w.-]+)?))/g)].map((m) => m[1]);
+    expect(paths).toContain('tools/build.sh');
+    for (const p of paths) expect(existsSync(join(dir, p)), `${key}: ${p}`).toBe(true);
+  });
+
+  it.each(dirs)('%s: no copy of frame.md and no HyperFrames scaffold AGENTS.md / CLAUDE.md', (key) => {
+    const dir = join('design/clips', key);
+    expect(existsSync(join(dir, 'frame.md'))).toBe(false);
+    for (const cut of ['sting-16x9', 'sting-1x1']) {
+      for (const f of ['AGENTS.md', 'CLAUDE.md']) expect(existsSync(join(dir, cut, f)), `${cut}/${f}`).toBe(false);
+    }
+  });
+});

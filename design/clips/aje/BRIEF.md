@@ -41,7 +41,7 @@ moves down the same card to its review section, and the same three beats play.
 - The running app (`next dev -p 3230`, fresh browser profile): "See an example first" → Next steps → "Choose another
   test" → "Talk to 5 clinic owners". Every non-localhost request aborted, every `/api/*` answered `{}` locally:
   no model call, no database call. The DOM, the compiled stylesheet and the next/font files come from that page.
-- klao-site `public/images/aje.jpg` (frame 0) and `frame.md` (copied here; the frame and motion spec).
+- klao-site `public/images/aje.jpg` (frame 0) and `../frame.md` (the frame and motion spec).
 
 ## Constraints
 

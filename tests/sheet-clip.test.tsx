@@ -13,8 +13,8 @@ import { PHONE_QUERY, PROJECT_CLIPS, clipFor } from '@/lib/project-clips';
 import { projectKey } from '@/lib/sheet-url';
 import { stubDialog } from './helpers/dialog';
 import { installFakeIO } from './helpers/io';
-import { CAFENISTA, LINEUP, makeProject } from './helpers/lineup';
-import { stubMatchMedia } from './helpers/media';
+import { AJE, CAFENISTA, GONAI, LINEUP, makeProject } from './helpers/lineup';
+import { liveMatchMedia, stubMatchMedia } from './helpers/media';
 
 // Product clips in the project sheet (spec docs/superpowers/specs/2026-09-30-sheet-clips.md).
 // jsdom has no media pipeline: play/pause/load are stubbed on the prototype, and the media
@@ -287,6 +287,106 @@ describe('SheetClip: the square cut on phones', () => {
   });
 });
 
+// Final review (B): the cut was read once at mount, so turning a phone mid-clip kept the wrong
+// cut, and landscape -> portrait cut Thai text mid-word. A 'change' listener on the phone query
+// now re-picks the files: the same <video> loads the other cut, hides until it plays (the
+// <picture> already shows that cut's poster), and plays from the top only if it was playing.
+describe('SheetClip: a rotation across the phone breakpoint switches cuts', () => {
+  const sources = (root: ParentNode) => Array.from(root.querySelectorAll('video source')).map((el) => el.getAttribute('src'));
+  const WIDE = ['/clips/cafenista.webm', '/clips/cafenista.mp4'];
+  const SQUARE = ['/clips/cafenista-1x1.webm', '/clips/cafenista-1x1.mp4'];
+
+  // The sheet open on cafenista, past its entrance, its clip playing.
+  async function playing(phone: boolean) {
+    vi.useFakeTimers();
+    const media = liveMatchMedia({ [MOTION_QUERY]: true, [PHONE_QUERY]: phone });
+    const { dialog } = openAt('cafenista');
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(ENTER_MS);
+    });
+    const video = dialog.querySelector('video')!;
+    fireEvent.playing(video);
+    expect(play).toHaveBeenCalledTimes(1);
+    return { media, dialog, video };
+  }
+
+  it('landscape -> portrait mid-play: the same video loads the square files, hides, and plays them from the top', async () => {
+    const { media, dialog, video } = await playing(false);
+    expect(sources(dialog)).toEqual(WIDE);
+    load.mockClear();
+    act(() => media.set(PHONE_QUERY, true));
+    expect(dialog.querySelector('video')).toBe(video);
+    expect(sources(dialog)).toEqual(SQUARE);
+    expect(load).toHaveBeenCalledTimes(1);
+    expect(play).toHaveBeenCalledTimes(2);
+    // load() first, so play() starts the new sources, not the old ones.
+    expect(load.mock.invocationCallOrder[0]).toBeLessThan(play.mock.invocationCallOrder[1]);
+    // Hidden until the new cut actually plays: the poster under it is already the new cut's.
+    expect(video.hasAttribute('data-playing')).toBe(false);
+    fireEvent.playing(video);
+    expect(video.hasAttribute('data-playing')).toBe(true);
+  });
+
+  it('portrait -> landscape mid-play: back to the 16:9 files, playing', async () => {
+    const { media, dialog, video } = await playing(true);
+    expect(sources(dialog)).toEqual(SQUARE);
+    act(() => media.set(PHONE_QUERY, false));
+    expect(sources(dialog)).toEqual(WIDE);
+    expect(load).toHaveBeenCalled();
+    expect(play).toHaveBeenCalledTimes(2);
+    expect(video.hasAttribute('data-playing')).toBe(false);
+  });
+
+  it('after the clip ended: switches the files without playing them, and Replay stays to play the new cut', async () => {
+    const { media, dialog, video } = await playing(false);
+    fireEvent.ended(video);
+    load.mockClear();
+    play.mockClear();
+    act(() => media.set(PHONE_QUERY, true));
+    expect(sources(dialog)).toEqual(SQUARE);
+    expect(load).toHaveBeenCalledTimes(1);
+    expect(play).not.toHaveBeenCalled();
+    expect(video.hasAttribute('data-playing')).toBe(false); // the new cut's poster (frame 0) shows
+    fireEvent.click(screen.getByRole('button', { name: dict.en.sheetClipReplay }));
+    expect(play).toHaveBeenCalledTimes(1);
+  });
+
+  it('before the sheet has settled: switches the files, and the first play is the new cut', async () => {
+    vi.useFakeTimers();
+    const media = liveMatchMedia({ [MOTION_QUERY]: true, [PHONE_QUERY]: false });
+    const { dialog } = openAt('cafenista');
+    act(() => media.set(PHONE_QUERY, true));
+    expect(sources(dialog)).toEqual(SQUARE);
+    expect(play).not.toHaveBeenCalled();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(ENTER_MS);
+    });
+    expect(play).toHaveBeenCalledTimes(1);
+  });
+
+  it('a clip with no square cut: nothing listens, and a flip changes nothing', async () => {
+    const media = liveMatchMedia({ [MOTION_QUERY]: true, [PHONE_QUERY]: false });
+    const flat = { ...clip, square: undefined };
+    const { container } = render(<SheetClip clip={flat} locale="en" startAfter={settled} />);
+    await act(async () => {});
+    expect(play).toHaveBeenCalledTimes(1);
+    expect(media.listeners(PHONE_QUERY)).toBe(0);
+    load.mockClear();
+    act(() => media.set(PHONE_QUERY, true));
+    expect(sources(container)).toEqual(WIDE);
+    expect(load).not.toHaveBeenCalled();
+    expect(play).toHaveBeenCalledTimes(1);
+  });
+
+  it('listens only while mounted', () => {
+    const media = liveMatchMedia({ [MOTION_QUERY]: true, [PHONE_QUERY]: false });
+    const { unmount } = render(<SheetClip clip={clip} locale="en" startAfter={settled} />);
+    expect(media.listeners(PHONE_QUERY)).toBe(1);
+    unmount();
+    expect(media.listeners(PHONE_QUERY)).toBe(0);
+  });
+});
+
 describe('SheetMedia: the square poster', () => {
   const media = (p: Project) => {
     const host = document.createElement('div');
@@ -330,6 +430,62 @@ describe('SheetMedia: the square poster', () => {
   });
 });
 
+// Final review (C): on a phone the <img> shows the square poster, so it needs the square
+// poster's alt. The server HTML keeps the 16:9 alt (hydration-safe); after mount the phone
+// query swaps it, with or without motion, and a rotation swaps it back.
+describe('SheetMedia: the phone poster has its own alt', () => {
+  const img = (root: ParentNode) => root.querySelector('.sheet-win img')!;
+
+  it('the server HTML keeps the 16:9 alt, even on a phone', () => {
+    liveMatchMedia({ [PHONE_QUERY]: true });
+    const host = document.createElement('div');
+    host.innerHTML = renderToStaticMarkup(<SheetMedia project={CAFENISTA} locale="en" />);
+    expect(img(host).getAttribute('alt')).toBe(CAFENISTA.alt!.en);
+  });
+
+  it('after mount on a phone the <img> takes the square alt (no motion needed), and follows a rotation both ways', () => {
+    const media = liveMatchMedia({ [PHONE_QUERY]: true });
+    const { container, unmount } = render(<SheetMedia project={CAFENISTA} locale="en" />);
+    const square = PROJECT_CLIPS.cafenista.square!.alt!;
+    expect(img(container).getAttribute('alt')).toBe(square.en);
+    act(() => media.set(PHONE_QUERY, false));
+    expect(img(container).getAttribute('alt')).toBe(CAFENISTA.alt!.en);
+    act(() => media.set(PHONE_QUERY, true));
+    expect(img(container).getAttribute('alt')).toBe(square.en);
+    unmount();
+    expect(media.listeners(PHONE_QUERY)).toBe(0);
+  });
+
+  it.each([AJE, GONAI, CAFENISTA])('$name on a phone: the square alt in each language', (project) => {
+    liveMatchMedia({ [PHONE_QUERY]: true });
+    const square = clipFor(project)!.square!.alt!;
+    for (const locale of ['en', 'th'] as const) {
+      const { container } = render(<SheetMedia project={project} locale={locale} />);
+      expect(img(container).getAttribute('alt'), locale).toBe(square[locale]);
+      cleanup();
+    }
+  });
+
+  it('a desktop viewport keeps the 16:9 alt', () => {
+    liveMatchMedia({ [PHONE_QUERY]: false });
+    const { container } = render(<SheetMedia project={CAFENISTA} locale="en" />);
+    expect(img(container).getAttribute('alt')).toBe(CAFENISTA.alt!.en);
+  });
+
+  it('a square cut without its own alt keeps the 16:9 alt on a phone, and does not listen', () => {
+    const media = liveMatchMedia({ [PHONE_QUERY]: true });
+    const plain = makeProject({ id: 'fx-noalt', name: 'Noalt', order: 7, imageSrc: '/images/klao-site.jpg', alt: { en: 'Wide alt', th: 'ภาพกว้าง' } });
+    (PROJECT_CLIPS as Record<string, unknown>).noalt = { ...clip, square: { ...clip.square!, alt: undefined } };
+    try {
+      const { container } = render(<SheetMedia project={plain} locale="en" />);
+      expect(img(container).getAttribute('alt')).toBe('Wide alt');
+      expect(media.listeners(PHONE_QUERY)).toBe(0);
+    } finally {
+      delete (PROJECT_CLIPS as Record<string, unknown>).noalt;
+    }
+  });
+});
+
 describe('the clip registry (src/lib/project-clips.ts)', () => {
   const entries = Object.entries(PROJECT_CLIPS);
   const keys = new Set((projects as Project[]).map((p) => projectKey(p)));
@@ -355,16 +511,41 @@ describe('the clip registry (src/lib/project-clips.ts)', () => {
     expect(c.mp4).toMatch(/^\/clips\/.+\.mp4$/);
   });
 
-  it.each(entries)('%s: the square cut and its poster exist in public/ (clips at most 700 KB, poster at most 250 KB)', (key, c) => {
-    expect(c.square, key).toMatchObject({ webm: `/clips/${key}-1x1.webm`, mp4: `/clips/${key}-1x1.mp4`, poster: `/images/${key}-1x1.jpg` });
-    expect(c.square!.label?.en, key).toBeTruthy();
-    expect(c.square!.label?.th, key).toBeTruthy();
-    for (const src of [c.square!.webm, c.square!.mp4]) {
+  // `square` is optional (a clip may have no phone cut), so only the entries that have one are
+  // checked here; today all three do.
+  const squares = entries.flatMap(([key, c]) => (c.square ? [[key, c.square] as const] : []));
+
+  it('all three of today\'s clips have a square cut', () => {
+    expect(squares.map(([key]) => key).sort()).toEqual(['aje', 'cafenista', 'gonai']);
+  });
+
+  it.each(squares)('%s: the square cut and its poster exist in public/ (clips at most 700 KB, poster at most 250 KB)', (key, sq) => {
+    expect(sq, key).toMatchObject({ webm: `/clips/${key}-1x1.webm`, mp4: `/clips/${key}-1x1.mp4`, poster: `/images/${key}-1x1.jpg` });
+    for (const src of [sq.webm, sq.mp4]) {
       const size = statSync(join('public', src)).size;
       expect(size, `${src} is ${size} bytes`).toBeLessThanOrEqual(700 * 1024);
     }
-    const poster = statSync(join('public', c.square!.poster)).size;
+    const poster = statSync(join('public', sq.poster)).size;
     expect(poster, `poster is ${poster} bytes`).toBeLessThanOrEqual(250 * 1024);
+  });
+
+  it.each(squares)('%s: the square cut has its own label and poster alt, in both languages', (key, sq) => {
+    for (const text of [sq.label?.en, sq.label?.th, sq.alt?.en, sq.alt?.th]) expect(text, key).toBeTruthy();
+  });
+
+  // The site sets ’ and “ ” (dictionary.ts); a straight ' or " reads as a typo to a screen reader user
+  // who sees the page too, and breaks the house style.
+  it.each(entries)('%s: labels and alts use curly quotes, never straight ones', (key, c) => {
+    const texts = [c.label, c.square?.label, c.square?.alt].flatMap((l) => (l ? [l.en, l.th] : []));
+    for (const text of texts) expect(text, key).not.toMatch(/['"]/);
+  });
+
+  it('GoNai\'s square label names the plan, not the device', () => {
+    const sq = PROJECT_CLIPS.gonai.square!.label!;
+    expect(sq.en).toContain('a GoNai plan:');
+    expect(sq.en).not.toContain('on a phone');
+    expect(sq.th).toContain('แผน GoNai ');
+    expect(sq.th).not.toContain('บนมือถือ');
   });
 
   it.each(entries)('%s: at most 5 s, labelled in both languages, no "|" marks', (_key, c) => {
@@ -410,5 +591,20 @@ describe('project-sheet.css: the clip', () => {
   it('on a phone the square cut is one 1 / 1 box for the clip (and the poster)', () => {
     const phone = css.slice(css.indexOf('/* Square cut'));
     expect(phone).toMatch(/@media \(max-width: 734px\) \{[\s\S]*\.smedia\[data-square\] \.sheet-clip \{[^}]*aspect-ratio: 1 \/ 1;/);
+  });
+
+  // The phone block itself (from its @media line to its closing brace), so a rule that drifts
+  // out of it fails here.
+  const phoneBlock = () => {
+    const from = css.indexOf('@media (max-width: 734px)', css.indexOf('/* Square cut'));
+    return css.slice(from, css.indexOf('\n  }', from));
+  };
+
+  it('on a phone the square poster reserves its 1 / 1 box before it loads (no layout jump)', () => {
+    expect(phoneBlock()).toMatch(/\.smedia\[data-square\] \.sheet-win img \{[^}]*aspect-ratio: 1 \/ 1;/);
+  });
+
+  it('on a phone Replay sits a plain 12px from the square picture\'s corner', () => {
+    expect(phoneBlock()).toMatch(/\.smedia\[data-square\] \.sheet-win \.sheet-replay \{[^}]*bottom: 12px;/);
   });
 });

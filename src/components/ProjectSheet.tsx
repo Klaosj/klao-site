@@ -338,6 +338,22 @@ export default function ProjectSheet({ projects, locale }: { projects: Project[]
   );
 }
 
+// Whether a media query matches, kept live (a rotation, a resize). False on the server and on
+// the first client render, so the server HTML hydrates unchanged; read after mount. `enabled`
+// false: never subscribes, always false.
+function useAfterMountMedia(query: string, enabled: boolean): boolean {
+  const [matches, setMatches] = useState(false);
+  useEffect(() => {
+    if (!enabled || typeof matchMedia !== 'function') return;
+    const mq = matchMedia(query);
+    setMatches(mq.matches);
+    const onChange = (e: MediaQueryListEvent) => setMatches(e.matches);
+    mq.addEventListener?.('change', onChange);
+    return () => mq.removeEventListener?.('change', onChange);
+  }, [query, enabled]);
+  return enabled && matches;
+}
+
 // Assistive-tech attributes for a picture that is a drawing or a vignette: an image with the
 // row's alt text when there is one, hidden when there is not (never a nameless role="img").
 function pictureA11y(alt: string) {
@@ -364,6 +380,12 @@ export function SheetMedia({ project, locale }: { project: Project; locale: Loca
   const drawn = project.media === 'notion' || project.media === 'rings' || project.media === 'five';
   const phase = useEnterOnce(sheetSettled, drawn);
   const enter = phase === 'rest' ? undefined : phase;
+  // A product clip (src/lib/project-clips.ts) plays over the screenshot, inside the same window.
+  const clip = clipFor(project);
+  // On a phone the <picture> shows the square poster, a different crop, so the <img> takes the
+  // square poster's alt -- after mount only, so the server HTML (the 16:9 alt) hydrates as is.
+  const squareAlt = clip?.square?.alt;
+  const phone = useAfterMountMedia(PHONE_QUERY, squareAlt !== undefined);
 
   // Business plays carry their receipts as line drawings (Talatify's TAM/SAM/SOM rings,
   // Tripedia's five apps -> one), never a stand-in screenshot.
@@ -418,10 +440,9 @@ export function SheetMedia({ project, locale }: { project: Project; locale: Loca
   // image gets no media block at all. 'win' adds the address bar from the live URL.
   if (!project.imageSrc) return null;
   const host = project.media === 'win' ? hostOf(project.liveUrl) : null;
-  // A product clip (src/lib/project-clips.ts) plays over the screenshot, inside the same window.
   // SheetClip renders nothing until after mount, so this markup starts out exactly as before.
-  const clip = clipFor(project);
-  const shot = <img src={project.imageSrc} alt={alt || imageAlt(project.imageSrc, project.name)} width={1580} height={900} decoding="async" />;
+  const shotAlt = phone && squareAlt ? squareAlt[locale] : alt || imageAlt(project.imageSrc, project.name);
+  const shot = <img src={project.imageSrc} alt={shotAlt} width={1580} height={900} decoding="async" />;
   return (
     <div className="smedia" data-media={project.media} data-square={clip?.square ? '' : undefined} data-vt="shot" style={{ '--wash': washVar(project.wash) } as CSSProperties}>
       <div className="win sheet-win">

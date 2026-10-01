@@ -1,16 +1,16 @@
 # Aje UI sting (round 2)
 
 Two HyperFrames 0.8.97 compositions that rebuild Aje's real Next steps screen (its built-in example idea) as HTML and
-let Aje's own review moment play. `BRIEF.md` has the story and the decisions; `frame.md` is klao-site's frame spec.
+let Aje's own review moment play. `BRIEF.md` has the story and the decisions; `../frame.md` is klao-site's frame spec.
 
 Brand truth: [../frame.md](../frame.md) — every clip follows it.
 
 ```
-out/source/
+design/clips/aje/
   sting-16x9/   index.html · index.motion.json · ui/ (aje-d.css, fonts.css, fonts/) · assets/aje.jpg   1580×900
   sting-1x1/    index.html · index.motion.json · ui/ (aje-d.css, aje-p.css, fonts.css, fonts/)        1080×1080
   tools/        capture.mjs · vp.mjs · verify-ui.mjs · compose.mjs · build.sh · encode.sh · stills.py · quality.py
-  BRIEF.md  README.md  frame.md
+  BRIEF.md  README.md
 ```
 
 ## How the UI is rebuilt
@@ -34,14 +34,20 @@ Not a screenshot and not a redraw: the sting embeds Aje's own DOM and stylesheet
 
 Needs Node 22+, ffmpeg with libx264 + libvpx, Python 3 with Pillow + NumPy.
 
+Paths below are relative to this folder, `design/clips/aje/`.
+
 ```bash
-bash out/source/tools/build.sh   # check both cuts, render PNG masters to work/build/<cut>, write out/
+bash tools/build.sh   # check both cuts, render PNG masters, encode, stills, PSNR lines
 ```
 
-Recapture (only if Aje's UI changes): start Aje (`cd <Aje>/web && npx next dev -p 3230`), then
-`PLAYWRIGHT_MODULE=<Aje>/web/node_modules/playwright/index.mjs node out/source/tools/capture.mjs` (writes `work/capture`),
-`node out/source/tools/verify-ui.mjs work/capture work/verify`, and
-`KLAO_SITE=<klao-site> node out/source/tools/compose.mjs work/capture out/source`. Stop the dev server afterwards.
+The script finds its folders from its own path, so it runs from any directory. Masters (lossless PNG) go to
+`design/work/build/<cut>/`; the four files and the stills are written to `design/clips/` (the folder above this one).
+Neither is committed: the site serves its own copies from `public/clips/` and `public/images/`.
+
+Recapture (only if Aje's UI changes): start Aje (`cd <Aje>/web && npx next dev -p 3230`), then from this folder
+`PLAYWRIGHT_MODULE=<Aje>/web/node_modules/playwright/index.mjs node tools/capture.mjs` (writes `work/capture`),
+`node tools/verify-ui.mjs work/capture work/verify`, and
+`KLAO_SITE=<klao-site> node tools/compose.mjs work/capture .`. Stop the dev server afterwards.
 
 ## Fidelity
 

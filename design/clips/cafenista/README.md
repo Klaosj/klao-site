@@ -6,11 +6,11 @@ The 16:9 opens on the site's own still and zooms through into the rebuilt UI.
 Brand truth: [../frame.md](../frame.md) — every clip follows it.
 
 ```
-source/
+design/clips/cafenista/
   sting-16x9/   index.html · ui.css · ui.js · assets/cafenista.jpg   1580×900, desktop project sheet
   sting-1x1/    index.html · ui.css · ui.js                          1080×1080, phone (re-composed, bigger UI)
   tools/        build.sh · encode.sh · stills.py · quality.py · psnr_still.py
-  BRIEF.md  DESIGN-NOTE.md (this sting's design note)  frame.md (klao-site frame spec, copied)
+  BRIEF.md  DESIGN-NOTE.md (this sting's design note)  README.md
 ```
 
 `assets/cafenista.jpg` is a byte-identical copy of klao-site `public/images/cafenista.jpg` (sha1 7c851576…).
@@ -24,12 +24,15 @@ Needs Node 22+, ffmpeg with libx264 + libvpx, Python 3 with Pillow + NumPy, and 
 the system's Sukhumvit Set through `local()`, as the app does; elsewhere it falls back to
 system Thai and line breaks may move).
 
+Paths below are relative to this folder, `design/clips/cafenista/`.
+
 ```bash
-bash source/tools/build.sh
+bash tools/build.sh
 ```
 
-It runs `hyperframes check` on both cuts, renders lossless PNG masters to `work/build/<cut>/`,
-then writes `out/`:
+The script finds its folders from its own path, so it runs from any directory. It runs `hyperframes check`
+on both cuts, renders lossless PNG masters to `design/clips/work/build/<cut>/`, then writes `design/clips/out/`
+(neither is committed; the site serves its own copies from `public/clips/` and `public/images/`):
 
 - `cafenista-sting-16x9.mp4|webm`, `cafenista-sting-1x1.mp4|webm` — 30 fps, 150 frames, no audio,
   keyframes at 0 and at the hold (16:9 4.433 s, 1:1 4.367 s); x264 may add a scene-cut I-frame.
@@ -40,7 +43,7 @@ then writes `out/`:
 - a PSNR line per file against the master, then frame 0 of the 16:9 master and files against the
   site's still (the master is bit-identical; ~40.5 dB after 4:2:0, whose limit for this image is 40.55 dB).
 
-Preview while editing: `cd source/sting-16x9 && npx hyperframes@0.8.97 preview --background`.
+Preview while editing: `cd sting-16x9 && npx hyperframes@0.8.97 preview --background`.
 
 ## Editing
 
