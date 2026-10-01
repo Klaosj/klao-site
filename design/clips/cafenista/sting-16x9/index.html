@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1580, height=900" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <link rel="stylesheet" href="ui.css" />
+    <style>
+      /* ── klao-site frame (frame.md): quiet stage, the app is the only colour */
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1580px; height: 900px; overflow: hidden; background: #F5F6F8; }
+      #root { position: relative; width: 100%; height: 100%; background: #F5F6F8; overflow: hidden; }
+      #bg { position: absolute; inset: 0; background: #F5F6F8; }   /* painted stage: survives transparent PNG/WebM capture */
+
+      /* one hairline + one e2 shadow per surface (the e2 stack opens with the 1px hairline ring) */
+      .surf {
+        position: absolute; left: 0; top: 0; transform-origin: 0 0;
+        box-shadow: 0 0 0 1px rgba(20,26,44,.05), 0 2px 4px rgba(20,26,44,.04), 0 12px 28px -8px rgba(20,26,44,.12);
+      }
+      /* app UI at 1.8x / 1.65x, laid out at its real CSS size and zoomed so text stays crisp */
+      .z-owner { zoom: 1.8; width: 358px; }
+      .z-bar { zoom: 1.65; }
+
+      /* owner cards: the component is its own surface; radius = app radius 14 × 1.8 */
+      #m-wrap, #a-wrap { width: 644.4px; border-radius: 25.2px; background: #fff; }
+
+      /* bar phone: our phone frame (radius 36) at the full 390×844 screen; it bleeds off the canvas */
+      #p-wrap { width: 643.5px; height: 1392.6px; border-radius: 36px; overflow: hidden; background: #F2F2F7; transform-origin: 50% 420px; }
+      .screen { position: relative; width: 390px; height: 844px; background: var(--bg); }
+
+      /* state slots: both states share one box so the swap never reflows the card */
+      .pillSlot { display: grid; justify-items: end; }
+      .pillSlot > * { grid-area: 1 / 1; }
+      .headSlot { display: grid; }
+      .headSlot > * { grid-area: 1 / 1; }
+      /* strokes scale with the UI, as they do on the device-pixel renders */
+      .cf .t-sparkLine, .cf .t-sparkNormal { vector-effect: none; }
+      /* the app colours this line by tone (accent → crit); one variable lets the flip be one tween */
+      #m_spark { --spark: #6F4E37; }
+      #m_spark .t-sparkLine { stroke: var(--spark); }
+      #m_spark .t-sparkDot { fill: var(--spark); }
+      .b-seg { transform-origin: 50% 50%; }
+
+      /* frame 0: the site's own still (public/images/cafenista.jpg), full-bleed at 1:1, untouched.
+         It sits on top; the rebuilt UI waits underneath and is revealed as the still zooms through. */
+      #shot { position: absolute; left: 0; top: 0; width: 1580px; height: 900px; transform-origin: 790px 409px; }
+      #shot img { display: block; width: 1580px; height: 900px; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="5" data-width="1580" data-height="900">
+      <div id="bg"></div>
+      <div id="m-wrap" class="surf" data-layout-allow-overflow data-layout-allow-overlap><div class="cf z-owner" id="m-ui"></div></div>
+      <div id="a-wrap" class="surf" data-layout-allow-overflow data-layout-allow-overlap><div class="cf z-owner" id="a-ui"></div></div>
+      <div id="p-wrap" class="surf" data-layout-allow-overflow data-layout-allow-overlap><div class="cf z-bar"><div class="screen" id="p-ui"></div></div></div>
+      <div id="shot" data-layout-allow-overflow data-layout-allow-overlap data-layout-allow-occlusion><img id="shot-img" src="assets/cafenista.jpg" alt="" /></div>
+    </div>
+
+    <script src="ui.js"></script>
+    <script>
+      /* =====================================================================
+         Cafénista UI sting · 1580×900 · 30 fps · 5.0 s · plays once, holds.  (round 2)
+         0.0–0.3         frame 0 = public/images/cafenista.jpg, the owner's Today screen, untouched
+         0.3–0.9         zoom-through: the still pushes in (1.06) and dissolves; the machine card
+                         (the detail behind its red alert) settles in underneath
+         build ‑1.6+     the machine goes cold on the owner's card, the owner's alert arrives
+         breathe –3.6    the same alert reaches the bar phone (one move: the handoff)
+         resolve 3.6–4.4 one tap on "พอดี" · the app's own "บันทึกแล้ว" screen
+         hold 4.43–5.0   nothing moves
+         ===================================================================== */
+      document.getElementById('m-ui').innerHTML = CF.machineCard('m_');
+      document.getElementById('a-ui').innerHTML = CF.ownerAlert('a_');
+      document.getElementById('p-ui').innerHTML = CF.barHome('p_') + CF.savedScreen('p_');
+
+      /* klao-site eases (frame.md), solved as real cubic-béziers so GSAP gets the exact curve */
+      function bezier(x1, y1, x2, y2) {
+        const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx;
+        const cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by;
+        const sx = (t) => ((ax * t + bx) * t + cx) * t;
+        const sy = (t) => ((ay * t + by) * t + cy) * t;
+        const dx = (t) => (3 * ax * t + 2 * bx) * t + cx;
+        return (p) => {
+          if (p <= 0) return 0;
+          if (p >= 1) return 1;
+          let t = p;
+          for (let i = 0; i < 8; i++) {
+            const e = sx(t) - p, d = dx(t);
+            if (Math.abs(e) < 1e-7) return sy(t);
+            if (Math.abs(d) < 1e-6) break;
+            t -= e / d;
+          }
+          let lo = 0, hi = 1; t = p;
+          for (let i = 0; i < 40; i++) { const v = sx(t); if (Math.abs(v - p) < 1e-7) break; if (v < p) lo = t; else hi = t; t = (lo + hi) / 2; }
+          return sy(t);
+        };
+      }
+      const ARRIVE = bezier(.32, .72, 0, 1);     // --ease-settle
+      const MOVE   = bezier(.28, .11, .32, 1);    // --ease-drift
+      const LEAVE  = bezier(.4, 0, 1, 1);         // --ease-exit
+      const PRESS  = bezier(.34, 1.56, .64, 1);   // --ease-tick · the one overshoot, on the press only
+      const APP    = bezier(.2, .7, .3, 1);       // Cafénista's own --motion (140 ms) for in-app state changes
+
+      const S = 1.8;                        // owner UI scale
+      const CARD_W = 358 * S, CARD_H = 232 * S, ALERT_H = 160.33 * S;
+      const K_IN = 0.96;                    // the card's zoom-through start scale (about its centre)
+      const pos = {
+        m0:  { x: (1580 - CARD_W) / 2, y: (900 - CARD_H) / 2 },            // after the zoom-through: centred under the still's alert
+        m1:  { x: 110, y: (900 - CARD_H) / 2 },                              // build: card left, alert right
+        a1:  { x: 110 + CARD_W + 72, y: (900 - ALERT_H) / 2 },
+        m2:  { x: 153.6, y: 450 - (CARD_H * 0.84) / 2, s: 0.84 },            // breathe/hold: stepped back
+        p2:  { x: 153.6 + CARD_W * 0.84 + 88, y: 56 },                       // bar phone, hero
+        p3:  { y: 460 - 351 * 1.65 },                                         // saved body centred (css 241–461)
+      };
+
+      const tl = gsap.timeline({ paused: true });
+      const line = document.querySelector('#m_spark polyline');
+      const norm = document.querySelector('#m_spark line');
+      const dot = document.querySelector('#m_spark circle');
+
+      /* ── rest state (frame 0 = the site's still) · immediate sets, outside the paused timeline */
+      gsap.set('#shot', { scale: 1, opacity: 1 });
+      gsap.set('#m-wrap', { x: pos.m0.x + CARD_W * (1 - K_IN) / 2, y: pos.m0.y + CARD_H * (1 - K_IN) / 2, scale: K_IN, opacity: 0 });
+      gsap.set('#a-wrap', { x: pos.a1.x + 100, y: pos.a1.y, opacity: 0, transformOrigin: '50% 50%' });
+      gsap.set('#p-wrap', { x: pos.p2.x, y: pos.p2.y, scale: 0.94, opacity: 0 });
+      gsap.set(['#m_pillCrit', '#m_headCrit'], { opacity: 0 });
+      gsap.set('#m_headCrit', { y: 8 });
+      gsap.set('#m_pillCrit', { scale: 0.92, transformOrigin: '100% 50%' });
+      gsap.set('#p_saved', { opacity: 0 });
+      gsap.set('#p_checkPath', { strokeDasharray: 16, strokeDashoffset: 16 });
+
+      /* ── ZOOM-THROUGH · the Today still pushes in about its alert card and dissolves to the stage;
+         the machine card that alert is about settles in underneath (both travel toward the viewer) */
+      tl.to('#shot', { scale: 1.06, duration: 0.6, ease: MOVE }, 0.3);
+      tl.to('#shot', { opacity: 0, duration: 0.24, ease: LEAVE }, 0.34);
+      tl.to('#m-wrap', { x: pos.m0.x, y: pos.m0.y, scale: 1, opacity: 1, duration: 0.5, ease: ARRIVE }, 0.52);
+
+      /* ── BUILD · the reading falls away from the machine's own normal (real autoscale) */
+      const chart = { s: 0 };                       // 0 = dashboard-normal, 1 = dashboard-alert (sparkGeometry)
+      const drawChart = () => {
+        const g = CF.geometry(chart.s);
+        line.setAttribute('points', g.line);
+        norm.setAttribute('y1', g.normalY); norm.setAttribute('y2', g.normalY);
+        dot.setAttribute('cy', g.dot.y);
+      };
+      tl.fromTo(chart, { s: 0 }, { s: 1, duration: 0.55, ease: MOVE, onUpdate: drawChart }, 0.8);
+      // headline follows the reading, the chip follows the alert
+      tl.to('#m_headOk', { opacity: 0, y: -8, duration: 0.15, ease: LEAVE }, 1.15);
+      tl.to('#m_headCrit', { opacity: 1, y: 0, duration: 0.3, ease: ARRIVE }, 1.267);
+      // the alert opens: chip and line tone flip together (the app swaps them in one render)
+      tl.to(['#m_pillOk', '#m_pillCrit'], { opacity: (i) => i, scale: 1, duration: 0.24, ease: APP }, 1.267);
+      tl.to('#m_spark', { '--spark': '#D03B3B', duration: 0.24, ease: APP }, 1.267);
+      // the owner's alert arrives; the card makes room
+      // matched vectors: the card drifts left and the alert follows it in from the right
+      tl.to('#m-wrap', { x: pos.m1.x, duration: 0.7, ease: MOVE }, 1.35);
+      tl.to('#a-wrap', { x: pos.a1.x, opacity: 1, duration: 0.6, ease: ARRIVE }, 1.55);
+
+      /* ── BREATHE · handoff to the bar (owner alert leaves before the bar's alert can be read) */
+      tl.to('#a-wrap', { scale: 0.97, opacity: 0, duration: 0.25, ease: LEAVE }, 2.45);
+      tl.to('#m-wrap', { x: pos.m2.x, y: pos.m2.y, scale: pos.m2.s, opacity: 0.7, duration: 0.9, ease: MOVE }, 2.5);
+      tl.to('#p-wrap', { scale: 1, opacity: 1, duration: 0.58, ease: ARRIVE }, 2.72);            // starts once the owner's alert is gone
+
+      /* ── RESOLVE · one tap on "พอดี" → the app's own saved screen */
+      tl.to('#p_seg0_1', { scale: 0.97, duration: 0.12, ease: APP }, 3.6);              // :active (app: scale .97)
+      tl.to('#p_seg0_1', { scale: 1, duration: 0.2, ease: PRESS }, 3.72);                // release · the one overshoot
+      tl.to('#p_segOn0_1', { opacity: 1, duration: 0.14, ease: APP }, 3.72);             // aria-pressed · reads for ~0.15 s
+      tl.to('#p-wrap', { y: pos.p3.y, duration: 0.7, ease: MOVE }, 3.72);                // camera follows the tap down the screen
+      tl.to('#p_saved', { opacity: 1, duration: 0.28, ease: ARRIVE }, 3.867);            // overlay (app: fadeIn · opacity only)
+      tl.to('#p_checkPath', { strokeDashoffset: 0, duration: 0.36, ease: MOVE }, 4.0);
+      tl.set('#p_home', { visibility: 'hidden' }, 4.15);                                   // covered + inert under the overlay, as in the app
+
+      window.__timelines['main'] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>

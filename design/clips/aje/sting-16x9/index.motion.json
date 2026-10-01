@@ -1,0 +1,54 @@
+{
+  "duration": 5,
+  "assertions": [
+    {
+      "kind": "appearsBy",
+      "selector": "#d-quest-q1",
+      "bySec": 1.2
+    },
+    {
+      "kind": "appearsBy",
+      "selector": "#d-quest-q1 .quest-receipt",
+      "bySec": 1.9
+    },
+    {
+      "kind": "appearsBy",
+      "selector": "#d-quest-q1 .result > span:nth-child(1)",
+      "bySec": 2.3
+    },
+    {
+      "kind": "appearsBy",
+      "selector": "#d-quest-q1 .result > span:nth-child(2)",
+      "bySec": 2.4
+    },
+    {
+      "kind": "appearsBy",
+      "selector": "#d-quest-q1 .qnote",
+      "bySec": 3.95
+    },
+    {
+      "kind": "before",
+      "a": "#d-quest-q1",
+      "b": "#d-quest-q1 .quest-receipt"
+    },
+    {
+      "kind": "before",
+      "a": "#d-quest-q1 .quest-receipt",
+      "b": "#d-quest-q1 .result > span:nth-child(1)"
+    },
+    {
+      "kind": "before",
+      "a": "#d-quest-q1 .result > span:nth-child(2)",
+      "b": "#d-quest-q1 .qnote"
+    },
+    {
+      "kind": "staysInFrame",
+      "selector": "#cardwin"
+    },
+    {
+      "kind": "before",
+      "a": "#strip header.top",
+      "b": "#d-quest-q1"
+    }
+  ]
+}

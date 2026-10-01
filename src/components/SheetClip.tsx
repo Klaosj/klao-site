@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import ReplayGlyph from '@/components/ReplayGlyph';
 import { dict } from '@/lib/dictionary';
-import type { Locale } from '@/lib/models';
+import type { Locale, Localized } from '@/lib/models';
 import { motionAllowed, saveDataOn } from '@/lib/motion';
 import { PHONE_QUERY, type ProjectClip } from '@/lib/project-clips';
 
@@ -42,8 +42,9 @@ export default function SheetClip({ clip, locale, startAfter }: Props) {
   const [playing, setPlaying] = useState(false);
   const [ended, setEnded] = useState(false);
   // Phones get the square cut when the clip has one. Read once at mount (the server renders
-  // nothing): the files are chosen before the <video> first exists.
-  const [src, setSrc] = useState<{ webm: string; mp4: string }>(clip);
+  // nothing): the files are chosen before the <video> first exists. The square cut may carry its
+  // own label (it tells a shorter story than the 16:9 cut); the clip's label is the fallback.
+  const [src, setSrc] = useState<{ webm: string; mp4: string; label?: Localized }>(clip);
   const videoRef = useRef<HTMLVideoElement>(null);
   // "Should be playing": from the start (or a Replay) until `ended`. A hidden tab pauses without
   // clearing it, so coming back knows whether to resume.
@@ -114,7 +115,7 @@ export default function SheetClip({ clip, locale, startAfter }: Props) {
         disablePictureInPicture
         width={1580}
         height={900}
-        aria-label={clip.label[locale]}
+        aria-label={(src.label ?? clip.label)[locale]}
         data-playing={playing ? '' : undefined}
         onPlaying={() => setPlaying(true)}
         onEnded={() => {

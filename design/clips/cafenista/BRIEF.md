@@ -2,68 +2,77 @@
 workflow: motion-graphics
 flow: automation
 storyboard: no
-message: "The owner sees the machine running cold on the Today timeline; the bar is already prompted to pull a check shot."
+message: "The espresso machine runs cold; the owner is alerted, the bar sees the same alert, and one tap logs the taste."
 destination: website
-aspect: 1580x900
+aspect: 1580x900 (desktop sheet) + 1080x1080 (phone)
 language: th
-audience: visitors of the klao-site portfolio (project sheet, 16:9 media box)
+audience: visitors of the klao-site portfolio, Cafénista project sheet
 length: 5s
-angle: webpage
+angle: ui-sting (rebuilt UI; the 16:9 opens on the site's own still, then zooms through into the rebuilt UI)
 ---
 
 ## Intent
 
-One 5.0 s unnarrated product clip for the Cafénista project sheet on klao-site. It plays
-once and holds its last frame. Frame 0 doubles as the still screenshot (index thumbnail,
-reduced-motion fallback). Tone: the site's "White Edition" — Apple-minimal, calm,
-understated. The owner dislikes hype.
+Pilot to replace the screenshot-pan clip on Cafénista's project sheet if Klao approves. Instead
+of panning flat renders, the sting rebuilds the real UI in HTML and animates the UI itself:
+the temperature line drops, the status chip changes, an alert card arrives, a segment is
+pressed, the app's own "บันทึกแล้ว" screen appears. Calm, Apple-minimal, never hype.
+Plays once, holds the last frame, no audio. Frame 0 is the poster and the reduced-motion image
+(16:9: the site's own still; 1:1: its own finished still, bundled as `cafenista-frame0-1x1.jpg`).
 
-Story (30 fps, 1580x900, no audio):
+## Story
 
-1. 0.0–0.5 s hold — owner "วันนี้" (Today) screen centred in a clean screen frame, top of
-   page visible including the red alert card.
-2. ~0.5–2.4 s — inside the frame the page scrolls (translate the inner image) down to the
-   "เส้นเวลาวันนี้" timeline; the machine line dropping into the pink band ends clearly visible.
-3. ~2.4–4.2 s — owner screen eases left; the bar phone rises in on the right
-   (opacity 0→1, translateY ~24 px→0) showing the top of the bar screen with the alert card and
-   the "ชงช็อตตรวจ" button. The owner alert card (08:45) is already scrolled out of view.
-4. ~4.2–5.0 s — settle and hold on the two-device composition.
+0. (16:9 only) the owner's Today screen, exactly the site's still, with its red "เครื่องชงเย็นกว่าปกติ" alert;
+   at 0.3 s it zooms through into that machine's card.
+1. build · owner's machine card at rest, then the reading drops below the machine's own normal
+   and the chip turns ปกติ → เย็นกว่าปกติ; the owner's urgent alert arrives.
+2. breathe · the same alert on the bar screen, with "ชงช็อตตรวจ" and "ชิมแล้วแตะรส บันทึกทันที".
+3. resolve · the barista taps "พอดี" on เชียงใหม่ แม่แตง; the app answers "บันทึกแล้ว".
 
-## Assets
+## Sources (read-only)
 
-- assets/owner-today.png — crop of `cafenista/design/renders/m4/owner-today.desktop.light.png`
-  (x 240–1040, full height, native 1×); the owner Today screen, shown at native size.
-- assets/bar-alert-live.png — `cafenista/design/renders/m1/bar-alert-live.light.png`, uniformly
-  downscaled (Lanczos) to its displayed phone size; the barista bar screen.
+- Repo `Personal/cafenista`, branch `feat/m4-demo`: `apps/web` components + CSS, `packages/domain`
+  copy rules, `design/design-tokens.json` 0.4.0.
+- Renders: `design/renders/m1/dashboard-normal`, `m1/dashboard-alert`, `m1/bar-alert-live`,
+  `m2/bar-beans`, `m2/bar-saved`, `m2/bar-result`, `m4/owner-today.desktop` (all `.light.png`).
+- klao-site `frame.md` (copied here) is the frame and motion spec.
 
-## Customizations
+## Constraints
 
-- Eases: klao-site tokens drift `cubic-bezier(.28,.11,.32,1)` and settle
-  `cubic-bezier(.32,.72,0,1)`, implemented as deterministic cubic-bezier ease functions.
+- Same words, numbers, colours, radii, type as the app. Invent nothing; only real states.
+- Stage #F5F6F8, one hairline + one e2 shadow per surface, no glow / neon / particles / cursor.
+- One overshoot, on the press only. Camera scale ≤ 1.06 (used once: the 16:9 still's push-in, 1.0 → 1.06).
+- Thai legible at ~1100–1240 px (desktop) and ~340 px (square); square is re-composed, not cropped.
+- Deliverables in `out/`: MP4 (H.264 yuv420p +faststart) and WebM (VP9, keyframes at 0 and at
+  the hold) for both cuts, ≤ 700 KB each (target ≤ 450 KB), 30 fps, 5.0 s, no audio; posters,
+  end frames, 7-frame contact sheets.
 
-## Notes
+## Round 2 (2026-10-01): what changed against the approved pilot
 
-- Visuals: only the real UI renders. Never invent UI, text or numbers; never retouch render
-  content. Crop / scale / mask / frame / move only.
-- The two alert times (08:45 owner vs 08:44 bar) must never be on screen together.
-- Canvas #F5F6F8. Frames: owner radius ~18 px, phone ~36 px, 1 px hairline rgba(0,0,0,.08),
-  at most one soft shadow (0 12px 32px rgba(0,0,0,.08)). No glow, neon, gradients, device chrome.
-- Motion: translate / scale / opacity only; camera scale ≤ 1.08; no bounce or overshoot, no cursor,
-  callouts, captions, logos, text overlays, particles, glitch, count-ups. No added text.
-- Crisp: UI images at ≥1× their displayed size; never upscale a render beyond native pixels.
-- Deliverables in out/: cafenista.mp4 (H.264 yuv420p +faststart, no audio, ≤450 KB target /
-  700 KB cap), cafenista.webm (VP9, same targets), cafenista.jpg (exact frame 0, ≤250 KB),
-  cafenista-end.jpg (exact last frame), contact.jpg (7 proof frames).
-- Source repos (cafenista, klao-site) are read-only.
+- 16:9 frame 0 is now `public/images/cafenista.jpg` itself (the owner's Today screen; the site serves the
+  same file as the sheet's still and cross-fades into the clip). Master frame 0 is bit-identical to it; the
+  encodes reach PSNR 40.5 / 40.4 dB (mp4 / webm), the 4:2:0 limit for this image being 40.55 dB.
+- 0.3–0.9 s: zoom-through. The still pushes in to 1.06 about its red alert card (MOVE, 0.6 s) and dissolves
+  (LEAVE, 0.24 s); the machine card that alert is about settles in underneath (0.96 → 1, ARRIVE, 0.5 s).
+  Then the pilot's story, re-timed: dip 0.8, chip/headline 1.27, owner alert 1.55, handoff 2.45, resolve 3.6.
+- Fixes the pilot's sparse poster (one small card on an empty stage). Last frame unchanged (balanced pair).
+- 1:1 keeps the pilot's composition; the UI is laid out at the app's 375-pt phone width (cards 343) and
+  zoomed 2.76× (was 390-pt, 2.64×) so the app's smallest text (15 px) is 13.0 px on a 340 px column (was 12.5).
+- Registry checked before hand-building the transition: `zoom-through-transition` (clip-path wipe + blur,
+  0.9 s) and `fade-through` (passes through a wash) don't meet the ≤ 0.6 s / scale ≤ 1.06 rule; two plain
+  tweens do.
 
-## Decisions (build run, 2026-09-30)
+## Decisions (pilot build run, 2026-10-01; still in force)
 
-- Owner kept at native 1:1 (no scale-down) so its Thai text stays pixel-exact; the optional
-  slight scale-down was skipped.
-- Owner frame 800x780 at y 60, x 390 → 178; page inset +24 px at frame 0; scroll ends at page
-  y 1100 (both cut edges land on blank card rows). Phone 360x780 at x 1042, y 60.
-- Timings: hold 0–0.5 · scroll 0.5–2.4 (drift) · owner left 2.4–3.9 (drift) · phone y 3.0–4.2
-  (settle), opacity 3.0–3.8 (drift) · static 4.2–5.0.
-- Master = lossless PNG sequence (`renders/master-final`); web files encoded by
-  `tools/encode-final.sh` (x264 veryslow CRF 26; VP9 CRF 32), tagged BT.709 primaries/matrix,
-  sRGB transfer, TV range.
+- Fixture: the 16:9 frame 0 is the m4 Today fixture (alert since 08:45, data to 08:46); from 0.3 s the
+  sting uses the pilot's m1 set. The still is fully gone by 0.58 s, before any m1 time can be read.
+- Fixture (pilot): owner side uses the m1 set (alert since 08:43, reading 08:44), bar uses m1 bar-alert-live
+  (08:44). The two alert cards are never readable together.
+- "ชงช็อตตรวจ" is shown but not pressed: in the app it opens the keypad log view, so a press
+  followed by a bean-card tap is not a real sequence. The press is on the "พอดี" segment.
+- Saved screen prints "เบอร์ 20 · 08:44 · บาริสต้า A"; the render reads 14:04 because its fixture
+  clock differs. The app prints the tap time, which on this bar screen is 08:44.
+- 16:9: camera follows the tap down the phone so the saved body lands centred. 1:1: bar shown as
+  windows onto the phone screen (home crop, then the saved layer's crop, centred on the 812-tall screen).
+- Encodes: x264 veryslow `-tune animation`, VP9 `-cpu-used 0`; BT.709 matrix, sRGB transfer tag, TV range.
+  16:9: x264 CRF 24 with frames 0–14 at QP 18 (x264 zones), VP9 CRF 33. 1:1: x264 CRF 22, VP9 CRF 32.

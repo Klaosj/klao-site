@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <link rel="stylesheet" href="ui.css" />
+    <style>
+      /* ── klao-site frame (frame.md): quiet stage, the app is the only colour */
+      /* no universal reset here: an unlayered `* { padding: 0 }` would beat Tailwind's layered utilities
+         inside the app UI (Tailwind's own preflight in ui.css already resets) */
+      html, body { margin: 0; padding: 0; }
+      html, body { width: 1080px; height: 1080px; overflow: hidden; background: #F5F6F8; }
+      #root { position: relative; width: 100%; height: 100%; background: #F5F6F8; overflow: hidden; }
+      #bg { position: absolute; inset: 0; background: #F5F6F8; }   /* painted stage: survives transparent capture */
+
+      /* Tailwind's default stacks (ui.css theme layer) name these system families; declare them as the
+         local fonts they already are so the renderer resolves them the way the browser does. */
+      @font-face { font-family: 'Apple Color Emoji'; src: local('Apple Color Emoji'), local('AppleColorEmoji'); }
+      @font-face { font-family: 'Segoe UI Emoji'; src: local('Segoe UI Emoji'); }
+      @font-face { font-family: 'Segoe UI Symbol'; src: local('Segoe UI Symbol'); }
+      @font-face { font-family: 'SFMono-Regular'; src: local('SFMono-Regular'), local('SF Mono'); }
+
+      /* GoNai UI, laid out at its real CSS size (the plan page on a 412 px phone: cards 380 px wide) and
+         scaled 2.6x for the square, one surface at a time. Shell = app/layout.tsx's body. The app's own
+         entrance animations and transitions are off, as under prefers-reduced-motion. */
+      .gnui { font-family: var(--font-plex-thai), system-ui, sans-serif; color: var(--ink); -webkit-font-smoothing: antialiased; }
+      .gnui, .gnui * { animation: none !important; transition: none !important; }
+      /* A visitor's Chrome draws the stop card's ☕ (inside .o-mono) as the colour emoji; headless capture
+         paths can pick Menlo's monochrome ☕ from the mono stack instead. Ask for emoji presentation so
+         the render matches the screen. */
+      .gnui li.gn-card-e > span.o-mono { font-variant-emoji: emoji; }   /* the emoji-only span; never on digits */
+      /* scaled with a transform, not CSS zoom: the layout is the app's own 1x layout (same line breaks),
+         and the boxes the HyperFrames audits measure match what is drawn */
+      .z { position: absolute; left: 0; top: 0; width: 380px; transform: scale(2.6); transform-origin: 0 0; }
+      /* each app card is its own surface (gn-card-e: the app's hairline + shadow) */
+      .cw { position: absolute; left: 0; top: 0; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="5" data-width="1080" data-height="1080">
+      <div id="bg"></div>
+      <div id="w-route" class="cw" data-layout-allow-overflow data-layout-allow-overlap>
+        <div class="gnui z __variable_3237e5 __variable_b4c22e"><div id="slot-route"></div></div>
+      </div>
+      <div id="w-stops" class="cw" data-layout-allow-overflow data-layout-allow-overlap>
+        <div class="gnui z __variable_3237e5 __variable_b4c22e"><ol class="space-y-3" id="slot-stops"></ol></div>
+      </div>
+      <div id="w-money" class="cw" data-layout-allow-overflow data-layout-allow-overlap>
+        <div class="gnui z __variable_3237e5 __variable_b4c22e"><div id="slot-money"></div></div>
+      </div>
+    </div>
+
+    <script src="ui.js"></script>
+    <script>
+      /* =====================================================================
+         GoNai UI sting · square 1080×1080 · 30 fps · 5.0 s · plays once, holds.
+         0.0–0.5     the route card alone (frame 0 = the phone poster): BTS 64฿ · 28 min
+         build 0.5–1.3   the route card lifts away; the two sample stops settle in
+         breathe 1.75–2.7 the stops rise to make room; the budget card arrives below, then rests
+         resolve 3.3–4.4 the budget bar fills to 410 of 450
+         hold 4.4–5.0    nothing moves
+         ===================================================================== */
+      const swap = (id, html) => { document.getElementById(id).outerHTML = html; };
+      swap('slot-route', GN.routeCard('route'));
+      document.getElementById('slot-stops').innerHTML = GN.stopCard(0, 'stop0') + GN.stopCard(1, 'stop1');
+      swap('slot-money', GN.money('money', 'bar'));
+
+      /* klao-site eases (frame.md), solved as real cubic-béziers so GSAP gets the exact curve */
+      function bezier(x1, y1, x2, y2) {
+        const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx;
+        const cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by;
+        const sx = (t) => ((ax * t + bx) * t + cx) * t;
+        const sy = (t) => ((ay * t + by) * t + cy) * t;
+        const dx = (t) => (3 * ax * t + 2 * bx) * t + cx;
+        return (p) => {
+          if (p <= 0) return 0;
+          if (p >= 1) return 1;
+          let t = p;
+          for (let i = 0; i < 8; i++) {
+            const e = sx(t) - p, d = dx(t);
+            if (Math.abs(e) < 1e-7) return sy(t);
+            if (Math.abs(d) < 1e-6) break;
+            t -= e / d;
+          }
+          let lo = 0, hi = 1; t = p;
+          for (let i = 0; i < 40; i++) { const v = sx(t); if (Math.abs(v - p) < 1e-7) break; if (v < p) lo = t; else hi = t; t = (lo + hi) / 2; }
+          return sy(t);
+        };
+      }
+      const ARRIVE = bezier(.32, .72, 0, 1);     // --ease-settle
+      const MOVE   = bezier(.28, .11, .32, 1);    // --ease-drift
+      const LEAVE  = bezier(.4, 0, 1, 1);         // --ease-exit
+      const APP    = bezier(.22, 1, .36, 1);      // GoNai's own --gn-ease, for the app's own motions (gn-slide-l)
+
+      GN.fontsReady().then(() => {
+        const Z = 2.6, W = 380 * Z;                                   // 988 px wide
+        const box = (id) => {
+          const w = document.getElementById(id);
+          const h = w.querySelector('.z').offsetHeight * Z;
+          w.style.width = W + 'px'; w.style.height = h + 'px';
+          return h;
+        };
+        const hR = box('w-route'), hS = box('w-stops'), hM = box('w-money');   // 185.75 · 74+12+74 · 66 css
+        const X = (1080 - W) / 2;
+        const GAP = 16 * Z;                                           // PlanView space-y-4 between the list and the budget card
+        const top = (1080 - (hS + GAP + hM)) / 2;                     // final group, centred
+        const pos = {
+          route: (1080 - hR) / 2,                                     // frame 0: the route card alone, centred
+          stops1: (1080 - hS) / 2,                                    // the stops alone, centred
+          stops2: top,
+          money: top + hS + GAP,
+        };
+
+        const tl = gsap.timeline({ paused: true });
+
+        /* ── rest state (frame 0 = the phone poster) · immediate sets, outside the paused timeline */
+        gsap.set('#w-route', { x: X, y: pos.route });
+        gsap.set('#w-stops', { x: X, y: pos.stops1 });
+        gsap.set('#w-money', { x: X, y: pos.money + 24, opacity: 0 });
+        gsap.set(['#stop0', '#stop1'], { x: -26, opacity: 0 });       // the app's gn-slide-l offset (css px)
+
+        /* ── BUILD · the route card lifts away, the two sample stops settle in */
+        tl.to('#w-route', { y: pos.route - 36, opacity: 0, duration: 0.24, ease: LEAVE }, 0.5);   // gone by 0.74
+        tl.to(['#stop0', '#stop1'], { x: 0, opacity: 1, duration: 0.45, ease: APP, stagger: 0.1 }, 0.76);   // once the route card has cleared (no double exposure)
+
+        /* ── BREATHE · the stops rise to make room; the budget card arrives below */
+        tl.to('#w-stops', { y: pos.stops2, duration: 0.8, ease: MOVE }, 1.75);
+        tl.to('#w-money', { y: pos.money, opacity: 1, duration: 0.55, ease: ARRIVE }, 2.15);
+
+        /* ── RESOLVE · the budget bar fills to the app's own 91 % (410 / 450) */
+        tl.fromTo('#bar', { width: '0%' }, { width: GN.BAR_PCT + '%', duration: 1.1, ease: MOVE }, 3.3);
+
+        window.__timelines['main'] = tl;
+        tl.seek(0);
+      });
+    </script>
+  </body>
+</html>

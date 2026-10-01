@@ -262,6 +262,23 @@ describe('SheetClip: the square cut on phones', () => {
     expect(sources(openAt('cafenista').dialog)).toEqual(['/clips/cafenista.webm', '/clips/cafenista.mp4']);
   });
 
+  it('labels the video with the square label on a phone, the clip label otherwise', () => {
+    const labelled = { ...clip, square: { ...clip.square!, label: { en: 'Square story', th: 'เรื่องสี่เหลี่ยม' } } };
+    const label = (c: typeof clip, locale: 'en' | 'th') => {
+      const { container } = render(<SheetClip clip={c} locale={locale} startAfter={settled} />);
+      const l = container.querySelector('video')?.getAttribute('aria-label');
+      cleanup();
+      return l;
+    };
+    phoneAndMotion();
+    expect(label(labelled, 'en')).toBe('Square story');
+    expect(label(labelled, 'th')).toBe('เรื่องสี่เหลี่ยม');
+    const plain = { ...clip, square: { ...clip.square!, label: undefined } };
+    expect(label(plain, 'en')).toBe(clip.label.en);
+    allowMotion();
+    expect(label(labelled, 'en')).toBe(clip.label.en);
+  });
+
   it('plays the 16:9 files on a phone when the clip has no square cut', () => {
     phoneAndMotion();
     const flat = { ...clip, square: undefined };
@@ -339,7 +356,9 @@ describe('the clip registry (src/lib/project-clips.ts)', () => {
   });
 
   it.each(entries)('%s: the square cut and its poster exist in public/ (clips at most 700 KB, poster at most 250 KB)', (key, c) => {
-    expect(c.square, key).toEqual({ webm: `/clips/${key}-1x1.webm`, mp4: `/clips/${key}-1x1.mp4`, poster: `/images/${key}-1x1.jpg` });
+    expect(c.square, key).toMatchObject({ webm: `/clips/${key}-1x1.webm`, mp4: `/clips/${key}-1x1.mp4`, poster: `/images/${key}-1x1.jpg` });
+    expect(c.square!.label?.en, key).toBeTruthy();
+    expect(c.square!.label?.th, key).toBeTruthy();
     for (const src of [c.square!.webm, c.square!.mp4]) {
       const size = statSync(join('public', src)).size;
       expect(size, `${src} is ${size} bytes`).toBeLessThanOrEqual(700 * 1024);

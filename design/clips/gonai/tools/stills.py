@@ -1,30 +1,37 @@
-# End still + contact sheet from the lossless PNG master (frame 1 = t 0.000 s, frame 150 = t 4.967 s).
-# Frame 0 is not exported: it is public/images/gonai.jpg itself (see tools/verify.py).
-import os
+"""stills.py <work-dir> <out-dir> <key> — phone poster, end frames and 7-frame contact sheets from the
+PNG masters. frame_000001 = t 0.000 s · frame_000150 = t 4.967 s (the held last frame).
+The 16:9 cut has no poster export: its frame 0 is public/images/<key>.jpg itself."""
+import os, sys
 from PIL import Image, ImageDraw, ImageFont
-M = "renders/master-final/frame_%06d.png"
-last = Image.open(M % 150).convert("RGB")
-last.save("out/gonai-end.jpg", quality=82, subsampling=0, optimize=True)
 
-times = [0.0, 0.5, 1.2, 2.1, 3.2, 4.2, 5.0]
-idx = [min(150, round(t * 30) + 1) for t in times]
-TW, TH, G, LH, COLS = 790, 450, 24, 40, 4
-rows = (len(times) + COLS - 1) // COLS
-W = COLS * TW + (COLS + 1) * G
-H = rows * (TH + LH) + (rows + 1) * G
-sheet = Image.new("RGB", (W, H), (255, 255, 255))
-d = ImageDraw.Draw(sheet)
+work, out, key = sys.argv[1], sys.argv[2], sys.argv[3]
+TIMES = {
+    '16x9': [0.0, 0.6, 1.2, 2.4, 3.6, 3.95, 4.967],
+    '1x1':  [0.0, 0.7, 1.1, 2.3, 3.6, 4.0, 4.967],
+}
 font = None
-for f in ("/System/Library/Fonts/SFNS.ttf", "/System/Library/Fonts/Helvetica.ttc"):
+for f in ('/System/Library/Fonts/SFNS.ttf', '/System/Library/Fonts/Helvetica.ttc'):
     if os.path.exists(f):
-        font = ImageFont.truetype(f, 22); break
-for k, (t, i) in enumerate(zip(times, idx)):
-    r, c = divmod(k, COLS)
-    x = G + c * (TW + G); y = G + r * (TH + LH + G)
-    label = f"{t:.1f} s  ·  frame {i - 1}" + ("  (last)" if i == 150 else "")
-    d.text((x, y + 6), label, fill=(60, 60, 67), font=font)
-    tile = Image.open(M % i).convert("RGB").resize((TW, TH), Image.LANCZOS)
-    sheet.paste(tile, (x, y + LH))
-    d.rectangle([x - 1, y + LH - 1, x + TW, y + LH + TH], outline=(210, 210, 215))
-sheet.save("out/contact.jpg", quality=85, optimize=True)
-print("frames used:", idx)
+        font = ImageFont.truetype(f, 20); break
+
+for cut, times in TIMES.items():
+    frame = lambda i: Image.open(os.path.join(work, cut, 'frame_%06d.png' % i)).convert('RGB')
+    if cut == '1x1':
+        frame(1).save(os.path.join(out, '%s-frame0-1x1.jpg' % key), quality=82, subsampling=0, optimize=True)
+    frame(150).save(os.path.join(out, 'end-%s.jpg' % cut), quality=88, subsampling=0, optimize=True)
+    idx = [min(150, round(t * 30) + 1) for t in times]
+    W, H = frame(1).size
+    TW = 560 if cut == '16x9' else 400
+    TH = round(TW * H / W)
+    COLS, G, LH = 4, 20, 32
+    rows = (len(idx) + COLS - 1) // COLS
+    sheet = Image.new('RGB', (COLS * TW + (COLS + 1) * G, rows * (TH + LH) + (rows + 1) * G), (255, 255, 255))
+    d = ImageDraw.Draw(sheet)
+    for k, (t, i) in enumerate(zip(times, idx)):
+        r, c = divmod(k, COLS)
+        x = G + c * (TW + G); y = G + r * (TH + LH + G)
+        d.text((x, y + 4), '%.2f s · frame %d%s' % ((i - 1) / 30, i - 1, ' (held)' if i == 150 else ''), fill=(60, 60, 67), font=font)
+        sheet.paste(frame(i).resize((TW, TH), Image.LANCZOS), (x, y + LH))
+        d.rectangle([x - 1, y + LH - 1, x + TW, y + LH + TH], outline=(210, 210, 215))
+    sheet.save(os.path.join(out, 'contact-%s.jpg' % cut), quality=86, optimize=True)
+    print(cut, 'contact frames', [i - 1 for i in idx])

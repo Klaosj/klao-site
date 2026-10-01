@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1580, height=900" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <link rel="stylesheet" href="ui.css" />
+    <style>
+      /* ── klao-site frame (frame.md): quiet stage, the app is the only colour */
+      /* no universal reset here: an unlayered `* { padding: 0 }` would beat Tailwind's layered utilities
+         inside the app UI (Tailwind's own preflight in ui.css already resets) */
+      html, body { margin: 0; padding: 0; }
+      html, body { width: 1580px; height: 900px; overflow: hidden; background: #F5F6F8; }
+      #root { position: relative; width: 100%; height: 100%; background: #F5F6F8; overflow: hidden; }
+      #bg { position: absolute; inset: 0; background: #F5F6F8; }   /* painted stage: survives transparent capture */
+
+      /* Tailwind's default stacks (ui.css theme layer) name these system families; declare them as the
+         local fonts they already are so the renderer resolves them the way the browser does. */
+      @font-face { font-family: 'Apple Color Emoji'; src: local('Apple Color Emoji'), local('AppleColorEmoji'); }
+      @font-face { font-family: 'Segoe UI Emoji'; src: local('Segoe UI Emoji'); }
+      @font-face { font-family: 'Segoe UI Symbol'; src: local('Segoe UI Symbol'); }
+      @font-face { font-family: 'SFMono-Regular'; src: local('SFMono-Regular'), local('SF Mono'); }
+
+      /* frame 0: public/images/gonai.jpg (the sheet's screenshot), unscaled, full frame */
+      #landing { position: absolute; left: 0; top: 0; width: 1580px; height: 900px; display: block; transform-origin: 50% 50%; }
+
+      /* GoNai UI, laid out at its real CSS size and zoomed (text stays crisp). The document shell is
+         app/layout.tsx's body: Plex Sans Thai, ink, antialiased. The app's own entrance animations
+         (gn-slide-l, gn-rise) and transitions are off, as under prefers-reduced-motion: the sting's
+         timeline does the moving. */
+      .gnui { font-family: var(--font-plex-thai), system-ui, sans-serif; color: var(--ink); -webkit-font-smoothing: antialiased; }
+      .gnui, .gnui * { animation: none !important; transition: none !important; }
+      /* A visitor's Chrome draws the stop card's ☕ (inside .o-mono) as the colour emoji; headless capture
+         paths can pick Menlo's monochrome ☕ from the mono stack instead. Ask for emoji presentation so
+         the render matches the screen. */
+      .gnui li.gn-card-e > span.o-mono { font-variant-emoji: emoji; }   /* the emoji-only span; never on digits */
+      /* scaled with a transform, not CSS zoom: the layout is the app's own 1x layout (same line breaks),
+         and the boxes the HyperFrames audits measure match what is drawn */
+      .z { position: absolute; left: 0; top: 0; transform: scale(1.45); transform-origin: 0 0; }
+
+      /* our window: the plan page (app/app/plan/[id]) at a 512 px viewport, cropped below the budget card.
+         One hairline + one surface shadow (frame.md shadow.surface); radius = frame window 18. */
+      #win {
+        position: absolute; left: 0; top: 0; transform-origin: 0 0;
+        width: 742.4px; overflow: hidden; border-radius: 18px; background: #fff;
+        box-shadow: 0 0 0 1px rgba(20,26,44,.05), 0 2px 4px rgba(20,26,44,.04), 0 12px 28px -8px rgba(20,26,44,.12), 0 32px 64px -32px rgba(20,26,44,.18);
+      }
+      #win .z { width: 512px; }
+      /* the share card is the app's own surface (gn-card-e: its hairline + its shadow), at the 390 px phone page width */
+      #share-wrap { position: absolute; left: 0; top: 0; }
+      #share-wrap .z { width: 358px; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="5" data-width="1580" data-height="900">
+      <div id="bg"></div>
+      <div id="win" data-layout-allow-overflow data-layout-allow-overlap>
+        <div class="gnui z __variable_3237e5 __variable_b4c22e">
+          <div class="mx-auto max-w-[1500px] space-y-4 px-4 py-4">
+            <div id="slot-head"></div>
+            <div class="gn-slide-l mx-auto max-w-2xl space-y-4">
+              <div id="slot-route"></div>
+              <ol class="space-y-3" id="slot-stops"></ol>
+              <div id="slot-money"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="share-wrap" data-layout-allow-overflow data-layout-allow-overlap>
+        <div class="gnui z __variable_3237e5 __variable_b4c22e"><div id="slot-share"></div></div>
+      </div>
+      <img id="landing" src="assets/landing.jpg" alt="" data-layout-allow-overlap />
+    </div>
+
+    <script src="ui.js"></script>
+    <script>
+      /* =====================================================================
+         GoNai UI sting · 1580×900 · 30 fps · 5.0 s · plays once, holds.
+         0.0–0.3     the sheet's screenshot (the landing page), untouched
+         build 0.3–1.8   zoom-through into "Your plan"; the route card arrives (BTS 64฿),
+                         the two sample stops settle in, the budget card follows
+         breathe 1.9–3.35 the budget bar fills to 410 of 450 (the one ambient move), then rests
+         resolve 3.35–4.4 the plan steps back; the view-only share card resolves beside it
+         hold 4.4–5.0    nothing moves
+         ===================================================================== */
+      const swap = (id, html) => { document.getElementById(id).outerHTML = html; };
+      swap('slot-head', GN.planHeader());
+      swap('slot-route', GN.routeCard('route'));
+      document.getElementById('slot-stops').innerHTML = GN.stopCard(0, 'stop0') + GN.stopCard(1, 'stop1');
+      swap('slot-money', GN.money('money', 'bar'));
+      swap('slot-share', GN.shareCard('share'));
+      // The share card is shown as the 390 px phone page draws it. There the viewport is under Tailwind's
+      // sm breakpoint (640 px), so its sm: variants are inactive; this page is 1580 px wide, so drop them.
+      document.querySelectorAll('#share [class*="sm:"]').forEach((el) => {
+        el.className = el.className.split(' ').filter((c) => !c.startsWith('sm:')).join(' ');
+      });
+
+      /* klao-site eases (frame.md), solved as real cubic-béziers so GSAP gets the exact curve */
+      function bezier(x1, y1, x2, y2) {
+        const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx;
+        const cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by;
+        const sx = (t) => ((ax * t + bx) * t + cx) * t;
+        const sy = (t) => ((ay * t + by) * t + cy) * t;
+        const dx = (t) => (3 * ax * t + 2 * bx) * t + cx;
+        return (p) => {
+          if (p <= 0) return 0;
+          if (p >= 1) return 1;
+          let t = p;
+          for (let i = 0; i < 8; i++) {
+            const e = sx(t) - p, d = dx(t);
+            if (Math.abs(e) < 1e-7) return sy(t);
+            if (Math.abs(d) < 1e-6) break;
+            t -= e / d;
+          }
+          let lo = 0, hi = 1; t = p;
+          for (let i = 0; i < 40; i++) { const v = sx(t); if (Math.abs(v - p) < 1e-7) break; if (v < p) lo = t; else hi = t; t = (lo + hi) / 2; }
+          return sy(t);
+        };
+      }
+      const ARRIVE = bezier(.32, .72, 0, 1);     // --ease-settle
+      const MOVE   = bezier(.28, .11, .32, 1);    // --ease-drift
+      const LEAVE  = bezier(.4, 0, 1, 1);         // --ease-exit
+      const APP    = bezier(.22, 1, .36, 1);      // GoNai's own --gn-ease, for the app's own motions (gn-slide-l)
+
+      GN.fontsReady().then(() => {
+        const Z = 1.45;
+        const win = document.getElementById('win');
+        const WIN_W = 512 * Z;
+        const WIN_H = win.querySelector('.z').offsetHeight * Z;                  // 525.25 css × 1.45
+        win.style.height = WIN_H + 'px';
+        const shareWrap = document.getElementById('share-wrap');
+        const SH = { width: 358 * Z, height: shareWrap.querySelector('.z').offsetHeight * Z };   // 358 × 417.06 css
+        shareWrap.style.width = SH.width + 'px'; shareWrap.style.height = SH.height + 'px';
+        const STEP = 0.96, GAP = 64;
+        const total = WIN_W * STEP + GAP + SH.width;
+        const pos = {
+          w1: { x: (1580 - WIN_W) / 2, y: (900 - WIN_H) / 2 },                                  // the plan alone, centred
+          w2: { x: (1580 - total) / 2, y: (900 - WIN_H * STEP) / 2 },                            // stepped back, left
+          s2: { x: (1580 - total) / 2 + WIN_W * STEP + GAP, y: (900 - SH.height) / 2 },          // share card, right
+        };
+
+        const tl = gsap.timeline({ paused: true });
+
+        /* ── rest state (frame 0 = the screenshot) · immediate sets, outside the paused timeline */
+        // scale-in about its own centre, written as top-left origin + matching offset (one origin for the whole clip)
+        gsap.set('#win', { x: pos.w1.x + WIN_W * 0.015, y: pos.w1.y + WIN_H * 0.015, scale: 0.97, opacity: 0, transformOrigin: '0% 0%' });
+        gsap.set('#share-wrap', { x: pos.s2.x + 40, y: pos.s2.y, opacity: 0 });   // follows the window's leftward drift
+        gsap.set('#route', { y: 16, opacity: 0 });
+        gsap.set(['#stop0', '#stop1'], { x: -26, opacity: 0 });   // the app's gn-slide-l offset
+        gsap.set('#money', { opacity: 0 });
+
+        /* ── BUILD · zoom-through, then the plan assembles */
+        tl.to('#landing', { scale: 1.05, duration: 0.6, ease: MOVE }, 0.3);
+        tl.to('#landing', { opacity: 0, duration: 0.32, ease: LEAVE }, 0.36);           // gone at 0.68, before the window shows
+        tl.to('#win', { x: pos.w1.x, y: pos.w1.y, opacity: 1, scale: 1, duration: 0.5, ease: ARRIVE }, 0.68);
+        tl.to('#route', { y: 0, opacity: 1, duration: 0.5, ease: ARRIVE }, 0.86);          // overlaps the window's settle: no empty page
+        tl.to(['#stop0', '#stop1'], { x: 0, opacity: 1, duration: 0.45, ease: APP, stagger: 0.1 }, 1.08);
+        tl.to('#money', { opacity: 1, duration: 0.4, ease: MOVE }, 1.42);
+
+        /* ── BREATHE · the budget bar fills to the app's own 91 % (410 / 450) */
+        tl.fromTo('#bar', { width: '0%' }, { width: GN.BAR_PCT + '%', duration: 1.1, ease: MOVE }, 1.9);
+
+        /* ── RESOLVE · the plan steps back; the view-only share card resolves beside it */
+        tl.to('#win', { x: pos.w2.x, y: pos.w2.y, scale: STEP, opacity: 0.8, duration: 0.7, ease: MOVE }, 3.35);   // steps back: the share card is the hero
+        tl.to('#share-wrap', { x: pos.s2.x, opacity: 1, duration: 0.55, ease: ARRIVE }, 3.85);   // only once the window has cleared its slot
+
+        window.__timelines['main'] = tl;
+        tl.seek(0);
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,44 @@
+{
+  "duration": 5,
+  "assertions": [
+    {
+      "kind": "appearsBy",
+      "selector": "#strip",
+      "bySec": 0
+    },
+    {
+      "kind": "appearsBy",
+      "selector": "#p-quest-q1 .quest-receipt",
+      "bySec": 1.05
+    },
+    {
+      "kind": "appearsBy",
+      "selector": "#p-quest-q1 .result > span:nth-child(1)",
+      "bySec": 1.5
+    },
+    {
+      "kind": "appearsBy",
+      "selector": "#p-quest-q1 .result > span:nth-child(2)",
+      "bySec": 1.6
+    },
+    {
+      "kind": "appearsBy",
+      "selector": "#p-quest-q1 .qnote",
+      "bySec": 3.95
+    },
+    {
+      "kind": "before",
+      "a": "#p-quest-q1 .quest-receipt",
+      "b": "#p-quest-q1 .result > span:nth-child(1)"
+    },
+    {
+      "kind": "before",
+      "a": "#p-quest-q1 .result > span:nth-child(2)",
+      "b": "#p-quest-q1 .qnote"
+    },
+    {
+      "kind": "staysInFrame",
+      "selector": "#cardwin"
+    }
+  ]
+}
