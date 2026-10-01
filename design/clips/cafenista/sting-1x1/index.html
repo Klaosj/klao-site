@@ -37,6 +37,8 @@
       .pillSlot > * { grid-area: 1 / 1; }
       .headSlot { display: grid; }
       .headSlot > * { grid-area: 1 / 1; }
+      .footSlot { display: grid; justify-items: end; }
+      .footSlot > * { grid-area: 1 / 1; }
       .cf .t-sparkLine, .cf .t-sparkNormal { vector-effect: none; }
       /* the app colours this line by tone (accent → crit); one variable lets the flip be one tween */
       #m_spark { --spark: #6F4E37; }
@@ -123,7 +125,7 @@
       gsap.set(['#h-wrap', '#s-wrap'], { x: pos.w.x, y: pos.w.y });
       gsap.set('#h-wrap', { y: pos.w.y + 64, opacity: 0 });
       gsap.set('#s-wrap', { opacity: 0 });
-      gsap.set(['#m_pillCrit', '#m_headCrit'], { opacity: 0 });
+      gsap.set(['#m_pillCrit', '#m_headCrit', '#m_footCrit'], { opacity: 0 });
       gsap.set('#m_headCrit', { y: 8 });
       gsap.set('#m_pillCrit', { scale: 0.92, transformOrigin: '100% 50%' });
       gsap.set('#p_checkPath', { strokeDasharray: 16, strokeDashoffset: 16 });
@@ -139,8 +141,9 @@
       tl.fromTo(chart, { s: 0 }, { s: 1, duration: 0.6, ease: MOVE, onUpdate: drawChart }, 0.2);
       tl.to('#m_headOk', { opacity: 0, y: -8, duration: 0.15, ease: LEAVE }, 0.6);
       tl.to('#m_headCrit', { opacity: 1, y: 0, duration: 0.3, ease: ARRIVE }, 0.733);
-      // the alert opens: chip and line tone flip together (the app swaps them in one render)
-      tl.to(['#m_pillOk', '#m_pillCrit'], { opacity: (i) => i, scale: 1, duration: 0.24, ease: APP }, 0.733);
+      // the alert opens: chip, line tone and the last reading's time flip together (the app swaps them in
+      // one render). Round 3: the foot's time joins the chip's tween, 08:44 → 08:46 (scale is a no-op on it).
+      tl.to(['#m_pillOk', '#m_pillCrit', '#m_footOk', '#m_footCrit'], { opacity: (i) => i % 2, scale: 1, duration: 0.24, ease: APP }, 0.733);
       tl.to('#m_spark', { '--spark': '#D03B3B', duration: 0.24, ease: APP }, 0.733);
       // the owner's alert rises over the card; the card steps back but keeps its reading in view
       tl.to('#m-wrap', { x: pos.m1.x, y: pos.m1.y, scale: pos.m1.s, opacity: 0.6, duration: 0.7, ease: MOVE }, 0.95);

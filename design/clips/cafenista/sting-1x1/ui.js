@@ -2,7 +2,8 @@
    components on feat/m4-demo, prefixed t-/b-). Copy is verbatim from the real renders
    named next to each builder. Nothing here animates; index.html owns the timeline.
    Clock times follow the site's still (public/images/cafenista.jpg, the m4 Today fixture): the alert is
-   open since 08:45 and data runs to 08:46, so every time below is one of those two (round 3). */
+   open since 08:45 and data runs to 08:46 (round 3). The one earlier time is the machine card's reading
+   while it is still normal, 08:44: it turns 08:46 with the chip, so no normal reading postdates the alert. */
 window.CF = (function () {
   'use strict';
 
@@ -59,8 +60,13 @@ window.CF = (function () {
           '<p class="t-headline" id="' + pfx + 'headCrit">ต่ำกว่าค่าปกติของเครื่องนี้ 6.6 °C</p>' +
         '</div>' +
         spark(pfx + 'spark', 0) +
-        // the square cut lays the owner's alert over this foot on purpose
-        '<div class="t-foot"><span data-layout-allow-occlusion data-layout-allow-overlap>จุดวัดผิวนอกเครื่องชง (เทียบกับค่าปกติของเครื่องนี้)</span><span data-layout-allow-occlusion data-layout-allow-overlap>ค่าล่าสุด 08:46</span></div>' +
+        // the square cut lays the owner's alert over this foot on purpose; the last reading's time has the
+        // card's two states stacked in one slot (normal 08:44, alert 08:46) like the chip and the headline
+        '<div class="t-foot"><span data-layout-allow-occlusion data-layout-allow-overlap>จุดวัดผิวนอกเครื่องชง (เทียบกับค่าปกติของเครื่องนี้)</span>' +
+          '<span class="footSlot" data-layout-allow-occlusion data-layout-allow-overlap>' +
+            '<span id="' + pfx + 'footOk" data-layout-allow-occlusion data-layout-allow-overlap>ค่าล่าสุด 08:44</span>' +
+            '<span id="' + pfx + 'footCrit" data-layout-allow-occlusion data-layout-allow-overlap>ค่าล่าสุด 08:46</span>' +
+          '</span></div>' +
       '</article>'
     );
   }

@@ -57,16 +57,21 @@ the alert rises over the card from the lower edge (1.05–1.75) while the card s
 (round 3; was 0.9×), the owner stack leaves upward (2.05–2.30),
 then the bar screen rises in (2.30–2.90), same resolve without the camera move; static from 4.30,
 keyframe at 4.367. Round 2 re-lays it out at the 375-pt phone width and 2.76× (smallest Thai 13.0 px at
-340 px), and starts the bar screen at 2.30 instead of 2.25: the pilot showed its two alert cards faintly
+340 px, round 2's estimate of the column; round 3 measured the video box at 358.8 px: 13.75 px), and starts the bar screen at 2.30 instead of 2.25: the pilot showed its two alert cards faintly
 together for two frames.
 
 ## Rules held
 
 - Frame 0 and the last frame are finished stills; first move at 0.30 s (16:9) / 0.20 s (1:1); nothing moves in the hold.
 - Every clock time agrees with the still (round 3): alert since 08:45 on the owner's card and the bar's,
-  ค่าล่าสุด 08:46, bar clock 08:46, saved at 08:46. The two alert cards are still never on screen together.
+  bar clock 08:46, saved at 08:46. The machine card's ค่าล่าสุด reads 08:44 while normal and turns 08:46 with
+  the chip (stacked states, flipped in the chip's tween: 0.733 s square, 1.267 s 16:9). The two alert cards
+  are still never on screen together.
 - Minimum text (round 3): measured in the sheet's video box (`.sheet-clip`: 358.8 px at a 390 phone, 894.4 px
   at 1440), every run is ≥ 13.2 px (square) / 13.1 px (16:9) in every frame it is readable, stepped-back
   surfaces included; at its largest every run is ≥ 13.75 / 14.0 px.
+- Headroom over the minimum is about 1 %: re-run `node tools/text-audit.mjs sting-1x1 <w>` and
+  `… sting-16x9 <w>` (w = `.sheet-clip` width at 390 / 1440) whenever `.sheet-win` sizing in
+  `src/components/project-sheet.css` changes.
 - Entrances vary by axis: card scale (zoom-through), alert x (16:9) / y (1:1), phone scale, saved layer opacity only.
 - No glow, gradient, particles, cursor, count-up or text we wrote. Every word is the app's.

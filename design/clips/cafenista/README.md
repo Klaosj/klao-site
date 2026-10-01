@@ -9,7 +9,7 @@ Brand truth: [../frame.md](../frame.md) — every clip follows it.
 design/clips/cafenista/
   sting-16x9/   index.html · ui.css · ui.js · assets/cafenista.jpg   1580×900, desktop project sheet
   sting-1x1/    index.html · ui.css · ui.js                          1080×1080, phone (re-composed, bigger UI)
-  tools/        build.sh · encode.sh · stills.py · quality.py · psnr_still.py
+  tools/        build.sh · encode.sh · stills.py · quality.py · psnr_still.py · text-audit.mjs
   BRIEF.md  DESIGN-NOTE.md (this sting's design note)  README.md
 ```
 
@@ -54,9 +54,12 @@ Preview while editing: `cd sting-16x9 && npx hyperframes@0.8.97 preview --backgr
 - The chart is driven by `CF.geometry(s)`, a port of the app's `sparkGeometry`: s = 0 is
   dashboard-normal, s = 1 is dashboard-alert (the autoscale saturates past a 1 °C gap).
 - Clock times follow the 16:9's still (alert since 08:45, data to 08:46); keep them in step if the still changes.
+  The machine card's last-reading time has two stacked states (08:44 normal, 08:46 alert) that flip with the chip.
 - Minimum text: frame.md's 13 px Thai / 12 px Latin in the sheet's video box (`.sheet-clip`, 358.8 px at a 390
   phone, 894.4 px at 1440), including stepped-back surfaces. That is why the machine card steps back only to
-  0.86 (16:9) / 0.96 (1:1); below 0.851 / 0.946 its 15 px text drops under 13 px.
+  0.86 (16:9) / 0.96 (1:1); below 0.851 / 0.946 its 15 px text drops under 13 px. Check with
+  `node tools/text-audit.mjs sting-1x1 358.8` and `node tools/text-audit.mjs sting-16x9 894.39` (exits 1 if
+  any readable run is under the minimum); re-measure the widths if `.sheet-win` sizing changes.
 - Keep `data-layout-allow-*` on the saved-screen text, the machine-card foot and the pills: those
   overlaps are the app's overlay, the square's stacked cards and the chip's two stacked states, on purpose.
 - Fidelity check used in the pilot: render the components at 390 CSS px, DPR 3, and diff against

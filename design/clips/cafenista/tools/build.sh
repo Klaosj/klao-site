@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # build.sh — check + render both cuts, then write the web deliverables.
-#   run from anywhere:  bash source/tools/build.sh
-#   masters (lossless PNG, overwritten each run) -> work/build/<cut>/ · deliverables -> out/
+#   run from anywhere:  bash design/clips/cafenista/tools/build.sh
+#   masters (lossless PNG, overwritten each run) -> design/clips/work/build/<cut>/ (git-ignored; the film reads them)
+#   deliverables -> design/clips/out/ (git-ignored); the site serves its own copies from public/clips/ + public/images/
 set -euo pipefail
-SRC="$(cd "$(dirname "$0")/.." && pwd)"          # .../source
-ROOT="$(cd "$SRC/.." && pwd)"                     # .../cafenista (the sting folder)
+SRC="$(cd "$(dirname "$0")/.." && pwd)"          # design/clips/cafenista (this sting's source folder)
+ROOT="$(cd "$SRC/.." && pwd)"                     # design/clips (the parent of the three clip folders)
 WORK="$ROOT/work/build"; OUT="$ROOT/out"
 HF="npx --yes hyperframes@0.8.97"
 mkdir -p "$WORK" "$OUT"

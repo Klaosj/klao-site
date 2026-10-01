@@ -33,6 +33,8 @@
       .pillSlot > * { grid-area: 1 / 1; }
       .headSlot { display: grid; }
       .headSlot > * { grid-area: 1 / 1; }
+      .footSlot { display: grid; justify-items: end; }
+      .footSlot > * { grid-area: 1 / 1; }
       /* strokes scale with the UI, as they do on the device-pixel renders */
       .cf .t-sparkLine, .cf .t-sparkNormal { vector-effect: none; }
       /* the app colours this line by tone (accent → crit); one variable lets the flip be one tween */
@@ -127,7 +129,7 @@
       gsap.set('#m-wrap', { x: pos.m0.x + CARD_W * (1 - K_IN) / 2, y: pos.m0.y + CARD_H * (1 - K_IN) / 2, scale: K_IN, opacity: 0 });
       gsap.set('#a-wrap', { x: pos.a1.x + 100, y: pos.a1.y, opacity: 0, transformOrigin: '50% 50%' });
       gsap.set('#p-wrap', { x: pos.p2.x, y: pos.p2.y, scale: 0.94, opacity: 0 });
-      gsap.set(['#m_pillCrit', '#m_headCrit'], { opacity: 0 });
+      gsap.set(['#m_pillCrit', '#m_headCrit', '#m_footCrit'], { opacity: 0 });
       gsap.set('#m_headCrit', { y: 8 });
       gsap.set('#m_pillCrit', { scale: 0.92, transformOrigin: '100% 50%' });
       gsap.set('#p_saved', { opacity: 0 });
@@ -151,8 +153,9 @@
       // headline follows the reading, the chip follows the alert
       tl.to('#m_headOk', { opacity: 0, y: -8, duration: 0.15, ease: LEAVE }, 1.15);
       tl.to('#m_headCrit', { opacity: 1, y: 0, duration: 0.3, ease: ARRIVE }, 1.267);
-      // the alert opens: chip and line tone flip together (the app swaps them in one render)
-      tl.to(['#m_pillOk', '#m_pillCrit'], { opacity: (i) => i, scale: 1, duration: 0.24, ease: APP }, 1.267);
+      // the alert opens: chip, line tone and the last reading's time flip together (the app swaps them in
+      // one render). Round 3: the foot's time joins the chip's tween, 08:44 → 08:46 (scale is a no-op on it).
+      tl.to(['#m_pillOk', '#m_pillCrit', '#m_footOk', '#m_footCrit'], { opacity: (i) => i % 2, scale: 1, duration: 0.24, ease: APP }, 1.267);
       tl.to('#m_spark', { '--spark': '#D03B3B', duration: 0.24, ease: APP }, 1.267);
       // the owner's alert arrives; the card makes room
       // matched vectors: the card drifts left and the alert follows it in from the right

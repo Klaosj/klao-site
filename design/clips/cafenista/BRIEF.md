@@ -60,6 +60,7 @@ Plays once, holds the last frame, no audio. Frame 0 is the poster and the reduce
 - Fixes the pilot's sparse poster (one small card on an empty stage). Last frame unchanged (balanced pair).
 - 1:1 keeps the pilot's composition; the UI is laid out at the app's 375-pt phone width (cards 343) and
   zoomed 2.76× (was 390-pt, 2.64×) so the app's smallest text (15 px) is 13.0 px on a 340 px column (was 12.5).
+  (Round-2 estimate of the column; round 3 measured the phone sheet's video box at 358.8 px: 13.75 px.)
 - Registry checked before hand-building the transition: `zoom-through-transition` (clip-path wipe + blur,
   0.9 s) and `fade-through` (passes through a wash) don't meet the ≤ 0.6 s / scale ≤ 1.06 rule; two plain
   tweens do.
@@ -70,8 +71,10 @@ Only times and text size changed (spec `docs/superpowers/specs/2026-10-01-film-o
 
 - Times: the rebuilt UI used the pilot's m1 times (owner alert 08:43, reading 08:44, bar 08:44), so it disagreed
   with the still it opens on (alert 08:45, data to 08:46). Every time now follows the still: owner alert and
-  bar alert "ตั้งแต่ 08:45" (one alert, one `openedAt`), "ค่าล่าสุด 08:46", bar header "บาริสต้า A · 08:46"
-  (the bar device's clock), saved "เบอร์ 20 · 08:46 · บาริสต้า A" (the tap time on that screen).
+  bar alert "ตั้งแต่ 08:45" (one alert, one `openedAt`), bar header "บาริสต้า A · 08:46" (the bar device's
+  clock), saved "เบอร์ 20 · 08:46 · บาริสต้า A" (the tap time on that screen). The machine card's
+  "ค่าล่าสุด" is 08:44 while the card is normal and turns 08:46 with the chip (two stacked states, one tween
+  with the chip), so no normal reading postdates the alert that opened at 08:45 (fix round 1).
 - Text size: measured on the live sheet, the video box is `.sheet-clip` (= `.sheet-win`, 92 % of `.smedia` on a
   phone): 358.8 px at 390 and 894.4 px at 1440 (not `.smedia`, 390 / 1040 px). Every run already cleared the
   minimum at its largest (smallest run 13.75 px square, 14.0 px desktop), but frame.md also says never scale a
@@ -79,8 +82,9 @@ Only times and text size changed (spec `docs/superpowers/specs/2026-10-01-film-o
   16:9 (scale 0.84, held to the last frame) for the chip "เย็นกว่าปกติ" and the card's foot. The step-backs are
   now 0.96 (square; frame.md's gentlest) and 0.86 (16:9): 13.2 / 13.1 px. The square's alert moves to keep
   covering just the card's foot (card 85, alert 541; was 98 / 526); the 16:9 pair stays centred.
-- The ~10 px figure parked by the sheet-stings review is not reproduced at 390. It is consistent with the
-  stepped-back caption (scale 0.9) in a 320 px phone's 294 px video box: 41.4 × 0.9 × 294.4 / 1080 = 10.2 px.
+- The ~10 px figure parked by the sheet-stings review is not reproduced at 390. Unmeasured hypothesis (not
+  checked on a 320 px viewport): the stepped-back caption (scale 0.9) in a 320 px phone's video box, 92 % of
+  320 = 294.4 px, would be 41.4 × 0.9 × 294.4 / 1080 = 10.2 px.
 
 ## Decisions (pilot build run, 2026-10-01; still in force)
 
