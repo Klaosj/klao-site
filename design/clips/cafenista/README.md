@@ -1,4 +1,4 @@
-# Cafénista UI sting (round 2)
+# Cafénista UI sting (round 3)
 
 Two HyperFrames 0.8.97 compositions that rebuild Cafénista's real UI in HTML and animate it.
 The 16:9 opens on the site's own still and zooms through into the rebuilt UI.
@@ -53,6 +53,10 @@ Preview while editing: `cd sting-16x9 && npx hyperframes@0.8.97 preview --backgr
   add `will-change` to it (a composited layer can resample the image).
 - The chart is driven by `CF.geometry(s)`, a port of the app's `sparkGeometry`: s = 0 is
   dashboard-normal, s = 1 is dashboard-alert (the autoscale saturates past a 1 °C gap).
+- Clock times follow the 16:9's still (alert since 08:45, data to 08:46); keep them in step if the still changes.
+- Minimum text: frame.md's 13 px Thai / 12 px Latin in the sheet's video box (`.sheet-clip`, 358.8 px at a 390
+  phone, 894.4 px at 1440), including stepped-back surfaces. That is why the machine card steps back only to
+  0.86 (16:9) / 0.96 (1:1); below 0.851 / 0.946 its 15 px text drops under 13 px.
 - Keep `data-layout-allow-*` on the saved-screen text, the machine-card foot and the pills: those
   overlaps are the app's overlay, the square's stacked cards and the chip's two stacked states, on purpose.
 - Fidelity check used in the pilot: render the components at 390 CSS px, DPR 3, and diff against

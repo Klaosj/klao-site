@@ -3,6 +3,14 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const FRAME = 'design/clips/frame.md';
+// Cafénista's tools/build.sh writes its render byproducts one level up, into design/clips/out/ and
+// design/clips/work/ (both git-ignored; the PNG masters in work/build/ are an input to the film). They
+// are not clip source folders.
+const RENDER_DIRS = new Set(['out', 'work']);
+const sourceDirs = () =>
+  readdirSync('design/clips', { withFileTypes: true })
+    .filter((d) => d.isDirectory() && !RENDER_DIRS.has(d.name))
+    .map((d) => d.name);
 
 describe('design/clips/frame.md (spec 2026-10-01 §2.1)', () => {
   it('exists with the White Edition stage, accent and the four motion eases', () => {
@@ -18,11 +26,11 @@ describe('design/clips/frame.md (spec 2026-10-01 §2.1)', () => {
   });
 
   it('is referenced by every clip source folder', () => {
-    const dirs = readdirSync('design/clips', { withFileTypes: true }).filter((d) => d.isDirectory());
+    const dirs = sourceDirs();
     expect(dirs.length).toBeGreaterThanOrEqual(3);
     for (const d of dirs) {
-      const readme = readFileSync(join('design/clips', d.name, 'README.md'), 'utf8');
-      expect(readme, d.name).toContain('../frame.md');
+      const readme = readFileSync(join('design/clips', d, 'README.md'), 'utf8');
+      expect(readme, d).toContain('../frame.md');
     }
   });
 });
@@ -31,9 +39,7 @@ describe('design/clips/frame.md (spec 2026-10-01 §2.1)', () => {
 // `source/`), so their READMEs pointed at paths that do not exist here, and each carried a copy
 // of frame.md plus HyperFrames scaffold notes. The folders are the layout now.
 describe('design/clips/<key>/ source folders', () => {
-  const dirs = readdirSync('design/clips', { withFileTypes: true })
-    .filter((d) => d.isDirectory())
-    .map((d) => d.name);
+  const dirs = sourceDirs();
 
   it.each(dirs)('%s: its README names only paths that exist, relative to the folder', (key) => {
     const dir = join('design/clips', key);

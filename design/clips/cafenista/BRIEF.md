@@ -42,7 +42,9 @@ Plays once, holds the last frame, no audio. Frame 0 is the poster and the reduce
 - Same words, numbers, colours, radii, type as the app. Invent nothing; only real states.
 - Stage #F5F6F8, one hairline + one e2 shadow per surface, no glow / neon / particles / cursor.
 - One overshoot, on the press only. Camera scale ≤ 1.06 (used once: the 16:9 still's push-in, 1.0 → 1.06).
-- Thai legible at ~1100–1240 px (desktop) and ~340 px (square); square is re-composed, not cropped.
+- Thai legible: frame.md's 13 px Thai / 12 px Latin at the sheet's video box (measured 1 Oct 2026: 894.4 px wide
+  at a 1440 viewport, 358.8 px at 390), in every frame a run is readable, stepped-back surfaces included;
+  square is re-composed, not cropped.
 - Deliverables in `out/`: MP4 (H.264 yuv420p +faststart) and WebM (VP9, keyframes at 0 and at
   the hold) for both cuts, ≤ 700 KB each (target ≤ 450 KB), 30 fps, 5.0 s, no audio; posters,
   end frames, 7-frame contact sheets.
@@ -62,16 +64,35 @@ Plays once, holds the last frame, no audio. Frame 0 is the poster and the reduce
   0.9 s) and `fade-through` (passes through a wash) don't meet the ≤ 0.6 s / scale ≤ 1.06 rule; two plain
   tweens do.
 
+## Round 3 (2026-10-01): times agree with the still, text clears the minimum
+
+Only times and text size changed (spec `docs/superpowers/specs/2026-10-01-film-og-design.md` §2).
+
+- Times: the rebuilt UI used the pilot's m1 times (owner alert 08:43, reading 08:44, bar 08:44), so it disagreed
+  with the still it opens on (alert 08:45, data to 08:46). Every time now follows the still: owner alert and
+  bar alert "ตั้งแต่ 08:45" (one alert, one `openedAt`), "ค่าล่าสุด 08:46", bar header "บาริสต้า A · 08:46"
+  (the bar device's clock), saved "เบอร์ 20 · 08:46 · บาริสต้า A" (the tap time on that screen).
+- Text size: measured on the live sheet, the video box is `.sheet-clip` (= `.sheet-win`, 92 % of `.smedia` on a
+  phone): 358.8 px at 390 and 894.4 px at 1440 (not `.smedia`, 390 / 1040 px). Every run already cleared the
+  minimum at its largest (smallest run 13.75 px square, 14.0 px desktop), but frame.md also says never scale a
+  Thai line below it, and the stepped-back machine card did: 12.4 px on the square (scale 0.9) and 12.8 px on the
+  16:9 (scale 0.84, held to the last frame) for the chip "เย็นกว่าปกติ" and the card's foot. The step-backs are
+  now 0.96 (square; frame.md's gentlest) and 0.86 (16:9): 13.2 / 13.1 px. The square's alert moves to keep
+  covering just the card's foot (card 85, alert 541; was 98 / 526); the 16:9 pair stays centred.
+- The ~10 px figure parked by the sheet-stings review is not reproduced at 390. It is consistent with the
+  stepped-back caption (scale 0.9) in a 320 px phone's 294 px video box: 41.4 × 0.9 × 294.4 / 1080 = 10.2 px.
+
 ## Decisions (pilot build run, 2026-10-01; still in force)
 
-- Fixture: the 16:9 frame 0 is the m4 Today fixture (alert since 08:45, data to 08:46); from 0.3 s the
-  sting uses the pilot's m1 set. The still is fully gone by 0.58 s, before any m1 time can be read.
-- Fixture (pilot): owner side uses the m1 set (alert since 08:43, reading 08:44), bar uses m1 bar-alert-live
-  (08:44). The two alert cards are never readable together.
+- Fixture: the 16:9 frame 0 is the m4 Today fixture (alert since 08:45, data to 08:46). From 0.3 s the sting
+  uses the pilot's m1 screens (copy, layout, the 6.6 °C reading) with the still's times (round 3; the pilot's
+  m1 times were 08:43 / 08:44).
+- The owner's alert and the bar's alert are the same alert and both read 08:45; they are still never on
+  screen together (the square's bar screen starts once the owner stack is gone).
 - "ชงช็อตตรวจ" is shown but not pressed: in the app it opens the keypad log view, so a press
   followed by a bean-card tap is not a real sequence. The press is on the "พอดี" segment.
-- Saved screen prints "เบอร์ 20 · 08:44 · บาริสต้า A"; the render reads 14:04 because its fixture
-  clock differs. The app prints the tap time, which on this bar screen is 08:44.
+- Saved screen prints "เบอร์ 20 · 08:46 · บาริสต้า A"; the render reads 14:04 because its fixture
+  clock differs. The app prints the tap time, which on this bar screen is 08:46.
 - 16:9: camera follows the tap down the phone so the saved body lands centred. 1:1: bar shown as
   windows onto the phone screen (home crop, then the saved layer's crop, centred on the 812-tall screen).
 - Encodes: x264 veryslow `-tune animation`, VP9 `-cpu-used 0`; BT.709 matrix, sRGB transfer tag, TV range.

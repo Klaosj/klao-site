@@ -1,6 +1,8 @@
 /* Cafénista components rebuilt as HTML (same DOM order and class names as the React
    components on feat/m4-demo, prefixed t-/b-). Copy is verbatim from the real renders
-   named next to each builder. Nothing here animates; index.html owns the timeline. */
+   named next to each builder. Nothing here animates; index.html owns the timeline.
+   Clock times follow the site's still (public/images/cafenista.jpg, the m4 Today fixture): the alert is
+   open since 08:45 and data runs to 08:46, so every time below is one of those two (round 3). */
 window.CF = (function () {
   'use strict';
 
@@ -58,17 +60,17 @@ window.CF = (function () {
         '</div>' +
         spark(pfx + 'spark', 0) +
         // the square cut lays the owner's alert over this foot on purpose
-        '<div class="t-foot"><span data-layout-allow-occlusion data-layout-allow-overlap>จุดวัดผิวนอกเครื่องชง (เทียบกับค่าปกติของเครื่องนี้)</span><span data-layout-allow-occlusion data-layout-allow-overlap>ค่าล่าสุด 08:44</span></div>' +
+        '<div class="t-foot"><span data-layout-allow-occlusion data-layout-allow-overlap>จุดวัดผิวนอกเครื่องชง (เทียบกับค่าปกติของเครื่องนี้)</span><span data-layout-allow-occlusion data-layout-allow-overlap>ค่าล่าสุด 08:46</span></div>' +
       '</article>'
     );
   }
 
   /* ── AlertList row, open + not acknowledged (components/telemetry/AlertList.tsx)
-     copy = m1/dashboard-alert.light.png */
+     copy = m1/dashboard-alert.light.png; time = the still's alert (openedAt 08:45) */
   function ownerAlert(pfx) {
     return (
       '<div class="t-alert" id="' + pfx + 'ownerAlert" data-layout-allow-occlusion>' +
-        '<span class="t-level"><span class="t-diamond"></span>ด่วน · ตั้งแต่ 08:43</span>' +
+        '<span class="t-level"><span class="t-diamond"></span>ด่วน · ตั้งแต่ 08:45</span>' +
         '<span class="t-alertTitle">เครื่องชงเย็นกว่าปกติ</span>' +
         '<span class="t-alertDetail">ต่ำกว่าค่าปกติของเครื่องนี้ 6.6 °C · เพิ่งเริ่ม</span>' +
         '<div class="t-alertFoot"><button type="button" class="t-ack">รับทราบ</button></div>' +
@@ -76,7 +78,9 @@ window.CF = (function () {
     );
   }
 
-  /* ── Bar pieces (components/bar/*) · copy = m1/bar-alert-live.light.png */
+  /* ── Bar pieces (components/bar/*) · copy = m1/bar-alert-live.light.png
+     Times: the header is the bar device's clock (BarHeader useNow) = 08:46, the latest data; the alert
+     card prints the same alert's openedAt (AlertCard), 08:45, as on the owner's screen. */
   var CHEVRON =
     '<svg width="8" height="13" viewBox="0 0 8 13" aria-hidden="true"><path d="m1.5 1.5 5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   var BEANS = [
@@ -88,7 +92,7 @@ window.CF = (function () {
   function barHeader() {
     return (
       '<header class="b-header">' +
-        '<div class="b-titleBlock"><h1 class="b-title">หน้าบาร์</h1><span class="b-subtitle">บาริสต้า A · 08:44</span></div>' +
+        '<div class="b-titleBlock"><h1 class="b-title">หน้าบาร์</h1><span class="b-subtitle">บาริสต้า A · 08:46</span></div>' +
         '<div class="b-headerActions"><button type="button" class="b-textButton">เปลี่ยนคน</button></div>' +
       '</header>'
     );
@@ -98,7 +102,7 @@ window.CF = (function () {
     return (
       '<section class="b-alertCard" id="' + pfx + 'barAlert">' +
         '<div class="b-alertText">' +
-          '<span class="b-alertLevel"><span class="b-diamond"></span>ด่วน · ตั้งแต่ 08:44</span>' +
+          '<span class="b-alertLevel"><span class="b-diamond"></span>ด่วน · ตั้งแต่ 08:45</span>' +
           '<span class="b-alertTitle">เครื่องชงเย็นกว่าปกติ</span>' +
         '</div>' +
         '<button type="button" class="b-primarySmall" id="' + pfx + 'checkShot">ชงช็อตตรวจ</button>' +
@@ -144,7 +148,7 @@ window.CF = (function () {
 
   /* ── SavedScreen (components/bar/SavedScreen.tsx) · layout + copy = m2/bar-saved.light.png
      The detail line is "เบอร์ · clockHM(loggedAt) · barista". The render's fixture clock read
-     14:04; here the tap happens on the 08:44 bar screen, so the app would print 08:44. */
+     14:04; here the tap happens on the 08:46 bar screen, so the app would print 08:46. */
   function savedScreen(pfx) {
     return (
       '<div class="b-overlay" id="' + pfx + 'saved" data-layout-allow-occlusion>' +
@@ -153,7 +157,7 @@ window.CF = (function () {
             '<path id="' + pfx + 'checkPath" d="m4.5 10.5 3.5 3.5 7.5-8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' +
           '<h1 class="b-savedTitle" data-layout-allow-overlap>บันทึกแล้ว</h1>' +
           '<span class="b-savedWhat" data-layout-allow-overlap><span class="b-swatch" style="background:var(--series-1);width:12px;height:12px"></span>เชียงใหม่ แม่แตง · Washed · รสพอดี</span>' +
-          '<span class="b-muted" data-layout-allow-overlap>เบอร์ 20 · 08:44 · บาริสต้า A</span>' +
+          '<span class="b-muted" data-layout-allow-overlap>เบอร์ 20 · 08:46 · บาริสต้า A</span>' +
         '</div>' +
         '<div class="b-savedActions">' +
           '<button type="button" class="b-primary" data-layout-allow-overlap>กลับหน้าบาร์</button>' +

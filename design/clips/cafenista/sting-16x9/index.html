@@ -103,12 +103,17 @@
       const S = 1.8;                        // owner UI scale
       const CARD_W = 358 * S, CARD_H = 232 * S, ALERT_H = 160.33 * S;
       const K_IN = 0.96;                    // the card's zoom-through start scale (about its centre)
+      // Round 3: the card steps back to 0.86 (was 0.84) and stays there through the held last frame. Text in a
+      // stepped-back surface must still clear frame.md's minimum: 15 px app text × 1.8 × 0.86 = 23.2 px here
+      // = 13.1 px in the 894.4 px desktop video box (0.84 gave 12.8 px Thai). Card + phone stay centred as a pair.
+      const K_BACK = 0.86, GAP = 88, PHONE_W = 643.5;
+      const M2_X = (1580 - (CARD_W * K_BACK + GAP + PHONE_W)) / 2;
       const pos = {
         m0:  { x: (1580 - CARD_W) / 2, y: (900 - CARD_H) / 2 },            // after the zoom-through: centred under the still's alert
         m1:  { x: 110, y: (900 - CARD_H) / 2 },                              // build: card left, alert right
         a1:  { x: 110 + CARD_W + 72, y: (900 - ALERT_H) / 2 },
-        m2:  { x: 153.6, y: 450 - (CARD_H * 0.84) / 2, s: 0.84 },            // breathe/hold: stepped back
-        p2:  { x: 153.6 + CARD_W * 0.84 + 88, y: 56 },                       // bar phone, hero
+        m2:  { x: M2_X, y: 450 - (CARD_H * K_BACK) / 2, s: K_BACK },         // breathe/hold: stepped back
+        p2:  { x: M2_X + CARD_W * K_BACK + GAP, y: 56 },                     // bar phone, hero
         p3:  { y: 460 - 351 * 1.65 },                                         // saved body centred (css 241–461)
       };
 

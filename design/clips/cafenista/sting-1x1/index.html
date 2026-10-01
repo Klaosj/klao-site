@@ -99,11 +99,16 @@
 
       const S = 2.76;
       const CARD_W = 343 * S, CARD_H = 232 * S;
-      const K = 0.9;                                   // machine card steps back under the alert
+      // Round 3: the machine card steps back to 0.96, frame.md's gentlest step-back (was 0.9). Text in a
+      // stepped-back surface must still clear frame.md's minimum: 15 px app text × 2.76 × 0.96 = 39.7 px
+      // here = 13.2 px in the 358.8 px phone video box (0.9 gave 12.4 px Thai on the chip "เย็นกว่าปกติ").
+      const K = 0.96;                                  // machine card steps back under the alert
+      const FOOT_Y = 171 * S * K + 3;                  // the alert's top sits 3 px below the foot's top (css 171)
+      const M1_Y = 85;                                 // margins: top 85 · bottom 96 under the alert (pilot 98 · 111)
       const pos = {
         m0: { x: (1080 - CARD_W) / 2, y: (1080 - CARD_H) / 2 },                 // poster
-        m1: { x: (1080 - CARD_W * K) / 2, y: 98, s: K },                         // behind the alert
-        a1: { x: (1080 - CARD_W) / 2, y: 526 },                                  // covers the card's foot
+        m1: { x: (1080 - CARD_W * K) / 2, y: M1_Y, s: K },                       // behind the alert
+        a1: { x: (1080 - CARD_W) / 2, y: M1_Y + FOOT_Y },                        // covers the card's foot
         w:  { x: (1080 - 1004) / 2, y: (1080 - 828) / 2 },                       // bar window
       };
 
@@ -146,7 +151,7 @@
       /* ── BREATHE · handoff to the bar screen (the owner's alert is gone before the bar's appears) */
       // matched vectors: the owner's stack leaves upward, the bar screen rises in on the same axis
       tl.to(['#m-wrap', '#a-wrap'], { opacity: 0, y: (i) => [pos.m1.y, pos.a1.y][i] - 64, duration: 0.25, ease: LEAVE }, 2.05);
-      tl.to('#h-wrap', { y: pos.w.y, opacity: 1, duration: 0.6, ease: ARRIVE }, 2.3);    // round 2: starts as the owner stack reaches 0 (was 2.25, a 2-frame overlap of 08:43 and 08:44)
+      tl.to('#h-wrap', { y: pos.w.y, opacity: 1, duration: 0.6, ease: ARRIVE }, 2.3);    // round 2: starts as the owner stack reaches 0 (was 2.25, a 2-frame overlap of the two alert cards)
 
       /* ── RESOLVE · one tap on "พอดี" → the app's own saved layer over the screen */
       tl.to('#p_seg0_1', { scale: 0.97, duration: 0.12, ease: APP }, 3.6);              // :active (app: scale .97)

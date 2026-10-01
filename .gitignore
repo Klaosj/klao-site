@@ -20,3 +20,5 @@ design/clips/*/out/
 design/clips/*/work/
 design/clips/*/snapshots/
 design/clips/*/node_modules/
+# Cafénista's tools/build.sh writes its lossless PNG masters one level up, to design/clips/work/build/<cut>/
+design/clips/work/

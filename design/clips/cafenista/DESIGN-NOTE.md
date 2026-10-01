@@ -1,6 +1,6 @@
 # Cafénista UI sting · design note
 
-Pilot + round 2, 2026-10-01. Follows klao-site `../frame.md`. This note records
+Pilot, round 2 and round 3, 2026-10-01. Follows klao-site `../frame.md`. This note records
 what this sting uses and where it deliberately departs.
 
 ## Surfaces and tokens
@@ -16,7 +16,9 @@ what this sting uses and where it deliberately departs.
 | Our accent | none added | frame.md allows one; not needed |
 
 UI scale: 16:9 owner cards 1.8×, bar phone 1.65× (390-pt layout); square everything 2.76× on the 375-pt layout
-(cards 343 wide, screen 375 × 812; one surface at a time).
+(cards 343 wide, screen 375 × 812; one surface at a time). Step-backs: the machine card goes to 0.86 (16:9) and
+0.96 (square), so its 15 px text stays at or above frame.md's 13 px Thai in the sheet's video box (round 3;
+below 0.851 / 0.946 it would not).
 The UI is laid out at its real CSS size and enlarged with CSS `zoom`, so Thai stays crisp and
 line breaks match the app (checked by diffing against the 3× renders; see README).
 
@@ -33,7 +35,7 @@ line breaks match the app (checked by diffing against the 3× renders; see READM
 Per beat no ease carries more than two tweens (frame.md rule). The stricter "no two share" is
 not met: MOVE, ARRIVE and APP each carry two in some beats.
 
-## Beats (30 fps) · round 2
+## Beats (30 fps) · round 2 timing, round 3 scales
 
 16:9 · 1580×900
 
@@ -45,22 +47,26 @@ not met: MOVE, ARRIVE and APP each carry two in some beats.
 | 1.15–1.57 | build | headline → "ต่ำกว่าค่าปกติของเครื่องนี้ 6.6 °C"; chip → เย็นกว่าปกติ; line → crit red |
 | 1.35–2.15 | build | card drifts left, owner alert follows it in from the right (matched vectors) |
 | 2.15–2.45 | breathe | read the alert (readable ~1.8–2.5) |
-| 2.45–3.40 | breathe | alert leaves (gone at 2.70); card steps back (0.84×, 70 %); bar phone scales in from 0.94 at 2.72 |
+| 2.45–3.40 | breathe | alert leaves (gone at 2.70); card steps back (0.86×, 70 %; was 0.84×); bar phone scales in from 0.94 at 2.72 |
 | 3.30–3.60 | breathe | read the bar alert + "ชงช็อตตรวจ" + "ชิมแล้วแตะรส บันทึกทันที" |
 | 3.60–4.42 | resolve | press "พอดี" (0.97, release overshoot), chip selected, camera follows, "บันทึกแล้ว" layer, check draws |
 | 4.43–5.00 | hold | nothing moves (keyframe at 4.433) |
 
 1:1 · 1080×1080 — the pilot's timing: poster card (0–0.2), dip 0.2–0.8, chip/headline 0.6–1.03,
-the alert rises over the card from the lower edge (1.05–1.75), the owner stack leaves upward (2.05–2.30),
+the alert rises over the card from the lower edge (1.05–1.75) while the card steps back to 0.96× / 60 %
+(round 3; was 0.9×), the owner stack leaves upward (2.05–2.30),
 then the bar screen rises in (2.30–2.90), same resolve without the camera move; static from 4.30,
 keyframe at 4.367. Round 2 re-lays it out at the 375-pt phone width and 2.76× (smallest Thai 13.0 px at
-340 px), and starts the bar screen at 2.30 instead of 2.25: the pilot showed 08:43 and 08:44 faintly
+340 px), and starts the bar screen at 2.30 instead of 2.25: the pilot showed its two alert cards faintly
 together for two frames.
 
 ## Rules held
 
 - Frame 0 and the last frame are finished stills; first move at 0.30 s (16:9) / 0.20 s (1:1); nothing moves in the hold.
-- The owner's alert (08:43) and the bar's alert (08:44) are never readable at the same time; the still's
-  08:45 is gone (0.58 s) long before the owner's 08:43 arrives (1.55 s).
+- Every clock time agrees with the still (round 3): alert since 08:45 on the owner's card and the bar's,
+  ค่าล่าสุด 08:46, bar clock 08:46, saved at 08:46. The two alert cards are still never on screen together.
+- Minimum text (round 3): measured in the sheet's video box (`.sheet-clip`: 358.8 px at a 390 phone, 894.4 px
+  at 1440), every run is ≥ 13.2 px (square) / 13.1 px (16:9) in every frame it is readable, stepped-back
+  surfaces included; at its largest every run is ≥ 13.75 / 14.0 px.
 - Entrances vary by axis: card scale (zoom-through), alert x (16:9) / y (1:1), phone scale, saved layer opacity only.
 - No glow, gradient, particles, cursor, count-up or text we wrote. Every word is the app's.
