@@ -51,8 +51,9 @@ afterEach(() => {
 function Page({ locale = 'en' }: { locale?: Locale }) {
   return (
     <>
-      <a data-film="" href={filmCuts(locale).wide.mp4} aria-label={dict[locale].filmButtonLabel}>
+      <a data-film="" href={filmCuts(locale).wide.mp4}>
         {dict[locale].filmButton}
+        <span className="sr-only">, {dict[locale].filmButtonLabel}</span>
       </a>
       <FilmSheet locale={locale} />
     </>
@@ -64,7 +65,7 @@ const filmDialog = () => document.querySelector('dialog.film-sheet') as HTMLDial
 const video = () => filmDialog().querySelector('video');
 const sources = () => Array.from(filmDialog().querySelectorAll('video source')).map((s) => s.getAttribute('src'));
 const closeButton = () => screen.getByRole('button', { name: dict.en.sheetClose });
-const plain = (s: string | null | undefined) => (s ?? '').replace(/ /g, ' ').replace(/\s+/g, ' ');
+const plain = (s: string | null | undefined) => (s ?? '').replace(/\u00a0/g, ' ').replace(/\s+/g, ' ');
 
 describe('FilmSheet: opening', () => {
   it('a click on a[data-film] prevents navigation, pushes #film, opens the dialog and plays once', () => {
@@ -350,6 +351,28 @@ describe('FilmSheet next to ProjectSheet', () => {
     expect(projectDialog().open).toBe(true);
     expect(window.location.hash).toBe('#work/gonai');
     expect(document.documentElement.classList.contains('sheet-open')).toBe(true);
+  });
+
+  // Fix round 1 (Minor 2): with motion on, ProjectSheet's close finishes 280 ms after the hash
+  // moved -- by then the film is open, and the page behind it must stay locked.
+  it('a hash moving from #work/<key> to #film keeps the page locked once the project sheet has finished closing', () => {
+    vi.useFakeTimers();
+    liveMatchMedia({ [MOTION]: true });
+    window.history.replaceState(null, '', '/en#work/gonai');
+    render(<Both />);
+    expect(projectDialog().open).toBe(true);
+    act(() => {
+      window.history.replaceState(null, '', '/en#film');
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
+    });
+    expect(filmDialog().open).toBe(true);
+    act(() => {
+      vi.advanceTimersByTime(600); // past the project sheet's 280 ms exit
+    });
+    expect(projectDialog().open).toBe(false);
+    expect(filmDialog().open).toBe(true);
+    expect(document.documentElement.classList.contains('sheet-open')).toBe(true);
+    expect(play).not.toHaveBeenCalled();
   });
 
   it('a project sheet open from a deep link stays open while the film sheet mounts', () => {

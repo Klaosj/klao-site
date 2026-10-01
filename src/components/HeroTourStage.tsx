@@ -401,17 +401,14 @@ export default function HeroTourStage({ slides, vignette, locale }: Props) {
             without JavaScript; FilmSheet opens it in place instead. Rendered in every state --
             one frame, reduced motion, no JS. Following it is a visitor pick, so it stops the
             tour where it is, like a caption click (and leaves this link there for the sheet to
-            hand focus back to). Its glyph is a film frame, never Play/Pause. On a narrow phone
-            the duration hides (hero-tour-stage.css); the name stays in its aria-label. */}
-        <a
-          className="ht-film ctl"
-          data-film=""
-          href={filmCuts(locale).wide.mp4}
-          aria-label={t.filmButtonLabel}
-          onClick={() => dispatch({ type: 'stop' })}
-        >
+            hand focus back to). Its glyph is a film frame, never Play/Pause. Its name starts
+            with the words it shows (WCAG 2.5.3 label in name): "Film · 0:40", then the
+            visually hidden description -- no aria-label to replace them. On a narrow phone the
+            duration hides (hero-tour-stage.css), and the name is "Film, Watch a …". */}
+        <a className="ht-film ctl" data-film="" href={filmCuts(locale).wide.mp4} onClick={() => dispatch({ type: 'stop' })}>
           <FilmGlyph />
           <FilmButtonLabel text={t.filmButton} />
+          <span className="sr-only">, {t.filmButtonLabel}</span>
         </a>
       </div>
     </section>
@@ -420,14 +417,15 @@ export default function HeroTourStage({ slides, vignette, locale }: Props) {
 
 /** "Film · 0:40" as a word and its duration, so the duration can step aside on a narrow
  *  phone. One flex item (the link is inline-flex), so the space before "·" stays a plain
- *  space. The text reads exactly as the dictionary has it. */
+ *  space -- a text node of its own, outside the duration's span, so every accessible-name
+ *  algorithm keeps it ("Film · 0:40", not "Film· 0:40"). The text reads exactly as the
+ *  dictionary has it. */
 function FilmButtonLabel({ text }: { text: string }) {
   const at = text.indexOf(' · ');
   if (at < 0) return <span>{text}</span>;
   return (
     <span>
-      {text.slice(0, at)}
-      <span className="ht-film-dur">{text.slice(at)}</span>
+      {text.slice(0, at)} <span className="ht-film-dur">{text.slice(at + 1)}</span>
     </span>
   );
 }

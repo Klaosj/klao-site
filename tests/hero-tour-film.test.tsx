@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { renderToString } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import HeroTourStage from '@/components/HeroTourStage';
@@ -39,16 +39,21 @@ describe('Film button: server render', () => {
   it.each([
     ['en', '/film/film-en.mp4', 'Watch a 40-second film of the work', 'Film · 0:40'],
     ['th', '/film/film-th.mp4', 'ดูฟิล์มสรุปผลงาน 40 วินาที', 'ฟิล์ม · 0:40'],
-  ] as const)('%s: an <a class="ht-film" data-film> to the 16:9 file, named, with its label and a hidden glyph', (locale, href, label, text) => {
+  ] as const)('%s: an <a class="ht-film" data-film> to the 16:9 file, its visible label first in its name, and a hidden glyph', (locale, href, label, text) => {
     const html = renderToString(<HeroTour profile={profile} projects={projects} locale={locale} />);
     const tag = filmTag(html);
     expect(tag).toMatch(/^<a\b/);
     expect(tag).toMatch(/\sdata-film(="[^"]*")?[\s>]/);
     expect(tag).toContain(`href="${href}"`);
-    expect(tag).toContain(`aria-label="${label}"`);
+    // Fix round 1 (ruling 7, WCAG 2.5.3 label in name): no aria-label replacing the visible
+    // words; the description follows them, visually hidden, so the name starts with what shows.
+    expect(tag).not.toContain('aria-label');
     const a = parse(html).querySelector('a.ht-film')!;
-    expect(a.textContent!.replace(/ /g, ' ')).toBe(text);
-    expect(a.getAttribute('aria-label')).toBe(dict[locale].filmButtonLabel);
+    expect(a.hasAttribute('aria-label')).toBe(false);
+    const content = a.textContent!.replace(/\u00a0/g, ' ');
+    expect(content.startsWith(text)).toBe(true);
+    expect(content).toBe(`${text}, ${label}`);
+    expect(a.querySelector('.sr-only')!.textContent).toBe(`, ${dict[locale].filmButtonLabel}`);
     // A frame glyph, decorative -- never the tour's Play/Pause glyph (.ht-pp) or its Replay.
     const svg = a.querySelector('svg')!;
     expect(svg.getAttribute('aria-hidden')).toBe('true');
@@ -78,6 +83,17 @@ describe('Film button: in the browser', () => {
   const film = () => document.querySelector('a.ht-film') as HTMLAnchorElement;
   const playButton = () => document.querySelector('.ht-play') as HTMLButtonElement;
   const selected = () => Array.from(document.querySelectorAll('.ht-dot')).findIndex((d) => d.getAttribute('aria-selected') === 'true');
+
+  it('is named by its visible label first: "Film · 0:40, Watch a 40-second film of the work"', () => {
+    renderStage();
+    const link = screen.getByRole('link', { name: /^Film · 0:40/ });
+    expect(link).toBe(film());
+    expect(link.getAttribute('href')).toBe('/film/film-en.mp4');
+    expect(screen.getByRole('link', { name: `${dict.en.filmButton}, ${dict.en.filmButtonLabel}` })).toBe(link);
+    cleanup();
+    renderStage('th');
+    expect(screen.getByRole('link', { name: `${dict.th.filmButton}, ${dict.th.filmButtonLabel}` })).toBe(film());
+  });
 
   it('stays under reduced motion, where Play is gone', () => {
     stubMatchMedia((q) => q === '(prefers-reduced-motion: reduce)');

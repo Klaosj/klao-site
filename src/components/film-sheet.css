@@ -19,11 +19,11 @@
 
   /* The film spans the sheet's whole inner width (1040 px at 1440, the full 390 on a phone), in
      its own ratio before the poster arrives. On a screen too short for the whole picture under
-     the header it letterboxes instead of being cut (100vh less the sheet's 40 px margins and the
-     68 px header). In dark mode it dims a touch, like every light picture on the site. */
+     the header it letterboxes instead of being cut (the dynamic viewport height, 100vh where
+     dvh is missing, less the sheet's 40 px margins and the 68 px header). In dark mode it dims a touch, like every light picture on the site. */
   .film-video {
     display: block; width: 100%; height: auto; aspect-ratio: var(--film-ratio, 16 / 9);
-    max-height: calc(100vh - 148px); object-fit: contain;
+    max-height: calc(100vh - 148px); max-height: calc(100dvh - 148px); object-fit: contain;
     background: var(--mist); filter: var(--shot-dim);
   }
 

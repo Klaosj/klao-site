@@ -207,7 +207,9 @@ export default function ProjectSheet({ projects, locale }: { projects: Project[]
         else d.removeAttribute('open');
       }
     }
-    document.documentElement.classList.remove('sheet-open');
+    // Film-og fix round 1: the hash that closed this sheet may have opened another one (#film's
+    // FilmSheet) during the exit animation -- that dialog keeps the page locked.
+    if (!document.querySelector('dialog[open]')) document.documentElement.classList.remove('sheet-open');
     setOpenKey(null);
     trigger?.focus({ preventScroll: true });
   }, []);
