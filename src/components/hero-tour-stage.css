@@ -206,11 +206,12 @@
   .ht-film-c { font-size: 0; clip-path: inset(50%); }
   .ht-film::before { content: ""; position: absolute; top: 10px; bottom: 10px; left: -6.5px; width: 1px; background: var(--line); }
   .ht-film::after { content: ""; position: absolute; inset: -2px; }
-  /* Tablet (735-818 px): the pill's 48 px margin plus the Film button leave the longest EN
-     question ("Can a personal site update itself from Notion, in two languages?") a few
-     pixels short, so it wraps to at most two lines here instead of ending in an ellipsis.
-     The pill grows taller on tablets only; nothing else changes at any other width. */
-  @media (min-width: 735px) and (max-width: 818px) {
+  /* Tablet (735-1023 px): the pill's 48 px margin plus the Film button can leave the longest
+     EN question ("Can a personal site update itself from Notion, in two languages?") short
+     (measured: cut up to ~859 px), so here it may wrap to at most two lines instead of ending
+     in an ellipsis. Wrapping is allowed, not forced: a caption that fits stays on one line, so
+     the pill grows only where a caption would otherwise be cut. Phones and desktop unchanged. */
+  @media (min-width: 735px) and (max-width: 1023px) {
     .ht-q {
       white-space: normal; text-wrap: balance;
       display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2;
