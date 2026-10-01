@@ -1,3 +1,4 @@
+import FilmSheet from '@/components/FilmSheet';
 import ByDay from '@/components/sections/ByDay';
 import CareerBand from '@/components/sections/CareerBand';
 import CloseBand from '@/components/sections/CloseBand';
@@ -45,6 +46,9 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       {/* Business plays, then builds; each row opens its sheet at #work/<key> (ProjectSheet).
           The page's one ProjectSheet dialog lives in here -- no other section mounts one. */}
       <ProjectsIndex projects={projects} locale={locale} />
+      {/* The film's sheet (#film), next to the project sheet: opened by the Film button in the
+          tour pill. Server HTML is the empty dialog; nothing of the film loads until it opens. */}
+      <FilmSheet locale={locale} />
       {/* C7: what he shipped (#work), then where he has worked (#career).
           The toolbox lives inside the career band (#toolbox). */}
       <CareerBand entries={career} skills={skills} locale={locale} resumeUrl={profile.resumeUrl} />

@@ -107,6 +107,13 @@ const en = {
   tourEndTitle: 'The idea, then the app.',
   // Years and arrow are locale-invariant (sharedKeys in dictionary.test.ts).
   tourEndKicker: '2022 → 2026 ↓',
+  // The film (spec 2026-10-01-film-og §4): the Film button in the tour pill (its visible label
+  // and its accessible name) and the film sheet's heading, meta line and text version.
+  filmButton: 'Film · 0:40',
+  filmButtonLabel: 'Watch a 40-second film of the work',
+  filmTitle: 'A 40-second film',
+  filmMeta: '40 s · music',
+  filmTextVersion: 'Text version',
   // White Edition theme control (ThemeToggle): footer, phone menu, ⌘K.
   // Prototype copy. P1 and P4 reuse these keys rather than adding their own.
   appearance: 'Appearance',
@@ -320,6 +327,11 @@ const th: typeof en = {
   tourReplay: 'ดูทัวร์อีกครั้ง',
   tourEndTitle: 'ไอเดียมาก่อน แล้วค่อยเป็นแอป',
   tourEndKicker: '2022 → 2026 ↓',
+  filmButton: 'ฟิล์ม · 0:40',
+  filmButtonLabel: 'ดูฟิล์มสรุปผลงาน 40 วินาที',
+  filmTitle: 'ฟิล์ม 40 วินาที',
+  filmMeta: '40 วินาที · มีเพลง',
+  filmTextVersion: 'ฉบับข้อความ',
   appearance: 'การแสดงผล',
   themeAuto: 'ตามเครื่อง',
   themeLight: 'สว่าง',

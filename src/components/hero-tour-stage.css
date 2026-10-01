@@ -91,11 +91,14 @@
 
   /* The subtitle pill (spec §5.4 "Tour pill": 56 px, r28, white .80, blur 16)
      uses P0's shared `.glass.glass-pill` (globals.css) for background/blur/
-     fallbacks; only position, size and layout are local (ruling C4). */
+     fallbacks; only position, size and layout are local (ruling C4).
+     Width (film-og Task 3): the prototype's 760 px plus the Film button and its
+     gap (12 + ~119 px, Thai the wider), so the caption keeps exactly the room it
+     had and the longest question still reads whole at 1440. */
   .ht-pill.glass {
     position: sticky; bottom: 24px; z-index: 6;
     display: flex; align-items: center; gap: 12px;
-    width: min(760px, 100% - 48px); min-height: 56px;
+    width: min(892px, 100% - 48px); min-height: 56px;
     margin: -28px auto 0; padding: 8px 18px 8px 8px;
     border-radius: 28px; text-align: left;
   }
@@ -186,6 +189,21 @@
   .ht-dot b { position: absolute; inset: 0; background: var(--ink-1); transform: scaleX(0); transform-origin: 0 50%; }
   .ht-dot[data-done] b { transform: none; }
   .ht-dot b[data-run] { animation: ht-fill var(--ht-ms, 6000ms) linear forwards; }
+
+  /* The Film button (spec 2026-10-01-film-og §4.1), last in the pill. It wears
+     the same small control surface as Play (.ctl, globals.css; no new glass)
+     and Play's 40 px height, so the pill keeps its 56 px. A hairline, centred in
+     the 12 px gap, sets it apart from the tour's own controls; its ::after makes
+     a 44 px tall hit area like .ht-play::after, clear of the dots. */
+  .ht-film {
+    position: relative; flex: none;
+    display: inline-flex; align-items: center; gap: 6px;
+    height: 40px; padding: 0 14px 0 12px; border-radius: 20px;
+    font-size: 14px; line-height: 20px; font-weight: 600; white-space: nowrap; text-decoration: none;
+  }
+  .ht-film-g { flex: none; }
+  .ht-film::before { content: ""; position: absolute; top: 10px; bottom: 10px; left: -6.5px; width: 1px; background: var(--line); }
+  .ht-film::after { content: ""; position: absolute; inset: -2px; }
 
   /* One pause for everything the clock drives. */
   .ht-tour[data-hold] :is(.ht-cam, .ht-dot b, .ht-vh1, .ht-ul) { animation-play-state: paused; }
@@ -282,6 +300,30 @@
     .ht-dots { width: 100%; justify-content: center; }
     .ht-dot { width: 44px; height: 32px; }
     .ht-dot[aria-selected="true"] { width: 56px; }
+    /* Film: at the right end of the dots row, out of flow, so the dots stay
+       centred and the pill keeps its two rows (and its height). A filled
+       capsule beside centred dots does not fit at 390, so here it is the glyph
+       and the label alone, 32 px tall like the dots, with a 44 px tall hit
+       area that never reaches sideways into theirs. 10 px from the pill's
+       edge: the 24 px corner curves in only ~3 px at the label's lowest text.
+       (0,2,0) so it wins over .ctl's own fills in globals.css whatever the
+       stylesheet order. */
+    .ht-pill .ht-film {
+      position: absolute; right: 10px; bottom: 6px;
+      height: 32px; padding: 0 0 0 2px; gap: 5px; border-radius: 8px;
+      background: none; -webkit-backdrop-filter: none; backdrop-filter: none;
+    }
+    .ht-film-g { width: 14px; height: 14px; }
+    .ht-film::before { display: none; }
+    .ht-film::after { inset: -6px 0; }
+    /* One frame: no dots row to sit in, so back in flow after the caption. */
+    .ht-pill.glass:not(:has(.ht-dots)) .ht-film { position: relative; right: auto; bottom: auto; margin-left: auto; }
+  }
+  /* Below 390 px the row beside three centred dots is narrower than the full
+     label (64 px at 320); the duration steps aside and "Film" stays, which is
+     also the word in the button's accessible name. */
+  @media (max-width: 389px) {
+    .ht-film-dur { display: none; }
   }
   /* P1 final review I-4: the 6:5 stage gets shorter with the width while the
      vignette's rows don't, so below ~380 px the headline ran past the bottom

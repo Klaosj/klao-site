@@ -6,6 +6,7 @@ import { Icon } from '@/components/icons';
 import ReplayGlyph from '@/components/ReplayGlyph';
 import ThaiText from '@/components/ThaiText';
 import { dict } from '@/lib/dictionary';
+import { filmCuts } from '@/lib/film';
 import { fill } from '@/lib/format';
 import type { Locale, ProjectWash } from '@/lib/models';
 import { saveDataOn } from '@/lib/motion';
@@ -396,8 +397,48 @@ export default function HeroTourStage({ slides, vignette, locale }: Props) {
             ))}
           </div>
         )}
+        {/* The film (spec 2026-10-01-film-og §4.1): a plain link to the 16:9 file, so it works
+            without JavaScript; FilmSheet opens it in place instead. Rendered in every state --
+            one frame, reduced motion, no JS. Following it is a visitor pick, so it stops the
+            tour where it is, like a caption click (and leaves this link there for the sheet to
+            hand focus back to). Its glyph is a film frame, never Play/Pause. On a narrow phone
+            the duration hides (hero-tour-stage.css); the name stays in its aria-label. */}
+        <a
+          className="ht-film ctl"
+          data-film=""
+          href={filmCuts(locale).wide.mp4}
+          aria-label={t.filmButtonLabel}
+          onClick={() => dispatch({ type: 'stop' })}
+        >
+          <FilmGlyph />
+          <FilmButtonLabel text={t.filmButton} />
+        </a>
       </div>
     </section>
+  );
+}
+
+/** "Film · 0:40" as a word and its duration, so the duration can step aside on a narrow
+ *  phone. One flex item (the link is inline-flex), so the space before "·" stays a plain
+ *  space. The text reads exactly as the dictionary has it. */
+function FilmButtonLabel({ text }: { text: string }) {
+  const at = text.indexOf(' · ');
+  if (at < 0) return <span>{text}</span>;
+  return (
+    <span>
+      {text.slice(0, at)}
+      <span className="ht-film-dur">{text.slice(at)}</span>
+    </span>
+  );
+}
+
+/** A film frame: the picture and its two perforated edges. Decorative; the link has a name. */
+function FilmGlyph() {
+  return (
+    <svg className="ht-film-g" viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" aria-hidden="true" focusable="false">
+      <rect x="1.75" y="2.75" width="12.5" height="10.5" rx="2" strokeWidth="1.5" />
+      <path d="M5 3v10M11 3v10M2 6.5h3M2 9.5h3M11 6.5h3M11 9.5h3" strokeWidth="1.25" />
+    </svg>
   );
 }
 

@@ -1,0 +1,44 @@
+/* Film sheet (spec 2026-10-01-film-og §4.2). The shell is ProjectSheet's own `.sheet`
+   (project-sheet.css): width, radius, backdrop, the open/close animation and the phone grabber.
+   This file lays out what is inside it: a header row (title + close), then the film edge to
+   edge, then the meta line and the text version. The header sits above the film, never on it,
+   so only the video's own controls are ever drawn over the picture (the square cut keeps its
+   words in its top 84 px). Only opacity/transform animate (the shell's); nothing here moves. */
+@layer components {
+  /* Sticky, like the project sheet's close button: with the text version open and the sheet
+     scrolled, Close stays in reach. At rest (scrolled to the top) it sits above the film. */
+  .film-head { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 16px; padding: 16px 16px 16px 28px; background: var(--raised); }
+  .film-title { flex: 1; min-width: 0; margin: 0; font-size: 21px; line-height: 28px; font-weight: 600; letter-spacing: .011em; }
+  .film-title:lang(th) { line-height: 32px; letter-spacing: 0; }
+  /* Focus lands on the heading programmatically (tabindex -1), like the project sheet's name. */
+  .film-title:focus { outline: none; }
+  /* The project sheet's close button is sticky and pulls the media up under itself
+     (project-sheet.css); here it is a plain item at the end of the header row. (0,3,0), so it
+     wins over both of that file's .sheet-close rules on every width. */
+  .film-sheet .film-head .sheet-close { position: relative; top: auto; flex: none; float: none; margin: 0; }
+
+  /* The film spans the sheet's whole inner width (1040 px at 1440, the full 390 on a phone), in
+     its own ratio before the poster arrives. On a screen too short for the whole picture under
+     the header it letterboxes instead of being cut (100vh less the sheet's 40 px margins and the
+     68 px header). In dark mode it dims a touch, like every light picture on the site. */
+  .film-video {
+    display: block; width: 100%; height: auto; aspect-ratio: var(--film-ratio, 16 / 9);
+    max-height: calc(100vh - 148px); object-fit: contain;
+    background: var(--mist); filter: var(--shot-dim);
+  }
+
+  .film-body { padding: 16px 28px 28px; }
+  .film-meta { margin: 0; color: var(--ink-2); font-size: 14px; line-height: 20px; }
+  .film-text { margin-top: 16px; border-top: 1px solid var(--line); }
+  /* The summary keeps its native disclosure triangle; 12 px above and below make a 48 px row. */
+  .film-text > summary { padding: 12px 0; color: var(--ink-1); font-size: 17px; line-height: 24px; font-weight: 600; cursor: pointer; }
+  .film-text ol { display: grid; gap: 16px; margin: 4px 0 0; padding: 0; list-style: none; }
+  .film-text li p { margin: 0; font-size: 15px; line-height: 22px; }
+  :lang(th) .film-text li p { line-height: 24px; }
+
+  @media (max-width: 734px) {
+    /* 20 px top: clear of the grabber (project-sheet.css, 6 px from the top, 5 px tall). */
+    .film-head { padding: 20px 12px 12px 20px; }
+    .film-body { padding: 16px 20px 24px; }
+  }
+}
