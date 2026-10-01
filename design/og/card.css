@@ -1,0 +1,68 @@
+/* card.css — the frame both share cards share (design/clips/frame.md, spec 2026-10-01 §5). Each og-*.html sets
+   only its headline face and size. Rendered by render.mjs at exactly 1200×630, device scale 1; light only.
+
+   Faces (render.mjs proves each one rendered, not a fallback):
+   - "OG Display": New York, Apple's font, loaded from the Mac by path and never copied into the repo (the repo is
+     public). local() does not resolve it in Chrome (checked 2026-10-01: every local() name fell back).
+   - "OG Thai": Anuphan 500/600, the film's committed OFL woff2 (../clips/film/assets/fonts/), Thai code points
+     only, as the site and the film do it: Latin inside a Thai line stays on the system font (SF).
+   - Everything else: system-ui (SF). */
+@font-face {
+  font-family: "OG Display";
+  font-style: normal;
+  font-weight: 400 1000;
+  src: url("file:///System/Library/Fonts/NewYork.ttf") format("truetype");
+}
+@font-face {
+  font-family: "OG Thai";
+  font-style: normal;
+  font-weight: 500;
+  src: url("../clips/film/assets/fonts/anuphan-500.woff2") format("woff2");
+  unicode-range: U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;
+}
+@font-face {
+  font-family: "OG Thai";
+  font-style: normal;
+  font-weight: 600;
+  src: url("../clips/film/assets/fonts/anuphan-600.woff2") format("woff2");
+  unicode-range: U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;
+}
+
+:root {
+  --stage: #F5F6F8;
+  --paper: #FFFFFF;
+  --ink: #1A1C20;
+  --ink-2: #666970;
+  --accent: #26314A;
+  --surface: 0 0 0 1px rgba(20, 26, 44, .05), 0 2px 4px rgba(20, 26, 44, .04), 0 12px 28px -8px rgba(20, 26, 44, .12), 0 32px 64px -32px rgba(20, 26, 44, .18);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 1200px; height: 630px; overflow: hidden; background: var(--stage); }
+body {
+  color: var(--ink);
+  font-family: "OG Thai", system-ui, -apple-system, sans-serif;
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Everything that matters sits inside the middle 80% (x 120–1080, y 63–567): platforms crop around 1.91:1. */
+.card { position: relative; width: 1200px; height: 630px; background: var(--stage); }
+
+/* the message: the headline, then the name under it as on the film's title card, with the URL beside it and the
+   one accent mark between them (the film's end card stacks the same three) */
+.head { position: absolute; left: 120px; top: 84px; }
+.title { font-weight: 600; color: var(--ink); }
+.ln { display: block; white-space: nowrap; }
+.byline { display: flex; align-items: center; gap: 16px; margin-top: 20px; font-size: 22px; line-height: 30px; font-weight: 500; color: var(--ink-2); white-space: nowrap; }
+.mark { display: block; width: 28px; height: 4px; border-radius: 2px; background: var(--accent); }
+
+/* the second layer: the three apps' finished last frames, in paper frames (one hairline, one surface shadow) */
+.apps { position: absolute; left: 120px; top: 330px; display: flex; gap: 24px; list-style: none; }
+.app { width: 304px; }
+.frame { position: relative; width: 304px; height: 173px; border-radius: 14px; overflow: hidden; background: var(--paper); box-shadow: var(--surface); }
+.frame::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 .5px rgba(0, 0, 0, .14); }
+.frame img { display: block; width: 304px; height: 173px; }
+.label { margin-top: 14px; font-size: 16px; line-height: 22px; font-weight: 500; color: var(--ink-2); white-space: nowrap; }
+.label b { font-weight: 600; color: var(--ink); }

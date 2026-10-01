@@ -2,73 +2,33 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>OG image — EN (1200x630)</title>
+<title>Share card — EN (1200×630)</title>
+<link rel="stylesheet" href="card.css">
 <style>
-  /* Source for public/og/og-en.png. Regenerate: see design/og/README.md */
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body { width: 1200px; height: 630px; overflow: hidden; }
-  body {
-    background: #fafaf8;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    color: #111111;
-    -webkit-font-smoothing: antialiased;
-  }
-  .board { width: 1200px; height: 630px; display: flex; }
-  .left {
-    flex: 1.35; padding: 76px 56px 68px 92px;
-    display: flex; flex-direction: column; justify-content: space-between;
-  }
-  .right {
-    flex: 1; border-left: 1px solid #e5e5e0; background: #ffffff;
-    padding: 76px 68px 68px 56px;
-    display: flex; flex-direction: column; justify-content: center; gap: 20px;
-  }
-  /* Latin is the site's system stack (spec §5.2) -- no font files shipped
-     for Latin, so this board renders in whatever the OS gives (SF Pro on
-     Apple, Segoe UI on Windows). Serif/Georgia is gone from this file. */
-  .wordmark {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    font-size: 25px; font-weight: 700; letter-spacing: 0.14em;
-  }
-  .headline {
-    /* 600 (semibold), matching the site's own .t-hero weight and the TH
-       board's headline -- not the old serif's regular 400. */
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    font-size: 58px; line-height: 1.14; letter-spacing: -0.015em; font-weight: 600;
-  }
-  .rule { width: 84px; height: 3px; background: #111111; margin: 26px 0 22px; }
-  .byline { font-size: 20px; color: #666666; line-height: 1.45; }
-  .domain {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    font-size: 17px; letter-spacing: 0.04em;
-  }
-  .label {
-    font-size: 12px; color: #666666; letter-spacing: 0.16em;
-    text-transform: uppercase; margin-bottom: 4px;
-  }
-  .proj { border-bottom: 1px solid #e5e5e0; padding-bottom: 16px; }
-  .proj:last-of-type { border-bottom: 0; padding-bottom: 0; }
-  .pname { font-size: 24px; font-weight: 600; letter-spacing: -0.01em; }
-  .pdesc { font-size: 15px; color: #666666; margin-top: 3px; }
+  /* EN: the headline in the display serif, two lines exactly as the film's title card breaks it. */
+  .title { font-family: "OG Display", serif; font-size: 64px; line-height: 68px; letter-spacing: -.012em; }
 </style>
 </head>
 <body>
-  <div class="board">
-    <div class="left">
-      <span class="wordmark">KLAO</span>
-      <div>
-        <h1 class="headline">Business developer who builds his own tools.</h1>
-        <div class="rule"></div>
-        <p class="byline">Bangkok · BD × Data Analytics<br>shipping apps with AI</p>
-      </div>
-      <span class="domain">klao-site.vercel.app</span>
-    </div>
-    <div class="right">
-      <div class="label">Selected work</div>
-      <div class="proj"><div class="pname">GoNai</div><div class="pdesc">Trip planner · Next.js</div></div>
-      <div class="proj"><div class="pname">Aje</div><div class="pdesc">Idea-grading workspace · Next.js</div></div>
-      <div class="proj"><div class="pname">klao-site</div><div class="pdesc">This site · Next.js + Notion</div></div>
-    </div>
-  </div>
+  <main class="card">
+    <header class="head">
+      <h1 class="title"><span class="ln">Business developer who</span><span class="ln">builds his own tools.</span></h1>
+      <p class="byline"><span class="name">Suwichak Jarunopratamp</span><span class="mark"></span><span class="url">klao-site.vercel.app</span></p>
+    </header>
+    <ul class="apps">
+      <li class="app">
+        <div class="frame"><img src="assets/gonai-end.png" width="304" height="173" alt=""></div>
+        <p class="label"><b>GoNai</b> · Live</p>
+      </li>
+      <li class="app">
+        <div class="frame"><img src="assets/aje-end.png" width="304" height="173" alt=""></div>
+        <p class="label"><b>Aje</b> · Working prototype</p>
+      </li>
+      <li class="app">
+        <div class="frame"><img src="assets/cafenista-end.png" width="304" height="173" alt=""></div>
+        <p class="label"><b>Cafénista</b> · Prototype · simulated data</p>
+      </li>
+    </ul>
+  </main>
 </body>
 </html>

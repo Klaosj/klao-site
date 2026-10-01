@@ -69,13 +69,13 @@ export async function generateMetadata({
   // ImageResponse: Satori (which ImageResponse uses) ships no Thai font, so
   // the TH card would need a Thai font file loaded at request time. Sources
   // are design/og/og-{en,th}.html — see design/og/README.md to regenerate
-  // after changing the headline or the featured-project list.
-  // No project list here: the two removed projects (spec §8) are still drawn
-  // on the current og-*.png cards, and alt text may not name them. When the
-  // cards are re-rendered without them, a project list can come back.
+  // after changing the headline or the three apps.
+  // The alt says what the card shows (spec 2026-10-01 §5): the headline, the
+  // name and URL, and the three apps with their status labels. Change it
+  // whenever the card's content changes.
   const ogAlt: Record<Locale, string> = {
-    en: 'Klao — business developer who builds his own tools.',
-    th: 'Klao — นัก Business Development ที่สร้างเครื่องมือใช้เอง',
+    en: 'Business developer who builds his own tools. Suwichak Jarunopratamp · klao-site.vercel.app, with screens from GoNai (live), Aje (working prototype) and Cafénista (prototype, simulated data).',
+    th: 'นัก Business Development ที่สร้างเครื่องมือใช้เอง Suwichak Jarunopratamp · klao-site.vercel.app พร้อมหน้าจอจาก GoNai (เปิดใช้งานแล้ว) Aje (Prototype ใช้งานได้) และ Cafénista (Prototype · ข้อมูลจำลอง)',
   };
   // Relative path resolves against metadataBase, so this follows
   // NEXT_PUBLIC_SITE_URL automatically instead of hardcoding a domain.
