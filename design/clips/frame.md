@@ -1,6 +1,6 @@
 ---
 name: klao-site frame
-version: 0.1 (2026-10-01)
+version: 0.2 (2026-10-01)
 source: klao-site src/app/globals.css (White Edition tokens), spec 2026-09-25 §5.5, sheet-clips spec 2026-09-30
 colors:
   stage: "#F5F6F8"          # --mist, light. Every clip sits on this.
@@ -35,6 +35,7 @@ formats:
   sting-desktop: "1580x900, 30 fps, 5.0 s, no audio, <=700 KB, frame 0 == poster, holds last frame"
   sting-mobile: "1080x1080, same rules, re-composed (bigger UI), not cropped"
   film: "1920x1080, 30 fps, 30-45 s, light music allowed, user-started only (poster + Play)"
+  film-mobile: "1080x1080, 30 fps, 30-45 s, light music allowed, user-started only (poster + Play), re-composed not cropped"
 ---
 
 ## Overview

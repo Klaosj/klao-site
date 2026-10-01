@@ -1,0 +1,161 @@
+<!doctype html>
+<html
+  lang="en"
+  data-composition-variables='[{"id":"locale","type":"enum","label":"Locale","default":"en","options":[{"value":"en","label":"English"},{"value":"th","label":"ไทย"}]}]'
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <link rel="stylesheet" href="scenes.css" />
+    <style>
+      /* ── 1:1 cut · 1080×1080 · re-composed for phones, not cropped. The film sheet shows it edge to edge (390 px
+         at a 390 px viewport, scale 0.3611), so text we set is ≥ 36 px Thai / ≥ 34 px Latin here (frame.md 13 / 12 px
+         at display). Stricter stand-in until the film sheet exists: the project sheet's square video box measured
+         358.8 px at 390 (Task 1), scale 0.3322 → ≥ 39.13 px Thai / ≥ 36.12 px Latin. Smallest here: 40 px
+         (39.36 px while the 2022 card steps back to 0.96), so both hold. */
+      html, body { width: 1080px; height: 1080px; }
+      #t-block, #e-block, #s-head { position: absolute; left: 0; top: 0; }
+
+      #t-head { font-size: 96px; line-height: 1.06; }
+      :lang(th) #t-head { font-size: 76px; line-height: 1.34; }
+      #t-name { margin-top: 48px; font-size: 40px; line-height: 50px; }
+
+      #s-head { width: 952px; }
+      #s-kick { font-size: 40px; line-height: 50px; }
+      :lang(th) #s-kick { line-height: 56px; }
+      #s-title { margin-top: 10px; font-size: 64px; line-height: 1.12; }
+      :lang(th) #s-title { font-size: 60px; line-height: 1.36; }
+      .card { width: 952px; padding: 46px 52px 50px; border-radius: 36px; }
+      #s-card-kick, #s-card-lab { font-size: 41px; line-height: 52px; }
+      :lang(th) #s-card-lab { line-height: 58px; }
+      #s-card-q { margin: 14px 0 24px; font-size: 50px; line-height: 62px; }
+      :lang(th) #s-card-q { line-height: 74px; }
+      #s-stat { font-size: 100px; line-height: 100px; }
+      #s-card-lab { margin-top: 12px; }
+      .tile { width: 96px; height: 96px; border-radius: 24px; }
+      .tile > svg, .tile .face > svg { width: 44px; height: 44px; }
+      #s-now-t1 { font-size: 50px; line-height: 60px; }
+      :lang(th) #s-now-t1 { line-height: 70px; }
+      #s-now-t2 { margin-top: 6px; font-size: 40px; line-height: 52px; }
+      :lang(th) #s-now-t2 { line-height: 60px; }
+
+      .a-kick { font-size: 40px; line-height: 52px; }
+      :lang(th) .a-kick { line-height: 56px; }
+      .a-q { width: 952px; font-size: 68px; line-height: 1.14; }
+      :lang(th) .a-q { font-size: 62px; line-height: 1.45; }
+      .win { border-radius: 18px 18px 0 0; }
+
+      #e-name { font-size: 104px; line-height: 1.06; }
+      :lang(th) #e-name { font-size: 96px; line-height: 1.2; }
+      #e-mark { width: 72px; height: 6px; border-radius: 3px; margin: 44px 0 36px; }
+      #e-url { font-size: 40px; line-height: 50px; }
+    </style>
+    <script>
+      /* 1:1 geometry. X = the text edge (frame.md gutter). The window is the square sting at 996×996 (0.922× its
+         1080×1080 master, ≥ the 0.92× floor: never smaller in the film than in its project sheet), docked to the
+         bottom edge; the band above it (84 px) holds only the kicker while the sting plays. */
+      window.CUT = {
+        W: 1080,
+        H: 1080,
+        X: 64,
+        titleLines: {
+          en: ['Business developer', 'who builds his', 'own tools.'],
+          th: ['นัก Business Development', 'ที่สร้างเครื่องมือใช้เอง'],
+        },
+        titleDy: -20,
+        endLines: { en: ['Suwichak', 'Jarunopratamp'], th: ['Suwichak', 'Jarunopratamp'] },
+        endDy: -20,
+        sig: {
+          mode: 'row',
+          dy: -4,
+          cardGap: 44,
+          tile: 96,
+          rowGap: 56,
+          // the five apps, a loose row under the card: centre offsets from (frame centre, row centre), deg
+          scatter: [[-340, 0, -8], [-170, -10, 6], [0, 8, 7], [170, -6, -6], [340, 6, 4]],
+          nowGap: 28,
+          subGap: 14,
+        },
+        win: { w: 996, h: 996 },
+        qGap: 24,
+        qDy: -16,
+      };
+    </script>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="40" data-width="1080" data-height="1080">
+      <div id="bg"></div>
+
+      <section id="t" class="scene">
+        <div id="t-block">
+          <h1 id="t-head" class="display"></h1>
+          <p id="t-name"></p>
+        </div>
+      </section>
+
+      <section id="s" class="scene">
+        <div id="s-head">
+          <p id="s-kick" class="eyebrow"></p>
+          <h2 id="s-title" class="display"></h2>
+        </div>
+        <div id="s-card" class="card">
+          <p id="s-card-kick" class="cap"></p>
+          <p id="s-card-q"></p>
+          <p id="s-stat"><span id="s-stat-v"></span><span class="of"> / </span><span id="s-stat-t"></span></p>
+          <p id="s-card-lab" class="cap"></p>
+        </div>
+        <div id="s-tiles"></div>
+        <div id="s-now">
+          <div id="s-now-text">
+            <p id="s-now-t1"></p>
+            <p id="s-now-t2"></p>
+          </div>
+        </div>
+      </section>
+
+      <section id="a-gonai" class="scene">
+        <p class="a-kick"></p>
+        <p class="a-q"></p>
+        <div class="win">
+          <video id="v-gonai" class="clip" src="media/gonai.mp4" data-start="13.8" data-duration="5.7" data-track-index="2" muted playsinline></video>
+        </div>
+      </section>
+
+      <section id="a-aje" class="scene">
+        <p class="a-kick"></p>
+        <p class="a-q"></p>
+        <div class="win">
+          <video id="v-aje" class="clip" src="media/aje.mp4" data-start="21.8" data-duration="5.7" data-track-index="3" muted playsinline></video>
+        </div>
+      </section>
+
+      <section id="a-cafenista" class="scene">
+        <p class="a-kick"></p>
+        <p class="a-q"></p>
+        <div class="win">
+          <video id="v-cafenista" class="clip" src="media/cafenista.mp4" data-start="30.6" data-duration="5.7" data-track-index="4" muted playsinline></video>
+        </div>
+      </section>
+
+      <section id="e" class="scene">
+        <div id="e-block">
+          <p id="e-name" class="display"></p>
+          <div id="e-mark"></div>
+          <p id="e-url"></p>
+        </div>
+      </section>
+
+      <audio id="bed" src="media/bed.m4a" data-start="0" data-duration="40" data-track-index="9" data-volume="1"></audio>
+    </div>
+
+    <script src="scenes.js"></script>
+    <script>
+      /* The one paused timeline. scenes.js builds it once the faces are in (the layout depends on them), so it is
+         registered only after the build completes. */
+      window.FILM.ready.then(({ timeline }) => {
+        window.__timelines['main'] = timeline;
+      });
+    </script>
+  </body>
+</html>

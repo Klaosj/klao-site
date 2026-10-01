@@ -23,6 +23,7 @@ describe('design/clips/frame.md (spec 2026-10-01 §2.1)', () => {
     expect(md).toContain('cubic-bezier(.28,.11,.32,1)');
     expect(md).toContain('cubic-bezier(.4,0,1,1)');
     expect(md).toContain('cubic-bezier(.34,1.56,.64,1)');
+    expect(md).toContain('film-mobile: "1080x1080, 30 fps, 30-45 s, light music allowed, user-started only (poster + Play), re-composed not cropped"');
   });
 
   it('is referenced by every clip source folder', () => {

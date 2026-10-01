@@ -1,0 +1,100 @@
+/* scenes.css — the film's frame (design/clips/frame.md). Byte-identical in film-16x9/ and film-1x1/;
+   each cut's index.html sets the sizes (custom properties + a few per-cut rules).
+
+   Faces (staged into media/fonts/ by tools/build.sh, which is git-ignored):
+   - "Film Display": New York, copied at build time from /System/Library/Fonts/NewYork.ttf. Apple's font is
+     never committed (the repo is public). local() does not resolve in the HyperFrames renderer (checked
+     2026-10-01: it fell back to Times), so the copy is the only path.
+   - "Film Thai": Anuphan 500/600 from Google Fonts (OFL, design/clips/film/assets/fonts/), Thai code points
+     only, exactly as the site does it: Latin in a Thai line stays on the system font (SF). */
+@font-face {
+  font-family: "Film Display";
+  font-style: normal;
+  font-weight: 400 1000;
+  src: url("media/fonts/NewYork.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Film Thai";
+  font-style: normal;
+  font-weight: 500;
+  src: url("media/fonts/anuphan-500.woff2") format("woff2");
+  unicode-range: U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;
+}
+@font-face {
+  font-family: "Film Thai";
+  font-style: normal;
+  font-weight: 600;
+  src: url("media/fonts/anuphan-600.woff2") format("woff2");
+  unicode-range: U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;
+}
+
+:root {
+  --stage: #F5F6F8;
+  --paper: #FFFFFF;
+  --ink: #1A1C20;
+  --ink-2: #666970;
+  --ink-3: #83868C;
+  --accent: #26314A;
+  --gonai: #1C7A57;
+  --surface: 0 0 0 1px rgba(20, 26, 44, .05), 0 2px 4px rgba(20, 26, 44, .04), 0 12px 28px -8px rgba(20, 26, 44, .12), 0 32px 64px -32px rgba(20, 26, 44, .18);
+}
+
+html, body { margin: 0; padding: 0; overflow: hidden; background: var(--stage); }
+#root {
+  position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--stage); color: var(--ink);
+  font-family: "Film Thai", system-ui, -apple-system, sans-serif; font-synthesis: none;
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+}
+#bg { position: absolute; inset: 0; background: var(--stage); }   /* painted stage: survives transparent capture */
+/* zero-specificity reset, so each cut's #id sizes win */
+:where(#root) :where(p, h1, h2) { margin: 0; font-size: inherit; font-weight: inherit; }
+.scene { position: absolute; inset: 0; }
+.abs { position: absolute; left: 0; top: 0; }
+
+/* Thai keep-run (the site's .kt) and a deliberate display line */
+.kt { display: inline-block; max-width: 100%; }
+.ln { display: block; white-space: nowrap; }
+
+/* type */
+.display { font-weight: 600; }
+:lang(en) .display { font-family: "Film Display", serif; letter-spacing: -.012em; }
+.eyebrow { font-weight: 600; color: var(--ink-2); letter-spacing: .011em; }
+:lang(th) .eyebrow { letter-spacing: 0; }
+.cap { color: var(--ink-2); letter-spacing: -.016em; }
+:lang(th) .cap { letter-spacing: 0; }
+
+/* title */
+#t-name { font-weight: 500; color: var(--ink-2); }
+
+/* Signature: the 2022 card (white paper on the stage: one hairline + one surface shadow, frame.md) */
+.card { position: absolute; box-sizing: border-box; background: var(--paper); box-shadow: var(--surface); }
+#s-card-q { font-weight: 600; letter-spacing: .011em; text-wrap: balance; }
+:lang(th) #s-card-q { letter-spacing: 0; }
+#s-stat { font-weight: 600; letter-spacing: -.003em; font-variant-numeric: tabular-nums; }
+#s-stat .of { color: var(--ink-2); }
+/* the five apps: one uniform grey, no brand colour; only the tile that becomes GoNai turns green */
+#s-tiles { position: absolute; inset: 0; }
+.tile {
+  position: absolute; left: 0; top: 0; display: grid; place-items: center; overflow: hidden;
+  background: var(--paper); color: var(--ink-3);
+  box-shadow: 0 0 0 1px rgba(20, 26, 44, .06), 0 1px 2px rgba(20, 26, 44, .05), 0 6px 14px -8px rgba(20, 26, 44, .18);
+}
+.tile > svg, .tile .face > svg { display: block; }
+.tile .face { position: absolute; inset: 0; display: grid; place-items: center; background: var(--gonai); color: #FFFFFF; }
+#s-now { position: absolute; }
+#s-now-t1 { font-weight: 600; }
+#s-now-t2 { color: var(--ink); }
+
+/* app beats: kicker, question, and the window the sting plays in (docked to the frame's bottom edge, as the
+   site's sheet window runs past its media box) */
+.a-kick { position: absolute; font-weight: 600; color: var(--ink-2); letter-spacing: .011em; white-space: nowrap; }
+:lang(th) .a-kick { letter-spacing: 0; }
+.a-q { position: absolute; font-weight: 600; letter-spacing: -.004em; text-wrap: balance; }
+:lang(th) .a-q { letter-spacing: 0; }
+.win { position: absolute; overflow: hidden; background: var(--paper); box-shadow: var(--surface); }
+.win::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 .5px rgba(0, 0, 0, .14); pointer-events: none; }
+.win video { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+/* end card: the one accent mark */
+#e-mark { background: var(--accent); }
+#e-url { font-weight: 500; color: var(--ink-2); }

@@ -22,3 +22,8 @@ design/clips/*/snapshots/
 design/clips/*/node_modules/
 # Cafénista's tools/build.sh writes its lossless PNG masters one level up, to design/clips/work/build/<cut>/
 design/clips/work/
+# The film (design/clips/film/tools/build.sh): each cut's staged media/ (sting intermediates, the bed, the faces,
+# including the build-time copy of Apple's New York, which must never be committed). film/work/ is covered above.
+design/clips/film/*/media/
+design/clips/film/*/snapshots/
+design/clips/film/*/renders/
