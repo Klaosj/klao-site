@@ -12,7 +12,7 @@ iMessage. Without them, a shared link is text only. Spec: `docs/superpowers/spec
 | `render.mjs` | takes the stills, renders both cards, checks them, writes the PNGs |
 
 `src/app/[locale]/layout.tsx` points `openGraph.images` and `twitter.images` at the PNGs. The path there is
-**relative** (`/og/og-en.png`), so it resolves against `NEXT_PUBLIC_SITE_URL` automatically. The domain is still
+**relative** (`/og/og-en.png?v=2`), so it resolves against `NEXT_PUBLIC_SITE_URL` automatically. The domain is still
 drawn in the artwork, though: see "Changing the words" below. Other routes reuse the same two PNGs and only set
 their own `alt`.
 

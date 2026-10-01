@@ -407,8 +407,7 @@ export default function HeroTourStage({ slides, vignette, locale }: Props) {
             duration hides (hero-tour-stage.css), and the name is "Film, Watch a …". */}
         <a className="ht-film ctl" data-film="" href={filmCuts(locale).wide.mp4} onClick={() => dispatch({ type: 'stop' })}>
           <FilmGlyph />
-          <FilmButtonLabel text={t.filmButton} />
-          <span className="sr-only">, {t.filmButtonLabel}</span>
+          <FilmButtonLabel text={t.filmButton} description={t.filmButtonLabel} />
         </a>
       </div>
     </section>
@@ -420,12 +419,22 @@ export default function HeroTourStage({ slides, vignette, locale }: Props) {
  *  space -- a text node of its own, outside the duration's span, so every accessible-name
  *  algorithm keeps it ("Film · 0:40", not "Film· 0:40"). The text reads exactly as the
  *  dictionary has it. */
-function FilmButtonLabel({ text }: { text: string }) {
+function FilmButtonLabel({ text, description }: { text: string; description: string }) {
   const at = text.indexOf(' · ');
-  if (at < 0) return <span>{text}</span>;
+  // The comma is an inline, zero-size span right after the duration, and the description follows
+  // as the visually hidden (absolutely positioned) span. A hidden span that carried the comma
+  // itself is blockified, and browsers then put a space before it ("Film · 0:40 , Watch ...").
+  const hidden = (
+    <>
+      <span className="ht-film-c">,</span>{' '}
+      <span className="sr-only">{description}</span>
+    </>
+  );
+  if (at < 0) return <span>{text}{hidden}</span>;
   return (
     <span>
       {text.slice(0, at)} <span className="ht-film-dur">{text.slice(at + 1)}</span>
+      {hidden}
     </span>
   );
 }

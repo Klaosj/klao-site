@@ -111,7 +111,8 @@ encode() {
         -x264-params "keyint=120:zones=0,14,q=16" -force_key_frames "$KEYS_AT" \
         -c:a copy -t 40 -movflags +faststart "$out.mp4"
       # webm: VP9 + Opus 96 kb/s (constrained VBR: libopus's default VBR ran this pad at 130 kb/s)
-      ffmpeg -v error -y -framerate 30 -i "$src" -i "$FILM/assets/bed.m4a" -map 0:v -map 1:a -vf "$VF" \
+      local bed_webm="$FILM/assets/bed.m4a"; [ -f "$WORK/bed/bed.wav" ] && bed_webm="$WORK/bed/bed.wav"
+      ffmpeg -v error -y -framerate 30 -i "$src" -i "$bed_webm" -map 0:v -map 1:a -vf "$VF" \
         -c:v libvpx-vp9 -b:v 0 -crf "$CVP9" -deadline good -cpu-used 1 -row-mt 1 -pix_fmt yuv420p \
         -g 120 -force_key_frames "$KEYS_AT" -c:a libopus -b:a 96k -vbr constrained -t 40 "$out.webm"
       # poster: exactly frame 0, JPEG q 82

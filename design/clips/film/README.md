@@ -89,12 +89,10 @@ bash tools/bed.sh                   # only if the music changes (rewrites assets
 
 Measured on `assets/bed.m4a` (ffmpeg ebur128, 2026-10-01): −19.8 LUFS integrated, LRA 2.1 LU, true peak −10.1 dBFS.
 The composition plays it from 0 to 40 s at volume 1 (`<audio id="bed">`). HyperFrames' own mix of the composition
-measured the same (−19.8 LUFS, −10.2 dBFS), so encode copies the bed's stream rather than re-encoding a mix.
+measured the same (−19.8 LUFS, −10.2 dBFS), so encode copies the bed's stream rather than re-encoding a mix. The webm's Opus track is encoded from `work/bed/bed.wav` (the lossless bed `tools/bed.sh` writes) when it exists, and from `assets/bed.m4a` otherwise, so a rebuilt webm is not lossy-to-lossy; the committed films were not re-encoded.
 
 ## Beats
 
-| Time (s) | Beat | What happens |
-|---|---|---|
 Spec §3.2's boundaries: title 0–3.1 · Signature 3.1–10.0 · GoNai 10.0–18.7 · Aje 18.7–27.3 · Cafénista
 27.3–37.3 · end 37.3–40.0. The details (s):
 

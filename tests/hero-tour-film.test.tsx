@@ -53,7 +53,7 @@ describe('Film button: server render', () => {
     const content = a.textContent!.replace(/\u00a0/g, ' ');
     expect(content.startsWith(text)).toBe(true);
     expect(content).toBe(`${text}, ${label}`);
-    expect(a.querySelector('.sr-only')!.textContent).toBe(`, ${dict[locale].filmButtonLabel}`);
+    expect(a.querySelector('.sr-only')!.textContent).toBe(dict[locale].filmButtonLabel);
     // A frame glyph, decorative -- never the tour's Play/Pause glyph (.ht-pp) or its Replay.
     const svg = a.querySelector('svg')!;
     expect(svg.getAttribute('aria-hidden')).toBe('true');
