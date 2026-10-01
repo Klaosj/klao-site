@@ -9,8 +9,11 @@
 //      (≥ 36 / 34 px), and for the 1:1 the stricter stand-in until the film sheet exists, the project sheet's
 //      square video box, 358.8 px at 390 (≥ 39.13 / 36.12 px).
 //   2. Words. Every block's text is a run of its locale's column of spec 2026-10-01 §3.1.
-//   3. "simulated data" / "ข้อมูลจำลอง". Cafénista's kicker carries it, is fully opaque on every frame of the
-//      Cafénista beat (28.0–36.0 s, frames 840–1079), and is never fainter than any other Cafénista element.
+//   3. "simulated data" / "ข้อมูลจำลอง". Cafénista's kicker carries it, is fully opaque on every frame from the
+//      beat's start B until it leaves (scenes.js APP_BEATS: 27.78–36.98 s), and is never fainter than any other
+//      Cafénista element on any frame.
+//   Also printed: each app beat's question reading time, frames with the question readable (opacity ≥ 0.5) / 30:
+//      the big question, the small one in the 16:9 band, and either.
 //   4. Sting size. Each window, whenever it is visible, is at least the floor (16:9 ≥ 1651 × 941, 1.045× the
 //      1580 × 900 master; 1:1 ≥ 994 × 994, 0.92× the 1080 × 1080 master), and its video's intrinsic size is the
 //      window's size (shown 1:1, no browser scaling).
@@ -110,8 +113,15 @@ const res = await page.evaluate(
     const runs = els.map((el) => ({ el, text: own(el), thai: THAI.test(block(el)?.textContent || own(el)), min: Infinity, minF: -1, max: 0, edge: Infinity, edgeF: -1 }));
     const caf = document.getElementById('a-cafenista');
     const cafKick = caf.querySelector('.a-kick');
-    const cafOthers = [caf.querySelector('.a-q'), caf.querySelector('.win')];
-    const label = { text: cafKick.textContent, minInBeat: Infinity, minInBeatF: -1, fainter: [] };
+    const cafOthers = [caf.querySelector('.a-q'), caf.querySelector('.a-qb'), caf.querySelector('.win')];
+    const cb = window.FILM.APP_BEATS.find((a) => a.key === 'cafenista');
+    const first = Math.ceil(cb.B * 30 - 1e-6);
+    const last = Math.ceil(cb.out * 30 - 1e-6) - 1; // the last frame before the beat starts to leave
+    const label = { text: cafKick.textContent, first, last, minInBeat: Infinity, minInBeatF: -1, fainter: [] };
+    const reads = window.FILM.APP_BEATS.map((a) => {
+      const sec = document.getElementById(`a-${a.key}`);
+      return { key: a.key, q: sec.querySelector('.a-q'), qb: sec.querySelector('.a-qb'), big: 0, band: 0, either: 0 };
+    });
     const wins = [...document.querySelectorAll('.win')].map((w) => {
       const v = w.querySelector('video');
       return { id: w.parentElement.id, w, v, minW: Infinity, minH: Infinity, seen: 0, video: `${v.videoWidth}x${v.videoHeight}`, box: `${w.offsetWidth}x${w.offsetHeight}` };
@@ -134,8 +144,15 @@ const res = await page.evaluate(
         if (size < r.min) [r.min, r.minF] = [size, f];
         if (size > r.max) r.max = size;
       }
+      for (const r of reads) {
+        const b = opacityOf(r.q) >= 0.5;
+        const s = r.qb.textContent.trim() !== '' && opacityOf(r.qb) >= 0.5;
+        r.big += b;
+        r.band += s;
+        r.either += b || s;
+      }
       const ko = opacityOf(cafKick);
-      if (f >= 840 && f < 1080 && ko < label.minInBeat) [label.minInBeat, label.minInBeatF] = [ko, f];
+      if (f >= first && f <= last && ko < label.minInBeat) [label.minInBeat, label.minInBeatF] = [ko, f];
       const other = Math.max(...cafOthers.map(opacityOf));
       if (other > 0.01 && ko + 1e-6 < other) label.fainter.push(f);
       for (const x of wins) {
@@ -152,6 +169,7 @@ const res = await page.evaluate(
       runs: runs.map(({ text, thai, min, minF, max, edge, edgeF }) => ({ text, thai, min, minF, max, edge, edgeF })),
       label: { ...label, fainter: label.fainter.length ? `${label.fainter.length} frames (first ${label.fainter[0]})` : 'none' },
       wins: wins.map(({ id, minW, minH, seen, video, box }) => ({ id, minW, minH, seen, video, box })),
+      reads: reads.map(({ key, big, band, either }) => ({ key, big, band, either })),
     };
   },
   { W, H },
@@ -187,7 +205,7 @@ console.log(`   ${res.blocks.length} blocks checked`);
 console.log('3. Cafénista label');
 const want = loc === 'en' ? 'simulated data' : 'ข้อมูลจำลอง';
 if (!res.label.text.includes(want)) bad(`kicker "${res.label.text}" lacks "${want}"`);
-console.log(`   kicker "${res.label.text}" · lowest opacity over frames 840–1079: ${res.label.minInBeat.toFixed(4)} @${res.label.minInBeatF} · frames where it is fainter than the question or window: ${res.label.fainter}`);
+console.log(`   kicker "${res.label.text}" · lowest opacity over frames ${res.label.first}–${res.label.last}: ${res.label.minInBeat.toFixed(4)} @${res.label.minInBeatF} · frames where it is fainter than the question or window: ${res.label.fainter}`);
 if (res.label.minInBeat < 0.99) bad('the label fades during the Cafénista beat');
 if (res.label.fainter !== 'none') bad('the label is fainter than other Cafénista content');
 
@@ -198,6 +216,7 @@ for (const x of res.wins) {
   if (x.video !== x.box) bad(`${x.id} video ${x.video} is not the window's ${x.box}`);
 }
 
+console.log('   question reading time (opacity ≥ 0.5): ' + res.reads.map((r) => `${r.key} ${(r.big / 30).toFixed(2)} s big${r.band ? ` + ${(r.band / 30).toFixed(2)} s in the band = ${(r.either / 30).toFixed(2)} s` : ''}`).join(' · '));
 console.log('5. edges and clipping');
 const tight = res.runs.filter((r) => r.edgeF >= 0).reduce((a, b) => (b.edge < a.edge ? b : a));
 console.log(`   closest text to a frame edge: ${tight.edge.toFixed(1)} px @frame ${tight.edgeF} "${tight.text.slice(0, 40)}"`);

@@ -68,12 +68,15 @@ A beat may use a subset of its cell. It may not reword, add a number, or drop a 
 
 | Time | Beat | What happens |
 |---|---|---|
-| 0.0–4.0 | Title | Frame 0 is the finished title card and the poster: headline in display type, name below. It holds, then leaves. |
-| 4.0–12.0 | Signature | Rebuild the site's Signature scene (`SignatureScene.tsx`, `signature.css`, `sketches.tsx`). The 2022 side shows the five grey app tiles (map, calendar, wallet, transit, chat) with the Tripedia lines; the tiles converge into the one GoNai tile, and the 2026 side arrives. Same icons, same order, same grey, GoNai's own green only on its own tile. |
-| 12.0–20.0 | GoNai | Kicker and question arrive first, then the GoNai sting plays once (5 s) inside a window frame, then holds and leaves. |
-| 20.0–28.0 | Aje | Same pattern with the Aje sting. |
-| 28.0–36.0 | Cafénista | Same pattern with the (fixed) Cafénista sting. The status label stays visible. |
-| 36.0–40.0 | End | Name and URL with the one `accent` mark; final hold from about 37 s. |
+| 0.0–3.1 | Title | Frame 0 is the finished title card and the poster: headline in display type, name below. It holds to 2.8 s, then leaves. |
+| 3.1–10.0 | Signature | Rebuild the site's Signature scene (`SignatureScene.tsx`, `signature.css`, `sketches.tsx`). The 2022 side shows the five grey app tiles (map, calendar, wallet, transit, chat) with the Tripedia lines; the tiles converge into the one GoNai tile, and the 2026 side arrives and holds 1.2 s. Same icons, same order, same grey, GoNai's own green only on its own tile. |
+| 10.0–18.7 | GoNai | Kicker and question arrive first and hold (≥ 2.7 s readable), then the GoNai sting plays once (5 s) inside a window frame, holds its finished last frame and leaves. On the 16:9 the question stays, small, in the band above the window. |
+| 18.7–27.3 | Aje | Same pattern with the Aje sting. |
+| 27.3–37.3 | Cafénista | Same pattern with the (fixed) Cafénista sting and a longer question moment (≥ 4 s readable). The status label stays visible. |
+| 37.3–40.0 | End | Name and URL with the one `accent` mark; final hold from 38.0 s. |
+
+Revised 2026-10-01 (task 2 fix round 1, controller ruling): app beats were 12 / 20 / 28 / 36 s; ~2 s was borrowed
+from the title, the Signature's last hold and the end hold so the questions can be read on the phone cut.
 
 - **Stings inside the film:** use each app's existing sting as is: the 16:9 sting in the 16:9
   film, the 1:1 sting in the 1:1 film. The source must be a high-quality render: either the

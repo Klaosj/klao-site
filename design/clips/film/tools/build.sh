@@ -7,7 +7,7 @@
 #   stage   1. renders each sting's lossless PNG master from its own source (design/clips/<key>/sting-<cut>/)
 #              into a sting-specific folder, work/stings/<key>-<cut>/, so no app's frames can stand in for
 #              another's (the stings' own build scripts share one masters folder). Never public/clips/*.
-#           2. encodes each master into the film's intermediate, film-<cut>/media/<key>.mp4: 12 frames of its
+#           2. encodes each master into the film's intermediate, film-<cut>/media/<key>.mp4: 6 frames of its
 #              frame 0 first (held while the window rises), the 150 frames, 30 frames of its last frame after;
 #              Lanczos-scaled to the window's exact size (CUT.win in index.html), so the film shows it 1:1; lossless
 #              RGB (libx264rgb, QP 0). Lossless RGB because HyperFrames turns video into PNG frames with ffmpeg,
@@ -32,7 +32,7 @@ WORK="$FILM/work"
 HF="npx --yes hyperframes@0.8.97"
 NEWYORK="${NEWYORK:-/System/Library/Fonts/NewYork.ttf}"
 CUTS="16x9 1x1"; LOCALES="en th"; KEYS="gonai aje cafenista"
-PRE=12; POST=30          # frames held before / after each sting (scenes.js PRE = 12 / 30)
+PRE=6; POST=30           # frames held before / after each sting (scenes.js PRE = 6 / 30)
 STEPS="${*:-stage check render encode verify}"
 
 # the deliverable's base name: film-en, film-th, film-en-1x1, film-th-1x1
@@ -98,7 +98,7 @@ render() {
 encode() {
   mkdir -p "$REPO/public/film" "$REPO/public/images"
   local VF="scale=out_color_matrix=bt709:out_range=tv:flags=accurate_rnd+full_chroma_int,format=yuv420p,setparams=color_primaries=bt709:color_trc=iec61966-2-1:colorspace=bt709:range=tv"
-  local KEYS_AT="0,4,12,20,28,36"     # a keyframe at every beat (seeking in the sheet's player)
+  local KEYS_AT="0,3.1,10.04,18.68,27.28,37.26"     # a keyframe at every beat (spec §3.2; seeking in the sheet's player)
   for cut in $CUTS; do
     # CRFs measured 2026-10-01 to land under budget (16:9 ≤ 6 MB, 1:1 ≤ 5 MB per file); see README
     if [ "$cut" = 16x9 ]; then C264="${CRF264_16:-20}"; CVP9="${CRFVP9_16:-32}"; else C264="${CRF264_1:-20}"; CVP9="${CRFVP9_1:-32}"; fi

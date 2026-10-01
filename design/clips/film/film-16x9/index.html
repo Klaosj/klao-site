@@ -10,8 +10,8 @@
     <link rel="stylesheet" href="scenes.css" />
     <style>
       /* ── 16:9 cut · 1920×1080 · shown ≥ 1040 px wide in the film sheet at 1440×900 (scale ≥ 0.5417), so text we
-         set is ≥ 24 px Thai / ≥ 23 px Latin here (frame.md 13 / 12 px at display). Smallest here: 26 px (24.96 px
-         while the 2022 card steps back to 0.96). */
+         set is ≥ 24 px Thai / ≥ 23 px Latin here (frame.md 13 / 12 px at display). Smallest here: the band kicker,
+         30 px settled to 0.8 = 24 px, and the 2022 card's 26 px at its 0.96 step-back = 24.96 px. */
       html, body { width: 1920px; height: 1080px; }
       #t-block, #e-block, #s-head { position: absolute; left: 0; top: 0; }
 
@@ -38,21 +38,22 @@
       #s-now-t2 { margin-top: 10px; font-size: 32px; line-height: 44px; }
       :lang(th) #s-now-t2 { line-height: 50px; }
 
-      .a-kick { font-size: 30px; line-height: 40px; }
+      .a-kick { font-size: 30px; line-height: 40px; }   /* settles to 0.8 (24 px) in the band */
       :lang(th) .a-kick { line-height: 46px; }
+      .a-qb { font-size: 30px; line-height: 40px; }      /* the question again, in the band during the sting */
+      :lang(th) .a-qb { line-height: 44px; }
       .a-q { width: 1500px; font-size: 80px; line-height: 1.1; }
       :lang(th) .a-q { font-size: 72px; line-height: 1.42; }
       .win { border-radius: 18px 18px 0 0; }
 
       #e-name { font-size: 104px; line-height: 1.08; }
-      :lang(th) #e-name { font-size: 96px; line-height: 1.2; }
       #e-mark { width: 72px; height: 6px; border-radius: 3px; margin: 40px 0 34px; }
       #e-url { font-size: 36px; line-height: 44px; }
     </style>
     <script>
       /* 16:9 geometry. X = the text edge. The window is the sting at 1664×948 (1.053× its 1580×900 master, ≥ the
          1.045× floor: never smaller in the film than in its project sheet), docked to the bottom edge; the band
-         above it (132 px) holds only the kicker while the sting plays. */
+         above it (132 px) holds the kicker and the question, small, while the sting plays. */
       window.CUT = {
         W: 1920,
         H: 1080,
@@ -76,6 +77,9 @@
           nowGap: 32,
         },
         win: { w: 1664, h: 948 },
+        // the band (132 px) during the sting: the kicker at 0.8 over the question, one line (28 px if 30 px
+        // would not fit the text width for every app)
+        band: { q: true, kickScale: 0.8, gap: 2, qFallback: 28 },
         qGap: 22,
         qDy: -12,
       };
@@ -115,24 +119,27 @@
       <section id="a-gonai" class="scene">
         <p class="a-kick"></p>
         <p class="a-q"></p>
+        <p class="a-qb"></p>
         <div class="win">
-          <video id="v-gonai" class="clip" src="media/gonai.mp4" data-start="13.8" data-duration="5.7" data-track-index="2" muted playsinline></video>
+          <video id="v-gonai" class="clip" src="media/gonai.mp4" data-start="13" data-duration="5.7" data-track-index="2" muted playsinline></video>
         </div>
       </section>
 
       <section id="a-aje" class="scene">
         <p class="a-kick"></p>
         <p class="a-q"></p>
+        <p class="a-qb"></p>
         <div class="win">
-          <video id="v-aje" class="clip" src="media/aje.mp4" data-start="21.8" data-duration="5.7" data-track-index="3" muted playsinline></video>
+          <video id="v-aje" class="clip" src="media/aje.mp4" data-start="21.6" data-duration="5.7" data-track-index="3" muted playsinline></video>
         </div>
       </section>
 
       <section id="a-cafenista" class="scene">
         <p class="a-kick"></p>
         <p class="a-q"></p>
+        <p class="a-qb"></p>
         <div class="win">
-          <video id="v-cafenista" class="clip" src="media/cafenista.mp4" data-start="30.6" data-duration="5.7" data-track-index="4" muted playsinline></video>
+          <video id="v-cafenista" class="clip" src="media/cafenista.mp4" data-start="31.6" data-duration="5.7" data-track-index="4" muted playsinline></video>
         </div>
       </section>
 

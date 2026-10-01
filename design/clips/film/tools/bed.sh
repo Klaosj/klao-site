@@ -7,8 +7,8 @@
 # A slow, soft chord pad. Each chord is a set of partials: a sine root (plus a quiet octave) and four
 # triangle-ish upper voices (fundamental, 1/9 third harmonic, 1/25 fifth harmonic), each voice doubled by a
 # copy detuned +0.15 % on the left and −0.15 % on the right for width.
-# The chords cross-fade over 2 s, centred on the film's beat changes (12, 20, 28, 36 s):
-#   0–12 Fmaj9 · 12–20 Am7 · 20–28 B♭maj7 · 28–36 C6/9 · 36–40 Fmaj7
+# The chords cross-fade over 2 s, centred on the film's beat changes (10.04, 18.68, 27.28, 37.26 s; spec §3.2):
+#   title + Signature Fmaj9 · GoNai Am7 · Aje B♭maj7 · Cafénista C6/9 · end Fmaj7
 # Then: high-pass 60 Hz, low-pass 2.2 kHz, a short multi-tap echo as a gentle room, 1 s fade in,
 # 2 s fade out ending at 40.0 s, and two-pass loudnorm (linear) to −20 LUFS integrated, true peak ≤ −1.5 dBTP
 # before AAC (the encoded file must stay ≤ −1 dBTP). No samples, no third-party audio, no randomness.
@@ -20,11 +20,11 @@ DUR=40; X=2.0          # length (s) · cross-fade between chords (s)
 
 # chord table: start end root "upper notes" (Hz, equal temperament, A4 = 440)
 CHORDS=(
-  "0  12 87.307 130.813 220.000 329.628 391.995"
-  "12 20 110.000 164.814 195.998 261.626 329.628"
-  "20 28 116.541 174.614 220.000 293.665 349.228"
-  "28 36 130.813 195.998 220.000 293.665 329.628"
-  "36 40 87.307 130.813 220.000 329.628 349.228"
+  "0     10.04 87.307 130.813 220.000 329.628 391.995"
+  "10.04 18.68 110.000 164.814 195.998 261.626 329.628"
+  "18.68 27.28 116.541 174.614 220.000 293.665 349.228"
+  "27.28 37.26 130.813 195.998 220.000 293.665 329.628"
+  "37.26 40    87.307 130.813 220.000 329.628 349.228"
 )
 
 # smoothstep cross-fade envelope for a chord held from $1 to $2 (edges at 0 and 40 stay open: the fades do that)

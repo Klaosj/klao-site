@@ -26,20 +26,20 @@ FRAMES = 1200
 MB = 1024 * 1024
 BUDGET = {"16x9": 6 * MB, "1x1": 5 * MB}
 POSTER_MAX = 150 * 1024
-# (frame, label): each beat's first frame and one held frame
+# (frame, label): each beat's first frame in which it is on screen, and one held frame (times from scenes.js)
 CONTACT = [
-    (0, "title · start (poster)"),
+    (0, "title · poster"),
     (60, "title · hold"),
-    (120, "Signature · start"),
-    (300, "Signature · hold (2026 side)"),
-    (360, "GoNai · start"),
-    (570, "GoNai · sting held"),
-    (600, "Aje · start"),
-    (810, "Aje · sting held"),
-    (840, "Cafénista · start"),
-    (1070, "Cafénista · sting held"),
-    (1080, "end · start"),
-    (1199, "end · hold (last frame)"),
+    (102, "Signature · in"),
+    (270, "Signature · 2026 side"),
+    (317, "GoNai · in"),
+    (549, "GoNai · sting held"),
+    (576, "Aje · in"),
+    (807, "Aje · sting held"),
+    (834, "Cafénista · in"),
+    (1106, "Cafénista · sting held"),
+    (1121, "end · in"),
+    (1199, "end · last frame"),
 ]
 
 
@@ -72,7 +72,7 @@ def decode(path, frame, w, h):
 def decode_every(path, step, w, h):
     out = subprocess.run(
         ["ffmpeg", "-v", "error", "-i", path, "-vf", f"select=not(mod(n\\,{step})),scale=in_color_matrix=bt709:in_range=tv:flags=accurate_rnd+full_chroma_int,format=rgb24",
-         "-vsync", "0", "-f", "rawvideo", "-"],
+         "-fps_mode", "passthrough", "-f", "rawvideo", "-"],
         capture_output=True, check=True).stdout
     return np.frombuffer(out, np.uint8).reshape(-1, h, w, 3)
 
@@ -89,13 +89,14 @@ def probe(path):
     return j
 
 
-def audio_kbps(path, stream):
-    """the audio stream's real rate: from the container if it says, else summed from its packets (WebM / Opus)"""
+def audio_kbps(path, stream, seconds):
+    """the audio stream's real rate: from the container if it says, else its packets' bytes over its real duration
+    (WebM / Opus carry no bit rate)"""
     if stream.get("bit_rate"):
         return int(stream["bit_rate"]) / 1000
     sizes = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "a", "-show_entries", "packet=size", "-of", "csv=p=0", path],
                            capture_output=True, check=True, text=True).stdout.split()
-    return sum(int(x.strip(",")) for x in sizes if x.strip(",")) * 8 / 40 / 1000
+    return sum(int(x.strip(",")) for x in sizes if x.strip(",")) * 8 / seconds / 1000
 
 
 def faststart(path):
@@ -157,7 +158,7 @@ def all_(repo, work, contact_dir):
                 fps = v["r_frame_rate"]
                 line = (f"{ext}: {size} B ({size / MB:.2f} MB of {BUDGET[cut] / MB:.0f}) · {dur:.3f} s · {v['codec_name']}"
                         f"{' ' + v['profile'] if v.get('profile') else ''} {v['pix_fmt']} {v['width']}x{v['height']} {fps} fps · {n} frames · "
-                        + (f"audio {a[0]['codec_name']} {a[0]['sample_rate']} Hz {a[0]['channels']} ch {audio_kbps(path, a[0]):.1f} kb/s" if a else "NO AUDIO"))
+                        + (f"audio {a[0]['codec_name']} {a[0]['sample_rate']} Hz {a[0]['channels']} ch {audio_kbps(path, a[0], float(a[0].get('duration') or dur)):.1f} kb/s" if a else "NO AUDIO"))
                 if ext == "mp4":
                     line += f" · faststart {'yes' if faststart(path) else 'NO'}"
                 print("  " + line)

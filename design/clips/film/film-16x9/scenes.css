@@ -2,7 +2,7 @@
    each cut's index.html sets the sizes (custom properties + a few per-cut rules).
 
    Faces (staged into media/fonts/ by tools/build.sh, which is git-ignored):
-   - "Film Display": New York, copied at build time from /System/Library/Fonts/NewYork.ttf. Apple's font is
+   - "Film Display": New York (EN titles, and the end card's name in both locales), copied at build time from /System/Library/Fonts/NewYork.ttf. Apple's font is
      never committed (the repo is public). local() does not resolve in the HyperFrames renderer (checked
      2026-10-01: it fell back to Times), so the copy is the only path.
    - "Film Thai": Anuphan 500/600 from Google Fonts (OFL, design/clips/film/assets/fonts/), Thai code points
@@ -91,10 +91,15 @@ html, body { margin: 0; padding: 0; overflow: hidden; background: var(--stage); 
 :lang(th) .a-kick { letter-spacing: 0; }
 .a-q { position: absolute; font-weight: 600; letter-spacing: -.004em; text-wrap: balance; }
 :lang(th) .a-q { letter-spacing: 0; }
+.a-qb { position: absolute; font-weight: 600; letter-spacing: -.004em; white-space: nowrap; }
+:lang(th) .a-qb { letter-spacing: 0; }
+.a-qb:empty { display: none; }
 .win { position: absolute; overflow: hidden; background: var(--paper); box-shadow: var(--surface); }
 .win::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 .5px rgba(0, 0, 0, .14); pointer-events: none; }
 .win video { display: block; width: 100%; height: 100%; object-fit: cover; }
 
 /* end card: the one accent mark */
+/* the name is Latin in both locales, so the end card sets it in the display serif in both */
+#e-name { font-family: "Film Display", serif; letter-spacing: -.012em; }
 #e-mark { background: var(--accent); }
 #e-url { font-weight: 500; color: var(--ink-2); }

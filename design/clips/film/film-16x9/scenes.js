@@ -4,17 +4,17 @@
 
    Words: every string in COPY is verbatim from spec 2026-10-01 §3.1 (copied from klao-site.vercel.app on
    1 Oct 2026). A beat may show a subset of its cell; nothing is reworded, no number is added and no status
-   label is dropped. Cafénista's "simulated data" / "ข้อมูลจำลอง" is part of its kicker, which is on screen,
-   fully opaque, for the whole Cafénista beat (28.0–36.0 s) and fades with the beat's last frame of content.
+   label is dropped. Cafénista's "simulated data" / "ข้อมูลจำลอง" is part of its kicker: the first Cafénista
+   element in, fully opaque from 27.78 s until the beat leaves at 36.98 s, and it leaves with the beat.
 
    Beats (spec §3.2), 40.0 s at 30 fps:
-     0–4     title     frame 0 is the finished card (the poster); it holds, then leaves at 3.42
-     4–12    Signature the 2022 card and five grey app tiles → the tiles gather into one pile, its top tile
-                       turns into GoNai's pin, the 2022 card steps back, the 2026 side arrives
-     12–20   GoNai     kicker + question; then the question leaves, the kicker rises into the band, the
-     20–28   Aje         window rises and the sting plays once (5.0 s), holds its last frame, the beat leaves
-     28–36   Cafénista   (the same pattern; its longer question holds 0.8 s longer and it leaves at 36.0)
-     36–40   end       name, the one accent mark, URL; final hold from 37.02 */
+     0–3.1       title     frame 0 is the finished card (the poster); it holds to 2.80, then leaves
+     3.1–10.0    Signature the 2022 card and five grey app tiles → the tiles gather into one pile, its top tile
+                           turns into GoNai's pin, the 2022 card steps back, the 2026 side arrives and holds 1.2 s
+     10.0–18.7   GoNai     kicker + question; then the question leaves (on the 16:9 it stays, small, in the band),
+     18.7–27.3   Aje         the kicker rises into the band, the window rises and the sting plays once (5.0 s),
+     27.3–37.3   Cafénista   holds its last frame, the beat leaves. Cafénista's longer question holds longest.
+     37.3–40.0   end       name, the one accent mark, URL; final hold from 38.00 */
 (function () {
   const COPY = {
     en: {
@@ -61,27 +61,30 @@
 
   /* ── timing (s) ─────────────────────────────────────────────────────────────────────────────────────── */
   const FPS = 30;
-  const PRE = 12 / FPS; // the sting's frame 0, held while its window rises (tools/build.sh pads the same 12 frames)
+  const PRE = 6 / FPS; // the sting's frame 0, held while its window rises (tools/build.sh pads the same 6 frames)
   const STING = 150 / FPS; // each sting plays once, 5.0 s
   const OUT = 0.28; // every leave: frame.md's 200–320 ms
-  /* Per app beat, relative to its start B:
-       B − 0.50  kicker in (opacity, ARRIVE 0.48 s: fully in by B − 0.02)
-       B − 0.36  question in (y 28 → 0, ARRIVE 0.6 s)
-       B + qe    question out (LEAVE 0.28 s) · + 0.02 the kicker rises into the band (MOVE 0.6 s)
-       B + qe + 0.30  the window rises (y 72 → 0, MOVE 0.65 s), showing the sting's frame 0 for PRE (0.4 s);
-                 then the sting plays its 150 frames once and holds its last frame
-       out       the beat leaves (opacity, y + 24, LEAVE 0.28 s) */
+  /* Per app beat, relative to its start B (each beat's kicker starts as the one before has left):
+       B − 0.50  kicker + question in, one tween (ARRIVE 0.5 s, stagger 0.14): the kicker (opacity) is fully in
+                 at B, the question (y 28 → 0) at B + 0.14
+       B + qe    question out (LEAVE 0.20 s) · + 0.02 the kicker rises into the band (MOVE 0.6 s; on the 16:9
+                 it also settles to 0.8 there) · on the 16:9, + 0.58 the question comes back small in the band,
+                 under the kicker, and stays for the rest of the beat (ARRIVE 0.5 s)
+       B + qe + 0.10  the window rises (y 72 → 0, MOVE 0.65 s), showing the sting's frame 0 for PRE (0.2 s);
+                 then the sting plays its 150 frames once and holds its finished last frame
+       out       the beat leaves (opacity, y + 24, LEAVE 0.28 s)
+     Window starts sit on whole tenths, so they are whole frames. */
   const APP_BEATS = [
-    // B = beat start · qe = the question starts to leave · out = the beat starts to leave
-    { key: 'gonai', B: 12, qe: 1.5, out: 19.22 },
-    { key: 'aje', B: 20, qe: 1.5, out: 27.22 },
-    { key: 'cafenista', B: 28, qe: 2.3, out: 36.0 }, // a longer question; leaves inside the end beat, so its label covers 28–36
+    // B = the kicker is fully in · qe = the question starts to leave · out = the beat starts to leave
+    { key: 'gonai', B: 10.54, qe: 2.36, out: 18.4 }, // window 13.0 · sting 13.2–18.2
+    { key: 'aje', B: 19.18, qe: 2.32, out: 27.0 }, // window 21.6 · sting 21.8–26.8
+    { key: 'cafenista', B: 27.78, qe: 3.72, out: 36.98 }, // window 31.6 · sting 31.8–36.8 · the longest question
   ];
   const frames = (s) => Math.round(s * FPS) / FPS;
   for (const a of APP_BEATS) {
-    a.win = frames(a.B + a.qe + 0.3); // the window starts to rise once the question is gone; the video clip starts here
+    a.win = frames(a.B + a.qe + 0.1); // the window starts to rise just after the question starts to leave; the clip starts here
     a.play = a.win + PRE; // the sting's own first frame plays
-    a.dur = Math.ceil((a.out + OUT - a.win) * FPS - 1e-6) / FPS; // the clip runs until the beat has left
+    a.dur = Math.ceil((a.out + OUT - a.win) * 10 - 1e-6) / 10; // the clip runs until the beat has left (whole tenths)
   }
 
   /* ── helpers ────────────────────────────────────────────────────────────────────────────────────────── */
@@ -192,6 +195,7 @@
     const sec = $(`a-${a.key}`);
     sec.querySelector('.a-kick').innerHTML = keep(t[a.key].kicker);
     sec.querySelector('.a-q').innerHTML = keep(t[a.key].question);
+    if (C.band.q) sec.querySelector('.a-qb').innerHTML = keep(t[a.key].question);
     // the clip's timing in the HTML must be the timing the timeline animates (a stale edit fails loudly)
     const v = $(`v-${a.key}`);
     const ds = Number(v.getAttribute('data-start'));
@@ -280,11 +284,20 @@
     const tiles = APPS.map((n) => $(`tile-${n}`));
     const at = ([cx, cy, r]) => ({ x: cx - T / 2, y: cy - T / 2, rotation: r });
 
-    /* app beats: kicker in the band above the docked window; during the question it sits just above it */
+    /* app beats: kicker (and, on the 16:9, the question again, small) in the band above the docked window;
+       during the question moment the kicker sits just above the big question */
+    const qbs = APP_BEATS.map((a) => $(`a-${a.key}`).querySelector('.a-qb'));
+    if (C.band.q) {
+      // the band question is one line: at its size if every app's fits the text width, else one step down for all
+      const fits = () => qbs.every((qb) => qb.scrollWidth <= W - 2 * X);
+      if (!fits()) qbs.forEach((qb) => (qb.style.fontSize = px(C.band.qFallback)));
+      if (!fits()) fail('a band question does not fit on one line');
+    }
     for (const a of APP_BEATS) {
       const sec = $(`a-${a.key}`);
       const kick = sec.querySelector('.a-kick');
       const q = sec.querySelector('.a-q');
+      const qb = sec.querySelector('.a-qb');
       const win = sec.querySelector('.win');
       const wl = (W - C.win.w) / 2;
       const wt = H - C.win.h;
@@ -292,8 +305,11 @@
       win.style.height = px(C.win.h);
       place(win, wl, wt);
       const kh = hOf(kick);
-      const band = (wt - kh) / 2;
+      const ks = C.band.kickScale;
+      const stack = kh * ks + (C.band.q ? C.band.gap + hOf(qb) : 0);
+      const band = (wt - stack) / 2;
       place(kick, X, band);
+      if (C.band.q) place(qb, X, band + kh * ks + C.band.gap);
       const block = kh + C.qGap + hOf(q);
       const top = (H - block) / 2 + C.qDy;
       place(q, X, top + kh + C.qGap);
@@ -312,8 +328,9 @@
     gsap.set(['#s-now-t1', '#s-now-t2'], { opacity: 0, y: 16 });
     for (const a of APP_BEATS) {
       const sec = $(`a-${a.key}`);
-      gsap.set(sec.querySelector('.a-kick'), { opacity: 0, y: a.lift });
+      gsap.set(sec.querySelector('.a-kick'), { opacity: 0, y: a.lift, scale: 1, transformOrigin: '0% 0%' });
       gsap.set(sec.querySelector('.a-q'), { opacity: 0, y: 28 });
+      gsap.set(sec.querySelector('.a-qb'), { opacity: 0 });
       gsap.set(sec.querySelector('.win'), { opacity: 0, y: 72 });
     }
     gsap.set(['#e-name'], { opacity: 0, y: 20 });
@@ -322,45 +339,52 @@
 
     const tl = gsap.timeline({ paused: true });
 
-    /* 0–4 · title: holds, then leaves (3.42–3.70) */
-    tl.to('#t', { opacity: 0, y: -14, duration: OUT, ease: LEAVE }, 3.42);
+    /* 0–3.1 · title: holds to 2.80, then leaves (2.80–3.08) */
+    tl.to('#t', { opacity: 0, y: -14, duration: OUT, ease: LEAVE }, 2.8);
 
-    /* 4–12 · Signature
-       build    3.72 head · 3.86 the 2022 card · 3.96 the five apps (stagger 0.05; whole build < 0.5 s), so the
-                beat's first frame (4.0) already shows its head
-       breathe  7.10 the apps gather into one pile (map first, 0.95 s; the slowest move, ~3.4× the 0.28 s leaves)
-                · 7.20 the card steps back (0.96, 0.55)
-       resolve  8.20 the top tile turns into GoNai's pin · 8.40 the pile under it goes · 8.55 the 2026 side
-       leave    11.22 */
-    tl.to(['#s-kick', '#s-title'], { opacity: 1, y: 0, duration: 0.55, ease: ARRIVE, stagger: 0.08 }, 3.72);
-    tl.to(card, { opacity: 1, scale: 1, duration: 0.6, ease: MOVE }, 3.86);
-    tl.to(tiles, { opacity: 1, duration: 0.5, ease: ARRIVE, stagger: 0.05 }, 3.96);
+    /* 3.1–10.0 · Signature
+       build    3.10 head · 3.24 the 2022 card · 3.34 the five apps (stagger 0.05; whole build < 0.5 s)
+       breathe  6.48 the apps gather into one pile (map first, 0.95 s; the slowest move, ~3.4× the 0.28 s leaves)
+                · 6.58 the card steps back (0.96, 0.55)
+       resolve  7.58 the top tile turns into GoNai's pin · 7.78 the pile under it goes · 7.93 the 2026 side, in
+                by 8.56, holds 1.2 s
+       leave    9.76 */
+    tl.to(['#s-kick', '#s-title'], { opacity: 1, y: 0, duration: 0.55, ease: ARRIVE, stagger: 0.08 }, 3.1);
+    tl.to(card, { opacity: 1, scale: 1, duration: 0.6, ease: MOVE }, 3.24);
+    tl.to(tiles, { opacity: 1, duration: 0.5, ease: ARRIVE, stagger: 0.05 }, 3.34);
     const piled = pile.map(at); // one tween for the five (frame.md: ≤ 2 tweens per ease in a beat); map first
-    tl.to(tiles, { x: (i) => piled[i].x, y: (i) => piled[i].y, rotation: (i) => piled[i].rotation, duration: 0.95, ease: MOVE, stagger: 0.04 }, 7.1);
-    tl.to(card, { scale: 0.96, opacity: 0.55, duration: 0.8, ease: MOVE }, 7.2);
-    tl.to('#s-face', { opacity: 1, duration: 0.45, ease: ARRIVE }, 8.2);
-    tl.to(tiles.slice(1), { opacity: 0, duration: 0.3, ease: LEAVE }, 8.4);
-    tl.to(['#s-now-t1', '#s-now-t2'], { opacity: 1, y: 0, duration: 0.55, ease: ARRIVE, stagger: 0.08 }, 8.55);
-    tl.to('#s', { opacity: 0, y: -12, duration: OUT, ease: LEAVE }, 11.22);
+    tl.to(tiles, { x: (i) => piled[i].x, y: (i) => piled[i].y, rotation: (i) => piled[i].rotation, duration: 0.95, ease: MOVE, stagger: 0.04 }, 6.48);
+    tl.to(card, { scale: 0.96, opacity: 0.55, duration: 0.8, ease: MOVE }, 6.58);
+    tl.to('#s-face', { opacity: 1, duration: 0.45, ease: ARRIVE }, 7.58);
+    tl.to(tiles.slice(1), { opacity: 0, duration: 0.3, ease: LEAVE }, 7.78);
+    tl.to(['#s-now-t1', '#s-now-t2'], { opacity: 1, y: 0, duration: 0.55, ease: ARRIVE, stagger: 0.08 }, 7.93);
+    tl.to('#s', { opacity: 0, y: -12, duration: OUT, ease: LEAVE }, 9.76);
 
-    /* 12–36 · the three apps */
+    /* 10.0–37.3 · the three apps (eases per beat: arrive ×2, move ×2, leave ×2) */
     for (const a of APP_BEATS) {
       const sec = $(`a-${a.key}`);
       const kick = sec.querySelector('.a-kick');
       const q = sec.querySelector('.a-q');
+      const qb = sec.querySelector('.a-qb');
       const win = sec.querySelector('.win');
-      tl.to(kick, { opacity: 1, duration: 0.48, ease: ARRIVE }, a.B - 0.5); // fully in by B − 0.02
-      tl.to(q, { opacity: 1, y: 0, duration: 0.6, ease: ARRIVE }, a.B - 0.36);
-      tl.to(q, { opacity: 0, y: -14, duration: OUT, ease: LEAVE }, a.B + a.qe);
-      tl.to(kick, { y: 0, duration: 0.6, ease: MOVE }, a.B + a.qe + 0.02);
+      tl.fromTo(
+        [kick, q],
+        { opacity: 0, y: (i) => (i ? 28 : a.lift) },
+        { opacity: 1, y: (i) => (i ? 0 : a.lift), duration: 0.5, ease: ARRIVE, stagger: 0.14, immediateRender: false },
+        a.B - 0.5,
+      );
+      // 0.20 s, frame.md's quickest leave: the window rises 0.1 s after, so the two barely overlap
+      tl.to(q, { opacity: 0, y: -14, duration: 0.2, ease: LEAVE }, a.B + a.qe);
+      tl.to(kick, { y: 0, scale: C.band.kickScale, duration: 0.6, ease: MOVE }, a.B + a.qe + 0.02);
+      if (C.band.q) tl.to(qb, { opacity: 1, duration: 0.5, ease: ARRIVE }, a.B + a.qe + 0.58);
       tl.to(win, { opacity: 1, y: 0, duration: 0.65, ease: MOVE }, a.win);
       tl.to(sec, { opacity: 0, y: 24, duration: OUT, ease: LEAVE }, a.out);
     }
 
-    /* 36–40 · end: name, the one accent mark, URL; final hold from 37.02 */
-    tl.to('#e-name', { opacity: 1, y: 0, duration: 0.55, ease: ARRIVE }, 36.3);
-    tl.to('#e-mark', { scaleX: 1, duration: 0.6, ease: MOVE }, 36.42);
-    tl.to('#e-url', { opacity: 1, duration: 0.48, ease: ARRIVE }, 36.5);
+    /* 37.3–40 · end: name, the one accent mark, URL; final hold from 38.00 */
+    tl.to('#e-name', { opacity: 1, y: 0, duration: 0.55, ease: ARRIVE }, 37.28);
+    tl.to('#e-mark', { scaleX: 1, duration: 0.6, ease: MOVE }, 37.4);
+    tl.to('#e-url', { opacity: 1, duration: 0.48, ease: ARRIVE }, 37.48);
 
     tl.seek(0);
     return tl;
