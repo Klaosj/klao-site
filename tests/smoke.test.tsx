@@ -253,8 +253,8 @@ describe('smoke: pages render in both locales (fixture mode)', () => {
     // Locale-correct, not one shared card: swapping the two would ship a Thai
     // preview on English links -- the class of bug this project already
     // shipped twice with a hardcoded label.
-    expect(enOg.url).toBe('/og/og-en.png');
-    expect(thOg.url).toBe('/og/og-th.png');
+    expect(enOg.url).toBe('/og/og-en.png?v=2');
+    expect(thOg.url).toBe('/og/og-th.png?v=2');
 
     // Relative, so it resolves against metadataBase and follows
     // NEXT_PUBLIC_SITE_URL rather than pinning a domain into the markup.
@@ -276,8 +276,8 @@ describe('smoke: pages render in both locales (fixture mode)', () => {
     const enTw = enMeta.twitter as { card?: string; images?: OgImg[] };
     const thTw = thMeta.twitter as { card?: string; images?: OgImg[] };
     expect(enTw.card).toBe('summary_large_image');
-    expect(enTw.images?.[0].url).toBe('/og/og-en.png');
-    expect(thTw.images?.[0].url).toBe('/og/og-th.png');
+    expect(enTw.images?.[0].url).toBe('/og/og-en.png?v=2');
+    expect(thTw.images?.[0].url).toBe('/og/og-th.png?v=2');
   });
 
   it('both share-card PNGs exist on disk at exactly 1200x630', async () => {

@@ -8,7 +8,7 @@ import { dict } from '@/lib/dictionary';
 import { assertLocale } from '@/lib/locale';
 import { LOCALES, type Locale } from '@/lib/models';
 import { buildPaletteIndex } from '@/lib/palette-index';
-import { SITE_URL } from '@/lib/site';
+import { SITE_URL, ogImageUrl } from '@/lib/site';
 import { THEME_PREPAINT_SCRIPT } from '@/lib/theme';
 
 // The Thai face (the only font file this site ships) is declared in
@@ -80,7 +80,7 @@ export async function generateMetadata({
   // Relative path resolves against metadataBase, so this follows
   // NEXT_PUBLIC_SITE_URL automatically instead of hardcoding a domain.
   const ogImage = {
-    url: `/og/og-${l}.png`,
+    url: ogImageUrl(l),
     width: 1200,
     height: 630,
     alt: ogAlt[l],

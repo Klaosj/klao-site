@@ -5,7 +5,7 @@ import { dict } from '@/lib/dictionary';
 import { formatDate } from '@/lib/format';
 import { assertLocale } from '@/lib/locale';
 import type { Locale } from '@/lib/models';
-import { SITE_URL } from '@/lib/site';
+import { SITE_URL, ogImageUrl } from '@/lib/site';
 
 // See src/app/[locale]/page.tsx for why this is set per leaf page rather
 // than on the shared layout. (This is `/[locale]/writing` -- the *listing*
@@ -41,7 +41,7 @@ export async function generateMetadata({
   const title = dict[l].writing;
   const description = descriptions[l];
   const url = `${SITE_URL}/${l}/writing`;
-  const ogImage = { url: `/og/og-${l}.png`, width: 1200, height: 630, alt: ogAlt[l] };
+  const ogImage = { url: ogImageUrl(l), width: 1200, height: 630, alt: ogAlt[l] };
   return {
     title,
     description,

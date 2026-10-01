@@ -1,3 +1,5 @@
+import type { Locale } from '@/lib/models';
+
 // Single source of truth for the deployed site origin. Consumed by
 // layout.tsx (metadataBase/canonical), the four page-level generateMetadata
 // functions, sitemap.ts, and robots.ts -- previously each of layout.tsx,
@@ -62,3 +64,7 @@ function resolveSiteUrl(): string {
 }
 
 export const SITE_URL = resolveSiteUrl();
+
+/** Bump when public/og/og-{en,th}.png change: social platforms cache share cards by URL. */
+export const OG_VERSION = 2;
+export const ogImageUrl = (l: Locale) => `/og/og-${l}.png?v=${OG_VERSION}`;

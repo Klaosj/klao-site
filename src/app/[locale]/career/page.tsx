@@ -3,7 +3,7 @@ import { getCareer, getProfile } from '@/lib/content';
 import { dict } from '@/lib/dictionary';
 import { assertLocale } from '@/lib/locale';
 import type { Locale } from '@/lib/models';
-import { SITE_URL } from '@/lib/site';
+import { SITE_URL, ogImageUrl } from '@/lib/site';
 
 // See src/app/[locale]/page.tsx for why this is set per leaf page rather
 // than on the shared layout.
@@ -36,7 +36,7 @@ export async function generateMetadata({
   const title = dict[l].career;
   const description = descriptions[l];
   const url = `${SITE_URL}/${l}/career`;
-  const ogImage = { url: `/og/og-${l}.png`, width: 1200, height: 630, alt: ogAlt[l] };
+  const ogImage = { url: ogImageUrl(l), width: 1200, height: 630, alt: ogAlt[l] };
   return {
     title,
     description,

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import type { ContentBlock, Locale, Post, PostMeta } from '@/lib/models';
 import { dict } from '@/lib/dictionary';
-import { SITE_URL } from '@/lib/site';
+import { SITE_URL, ogImageUrl } from '@/lib/site';
 import { generateMetadata as projectsMetadata } from '@/app/[locale]/projects/page';
 import { generateMetadata as writingMetadata } from '@/app/[locale]/writing/page';
 import { derivePostDescription, deriveBodyDescription } from '@/lib/post-description';
@@ -55,13 +55,14 @@ describe('QA I4: projects/page.tsx sets its own description and share card', () 
       expect(meta.openGraph?.description).toBe(meta.description);
       expect(meta.openGraph?.title).not.toBe('Klao — Suwichak Jarunopratamp'); // the home OG title
       const og = (meta.openGraph?.images as OgImg[])[0];
-      expect(og.url).toBe(`/og/og-${locale}.png`);
+      expect(og.url).toBe(ogImageUrl(locale));
+      expect(og.url).toBe(`/og/og-${locale}.png?v=2`); // pins the format
       expect(og.width).toBe(1200);
       expect(og.height).toBe(630);
       const tw = meta.twitter as { card?: string; description?: string; images?: OgImg[] };
       expect(tw.card).toBe('summary_large_image');
       expect(tw.description).toBe(meta.description);
-      expect(tw.images?.[0].url).toBe(`/og/og-${locale}.png`);
+      expect(tw.images?.[0].url).toBe(ogImageUrl(locale));
     }
   });
 
@@ -96,7 +97,7 @@ describe('QA I4: writing/page.tsx sets its own description and share card', () =
       const meta = await writingMetadata(p(locale));
       expect(meta.openGraph?.description).toBe(meta.description);
       const og = (meta.openGraph?.images as OgImg[])[0];
-      expect(og.url).toBe(`/og/og-${locale}.png`);
+      expect(og.url).toBe(ogImageUrl(locale));
     }
   });
 

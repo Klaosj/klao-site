@@ -3,7 +3,7 @@ import { getProjects } from '@/lib/content';
 import { dict } from '@/lib/dictionary';
 import { assertLocale } from '@/lib/locale';
 import type { Locale } from '@/lib/models';
-import { SITE_URL } from '@/lib/site';
+import { SITE_URL, ogImageUrl } from '@/lib/site';
 import ProjectCard from '@/components/ProjectCard';
 import SectionLabel from '@/components/SectionLabel';
 
@@ -52,7 +52,7 @@ export async function generateMetadata({
   const title = dict[l].projects;
   const description = descriptions[l];
   const url = `${SITE_URL}/${l}/projects`;
-  const ogImage = { url: `/og/og-${l}.png`, width: 1200, height: 630, alt: ogAlt[l] };
+  const ogImage = { url: ogImageUrl(l), width: 1200, height: 630, alt: ogAlt[l] };
   return {
     title,
     description,

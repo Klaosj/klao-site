@@ -16,6 +16,8 @@ iMessage. Without them, a shared link is text only. Spec: `docs/superpowers/spec
 drawn in the artwork, though: see "Changing the words" below. Other routes reuse the same two PNGs and only set
 their own `alt`.
 
+**Bump `OG_VERSION` in `src/lib/site.ts` whenever the PNGs change** (LINE, Facebook, X and LinkedIn cache the card by URL; the `?v=` query is what makes them refetch).
+
 `concept-a-masthead.html`, `concept-b-builder.html` and `concept-c-statement.html` are the August 2026 concepts,
 from before the White Edition look. They are kept only as a record; nothing references them.
 

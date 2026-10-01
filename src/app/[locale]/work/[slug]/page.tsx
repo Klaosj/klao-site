@@ -7,7 +7,7 @@ import { formatDate } from '@/lib/format';
 import { assertLocale } from '@/lib/locale';
 import { LOCALES, type Locale } from '@/lib/models';
 import { deriveBodyDescription } from '@/lib/post-description';
-import { SITE_URL } from '@/lib/site';
+import { SITE_URL, ogImageUrl } from '@/lib/site';
 import PostBody from '@/components/PostBody';
 import SectionLabel from '@/components/SectionLabel';
 
@@ -95,7 +95,7 @@ export async function generateMetadata({
   // Same one pair of site-wide share-card PNGs as every other route (see
   // projects/page.tsx's comment and design/og/README.md) -- only the alt
   // text is story-specific.
-  const ogImage = { url: `/og/og-${l}.png`, width: 1200, height: 630, alt: `${story.name} · Klao` };
+  const ogImage = { url: ogImageUrl(l), width: 1200, height: 630, alt: `${story.name} · Klao` };
   return {
     title,
     description,
