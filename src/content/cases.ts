@@ -31,7 +31,7 @@ export const CASE_STUDIES: CaseStudy[] = [
       { label: { en: 'Role', th: 'บทบาท' }, value: { en: 'Project manager, rollout owner', th: 'ผู้จัดการโปรเจกต์ เจ้าของงานติดตั้ง' } },
       { label: { en: 'Worked with', th: 'ทำงานกับ' }, value: { en: 'Retailer · installer · sales, planning, ops', th: 'ค้าปลีก · ผู้ติดตั้ง · ทีมขาย วางแผน ปฏิบัติการ' } },
       { label: { en: 'Tools', th: 'เครื่องมือ' }, value: { en: 'Batch plan · launch checklist · CRM', th: 'แผนติดตั้งเป็นชุด · เช็กลิสต์เปิดตัว · CRM' } },
-      { label: { en: 'Status', th: 'สถานะ' }, value: { en: 'About two-thirds complete, on track', th: 'คืบหน้าราวสองในสาม ตรงตามแผน' } },
+      { label: { en: 'Status', th: 'สถานะ' }, value: { en: 'About two-thirds complete, on\u00a0track', th: 'คืบหน้าราวสองในสาม ตรงตามแผน' } },
     ],
     confidentiality: {
       en: 'The client’s name, store counts and budgets are confidential and left out. The tracker below uses illustrative data.',

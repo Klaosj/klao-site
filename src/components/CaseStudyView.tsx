@@ -199,7 +199,20 @@ export default function CaseStudyView({ c, next, locale }: { c: CaseStudy; next:
           <div key={m.label.en}>
             <dt>{m.label[locale]}</dt>
             <dd>
-              <ThaiText text={m.value[locale]} />
+              {/* Thai phrases stay whole (display mode). A list of "·" items keeps each
+                  item on one line on the desktop strip; a sentence wraps normally. */}
+              {m.value[locale].includes(' · ') ? (
+                m.value[locale].split(' · ').map((u, i) => (
+                  <span key={u}>
+                    {i > 0 && ' · '}
+                    <span className="cst-unit">
+                      <ThaiText text={u} display />
+                    </span>
+                  </span>
+                ))
+              ) : (
+                <ThaiText text={m.value[locale]} display />
+              )}
             </dd>
           </div>
         ))}

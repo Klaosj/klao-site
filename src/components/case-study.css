@@ -18,7 +18,10 @@
   .cst-meta > div + div { padding-left: 20px; border-left: 1px solid var(--line); }
   .cst-meta dt { margin-bottom: 6px; color: var(--ink-2); font-size: 12px; line-height: 16px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
   :lang(th) .cst-meta dt { letter-spacing: 0; }
-  .cst-meta dd { margin: 0; font-size: 15px; line-height: 22px; }
+  .cst-meta dd { margin: 0; font-size: 15px; line-height: 22px; text-wrap: balance; }
+  @media (min-width: 1069px) {
+    .cst-unit { white-space: nowrap; }
+  }
   .cst-note { display: flex; align-items: flex-start; gap: 10px; margin: 18px 0 0; color: var(--ink-2); font-size: 15px; line-height: 22px; }
   .cst-note svg { flex: none; margin-top: 5px; }
 
