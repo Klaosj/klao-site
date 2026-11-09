@@ -1,5 +1,8 @@
+import type { CSSProperties } from 'react';
 import Link from 'next/link';
 import CaseThumb from '@/components/CaseThumb';
+import CaseToc from '@/components/CaseToc';
+import Reveal from '@/components/motion/Reveal';
 import ThaiText from '@/components/ThaiText';
 import { LockGlyph } from '@/components/sections/CaseStudies';
 import { demoHref, type CaseStudy } from '@/lib/cases';
@@ -45,7 +48,7 @@ const TRACKER: State[][] = [
 function Tracker({ locale, caption }: { locale: Locale; caption: string }) {
   const s = COPY.states;
   return (
-    <figure className="cst-tracker">
+    <Reveal as="figure" className="cst-tracker">
       <div className="cst-scroll" role="region" aria-label={caption} tabIndex={0}>
         <table>
           <thead>
@@ -66,7 +69,13 @@ function Tracker({ locale, caption }: { locale: Locale; caption: string }) {
                 </th>
                 {row.map((st, j) => (
                   <td key={j}>
-                    <span className={`cst-chip cst-${st}`}>{s[st][locale]}</span>
+                    {/* --r/--c stagger the chips in, row by row, when the tracker scrolls in. */}
+                    <span className={`cst-chip cst-${st}`} style={{ ['--r' as string]: String(i), ['--c' as string]: String(j) } as CSSProperties}>
+                      {(st === 'risk' || st === 'off') && (
+                        <span className="cst-flag" aria-hidden="true" />
+                      )}
+                      {s[st][locale]}
+                    </span>
                   </td>
                 ))}
               </tr>
@@ -75,7 +84,7 @@ function Tracker({ locale, caption }: { locale: Locale; caption: string }) {
         </table>
       </div>
       <figcaption>{caption}</figcaption>
-    </figure>
+    </Reveal>
   );
 }
 
@@ -83,7 +92,7 @@ function Tracker({ locale, caption }: { locale: Locale; caption: string }) {
 export default function CaseStudyView({ c, next, locale }: { c: CaseStudy; next: CaseStudy | null; locale: Locale }) {
   const demo = demoHref(c);
   return (
-    <article className="cst wrap-wide">
+    <article className="cst wrap">
       <p className="cst-back">
         <Link href={`/${locale}#cases`}>
           <span aria-hidden="true">←</span> {COPY.allWork[locale]}
@@ -113,6 +122,12 @@ export default function CaseStudyView({ c, next, locale }: { c: CaseStudy; next:
           <ThaiText text={c.lede[locale]} />
         </p>
       </header>
+      {/* Hero picture only from real screenshots; a drawn case leads with its artifact below. */}
+      {c.image && (
+        <Reveal className="cst-hero">
+          <CaseThumb c={c} locale={locale} variant="hero" />
+        </Reveal>
+      )}
       <dl className="cst-meta">
         {c.meta.map((m) => (
           <div key={m.label.en}>
@@ -131,12 +146,15 @@ export default function CaseStudyView({ c, next, locale }: { c: CaseStudy; next:
       </p>
 
       <div className="cst-body">
-        <nav className="cst-toc" aria-label={COPY.onPage[locale]}>
-          <a href="#c-problem">{COPY.problem[locale]}</a>
-          <a href="#c-did">{COPY.did[locale]}</a>
-          <a href="#c-artifact">{c.artifact.heading[locale]}</a>
-          <a href="#c-result">{COPY.result[locale]}</a>
-        </nav>
+        <CaseToc
+          label={COPY.onPage[locale]}
+          items={[
+            { id: 'c-problem', text: COPY.problem[locale] },
+            { id: 'c-did', text: COPY.did[locale] },
+            { id: 'c-artifact', text: c.artifact.heading[locale] },
+            { id: 'c-result', text: COPY.result[locale] },
+          ]}
+        />
         <div className="cst-prose">
           <section id="c-problem" aria-labelledby="c-problem-h">
             <h2 id="c-problem-h">{COPY.problem[locale]}</h2>
@@ -148,9 +166,9 @@ export default function CaseStudyView({ c, next, locale }: { c: CaseStudy; next:
           </section>
           <section id="c-did" aria-labelledby="c-did-h">
             <h2 id="c-did-h">{COPY.did[locale]}</h2>
-            <ol className="cst-steps">
-              {c.steps.map((s) => (
-                <li key={s.title.en}>
+            <Reveal as="ol" className="cst-steps">
+              {c.steps.map((s, i) => (
+                <li key={s.title.en} style={{ ['--s' as string]: String(i) } as CSSProperties}>
                   <b>
                     <ThaiText text={s.title[locale]} />
                   </b>
@@ -159,7 +177,7 @@ export default function CaseStudyView({ c, next, locale }: { c: CaseStudy; next:
                   </span>
                 </li>
               ))}
-            </ol>
+            </Reveal>
           </section>
           <section id="c-artifact" aria-labelledby="c-artifact-h">
             <h2 id="c-artifact-h">{c.artifact.heading[locale]}</h2>
@@ -170,7 +188,19 @@ export default function CaseStudyView({ c, next, locale }: { c: CaseStudy; next:
               <Tracker locale={locale} caption={c.artifact.caption[locale]} />
             ) : (
               <figure className="cst-demo">
-                <CaseThumb c={c} locale={locale} />
+                {c.artifact.image ? (
+                  <img
+                    className="cst-demo-img"
+                    src={c.artifact.image.src}
+                    alt={c.artifact.image.alt[locale]}
+                    width={c.artifact.image.width}
+                    height={c.artifact.image.height}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                ) : (
+                  <CaseThumb c={c} locale={locale} />
+                )}
                 <figcaption>
                   {demo && (
                     <a className="btn btn-fill" href={demo} target="_blank" rel="noreferrer">
@@ -195,6 +225,7 @@ export default function CaseStudyView({ c, next, locale }: { c: CaseStudy; next:
           </section>
           {next && (
             <Link className="cst-next" href={`/${locale}/work/${next.slug}`}>
+              <CaseThumb c={next} locale={locale} variant="mini" />
               <span>
                 <span className="cst-next-l">{COPY.next[locale]}</span>
                 <b>

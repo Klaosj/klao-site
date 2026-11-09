@@ -1,32 +1,71 @@
-/* #cases cards (Recruiter Edition, 2026-11-09). Two across from 735 px. The
-   card lifts on hover (transform only, no bounce: a recruiter page, not a toy). */
+/* #cases cards (Recruiter Edition, 2026-11-09; motion pass the same night).
+   Two across from 735 px. The card lifts on hover (transform only, no bounce:
+   a recruiter page, not a toy). The pictures (CaseThumb) also serve as the
+   case page's hero and the next-case card's mini. */
 @layer components {
-  .cs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 40px 0 0; padding: 0; list-style: none; }
+  .cs-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; margin: 40px 0 0; padding: 0; list-style: none; }
   .cs-grid > li, .cs-grid > li > .rv { display: flex; }
   .cs-grid > li > .rv { flex: 1; }
   .cs-card { position: relative; display: flex; flex: 1; flex-direction: column; padding: 14px 14px 22px; border-radius: 22px; background: var(--card); box-shadow: var(--e1); color: inherit; text-decoration: none; transition: transform 320ms var(--ease-drift), box-shadow 320ms var(--ease-drift); }
+  .cs-more span { display: inline-block; transition: transform 320ms var(--ease-settle); }
   @media (hover: hover) and (pointer: fine) {
-    .cs-card:hover { transform: translateY(-3px); box-shadow: var(--e2); }
+    .cs-card:hover { transform: translateY(-4px); box-shadow: var(--e2); }
     .cs-card:hover .cs-more { text-decoration: underline; text-underline-offset: .12em; }
+    .cs-card:hover .cs-more span { transform: translateX(4px); }
   }
+  .cs-card:active { transform: translateY(-1px) scale(.995); }
   @media (prefers-reduced-motion: reduce) {
-    .cs-card { transition: none; }
+    .cs-card, .cs-more span { transition: none; }
+    .cs-card:active { transform: none; }
   }
 
+  /* The picture. Images get a neutral hairline so their edge never melts into the mist. */
   .cs-thumb { position: relative; display: grid; place-items: center; aspect-ratio: 16 / 10; overflow: hidden; border-radius: 14px; background: var(--mist); }
-  .cs-thumb svg { width: 86%; height: auto; }
-  .cs-thumb-shot { place-items: end center; padding: 18px 18px 0; }
-  .cs-thumb-shot img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top center; border-radius: 10px 10px 0 0; box-shadow: var(--e1); }
+  .cs-thumb svg { width: 86%; height: auto; overflow: visible; }
+  .cs-thumb-hero { aspect-ratio: 21 / 10; border-radius: 24px; }
+  .cs-thumb-hero svg { width: min(72%, 640px); }
+  .cs-thumb-mini { aspect-ratio: 16 / 10; border-radius: 10px; }
   .cs-illus { position: absolute; right: 10px; bottom: 8px; padding: 2px 7px; border-radius: 6px; background: var(--glass-pill); color: var(--ink-2); font-size: 12px; line-height: 16px; }
+
+  /* Screenshots: the desktop view rises from the bottom edge; the phone view
+     overlaps it on the right, like a product shot (no drawn device chrome). */
+  .cs-thumb-shot { display: block; }
+  .cs-thumb-shot img { position: absolute; display: block; object-fit: cover; object-position: top left; outline: 1px solid var(--line); outline-offset: -1px; box-shadow: var(--e2); transition: transform 600ms var(--ease-settle); }
+  .cs-shot-main { left: 7%; top: 12%; width: 78%; height: 100%; border-radius: 10px 10px 0 0; }
+  .cs-shot-phone { right: 6%; top: 22%; width: 24%; height: 100%; border-radius: 14px 14px 0 0; }
+  .cs-thumb-mini .cs-shot-main { left: 10%; top: 14%; width: 90%; }
+  .cs-thumb-hero .cs-shot-main { left: 9%; top: 10%; width: 70%; }
+  .cs-thumb-hero .cs-shot-phone { right: 9%; top: 16%; width: 21%; }
+  /* The demo is a light UI: dim it a touch on the dark canvas so it does not glare. */
+  :root[data-theme="dark"] .cs-thumb-shot img { filter: brightness(.88); }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .cs-thumb-shot img { filter: brightness(.88); }
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .cs-card:hover .cs-shot-main { transform: translateY(-4px); }
+    .cs-card:hover .cs-shot-phone { transform: translateY(-6px); }
+  }
+
+  /* The tracker draws itself once when its Reveal comes in (html.js + motion only). */
+  .ct-run, .ct-bar { transform-box: fill-box; transform-origin: left center; }
+  .ct-done, .ct-now { transform-box: fill-box; transform-origin: center; }
+  @media (prefers-reduced-motion: no-preference) {
+    html.js .rv:not(.in) .ct-run, html.js .rv:not(.in) .ct-bar { transform: scaleX(0); }
+    html.js .rv:not(.in) .ct-done, html.js .rv:not(.in) .ct-now { opacity: 0; transform: scale(.6); }
+    html.js .rv .ct-run { transition: transform 900ms var(--ease-settle) 150ms; }
+    html.js .rv .ct-done { transition: opacity 300ms var(--ease-drift), transform 500ms var(--ease-tick); transition-delay: calc(200ms + var(--k) * 260ms); }
+    html.js .rv .ct-now { transition: opacity 300ms var(--ease-drift) 760ms, transform 500ms var(--ease-tick) 760ms; }
+    html.js .rv .ct-bar { transition: transform 1100ms var(--ease-settle); transition-delay: calc(500ms + var(--k) * 140ms); }
+  }
 
   .cs-body { display: flex; flex: 1; flex-direction: column; padding: 18px 8px 0; }
   .cs-kick { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-bottom: 8px; color: var(--ink-2); font-size: 14px; line-height: 20px; }
   .cs-chip { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px 2px 7px; border-radius: 999px; background: var(--mist); color: var(--ink-2); font-size: 12px; line-height: 18px; font-weight: 600; }
   /* Preview-only mark, pinned to the picture's corner so it never pushes the kicker onto two lines. */
   .cs-draft { position: absolute; top: 26px; left: 26px; z-index: 1; padding-left: 9px; background: var(--select); color: var(--ink-1); box-shadow: 0 0 0 3px var(--card); }
-  .cs-title { display: block; margin-bottom: 8px; font-size: 24px; line-height: 30px; font-weight: 600; letter-spacing: -.01em; }
+  .cs-title { display: block; margin-bottom: 8px; font-size: 24px; line-height: 30px; font-weight: 600; letter-spacing: -.01em; text-wrap: balance; }
   :lang(th) .cs-title { font-size: 22px; line-height: 32px; letter-spacing: 0; }
-  .cs-sum { display: block; margin-bottom: 16px; color: var(--ink-2); font-size: 16px; line-height: 24px; }
+  .cs-sum { display: block; margin-bottom: 16px; color: var(--ink-2); font-size: 16px; line-height: 24px; text-wrap: pretty; }
   :lang(th) .cs-sum { line-height: 27px; }
   .cs-out { display: flex; align-items: baseline; gap: 10px; margin-top: auto; padding-top: 14px; border-top: 1px solid var(--line); font-size: 15px; line-height: 21px; }
   .cs-out > span:first-child { flex: none; color: var(--ink-2); font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
@@ -34,8 +73,10 @@
   .cs-more { margin-top: 14px; color: var(--link); font-size: 15px; line-height: 21px; font-weight: 600; }
 
   @media (max-width: 734px) {
-    .cs-grid { grid-template-columns: 1fr; gap: 16px; margin-top: 28px; }
+    .cs-grid { grid-template-columns: minmax(0, 1fr); gap: 16px; margin-top: 28px; }
     .cs-title { font-size: 21px; line-height: 27px; }
+    .cs-thumb-hero { aspect-ratio: 16 / 11; border-radius: 18px; }
+    .cs-thumb-hero svg { width: 88%; }
     /* Phones: no text under 14px (QA matrix rule). */
     .cs-illus, .cs-chip, .cs-out > span:first-child { font-size: 14px; line-height: 20px; }
   }

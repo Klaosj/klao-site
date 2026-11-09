@@ -43,7 +43,7 @@ export default function RecruiterHero({
 
   return (
     <section id="top" className="rh" aria-labelledby="hero-title">
-      <div className="wrap-wide rh-grid">
+      <div className="wrap rh-grid">
         <div className="rh-copy">
           <p className="rh-who rh-in-a">
             {photo && <img src={photo} alt="" width={48} height={48} fetchPriority="low" />}
@@ -57,7 +57,11 @@ export default function RecruiterHero({
             </span>
           </p>
           <h1 id="hero-title" className="rh-h1 rh-in-b">
-            <ThaiText text={HERO.title[locale]} display />
+            <ThaiText text={HERO.titleLead[locale]} display />
+            {/* The end point, marked with a highlight that draws in once (CSS only). */}
+            <span className="rh-mark">
+              <ThaiText text={HERO.titleAccent[locale]} display />
+            </span>
           </h1>
           <p className="rh-lede rh-in-c">
             <ThaiText text={HERO.lede[locale]} />
@@ -95,7 +99,7 @@ export default function RecruiterHero({
         </ul>
       </div>
       {orgs.length > 0 && (
-        <p className="wrap-wide rh-orgs rh-in-d">
+        <p className="wrap rh-orgs rh-in-d">
           <span>{HERO.experienceAt[locale]}</span>
           {orgs.map((o) => (
             <b key={o.name}>

@@ -1,30 +1,37 @@
-/* Recruiter Edition hero (2026-11-09 mockup). Two columns from 1069 px: the
-   copy and the four receipts; one column below. Only transform and opacity
-   animate, and only under html.js with motion welcome; the h1 (LCP) moves
-   but is never hidden. */
+/* Recruiter Edition hero (2026-11-09 mockup; motion pass the same night). Two
+   columns from 1069 px: the copy and the four receipts; one column below.
+   Only transform and opacity animate, plus one paint-only one-shot (the
+   highlight under the h1's end point; no count-up -- design review: a
+   counter shows numbers that are not true), and only under
+   html.js with motion welcome; the h1 (LCP) moves but is never hidden. */
 @layer components {
   .rh { padding-top: 132px; }
   .rh-grid { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 56px; align-items: center; }
-  .rh-who { display: flex; align-items: center; gap: 12px; margin: 0 0 22px; font-size: 15px; line-height: 20px; }
-  .rh-who img { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; box-shadow: var(--e1); }
+  .rh-who { display: flex; align-items: center; gap: 14px; margin: 0 0 24px; font-size: 15px; line-height: 20px; }
+  .rh-who img { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 3px var(--canvas), 0 0 0 4px var(--line); }
   .rh-who b { display: block; font-weight: 600; }
   .rh-role { display: block; color: var(--ink-2); }
-  .rh-h1 { margin: 0 0 20px; font-size: 52px; line-height: 56px; font-weight: 600; letter-spacing: -.015em; text-wrap: balance; }
-  .rh-h1:lang(th) { font-size: 44px; line-height: 58px; letter-spacing: 0; }
-  .rh-lede { max-width: 34em; margin: 0 0 30px; color: var(--ink-2); font-size: 19px; line-height: 29px; }
+  .rh-h1 { margin: 0 0 22px; font-size: 54px; line-height: 58px; font-weight: 600; letter-spacing: -.02em; text-wrap: balance; }
+  .rh-h1:lang(th) { font-size: 44px; line-height: 60px; letter-spacing: 0; }
+  /* The end point, highlighted like a marker pen under the lower part of the words. */
+  .rh-mark { padding: 0 .06em; margin: 0 -.06em; background: linear-gradient(var(--select), var(--select)) 0 88% / 100% .34em no-repeat; }
+  .rh-lede { max-width: 34em; margin: 0 0 30px; color: var(--ink-2); font-size: 19px; line-height: 29px; text-wrap: pretty; }
   .rh-lede:lang(th) { line-height: 32px; }
   .rh-ctas { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
   .rh-lnk { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; padding: 0 6px; color: var(--link); font-size: 17px; text-decoration: none; }
   .rh-lnk:hover { text-decoration: underline; text-underline-offset: .12em; }
 
-  .rh-proof { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 0; padding: 0; list-style: none; }
-  .rh-proof li { display: flex; flex-direction: column; min-height: 132px; padding: 22px 20px 20px; border-radius: 20px; background: var(--mist); }
-  .rh-n { font-size: 36px; line-height: 40px; font-weight: 600; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
-  .rh-n small { color: var(--ink-2); font-size: 18px; font-weight: 600; letter-spacing: 0; }
-  .rh-l { margin-top: 12px; color: var(--ink-2); font-size: 15px; line-height: 21px; }
+  /* The four receipts: one panel split by hairlines, not four grey tiles. */
+  .rh-proof { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); margin: 0; padding: 0; list-style: none; border-radius: 24px; background: var(--card); box-shadow: var(--e2); overflow: hidden; }
+  .rh-proof li { display: flex; flex-direction: column; gap: 8px; min-height: 148px; padding: 24px; }
+  .rh-proof li:nth-child(odd) { border-right: 1px solid var(--line); }
+  .rh-proof li:nth-child(-n + 2) { border-bottom: 1px solid var(--line); }
+  .rh-n { color: var(--kram); font-size: 48px; line-height: 50px; font-weight: 600; letter-spacing: -.03em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .rh-n small { color: var(--ink-2); font-size: 20px; font-weight: 600; letter-spacing: 0; }
+  .rh-l { color: var(--ink-2); font-size: 15px; line-height: 21px; text-wrap: pretty; }
   :lang(th) .rh-l { line-height: 24px; }
 
-  .rh-orgs { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 26px; margin-top: 40px; padding-top: 22px; border-top: 1px solid var(--line); color: var(--ink-2); font-size: 15px; line-height: 22px; }
+  .rh-orgs { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 26px; margin-top: 44px; padding-top: 22px; border-top: 1px solid var(--line); color: var(--ink-2); font-size: 15px; line-height: 22px; }
   .rh-orgs b { color: var(--ink-1); font-weight: 600; }
   .rh-founder { color: var(--ink-2); font-weight: 400; }
 
@@ -33,22 +40,26 @@
     html.js .rh-in-b { animation: rh-move 600ms var(--ease-settle) both; }
     html.js .rh-in-c { animation-delay: 80ms; }
     html.js .rh-in-d { animation-delay: 160ms; }
+    html.js .rh-mark { animation: rh-mark 900ms var(--ease-settle) 520ms both; }
   }
   @keyframes rh-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
   @keyframes rh-move { from { transform: translateY(10px); } to { transform: none; } }
+  @keyframes rh-mark { from { background-size: 0% .34em; } }
 
   @media (max-width: 1068px) {
-    .rh-grid { grid-template-columns: 1fr; gap: 36px; }
+    .rh-grid { grid-template-columns: minmax(0, 1fr); gap: 36px; }
   }
   @media (max-width: 734px) {
     .rh { padding-top: 104px; }
-    .rh-h1 { font-size: 36px; line-height: 40px; }
-    .rh-h1:lang(th) { font-size: 31px; line-height: 42px; }
+    .rh-h1 { font-size: 37px; line-height: 42px; }
+    .rh-h1:lang(th) { font-size: 31px; line-height: 44px; }
     .rh-lede { font-size: 17px; line-height: 26px; }
     .rh-lede:lang(th) { line-height: 29px; }
     .rh-ctas .btn { flex: 1 1 auto; }
-    .rh-proof li { min-height: 0; padding: 18px 16px; }
-    .rh-n { font-size: 30px; line-height: 34px; }
+    .rh-proof { border-radius: 20px; }
+    .rh-proof li { min-height: 0; padding: 18px 16px; gap: 6px; }
+    .rh-n { font-size: 34px; line-height: 38px; }
+    .rh-n small { font-size: 16px; }
     .rh-orgs { gap: 6px 18px; margin-top: 32px; }
   }
 }

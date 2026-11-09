@@ -80,10 +80,11 @@ describe('case study content', () => {
     for (const c of CASE_STUDIES) expect(c.artifact.caption.en).toMatch(/illustrative|sample/i);
   });
 
-  it('points the screenshot at a real file', () => {
+  it('points every screenshot at a real file', () => {
     for (const c of CASE_STUDIES) {
-      const src = c.image?.src;
-      if (src) expect(() => readFileSync(`public${src}`)).not.toThrow();
+      for (const src of [c.image?.src, c.imagePhone?.src, c.artifact.image?.src]) {
+        if (src) expect(() => readFileSync(`public${src}`), src).not.toThrow();
+      }
     }
   });
 });
@@ -138,6 +139,18 @@ describe('Recruiter Edition hero', () => {
     expect(orgs.filter((o) => o.founder).map((o) => o.name)).toEqual(['A Bun Dance']);
   });
 
+  it('splits the h1 into a lead and a highlighted end point that add up to the title', () => {
+    for (const l of ['en', 'th'] as const) expect(HERO.titleLead[l] + HERO.titleAccent[l]).toBe(HERO.title[l]);
+  });
+
+  it('shows the figures as static text (no count-up: it would display numbers that are not true) and marks the end point', () => {
+    const html = renderToStaticMarkup(<RecruiterHero profile={profile} career={career} locale="en" />);
+    expect(html).toContain('<span class="rh-n">4</span>');
+    expect(html).toContain('<span class="rh-n">~35%</span>');
+    expect(html).not.toContain('rh-c-v');
+    expect(html).toContain('class="rh-mark"');
+  });
+
   it.each(['en', 'th'] as const)('renders name, role, the three actions and four stats on /%s', (locale) => {
     const html = renderToStaticMarkup(<RecruiterHero profile={profile} career={career} locale={locale} />);
     expect(html).toContain('id="top"');
@@ -161,6 +174,12 @@ describe('case study rendering', () => {
     expect(html.match(/class="cs-chip cs-draft"/g)?.length).toBe(visibleCases(PREVIEW).filter((c) => c.status === 'draft').length);
   });
 
+  it('hides the next-case mini picture from assistive tech (the link text names the case)', () => {
+    const html = renderToStaticMarkup(<CaseStudyView c={first} next={second} locale="en" />);
+    const mini = html.slice(html.indexOf('class="cst-next"'));
+    expect(mini).toMatch(/class="cs-thumb cs-thumb-mini[^"]*" aria-hidden="true"/);
+  });
+
   it('renders nothing when no case is visible', () => {
     expect(renderToStaticMarkup(<CaseStudies cases={[]} locale="en" />)).toBe('');
   });
@@ -169,7 +188,12 @@ describe('case study rendering', () => {
     for (const c of [first, second] as CaseStudy[]) {
       const html = renderToStaticMarkup(<CaseStudyView c={c} next={c === first ? second : first} locale={locale} />);
       for (const id of ['c-problem', 'c-did', 'c-artifact', 'c-result']) expect(html, `${c.slug} lacks #${id}`).toContain(`id="${id}"`);
-      expect(html.match(/<li>/g)?.length ?? 0).toBeGreaterThanOrEqual(c.steps.length);
+      expect(html.match(/<li[ >]/g)?.length ?? 0).toBeGreaterThanOrEqual(c.steps.length);
+      // A hero picture only from real screenshots (a drawn case leads with its artifact); scroll-spy list always.
+      expect(html.includes('cs-thumb-hero')).toBe(Boolean(c.image));
+      expect(html).toContain('class="cst-toc"');
+      // Status is never shown by fill alone: the two slips carry a flag mark.
+      if (c.artifact.kind === 'tracker') expect(html.match(/class="cst-flag"/g)).toHaveLength(2);
       if (c.status === 'draft') expect(html).toContain('cst-draftnote');
       if (c.artifact.kind === 'tracker') expect(html).toContain('<table>');
       if (c.demo) expect(html).toContain(`href="${demoHref(c)}"`);

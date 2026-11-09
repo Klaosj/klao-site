@@ -36,7 +36,7 @@ export function LockGlyph() {
 export default function CaseStudies({ cases, locale }: { cases: CaseStudy[]; locale: Locale }) {
   if (cases.length === 0) return null;
   return (
-    <section id="cases" className="section wrap-wide" aria-labelledby="cases-h">
+    <section id="cases" className="section wrap" aria-labelledby="cases-h">
       <Reveal as="header">
         <h2 id="cases-h" className="t-h2" tabIndex={-1}>
           <ThaiText text={CASES_COPY.heading[locale]} display />

@@ -25,6 +25,8 @@ export interface CaseStudy {
   /** Card picture: a drawn tracker ('rollout') or the demo screenshot ('uat'). */
   thumb: 'rollout' | 'uat';
   image?: { src: string; alt: Localized };
+  /** Phone-width shot layered over `image` on the card and the case hero. */
+  imagePhone?: { src: string; alt: Localized };
   /** A live demo. `previewUrl` is the login-protected copy linked while the case is a draft. */
   demo?: { url: string; previewUrl: string };
   kicker: Localized;
@@ -36,7 +38,14 @@ export interface CaseStudy {
   confidentiality: Localized;
   problem: Localized[];
   steps: CaseStep[];
-  artifact: { kind: 'tracker' | 'demo'; heading: Localized; intro: Localized; caption: Localized };
+  artifact: {
+    kind: 'tracker' | 'demo';
+    heading: Localized;
+    intro: Localized;
+    caption: Localized;
+    /** The artifact's own picture (a different screen from the hero). */
+    image?: { src: string; alt: Localized; width: number; height: number };
+  };
   result: { headline: Localized; draftNote: string | null };
   skills: Localized;
 }

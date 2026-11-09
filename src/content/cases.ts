@@ -106,10 +106,17 @@ export const CASE_STUDIES: CaseStudy[] = [
     status: 'draft',
     thumb: 'uat',
     image: {
-      src: '/images/uat-desk.jpg',
+      src: '/images/uat-desk-list.jpg',
       alt: {
         en: 'Bug list of the demo desk: status and vendor-answer filters at the top, then bug cards grouped by the vendor’s answer, each with severity, impact, area and reporter.',
         th: 'หน้ารายการบั๊กของเดโม แถบกรองตามสถานะและคำตอบของผู้พัฒนาอยู่ด้านบน ตามด้วยการ์ดบั๊กที่จัดกลุ่มตามคำตอบ แต่ละใบบอกความรุนแรง ผลกระทบ ส่วนของระบบ และผู้แจ้ง',
+      },
+    },
+    imagePhone: {
+      src: '/images/uat-desk-phone.jpg',
+      alt: {
+        en: 'The same bug list on a phone, where most testers reported from.',
+        th: 'รายการบั๊กเดียวกันบนมือถือ ซึ่งผู้ทดสอบส่วนใหญ่ใช้แจ้ง',
       },
     },
     demo: {
@@ -191,6 +198,15 @@ export const CASE_STUDIES: CaseStudy[] = [
         th: 'เปิดเดโมในบทผู้ทดสอบเพื่อแจ้งบั๊ก หรือในบทหัวหน้าโปรเจกต์เพื่อคัดแยกบั๊ก ทุกอย่างทำงานในเบราว์เซอร์ของคุณด้วยข้อมูลตัวอย่าง',
       },
       caption: { en: 'Sample data only. Nothing you enter leaves your browser.', th: 'ข้อมูลตัวอย่างเท่านั้น สิ่งที่คุณพิมพ์จะอยู่ในเบราว์เซอร์ของคุณเท่านั้น' },
+      image: {
+        src: '/images/uat-desk-report.jpg',
+        width: 2160,
+        height: 1400,
+        alt: {
+          en: 'The report form: pick the part of the system in plain words, then how much it affects your work, then send.',
+          th: 'ฟอร์มแจ้งบั๊ก เลือกส่วนของระบบด้วยคำง่าย ๆ เลือกว่ากระทบงานแค่ไหน แล้วกดส่ง',
+        },
+      },
     },
     result: {
       headline: {
