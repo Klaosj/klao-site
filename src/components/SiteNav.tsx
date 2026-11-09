@@ -40,7 +40,16 @@ const READING_LINE = 0.45;
  * At ≤ 899 px the links, ⌘K and Contact fold into NavMenu; at ≤ 734 px
  * ThumbBar carries the two actions.
  */
-export default function SiteNav({ locale, profile }: { locale: Locale; profile: Profile }) {
+export default function SiteNav({
+  locale,
+  profile,
+  sections = NAV_SECTIONS,
+}: {
+  locale: Locale;
+  profile: Profile;
+  /** The home sections to link; the layout drops #cases when none is visible. */
+  sections?: readonly NavSection[];
+}) {
   const t = dict[locale];
   // usePathname() is null outside a mounted App Router (unit tests); the
   // locale's own root reproduces the home page's in-page behaviour there.
@@ -60,15 +69,15 @@ export default function SiteNav({ locale, profile }: { locale: Locale; profile: 
   //
   // The same band also feeds the reading anchor (src/lib/active-section.ts),
   // which every EN/ไทย toggle carries across a switch (Klao decision (a)).
-  // It is wider than the pill (P1 re-review Important 1): Signature, Contact
-  // and the footer count, a gap between two bands keeps the last one, and
+  // It is wider than the pill (P1 re-review Important 1): Contact and the
+  // footer count, a gap between two bands keeps the last one, and
   // only the hero clears it.
   useEffect(() => {
     setActive(null);
     setReadingAnchor(null);
     if (typeof IntersectionObserver === 'undefined') return;
-    const sections = NAV_SECTIONS.map((id) => document.getElementById(id)).filter((el): el is HTMLElement => el !== null);
-    if (sections.length === 0) return;
+    const els = sections.map((id) => document.getElementById(id)).filter((el): el is HTMLElement => el !== null);
+    if (els.length === 0) return;
     // Page order: at a boundary the band can touch two neighbours, and the
     // upper one wins, as it does for the pill.
     const anchors = new Map<Element, ReadingAnchor | null>();
@@ -94,7 +103,7 @@ export default function SiteNav({ locale, profile }: { locale: Locale; profile: 
     const io = new IntersectionObserver(
       (entries) => {
         for (const e of entries) inBand.set(e.target, e.isIntersecting);
-        const sec = sections.find((el) => inBand.get(el));
+        const sec = els.find((el) => inBand.get(el));
         setActive(sec ? (sec.id as NavSection) : null);
         const hit = Array.from(anchors).find(([el]) => inBand.get(el));
         if (hit) last = hit[1];
@@ -108,7 +117,9 @@ export default function SiteNav({ locale, profile }: { locale: Locale; profile: 
       io.disconnect();
       setReadingAnchor(null);
     };
-  }, [pathname]);
+    // `sections` is a fresh array per render only in tests; the layout passes a stable one.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname, sections.join(',')]);
 
   // The hero's buttons have left the viewport upwards. A row still below the
   // fold (top > 0) doesn't count: the visitor hasn't passed it yet. One
@@ -165,7 +176,7 @@ export default function SiteNav({ locale, profile }: { locale: Locale; profile: 
           </Link>
           <div className="sn-links" ref={linksRef}>
             <span className="sn-act" ref={pillRef} aria-hidden="true" />
-            {NAV_SECTIONS.map((sec) => (
+            {sections.map((sec) => (
               <Link
                 key={sec}
                 href={href(`#${sec}`)}
@@ -200,7 +211,7 @@ export default function SiteNav({ locale, profile }: { locale: Locale; profile: 
             <Link href={href('#contact')} className="sn-pill sn-contact" data-filled={heroGone ? '' : undefined}>
               {t.navContact}
             </Link>
-            <NavMenu locale={locale} profile={profile} active={active} />
+            <NavMenu locale={locale} profile={profile} active={active} sections={sections} />
           </div>
         </nav>
       </header>

@@ -51,14 +51,14 @@ describe('NavMenu', () => {
     expect(button.getAttribute('aria-expanded')).toBe('true');
   });
 
-  it('lists the four sections and marks the one in view', () => {
+  it('lists the five sections and marks the one in view', () => {
     render(<NavMenu locale="en" profile={makeProfile()} active="career" />);
     const dialog = openMenu();
     const links = Array.from(dialog.querySelectorAll<HTMLAnchorElement>('a[data-sec]'));
-    expect(links.map((a) => a.textContent)).toEqual([dict.en.navWork, dict.en.navCareer, dict.en.navStory, dict.en.navFaq]);
-    expect(links.map((a) => a.getAttribute('href'))).toEqual(['#work', '#career', '#story', '#faq']);
-    expect(links[1].getAttribute('aria-current')).toBe('location');
-    expect(links[0].hasAttribute('aria-current')).toBe(false);
+    expect(links.map((a) => a.textContent)).toEqual([dict.en.navCases, dict.en.navWork, dict.en.navCareer, dict.en.navStory, dict.en.navFaq]);
+    expect(links.map((a) => a.getAttribute('href'))).toEqual(['#cases', '#work', '#career', '#story', '#faq']);
+    expect(links[2].getAttribute('aria-current')).toBe('location');
+    expect(links[1].hasAttribute('aria-current')).toBe(false);
   });
 
   it('points the section links at the home page from any other route', () => {
@@ -66,7 +66,7 @@ describe('NavMenu', () => {
     render(<NavMenu locale="th" profile={makeProfile()} active={null} />);
     const dialog = openMenu('th');
     const hrefs = Array.from(dialog.querySelectorAll('a[data-sec]')).map((a) => a.getAttribute('href'));
-    expect(hrefs).toEqual(['/th#work', '/th#career', '/th#story', '/th#faq']);
+    expect(hrefs).toEqual(['/th#cases', '/th#work', '/th#career', '/th#story', '/th#faq']);
     expect(within(dialog).getByRole('link', { name: 'Suwichak กลับขึ้นด้านบน' }).getAttribute('href')).toBe('/th#top');
   });
 

@@ -374,128 +374,9 @@ async function probes(browser) {
     }
   }
 
-  // Film (spec 2026-10-01-film-og §4, §6): nothing of the film loads before it is asked for;
-  // the pill's Film button opens #film with the cut for the screen (the 16:9 at 1440, the 1:1
-  // on a phone) and plays from that click; the video spans the sheet's width and fits the
-  // 1440×900 screen whole; the close button hands focus back to the button; a project row still
-  // opens its sheet afterwards. A #film deep link and a reduced-motion click open it paused.
-  // Every wait is on the state itself (the dialog, the hash, the sheet's own animation), never
-  // a fixed sleep.
-  {
-    const label = 'probe film';
-    const notes = [];
-    const p = [];
-    // True once `fn` holds in the page, false after 8 s (reported by the caller, not thrown).
-    const until = (page, fn, arg) =>
-      page.waitForFunction(fn, arg, { timeout: 8000 }).then(
-        () => true,
-        () => false,
-      );
-    // Open, on #film, and the sheet's 500 ms entrance finished (its rect is final).
-    const filmSettled = () => {
-      const d = document.querySelector('dialog.film-sheet');
-      return !!d?.open && location.hash === '#film' && !!d.querySelector('video') && d.getAnimations().every((a) => a.playState === 'finished');
-    };
-    const filmState = () => {
-      const d = document.querySelector('dialog.film-sheet');
-      const v = d?.querySelector('video');
-      const r = v?.getBoundingClientRect();
-      return {
-        open: !!d?.open,
-        hash: location.hash,
-        src: v?.querySelector('source')?.getAttribute('src') ?? null,
-        width: r ? Math.round(r.width * 10) / 10 : null,
-        top: r ? Math.round(r.top) : null,
-        bottom: r ? Math.round(r.bottom) : null,
-        paused: v ? v.paused : null,
-        played: v ? v.played.length : null,
-        vh: innerHeight,
-        projectOpen: !!document.querySelector('dialog.sheet:not(.film-sheet)[open]'),
-      };
-    };
-    for (const [width, locale, want] of [
-      [1440, 'en', 'film-en.webm'],
-      [390, 'th', 'film-th-1x1.webm'],
-    ]) {
-      const ctx = await newContext(browser, { width, scheme: 'light' });
-      try {
-        const page = await ctx.newPage();
-        const errors = watchErrors(page);
-        const early = [];
-        const onRequest = (r) => {
-          if (/\/film\/|\/images\/film-/.test(r.url())) early.push(r.url().replace(/^.*?(\/(film|images)\/)/, '$1'));
-        };
-        page.on('request', onRequest);
-        await page.goto(urlFor(`/${locale}`), { waitUntil: 'load', timeout: 90_000 });
-        await page.evaluate(async () => {
-          await document.fonts.ready;
-        });
-        await page.waitForTimeout(1500); // a quiet window in which nothing film-related may load
-        page.off('request', onRequest);
-        const at = `${width}-${locale}`;
-        if (early.length) p.push(`${at}: film files requested before the sheet opened: ${[...new Set(early)].join(', ')}`);
-        if (await page.evaluate(() => !!document.querySelector('video[poster*="/images/film-"]'))) p.push(`${at}: a film <video> is in the page before the sheet opened`);
-        await page.locator('.ht-film').click();
-        if (!(await until(page, filmSettled))) p.push(`${at}: clicking .ht-film did not open dialog.film-sheet at #film`);
-        const s = await page.evaluate(filmState);
-        if (!s.open) p.push(`${at}: dialog.film-sheet is not open after the click`);
-        if (s.hash !== '#film') p.push(`${at}: hash "${s.hash}" after the click, expected "#film"`);
-        if (!s.src?.endsWith(want)) p.push(`${at}: first <source> is ${s.src}, expected …${want}`);
-        if (s.projectOpen) p.push(`${at}: a project sheet is open alongside the film`);
-        // A click with motion allowed plays, from the click itself.
-        if (width === 1440 && s.paused !== false) p.push(`${at}: the video is paused after a click-open (play() was not called or was refused)`);
-        // Ruling 2: ≥ 1040 px wide at 1440 (the sheet's inner width); edge to edge (390 ± 1) on the phone.
-        if (width === 1440 && !(s.width >= 1039.5)) p.push(`${at}: video ${s.width} px wide, expected ≥ 1040`);
-        if (width === 390 && !(Math.abs(s.width - 390) <= 1)) p.push(`${at}: video ${s.width} px wide, expected 390 ± 1`);
-        // Ruling 3: at 1440×900 the whole picture is on screen, under the header.
-        if (width === 1440 && !(s.top >= 0 && s.bottom <= s.vh)) p.push(`${at}: video spans ${s.top}–${s.bottom} px of a ${s.vh} px screen (cropped)`);
-        notes.push(`${at} src=${s.src} w=${s.width} y=${s.top}–${s.bottom}/${s.vh} playing=${s.paused === false}`);
-        await page.screenshot({ path: join(OUT, `probe-film-${at}.png`) });
-        await page.locator('dialog.film-sheet .sheet-close').click();
-        const closed = await until(page, () => !document.querySelector('dialog[open]') && !location.hash && !document.querySelector('dialog.film-sheet video'));
-        if (!closed) {
-          const c = await page.evaluate(() => ({ open: !!document.querySelector('dialog[open]'), hash: location.hash, video: !!document.querySelector('dialog.film-sheet video') }));
-          p.push(`${at}: after the close button: dialog open ${c.open}, hash "${c.hash}", video still in the page ${c.video}`);
-        }
-        if (!(await page.evaluate(() => document.activeElement?.classList.contains('ht-film') ?? false))) p.push(`${at}: focus did not return to .ht-film`);
-        // Ruling 5: the project sheet still opens from its row once the film has been and gone.
-        if (width === 1440) {
-          await page.locator('a[data-sheet]').first().click();
-          const opened = await until(page, () => location.hash.startsWith('#work/') && !!document.querySelector('dialog.sheet:not(.film-sheet)[open]'));
-          if (!opened) p.push(`${at}: a project row did not open its sheet after the film (hash "${await page.evaluate(() => location.hash)}")`);
-          if (await page.evaluate(() => !!document.querySelector('dialog.film-sheet[open]'))) p.push(`${at}: the film sheet reopened with the project sheet`);
-        }
-        p.push(...errors.map((e) => `${at} console: ${e}`));
-      } catch (e) {
-        p.push(`${width}-${locale} crashed: ${String(e?.message ?? e).split('\n')[0]}`);
-      } finally {
-        await ctx.close();
-      }
-    }
-    // Opened without a click on the button -- a shared /en#film link -- or by a click under
-    // reduced motion: the sheet opens on the poster and controls, and nothing plays.
-    for (const [kind, motion, path] of [
-      ['deep link /en#film', true, '/en#film'],
-      ['reduced-motion click', false, '/en'],
-    ]) {
-      const ctx = await newContext(browser, { width: 1440, scheme: 'light', motion });
-      try {
-        const { page, errors } = await open(ctx, path);
-        if (path === '/en') await page.locator('.ht-film').click();
-        if (!(await until(page, filmSettled))) p.push(`${kind}: dialog.film-sheet did not open at #film`);
-        const s = await page.evaluate(filmState);
-        if (!s.src?.endsWith('film-en.webm')) p.push(`${kind}: first <source> is ${s.src}, expected …film-en.webm`);
-        if (s.paused !== true || s.played !== 0) p.push(`${kind}: the video played (paused ${s.paused}, played ranges ${s.played}); it must open paused`);
-        notes.push(`${kind} open=${s.open} paused=${s.paused}`);
-        p.push(...errors.map((e) => `${kind} console: ${e}`));
-      } catch (e) {
-        p.push(`${kind} crashed: ${String(e?.message ?? e).split('\n')[0]}`);
-      } finally {
-        await ctx.close();
-      }
-    }
-    report(label, p, notes.join(' · '));
-  }
+  // The film probe left with the hero tour (Recruiter Edition, 2026-11-09): the
+  // film's only door was the tour pill's Film button. FilmSheet and its unit
+  // tests stay; restore the probe from git history if the film comes back.
 
   // Global Constraints: ⌘K Ask Preview makes no model call and sends nothing.
   {
@@ -541,7 +422,10 @@ async function pages(browser) {
   } finally {
     await discover.close();
   }
-  const REAL_PATHS = ['/en/projects', '/th/projects', '/en/writing', '/th/writing', '/en/career', ...extra];
+  // Recruiter Edition: the client case studies are drafts, absent from the
+  // sitemap, so they are listed here (they render on local and preview builds).
+  const CASE_PATHS = ['/en/work/rollout-playbook', '/th/work/rollout-playbook', '/en/work/uat-bug-desk', '/th/work/uat-bug-desk'];
+  const REAL_PATHS = ['/en/projects', '/th/projects', '/en/writing', '/th/writing', '/en/career', ...CASE_PATHS, ...extra];
   // T12 — both locales: the root 404 is ONE static page (global-not-found.tsx)
   // whose pre-paint picks lang, the visible copy and the Thai tab title from
   // the URL, so /th is the half that can silently come out English.

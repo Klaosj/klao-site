@@ -69,7 +69,7 @@ export default function ByDay({ profile, chapters, locale }: Props) {
         <p className="t-h2 bd-closing">
           <ThaiText text={closing[locale]} display />
         </p>
-        <a href="#top">{t.backToTour}</a>
+        <a href="#work">{t.backToTour}</a>
       </Reveal>
     </section>
   );

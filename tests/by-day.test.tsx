@@ -77,7 +77,7 @@ describe('ByDay', () => {
   it('closes with the Notion closing line and a link back to the tour', () => {
     const { container } = render(<ByDay profile={profile} chapters={chapters} locale="en" />);
     expect(norm(container.querySelector('.bd-closing')?.textContent)).toBe('Business developer who builds his own tools.');
-    expect(container.querySelector('.bd-close a[href="#top"]')?.textContent).toBe(dict.en.backToTour);
+    expect(container.querySelector('.bd-close a[href="#work"]')?.textContent).toBe(dict.en.backToTour);
   });
 
   it('renders Thai copy for locale th, with the | break marker removed', () => {

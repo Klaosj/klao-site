@@ -318,11 +318,11 @@ describe('smoke: pages render in both locales (fixture mode)', () => {
   // asserted posts.length >= 2, which the now-empty fixture can never
   // satisfy. See that file's header comment for the full rationale.
 
-  it('opens the home page with HeroTour (#top holding #tour), not the old hero or tour band', async () => {
+  it('opens the home page with the Recruiter Edition hero (#top with #hero-cta), not the tour or the old hero', async () => {
     for (const locale of locales) {
       const html = renderToStaticMarkup(await HomePage(p(locale)));
       expect(html).toContain('id="top"');
-      expect(html).toContain('id="tour"');
+      expect(html).not.toContain('id="tour"');
       expect(html).toContain('id="hero-cta"');
       expect(html).not.toContain('id="hero"');
       expect(html).not.toContain('tour-band');

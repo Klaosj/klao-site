@@ -123,6 +123,7 @@ const en = {
   // White Edition P1 — navigation (contract C7). Words from the prototype's UI.en.
   // No `navAppearance` here (preflight ruling C5): the phone menu's Appearance
   // label reuses the `appearance` key above instead of a duplicate.
+  navCases: 'Work',
   navWork: 'Projects',
   navCareer: 'Career',
   navStory: 'How I work',
@@ -336,6 +337,7 @@ const th: typeof en = {
   themeAuto: 'ตามเครื่อง',
   themeLight: 'สว่าง',
   themeDark: 'มืด',
+  navCases: 'ผลงาน',
   navWork: 'โปรเจกต์',
   navCareer: 'เส้นทางอาชีพ',
   navStory: 'วิธีทำงาน',

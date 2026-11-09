@@ -48,7 +48,7 @@ const rect = (top: number) => ({ top }) as DOMRectReadOnly;
 function HomeHooks() {
   return (
     <>
-      {['top', 'work', 'career', 'story', 'faq', 'contact'].map((id) => (
+      {['top', 'cases', 'work', 'career', 'story', 'faq', 'contact'].map((id) => (
         <section key={id} id={id} />
       ))}
       <div id="hero-cta" />
@@ -96,9 +96,10 @@ describe('SiteNav', () => {
     expect(within(nav()).getByRole('link', { name: 'zara, back to top' }).querySelector('.sn-mono')?.textContent).toBe('Z');
   });
 
-  it('links the four C7 sections in page order, as bare hashes on the home page', () => {
+  it('links the five home sections in page order, as bare hashes on the home page', () => {
     render(<SiteNav locale="en" profile={profile} />);
     expect(sectionLinks().map((a) => [a.textContent, a.getAttribute('href')])).toEqual([
+      [dict.en.navCases, '#cases'],
       [dict.en.navWork, '#work'],
       [dict.en.navCareer, '#career'],
       [dict.en.navStory, '#story'],
@@ -126,7 +127,7 @@ describe('SiteNav', () => {
   it('points every home anchor at /{locale}#id from another route, never a dead hash', () => {
     vi.mocked(usePathname).mockReturnValue('/th/projects');
     render(<SiteNav locale="th" profile={profile} />);
-    expect(sectionLinks('th').map((a) => a.getAttribute('href'))).toEqual(['/th#work', '/th#career', '/th#story', '/th#faq']);
+    expect(sectionLinks('th').map((a) => a.getAttribute('href'))).toEqual(['/th#cases', '/th#work', '/th#career', '/th#story', '/th#faq']);
     expect(within(nav('th')).getByRole('link', { name: dict.th.navContact }).getAttribute('href')).toBe('/th#contact');
     expect(within(nav('th')).getByRole('link', { name: 'Suwichak กลับขึ้นด้านบน' }).getAttribute('href')).toBe('/th#top');
   });
@@ -134,7 +135,7 @@ describe('SiteNav', () => {
   it('speaks Thai on /th', () => {
     vi.mocked(usePathname).mockReturnValue('/th');
     render(<SiteNav locale="th" profile={profile} />);
-    expect(sectionLinks('th').map((a) => a.textContent)).toEqual(['โปรเจกต์', 'เส้นทางอาชีพ', 'วิธีทำงาน', 'FAQ']);
+    expect(sectionLinks('th').map((a) => a.textContent)).toEqual(['ผลงาน', 'โปรเจกต์', 'เส้นทางอาชีพ', 'วิธีทำงาน', 'FAQ']);
     expect(screen.getByTestId('nav-menu').getAttribute('data-locale')).toBe('th');
   });
 
@@ -171,16 +172,16 @@ describe('SiteNav', () => {
     const career = document.getElementById('career')!;
     const io = FakeIO.watching(work);
     expect(io.options.rootMargin).toBe('-45% 0px -54% 0px');
-    expect(FakeIO.watching(career)).toBe(io); // one observer for all four
+    expect(FakeIO.watching(career)).toBe(io); // one observer for all of them
     io.fire([{ target: work, isIntersecting: true }]);
-    expect(sectionLinks()[0].getAttribute('aria-current')).toBe('location');
+    expect(sectionLinks()[1].getAttribute('aria-current')).toBe('location');
     expect(nav().querySelector('.sn-act')!.hasAttribute('data-on')).toBe(true);
     expect(screen.getByTestId('nav-menu').getAttribute('data-active')).toBe('work');
     io.fire([
       { target: work, isIntersecting: false },
       { target: career, isIntersecting: true },
     ]);
-    expect(sectionLinks().map((a) => a.hasAttribute('aria-current'))).toEqual([false, true, false, false]);
+    expect(sectionLinks().map((a) => a.hasAttribute('aria-current'))).toEqual([false, false, true, false, false]);
     io.fire([{ target: career, isIntersecting: false }]);
     expect(sectionLinks().some((a) => a.hasAttribute('aria-current'))).toBe(false);
     expect(nav().querySelector('.sn-act')!.hasAttribute('data-on')).toBe(false);
@@ -266,7 +267,7 @@ describe('SiteNav', () => {
     sectionsIO.fire([{ target: work, isIntersecting: true }]);
     ctaIO.fire([{ target: cta, isIntersecting: false, boundingClientRect: rect(-120) }]);
     const contact = () => within(nav()).getByRole('link', { name: dict.en.navContact });
-    expect(sectionLinks()[0].getAttribute('aria-current')).toBe('location');
+    expect(sectionLinks()[1].getAttribute('aria-current')).toBe('location');
     expect(nav().querySelector('.sn-act')!.hasAttribute('data-on')).toBe(true);
     expect(contact().hasAttribute('data-filled')).toBe(true);
     const sectionsGone = vi.spyOn(sectionsIO, 'disconnect');
@@ -302,7 +303,7 @@ describe('SiteNav', () => {
       </>,
     );
     // fireEvent returns false when the handler called preventDefault().
-    expect(fireEvent.click(sectionLinks()[1])).toBe(false);
+    expect(fireEvent.click(sectionLinks()[2])).toBe(false);
     expect(document.activeElement).toBe(screen.getByRole('heading', { name: 'Career heading' }));
     expect(scrollTo).toHaveBeenCalledTimes(1);
     expect(window.location.hash).toBe('#career');
@@ -318,7 +319,7 @@ describe('SiteNav', () => {
         <SiteNav locale="en" profile={profile} />
       </>,
     );
-    fireEvent.click(sectionLinks()[1], { metaKey: true });
+    fireEvent.click(sectionLinks()[2], { metaKey: true });
     expect(scrollTo).not.toHaveBeenCalled();
     expect(document.activeElement).not.toBe(screen.getByRole('heading', { name: 'Career heading' }));
   });
@@ -341,15 +342,15 @@ describe('SiteNav', () => {
     expect(otherLanguage().getAttribute('href')).toBe('/th#career');
   });
 
-  // P1 re-review Important 1: the switch kept only the four nav sections,
-  // so from Signature, the Contact band, the footer or a gap between bands
+  // P1 re-review Important 1: the switch kept only the nav sections,
+  // so from the Contact band, the footer or a gap between bands
   // it landed on the hero. The reading anchor (the prototype's anchor():
   // every band plus the footer) is separate from the pill, which stays
   // nav-only.
   function WholePage() {
     return (
       <>
-        {['top', 'signature', 'work', 'career', 'story', 'faq', 'contact'].map((id) => (
+        {['top', 'cases', 'work', 'career', 'story', 'faq', 'contact'].map((id) => (
           <section key={id} id={id} />
         ))}
         <footer className="site-foot" />
@@ -360,17 +361,13 @@ describe('SiteNav', () => {
   const byId = (id: string) => document.getElementById(id)!;
   const pillOn = () => sectionLinks().some((a) => a.hasAttribute('aria-current'));
 
-  it('carries Signature, the Contact band and the footer (as #contact) across a switch; the pill stays nav-only', () => {
+  it('carries the Contact band and the footer (as #contact) across a switch; the pill stays nav-only', () => {
     render(
       <>
         <WholePage />
         <SiteNav locale="en" profile={profile} />
       </>,
     );
-    band(byId('signature'), true);
-    expect(otherLanguage().getAttribute('href')).toBe('/th#signature');
-    expect(pillOn()).toBe(false);
-    band(byId('signature'), false);
     band(byId('contact'), true);
     expect(otherLanguage().getAttribute('href')).toBe('/th#contact');
     expect(pillOn()).toBe(false);
@@ -405,7 +402,7 @@ describe('SiteNav', () => {
       </>,
     );
     // jsdom has no layout: place the bands around the reading line (45 %).
-    const tops: Record<string, number> = { top: -3000, signature: -2000, work: -900, career: 600, story: 1800, faq: 3000, contact: 4000 };
+    const tops: Record<string, number> = { top: -3000, cases: -2000, work: -900, career: 600, story: 1800, faq: 3000, contact: 4000 };
     for (const [id, top] of Object.entries(tops)) vi.spyOn(byId(id), 'getBoundingClientRect').mockReturnValue({ top } as DOMRect);
     vi.spyOn(document.querySelector('footer')!, 'getBoundingClientRect').mockReturnValue({ top: 5000 } as DOMRect);
     band(byId('top'), false);
@@ -419,8 +416,8 @@ describe('SiteNav', () => {
         <SiteNav locale="en" profile={profile} />
       </>,
     );
-    band(byId('signature'), true);
-    band(byId('signature'), false);
+    band(byId('work'), true);
+    band(byId('work'), false);
     band(byId('top'), true);
     expect(otherLanguage().getAttribute('href')).toBe('/th');
   });

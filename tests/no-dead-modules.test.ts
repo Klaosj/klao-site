@@ -7,7 +7,15 @@ import { describe, expect, it } from 'vitest';
 // test imports is dead product code that still costs review and build time.
 // ClientsBand is the one deliberate exception: spec §4 keeps it in the code,
 // unrendered, until profile.clients has names again.
-const KEEP = new Set(['src/components/sections/ClientsBand.tsx']);
+// Recruiter Edition (2026-11-09) parks the White Edition hero tour, the
+// 2022 -> 2026 signature scene and the film sheet: off the home page, kept in
+// the code (with their tests) so they can return on /projects or by rollback.
+const KEEP = new Set([
+  'src/components/sections/ClientsBand.tsx',
+  'src/components/sections/HeroTour.tsx',
+  'src/components/sections/Signature.tsx',
+  'src/components/FilmSheet.tsx',
+]);
 
 function walk(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((e) =>

@@ -17,11 +17,14 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 /** C7 page order, minus #toolbox (an anchor inside #career, checked separately). */
-export const SECTION_IDS = ['top', 'tour', 'signature', 'work', 'career', 'story', 'faq', 'contact'];
+// Recruiter Edition (2026-11-09): #cases replaces #tour and #signature on the
+// home page. #cases renders only while a case is visible (local and preview
+// builds show the drafts), which is where this matrix runs.
+export const SECTION_IDS = ['top', 'cases', 'work', 'career', 'story', 'faq', 'contact'];
 /** Anchors that must exist but are not measured as sections. */
 export const ANCHOR_IDS = ['toolbox'];
 /** Sections that must carry readable text even on pre-migration Notion (Review Focus 1). #tour is mostly pictures. */
-export const TEXT_IDS = ['top', 'signature', 'work', 'career', 'story', 'faq', 'contact'];
+export const TEXT_IDS = ['top', 'cases', 'work', 'career', 'story', 'faq', 'contact'];
 /**
  * Spec §1 criterion 3, in viewport heights, keyed by viewport width. Only
  * 1440 and 390 carry a budget: R15 exempts a Thai or reduced-motion overage

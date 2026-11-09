@@ -4,28 +4,28 @@ import HomePage from '@/app/[locale]/page';
 
 const params = (locale: 'en' | 'th') => ({ params: Promise.resolve({ locale }) });
 
-// Contract C7: #top + #tour (HeroTour) -> #signature -> #work -> … Runs on the real fixtures,
-// where GoNai's LineageOf names Tripedia, so the signature must render.
-describe('home page order (contract C7)', () => {
-  it('puts the signature after the hero tour and before the projects, in both locales', async () => {
+// Recruiter Edition (2026-11-09): #top (RecruiterHero) -> #cases -> #work -> ...
+// The hero tour (#tour) and the 2022 -> 2026 signature (#signature) are off the
+// home page. Runs on the real fixtures and, outside production, the draft cases.
+describe('home page order (Recruiter Edition)', () => {
+  it('puts the case studies between the hero and the projects, in both locales', async () => {
     for (const locale of ['en', 'th'] as const) {
       const html = renderToStaticMarkup(await HomePage(params(locale)));
-      const tour = html.indexOf('id="tour"');
-      const signature = html.indexOf('id="signature"');
+      const top = html.indexOf('id="top"');
+      const cases = html.indexOf('id="cases"');
       const work = html.indexOf('id="work"');
-      expect(tour).toBeGreaterThan(-1);
-      expect(signature).toBeGreaterThan(tour);
-      expect(work).toBeGreaterThan(signature);
+      expect(top).toBeGreaterThan(-1);
+      expect(cases).toBeGreaterThan(top);
+      expect(work).toBeGreaterThan(cases);
+      expect(html).not.toContain('id="tour"');
+      expect(html).not.toContain('id="signature"');
+      expect(html).not.toContain('film-sheet');
     }
   });
 
-  it('puts the projects index directly after the signature, with the new index markup', async () => {
+  it('keeps the projects index markup, with each row opening its sheet', async () => {
     for (const locale of ['en', 'th'] as const) {
       const html = renderToStaticMarkup(await HomePage(params(locale)));
-      const signature = html.indexOf('id="signature"');
-      const work = html.indexOf('id="work"');
-      // No other top-level section sits between them.
-      expect(html.slice(signature + 1, work)).not.toContain('<section id="');
       expect(html).toContain('class="pi-cols"');
       expect(html).toMatch(/href="#work\/gonai" data-sheet="gonai"/);
     }
@@ -51,7 +51,7 @@ describe('home page order (contract C7)', () => {
 // that FAQ deep links target. Every <section> with an id counts too, so a
 // band slipped back in — ClientsBand's #clients stays in the code, unrendered
 // (spec §4), and the fixtures DO carry client names — fails here.
-const C7 = ['top', 'tour', 'signature', 'work', 'career', 'toolbox', 'story', 'faq', 'contact'];
+const C7 = ['top', 'cases', 'work', 'career', 'toolbox', 'story', 'faq', 'contact'];
 
 function pageIds(html: string): string[] {
   const ids: string[] = [];
