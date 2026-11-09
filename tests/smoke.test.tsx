@@ -1,3 +1,4 @@
+import { CASE_STUDIES } from '@/content/cases';
 import type { ReactElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, it, expect } from 'vitest';
@@ -185,8 +186,11 @@ describe('smoke: pages render in both locales (fixture mode)', () => {
         expect(urls).toContain(`${SITE_URL}/${locale}/writing/${post.slug}`);
       }
     }
+    // Code-defined client cases join the sitemap only once cleared (drafts never do).
+    const cleared = CASE_STUDIES.filter((c) => c.status === 'cleared');
+    for (const locale of locales) for (const c of cleared) expect(urls).toContain(`${SITE_URL}/${locale}/work/${c.slug}`);
     // Exact count -- catches both dropped entries and accidental duplicates.
-    expect(urls.length).toBe(locales.length * (staticPaths.length + posts.length));
+    expect(urls.length).toBe(locales.length * (staticPaths.length + posts.length + cleared.length));
   });
 
   // 'sitemap emits reciprocal per-URL hreflang with x-default, and
@@ -318,11 +322,11 @@ describe('smoke: pages render in both locales (fixture mode)', () => {
   // asserted posts.length >= 2, which the now-empty fixture can never
   // satisfy. See that file's header comment for the full rationale.
 
-  it('opens the home page with HeroTour (#top holding #tour), not the old hero or tour band', async () => {
+  it('opens the home page with the Recruiter Edition hero (#top with #hero-cta), not the tour or the old hero', async () => {
     for (const locale of locales) {
       const html = renderToStaticMarkup(await HomePage(p(locale)));
       expect(html).toContain('id="top"');
-      expect(html).toContain('id="tour"');
+      expect(html).not.toContain('id="tour"');
       expect(html).toContain('id="hero-cta"');
       expect(html).not.toContain('id="hero"');
       expect(html).not.toContain('tour-band');

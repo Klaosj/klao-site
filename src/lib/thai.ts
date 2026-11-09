@@ -62,6 +62,11 @@ export const THAI_KEEP: readonly string[] = [
   'เครือข่าย',
   'เท่าไหร่',
   'คนเดียว',
+  // Recruiter Edition case studies (2026-11-09): split mid-word on a 390 px phone.
+  'เช็กลิสต์',
+  'ปฏิบัติการ',
+  'บรรทัด',
+  'เผยแพร่',
 ];
 
 export interface Run {

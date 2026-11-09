@@ -50,8 +50,8 @@ describe('switchLocaleHref', () => {
     expect(switchLocaleHref('/en', 'th', 'career')).toBe('/th#career');
     expect(switchLocaleHref('/th/', 'en', 'faq')).toBe('/en#faq');
     expect(switchLocaleHref('/en', 'th', null)).toBe('/th');
-    // P1 re-review Important 1: the bands outside the nav count too.
-    expect(switchLocaleHref('/en', 'th', 'signature')).toBe('/th#signature');
+    // Recruiter Edition: #cases, the first nav section, carries across too.
+    expect(switchLocaleHref('/en', 'th', 'cases')).toBe('/th#cases');
     expect(switchLocaleHref('/th', 'en', 'contact')).toBe('/en#contact');
     expect(switchLocaleHref('/en/projects', 'th', 'contact')).toBe('/th/projects');
     expect(switchLocaleHref('/en/projects', 'th', 'career')).toBe('/th/projects');

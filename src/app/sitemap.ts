@@ -1,4 +1,5 @@
 import type { MetadataRoute } from 'next';
+import { CASE_STUDIES } from '@/content/cases';
 import { getPosts, getProjects } from '@/lib/content';
 import { LOCALES } from '@/lib/models';
 import { SITE_URL } from '@/lib/site';
@@ -46,6 +47,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // No lastModified — projects carry no date property, and faking one
     // violates the same rule the static paths above follow.
     ...(projects).filter((p) => p.slug).map((p) => ({ path: `/work/${p.slug}` })),
+    // Code-defined client case studies: only once Klao has cleared them. A
+    // draft renders on previews but is never listed (and is noindex).
+    ...CASE_STUDIES.filter((c) => c.status === 'cleared').map((c) => ({ path: `/work/${c.slug}` })),
   ];
 
   return pages.flatMap(({ path, lastModified }) =>

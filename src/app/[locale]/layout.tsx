@@ -3,10 +3,12 @@ import type { Metadata } from 'next';
 import PaletteHost from '@/components/palette/PaletteHost';
 import SiteNav from '@/components/SiteNav';
 import SiteFooter from '@/components/SiteFooter';
+import { visibleCases } from '@/lib/cases';
 import { getCareer, getFaq, getFeaturedProjects, getProfile } from '@/lib/content';
 import { dict } from '@/lib/dictionary';
 import { assertLocale } from '@/lib/locale';
 import { LOCALES, type Locale } from '@/lib/models';
+import { navSections } from '@/lib/nav';
 import { buildPaletteIndex } from '@/lib/palette-index';
 import { SITE_URL, ogImageUrl } from '@/lib/site';
 import { THEME_PREPAINT_SCRIPT } from '@/lib/theme';
@@ -178,7 +180,7 @@ export default async function RootLayout({
         >
           {dict[l].skipToContent}
         </a>
-        <SiteNav locale={l} profile={profile} />
+        <SiteNav locale={l} profile={profile} sections={navSections(visibleCases().length > 0)} />
         {/* Unconstrained, unlike the old boxed `max-w-3xl` column: the
             redesigned home route's bands (HeroTour, ByDay, ...) are meant to
             span the full viewport, with each band capping its own reading

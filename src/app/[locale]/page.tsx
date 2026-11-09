@@ -1,11 +1,11 @@
-import FilmSheet from '@/components/FilmSheet';
 import ByDay from '@/components/sections/ByDay';
 import CareerBand from '@/components/sections/CareerBand';
+import CaseStudies from '@/components/sections/CaseStudies';
 import CloseBand from '@/components/sections/CloseBand';
 import FaqBand from '@/components/sections/FaqBand';
-import HeroTour from '@/components/sections/HeroTour';
 import ProjectsIndex from '@/components/sections/ProjectsIndex';
-import Signature from '@/components/sections/Signature';
+import RecruiterHero from '@/components/sections/RecruiterHero';
+import { visibleCases } from '@/lib/cases';
 import {
   getCareer,
   getFaq,
@@ -35,31 +35,26 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
   return (
     <>
-      {/* White Edition (spec §4 row 1): the hero copy and the project tour are
-          one section (#top with #tour inside). It replaces the old dark Hero
-          and the separate tour band. */}
-      <HeroTour profile={profile} projects={projects} locale={locale} />
-      {/* 2022 → 2026, straight after the tour (contract C7): the tour shows the apps running,
-          this shows where one of them came from. The page's only scroll-linked scene; renders
-          nothing when no project carries a LineageOf. */}
-      <Signature projects={projects} locale={locale} />
-      {/* Business plays, then builds; each row opens its sheet at #work/<key> (ProjectSheet).
-          The page's one ProjectSheet dialog lives in here -- no other section mounts one. */}
+      {/* Recruiter Edition (2026-11-09, Klao approved the mockup): who, what role,
+          four receipts and the résumé/email/LinkedIn actions on the first screen.
+          It replaces the White Edition hero tour, the 2022 → 2026 signature scene
+          and the film sheet on this page; those modules stay in the codebase
+          (tests/no-dead-modules.test.ts keeps them). */}
+      <RecruiterHero profile={profile} career={career} locale={locale} />
+      {/* #cases: client work as case studies, names and figures left out. Drafts
+          show on previews only (src/lib/cases.ts). */}
+      <CaseStudies cases={visibleCases()} locale={locale} />
+      {/* #work: side projects, business plays then builds; each row opens its
+          sheet at #work/<key>. The page's one ProjectSheet dialog lives in here. */}
       <ProjectsIndex projects={projects} locale={locale} />
-      {/* The film's sheet (#film), next to the project sheet: opened by the Film button in the
-          tour pill. Server HTML is the empty dialog; nothing of the film loads until it opens. */}
-      <FilmSheet locale={locale} />
-      {/* C7: what he shipped (#work), then where he has worked (#career).
-          The toolbox lives inside the career band (#toolbox). */}
+      {/* Where he has worked (#career), with the toolbox (#toolbox) inside. */}
       <CareerBand entries={career} skills={skills} locale={locale} resumeUrl={profile.resumeUrl} />
-      {/* C7: then how he works (#story) -- the prologue and six chapters that
-          replace the old About and Craft bands. */}
+      {/* How he works (#story): the prologue and six chapters. */}
       <ByDay profile={profile} chapters={story} locale={locale} />
-      {/* #faq (C7): Klao's FAQ DB — fixtures until NOTION_DB_FAQ is set.
-          ClientsBand stays in the codebase but is no longer rendered (spec §4). */}
+      {/* #faq: Klao's FAQ DB — fixtures until NOTION_DB_FAQ is set.
+          ClientsBand stays in the codebase but is not rendered (spec §4). */}
       <FaqBand items={faq} locale={locale} />
-      {/* #contact (C7), last on the page: close CTA, email, Based in /
-          Working in, and one open question from the Questions DB. */}
+      {/* #contact, last on the page. */}
       <CloseBand profile={profile} questions={questions} locale={locale} />
     </>
   );

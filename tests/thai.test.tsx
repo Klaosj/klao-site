@@ -21,6 +21,8 @@ describe('THAI_RE / THAI_KEEP', () => {
       'เบอร์เกอร์คราฟต์', 'พาร์ตเนอร์ชิป', 'ซัพพลายเออร์', 'นอกเวลางาน', 'กำไรขั้นต้น', 'สุดสัปดาห์',
       'เครื่องมือ', 'งบประมาณ', 'สตาร์ทอัพ', 'โปรเจกต์', 'บาริสต้า', 'ค้าปลีก', 'ไอเดีย', 'ตอนนี้', 'ดีล',
       'เครือข่าย', 'เท่าไหร่', 'คนเดียว',
+      // Recruiter Edition case studies (2026-11-09).
+      'เช็กลิสต์', 'ปฏิบัติการ', 'บรรทัด', 'เผยแพร่',
     ]);
   });
 });
@@ -330,5 +332,15 @@ describe('<ThaiText>', () => {
   it('display: joins a Thai token and a following non-Thai token with a no-break space', () => {
     const html = renderToStaticMarkup(<ThaiText text="เปิดดีล CRM" display />);
     expect(html).toBe('<span class="kt">เปิดดีล</span>\u00A0CRM');
+  });
+});
+
+describe('Recruiter Edition keep words', () => {
+  it('keeps เช็กลิสต์ and ปฏิบัติการ whole', () => {
+    expect(keepRuns('เช็กลิสต์เปิดตัว')).toEqual([
+      { text: 'เช็กลิสต์', keep: true },
+      { text: 'เปิดตัว', keep: false },
+    ]);
+    expect(keepRuns('วางแผน ปฏิบัติการ').some((r) => r.keep && r.text === 'ปฏิบัติการ')).toBe(true);
   });
 });

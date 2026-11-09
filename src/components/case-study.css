@@ -1,0 +1,156 @@
+/* One case study page (Recruiter Edition, 2026-11-09). Reading column of 700
+   px with a sticky table of contents from 1069 px. */
+@layer components {
+  .cst { padding: 112px 0 96px; }
+  .cst-back { margin: 0 0 32px; font-size: 15px; }
+  .cst-back a { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; color: var(--link); font-weight: 600; text-decoration: none; }
+  .cst-back a:hover { text-decoration: underline; }
+  .cst-draftnote { margin: 0 0 32px; padding: 12px 16px; border-radius: 14px; background: var(--select); color: var(--ink-1); font-size: 15px; line-height: 22px; }
+  .cst-head { max-width: 780px; }
+  .cst-kick { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 0 0 12px; color: var(--ink-2); font-size: 15px; line-height: 21px; }
+  .cst-h1 { margin: 0 0 18px; font-size: 46px; line-height: 52px; font-weight: 600; letter-spacing: -.015em; text-wrap: balance; }
+  .cst-h1:lang(th) { font-size: 40px; line-height: 54px; letter-spacing: 0; }
+  .cst-lede { margin: 0; color: var(--ink-2); font-size: 19px; line-height: 29px; }
+  .cst-lede:lang(th) { line-height: 32px; }
+
+  .cst-meta { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 40px 0 0; border-block: 1px solid var(--line); }
+  .cst-meta > div { padding: 18px 20px 18px 0; }
+  .cst-meta > div + div { padding-left: 20px; border-left: 1px solid var(--line); }
+  .cst-meta dt { margin-bottom: 6px; color: var(--ink-2); font-size: 12px; line-height: 16px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+  :lang(th) .cst-meta dt { letter-spacing: 0; }
+  .cst-meta dd { margin: 0; font-size: 15px; line-height: 22px; text-wrap: balance; }
+  @media (min-width: 1069px) {
+    .cst-unit { white-space: nowrap; }
+  }
+  .cst-note { display: flex; align-items: flex-start; gap: 10px; margin: 18px 0 0; color: var(--ink-2); font-size: 15px; line-height: 22px; }
+  .cst-note svg { flex: none; margin-top: 5px; }
+
+  .cst-body { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 56px; margin-top: 64px; }
+  .cst-toc { position: sticky; top: 96px; align-self: start; display: flex; flex-direction: column; font-size: 15px; }
+  .cst-toc a { display: block; min-height: 32px; padding: 6px 0 6px 14px; border-left: 2px solid var(--line); color: var(--ink-2); text-decoration: none; transition: color 200ms var(--ease-glide), border-color 200ms var(--ease-glide); }
+  .cst-toc a:hover { border-left-color: var(--ink-1); color: var(--ink-1); }
+  /* The section being read (CaseToc). */
+  .cst-toc a[aria-current="true"] { border-left-color: var(--kram); color: var(--ink-1); font-weight: 600; }
+  .cst-prose { max-width: 700px; min-width: 0; }
+  .cst-prose section + section { margin-top: 56px; }
+  .cst-prose section { scroll-margin-top: 96px; }
+  .cst-prose h2 { margin: 0 0 14px; font-size: 28px; line-height: 34px; font-weight: 600; letter-spacing: -.01em; }
+  :lang(th) .cst-prose h2 { line-height: 40px; letter-spacing: 0; }
+  .cst-prose p { margin: 0 0 14px; color: var(--ink-2); font-size: 17px; line-height: 27px; }
+  :lang(th) .cst-prose p { line-height: 30px; }
+
+  .cst-steps { margin: 18px 0 0; padding: 0; list-style: none; counter-reset: step; }
+  .cst-steps li { position: relative; padding: 0 0 22px 52px; counter-increment: step; }
+  .cst-steps li::before { content: counter(step); position: absolute; top: 0; left: 0; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 10px; background: var(--card); box-shadow: inset 0 0 0 2px var(--kram); color: var(--kram); font-size: 15px; font-weight: 600; }
+  .cst-steps li::after { content: ""; position: absolute; top: 38px; bottom: 6px; left: 15px; width: 2px; background: var(--line); transform-origin: top; }
+  .cst-steps li:last-child::after { display: none; }
+  .cst-steps b { display: block; margin-bottom: 4px; font-size: 17px; line-height: 24px; font-weight: 600; }
+  .cst-steps li > span { display: block; color: var(--ink-2); font-size: 17px; line-height: 27px; }
+  :lang(th) .cst-steps li > span { line-height: 30px; }
+
+  .cst-tracker { margin: 24px 0 0; padding: 18px; border-radius: 18px; background: var(--card); box-shadow: var(--e1); }
+  .cst-scroll { position: relative; overflow-x: auto; }
+  .cst-tracker table { width: 100%; min-width: 600px; border-collapse: separate; border-spacing: 4px 6px; font-size: 14px; }
+  .cst-tracker th { padding: 0 6px 4px; color: var(--ink-2); font-size: 13px; font-weight: 600; text-align: left; white-space: nowrap; }
+  .cst-tracker tbody th { padding: 0 10px 0 6px; color: var(--ink-1); font-size: 14px; }
+  .cst-chip { display: flex; align-items: center; justify-content: center; gap: 5px; padding: 8px 6px; border-radius: 9px; font-size: 14px; line-height: 18px; font-weight: 600; text-align: center; white-space: nowrap; }
+  .cst-done { background: var(--mist); color: var(--ink-2); }
+  .cst-track { background: var(--select); color: var(--ink-1); }
+  .cst-risk { background: var(--mist); color: var(--ink-1); box-shadow: inset 0 0 0 2px var(--ink-3); }
+  .cst-off { background: var(--kram); color: var(--on-kram); }
+  .cst-wait { color: var(--ink-2); box-shadow: inset 0 0 0 1px var(--line); }
+  .cst-tracker figcaption { margin-top: 10px; color: var(--ink-2); font-size: 13px; line-height: 18px; }
+
+  .cst-demo { margin: 24px 0 0; }
+  :root[data-theme="dark"] .cst-demo-img { filter: brightness(.88); }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .cst-demo-img { filter: brightness(.88); }
+  }
+  .cst-demo-img { display: block; width: 100%; height: auto; border-radius: 18px; outline: 1px solid var(--line); outline-offset: -1px; box-shadow: var(--e2); }
+  .cst-demo figcaption { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-top: 16px; color: var(--ink-2); font-size: 15px; line-height: 22px; }
+
+  /* The result as the page's one dark band: the line a recruiter should leave with. */
+  /* The line to leave with: mist panel, ink text, a Kram rule. Solid Kram stays for actions and Off track only. */
+  .cst-result { padding: 26px 30px 26px 28px; border-radius: 0 20px 20px 0; border-left: 3px solid var(--kram); background: var(--mist); color: var(--ink-1) !important; font-size: 24px !important; line-height: 32px !important; font-weight: 600; letter-spacing: -.01em; text-wrap: pretty; }
+  :lang(th) .cst-result { font-size: 22px !important; line-height: 36px !important; letter-spacing: 0; }
+
+  .cst-next { display: grid; grid-template-columns: 200px minmax(0, 1fr) auto; align-items: center; gap: 20px; margin-top: 72px; padding: 14px 26px 14px 14px; border-radius: 20px; box-shadow: var(--e1); color: var(--ink-1); text-decoration: none; transition: transform 320ms var(--ease-drift), box-shadow 320ms var(--ease-drift); }
+  .cst-next-l { display: block; color: var(--ink-2); font-size: 13px; line-height: 18px; }
+  /* Block, so balance applies (it does nothing on an inline box). */
+  .cst-next b { display: block; font-size: 19px; line-height: 26px; font-weight: 600; text-wrap: balance; }
+  @media (hover: hover) and (pointer: fine) {
+    .cst-next:hover { transform: translateY(-2px); box-shadow: var(--e2); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .cst-next { transition: none; }
+  }
+
+  @media (max-width: 1068px) {
+    .cst-body { grid-template-columns: minmax(0, 1fr); gap: 0; }
+    .cst-toc { display: none; }
+  }
+  @media (max-width: 734px) {
+    .cst { padding-top: 88px; }
+    .cst-h1 { font-size: 32px; line-height: 38px; }
+    .cst-h1:lang(th) { font-size: 28px; line-height: 40px; }
+    .cst-lede { font-size: 17px; line-height: 26px; }
+    .cst-meta { grid-template-columns: 1fr 1fr; }
+    .cst-meta > div:nth-child(3) { padding-left: 0; border-left: 0; }
+    .cst-meta > div:nth-child(n + 3) { border-top: 1px solid var(--line); }
+    .cst-tracker { padding: 14px 0 14px 14px; }
+    .cst-tracker tbody th, .cst-tracker thead th:first-child { position: sticky; left: 0; z-index: 1; background: var(--card); }
+    .cst-tracker figcaption { padding-right: 14px; }
+    .cst-lead .cst-tracker { padding: 14px 0 14px 14px; }
+    /* More specific than the base .cst-flags rule, which comes later in this file. */
+    .cst-tracker .cst-flags { display: block; }
+    /* A soft right edge says the table scrolls. */
+    .cst-scroll { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); }
+    /* The next-case mini is unreadable at phone size: text only there. */
+    .cst-next .cs-thumb-mini { display: none; }
+    .cst-result { padding: 22px; font-size: 20px !important; line-height: 28px !important; }
+    :lang(th) .cst-result { font-size: 19px !important; line-height: 30px !important; }
+    .cst-next { grid-template-columns: minmax(0, 1fr) auto; gap: 14px; padding: 20px; }
+    /* Phones: no text under 14px (QA matrix rule). */
+    .cst-meta dt, .cst-tracker th, .cst-chip, .cst-tracker figcaption, .cst-next-l, .cs-chip { font-size: 14px; line-height: 20px; }
+  }
+
+  /* Case hero picture (CaseThumb, variant hero). */
+  .cst-hero { margin: 40px 0 0; }
+
+  /* One-shot reveals (Reveal adds .in): numbered steps land in order and
+     their spine draws down; the tracker's chips fill row by row and the two
+     slips ping twice, which is the case's point -- a slip is visible the
+     week it happens. */
+  .cst-chip { position: relative; }
+  /* The two slips in words, above the table on phones, where the table scrolls and may hide them. */
+  .cst-flags { display: none; margin: 0 14px 12px 0; color: var(--ink-1); font-size: 15px; line-height: 22px; }
+  .cst-flags b { display: block; font-weight: 600; }
+  .cst-flag-i { display: block; white-space: nowrap; }
+  .cst-flag { display: grid; flex: none; place-items: center; width: 14px; height: 14px; border-radius: 50%; background: currentColor; }
+  .cst-flag::before { content: "!"; color: var(--card); font-size: 11px; line-height: 14px; font-weight: 700; }
+  .cst-off .cst-flag::before { color: var(--kram); }
+  .cst-risk::after, .cst-off::after { content: ""; position: absolute; inset: -2px; border-radius: 10px; box-shadow: 0 0 0 2px var(--kram); opacity: 0; pointer-events: none; }
+  @media (prefers-reduced-motion: no-preference) {
+    html.js .cst-steps.rv:not(.in) li::before { opacity: 0; transform: scale(.6); }
+    html.js .cst-steps.rv:not(.in) li::after { transform: scaleY(0); }
+    html.js .cst-steps.rv li::before { transition: opacity 300ms var(--ease-drift), transform 500ms var(--ease-tick); transition-delay: calc(150ms + var(--s) * 140ms); }
+    html.js .cst-steps.rv li::after { transition: transform 600ms var(--ease-settle); transition-delay: calc(260ms + var(--s) * 140ms); }
+    html.js .rv:not(.in) .cst-chip { opacity: 0; transform: translateY(6px) scale(.96); }
+    html.js .rv .cst-chip { transition: opacity 320ms var(--ease-drift), transform 520ms var(--ease-settle); transition-delay: calc(150ms + var(--r) * 120ms + var(--c) * 45ms); }
+    html.js .rv.in .cst-risk::after, html.js .rv.in .cst-off::after { animation: cst-ping 1100ms var(--ease-drift) 1100ms 2; }
+  }
+  @keyframes cst-ping { 0% { opacity: .9; transform: scale(1); } 80%, 100% { opacity: 0; transform: scale(1.06); } }
+
+  /* The artifact leading a drawn case: full width, before the story. */
+  .cst-lead { margin-top: 56px; scroll-margin-top: 96px; }
+  .cst-lead h2 { margin: 0 0 10px; font-size: 28px; line-height: 34px; font-weight: 600; letter-spacing: -.01em; }
+  :lang(th) .cst-lead h2 { line-height: 40px; letter-spacing: 0; }
+  .cst-lead > p { max-width: 700px; margin: 0; color: var(--ink-2); font-size: 17px; line-height: 27px; }
+  .cst-lead .cst-tracker { margin-top: 20px; padding: 22px; border-radius: 22px; }
+  .cst-lead .cst-tracker table { min-width: 640px; border-spacing: 6px 8px; }
+  .cst-lead .cst-chip { padding: 10px 8px; }
+
+  /* Next-case mini from a close crop of the demo (readable at this size). */
+  .cs-thumb-crop { display: block; }
+  .cs-thumb-crop img { width: 100%; height: 100%; object-fit: cover; object-position: left top; -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent); }
+}

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { getCaseStudy, visibleCases } from '@/lib/cases';
 import { getProjects, getProjectStory, getQuestions } from '@/lib/content';
 import { dict } from '@/lib/dictionary';
 import { formatDate } from '@/lib/format';
@@ -8,6 +9,7 @@ import { assertLocale } from '@/lib/locale';
 import { LOCALES, type Locale } from '@/lib/models';
 import { deriveBodyDescription } from '@/lib/post-description';
 import { SITE_URL, ogImageUrl } from '@/lib/site';
+import CaseStudyView from '@/components/CaseStudyView';
 import PostBody from '@/components/PostBody';
 import SectionLabel from '@/components/SectionLabel';
 
@@ -23,9 +25,31 @@ const storyFallbacks: Record<Locale, string> = {
 
 export async function generateStaticParams() {
   const projects = await getProjects();
-  return LOCALES.flatMap((locale) =>
-    projects.filter((p) => p.slug).map((p) => ({ locale, slug: p.slug as string })),
-  );
+  // Recruiter Edition: code-defined case studies (src/content/cases.ts) first;
+  // a Notion project story never reuses one of their slugs.
+  const cases = visibleCases().map((c) => c.slug);
+  return LOCALES.flatMap((locale) => [
+    ...cases.map((slug) => ({ locale, slug })),
+    ...projects.filter((p) => p.slug && !cases.includes(p.slug)).map((p) => ({ locale, slug: p.slug as string })),
+  ]);
+}
+
+// Metadata for a code-defined case study. A draft is never indexed.
+function caseMetadata(slug: string, l: Locale): Metadata | null {
+  const c = getCaseStudy(slug);
+  if (!c) return null;
+  const title = c.title[l];
+  const description = c.summary[l];
+  const url = `${SITE_URL}/${l}/work/${slug}`;
+  const ogImage = { url: ogImageUrl(l), width: 1200, height: 630, alt: `${title} · Klao` };
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    robots: c.status === 'draft' ? { index: false, follow: false } : undefined,
+    openGraph: { title, description, type: 'article', locale: l === 'th' ? 'th_TH' : 'en_US', url, siteName: 'Klao', images: [ogImage] },
+    twitter: { card: 'summary_large_image', title, description, images: [ogImage] },
+  };
 }
 
 // Project stories live in Notion and are deliberately published between
@@ -80,6 +104,8 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale, slug } = await params;
   const l = assertLocale(locale);
+  const fromCase = caseMetadata(slug, l);
+  if (fromCase) return fromCase;
   const known = (await getProjects()).find((p) => p.slug === slug);
   if (!known) notFound();
   const story = await getProjectStory(slug);
@@ -128,6 +154,12 @@ export default async function WorkStoryPage({
 }) {
   const { locale: rawLocale, slug } = await params;
   const locale = assertLocale(rawLocale);
+  const c = getCaseStudy(slug);
+  if (c) {
+    const all = visibleCases();
+    const next = all.length > 1 ? all[(all.indexOf(c) + 1) % all.length] : null;
+    return <CaseStudyView c={c} next={next} locale={locale} />;
+  }
   const known = (await getProjects()).find((p) => p.slug === slug);
   if (!known) notFound();
   const story = await getProjectStory(slug);

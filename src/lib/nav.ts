@@ -6,8 +6,17 @@ import type { Locale, Profile } from './models';
  * it is the capsule's own pill (and the thumb bar's first button), because it
  * is an action, not a place to read.
  */
-export const NAV_SECTIONS = ['work', 'career', 'story', 'faq'] as const;
+export const NAV_SECTIONS = ['cases', 'work', 'career', 'story', 'faq'] as const;
 export type NavSection = (typeof NAV_SECTIONS)[number];
+
+/**
+ * The nav sections this deployment's home page renders. #cases only exists
+ * while at least one case study is visible (drafts are hidden on production),
+ * so the capsule never links a dead hash.
+ */
+export function navSections(hasCases: boolean): readonly NavSection[] {
+  return hasCases ? NAV_SECTIONS : NAV_SECTIONS.filter((s) => s !== 'cases');
+}
 
 /**
  * The bands a language switch can land on (Klao decision (a), P1 re-review
@@ -17,11 +26,12 @@ export type NavSection = (typeof NAV_SECTIONS)[number];
  * the same on both locales' home pages. The footer has no id of its own and
  * counts as 'contact', the band right above it.
  */
-export const READING_ANCHORS = ['signature', ...NAV_SECTIONS, 'contact'] as const;
+export const READING_ANCHORS = [...NAV_SECTIONS, 'contact'] as const;
 export type ReadingAnchor = (typeof READING_ANCHORS)[number];
 
 /** The dictionary key for each section link's label. */
 export const NAV_LABEL_KEY = {
+  cases: 'navCases',
   work: 'navWork',
   career: 'navCareer',
   story: 'navStory',

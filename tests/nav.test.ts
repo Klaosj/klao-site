@@ -4,12 +4,12 @@ import { NAV_LABEL_KEY, NAV_SECTIONS, sectionHref } from '@/lib/nav';
 
 describe('NAV_SECTIONS (C7)', () => {
   it('lists the four section links in page order', () => {
-    expect(NAV_SECTIONS).toEqual(['work', 'career', 'story', 'faq']);
+    expect(NAV_SECTIONS).toEqual(['cases', 'work', 'career', 'story', 'faq']);
   });
 
   it('labels them with the prototype words in both languages', () => {
-    expect(NAV_SECTIONS.map((s) => dict.en[NAV_LABEL_KEY[s]])).toEqual(['Projects', 'Career', 'How I work', 'FAQ']);
-    expect(NAV_SECTIONS.map((s) => dict.th[NAV_LABEL_KEY[s]])).toEqual(['โปรเจกต์', 'เส้นทางอาชีพ', 'วิธีทำงาน', 'FAQ']);
+    expect(NAV_SECTIONS.map((s) => dict.en[NAV_LABEL_KEY[s]])).toEqual(['Work', 'Projects', 'Career', 'How I work', 'FAQ']);
+    expect(NAV_SECTIONS.map((s) => dict.th[NAV_LABEL_KEY[s]])).toEqual(['ผลงาน', 'โปรเจกต์', 'เส้นทางอาชีพ', 'วิธีทำงาน', 'FAQ']);
   });
 });
 

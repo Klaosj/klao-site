@@ -33,7 +33,17 @@ const COPY_FAILED_MS = 3000;
  * place that syncs state and hands focus back to Menu (except after a section
  * link, whose heading keeps it).
  */
-export default function NavMenu({ locale, profile, active }: { locale: Locale; profile: Profile; active: NavSection | null }) {
+export default function NavMenu({
+  locale,
+  profile,
+  active,
+  sections = NAV_SECTIONS,
+}: {
+  locale: Locale;
+  profile: Profile;
+  active: NavSection | null;
+  sections?: readonly NavSection[];
+}) {
   const t = dict[locale];
   const pathname = usePathname() ?? `/${locale}`;
   const href = (hash: `#${string}`) => sectionHref(hash, pathname, locale);
@@ -150,7 +160,7 @@ export default function NavMenu({ locale, profile, active }: { locale: Locale; p
         </button>
 
         <div className="nm-grid">
-          {NAV_SECTIONS.map((sec) => (
+          {sections.map((sec) => (
             <Link
               key={sec}
               href={href(`#${sec}`)}
