@@ -53,7 +53,8 @@ export default function RecruiterHero({
 }) {
   const photo = profile.photoSrc ? (SMALL_PHOTO[profile.photoSrc] ?? profile.photoSrc) : null;
   const current = [...career].sort((a, b) => a.order - b.order)[0];
-  const role = [current?.role[locale], profile.basedIn?.[locale]].filter(Boolean).join(' · ');
+  const title = current?.role[locale];
+  const place = profile.basedIn?.[locale];
   const orgs = experienceOrgs(career);
 
   return (
@@ -64,9 +65,16 @@ export default function RecruiterHero({
             {photo && <img src={photo} alt="" width={48} height={48} fetchPriority="low" />}
             <span>
               <b>{profile.name}</b>
-              {role && (
+              {(title || place) && (
                 <span className="rh-role">
-                  <ThaiText text={role} />
+                  {/* The job title never splits; the place may wrap after it. */}
+                  {title && (
+                    <span className="rh-role-t">
+                      <ThaiText text={title} />
+                    </span>
+                  )}
+                  {title && place && ' · '}
+                  {place && <ThaiText text={place} />}
                 </span>
               )}
             </span>
