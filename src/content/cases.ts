@@ -119,6 +119,7 @@ export const CASE_STUDIES: CaseStudy[] = [
         th: 'รายการบั๊กเดียวกันบนมือถือ ซึ่งผู้ทดสอบส่วนใหญ่ใช้แจ้ง',
       },
     },
+    imageMini: { src: '/images/uat-desk-cards.jpg' },
     demo: {
       url: 'https://uat-bug-desk.vercel.app',
       previewUrl: 'https://uat-bug-desk-klaosjs-projects.vercel.app',

@@ -18,6 +18,13 @@ type Variant = 'card' | 'hero' | 'mini';
 export default function CaseThumb({ c, locale, variant = 'card' }: { c: CaseStudy; locale: Locale; variant?: Variant }) {
   const illustrative = locale === 'th' ? 'ภาพประกอบ' : 'Illustrative';
   const cls = `cs-thumb cs-thumb-${variant}`;
+  if (variant === 'mini' && c.imageMini) {
+    return (
+      <span className={`${cls} cs-thumb-crop`} aria-hidden="true">
+        <img src={c.imageMini.src} alt="" width={596} height={372} loading="lazy" decoding="async" />
+      </span>
+    );
+  }
   if (c.image) {
     const lazy = variant === 'hero' ? undefined : ('lazy' as const);
     return (

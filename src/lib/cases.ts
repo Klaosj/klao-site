@@ -27,6 +27,8 @@ export interface CaseStudy {
   image?: { src: string; alt: Localized };
   /** Phone-width shot layered over `image` on the card and the case hero. */
   imagePhone?: { src: string; alt: Localized };
+  /** A close crop (two rows of the demo) for the small next-case picture, where a whole screen would be unreadable. */
+  imageMini?: { src: string };
   /** A live demo. `previewUrl` is the login-protected copy linked while the case is a draft. */
   demo?: { url: string; previewUrl: string };
   kicker: Localized;

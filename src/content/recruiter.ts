@@ -7,13 +7,14 @@ import type { Localized } from '@/lib/models';
 export const HERO = {
   title: {
     en: 'Partnerships and business development, from first meeting to live rollout.',
-    th: 'งานพาร์ตเนอร์ชิปและพัฒนาธุรกิจ ตั้งแต่คุยกันครั้งแรก จนติดตั้งใช้งานได้จริง',
+    th: 'งานพาร์ตเนอร์ชิป และพัฒนาธุรกิจ ตั้งแต่คุยกันครั้งแรก จนติดตั้งใช้งานได้จริง',
   },
   // The h1 in two parts: the accent (marked with a drawn highlight) is the
   // end point a recruiter should remember. lead + accent === title.
   titleLead: {
     en: 'Partnerships and business development, from first meeting ',
-    th: 'งานพาร์ตเนอร์ชิปและพัฒนาธุรกิจ ตั้งแต่คุยกันครั้งแรก ',
+    // The space before และ is a deliberate headline break: each Thai phrase stays whole.
+    th: 'งานพาร์ตเนอร์ชิป และพัฒนาธุรกิจ ตั้งแต่คุยกันครั้งแรก ',
   },
   titleAccent: { en: 'to live rollout.', th: 'จนติดตั้งใช้งานได้จริง' },
   lede: {
@@ -25,7 +26,18 @@ export const HERO = {
   experienceAt: { en: 'Experience at', th: 'ประสบการณ์ที่' },
   founder: { en: 'founder', th: 'ผู้ก่อตั้ง' },
   highlights: { en: 'Highlights', th: 'ไฮไลต์' },
+  nowAt: { en: 'Now at Actmedia', th: 'ตอนนี้ที่ Actmedia' },
+  earlier: { en: 'Before Actmedia', th: 'ก่อนมา Actmedia' },
+  pathLabel: { en: 'How I take a deal from first meeting to live', th: 'ขั้นตอนที่ผมพาดีลจากคุยครั้งแรกจนใช้งานจริง' },
 } satisfies Record<string, Localized>;
+
+// The h1's promise drawn as a path (the hero card's signature). Same five
+// moves as the lede: meet, model the deal, agree terms, project-manage the
+// rollout, run live. Kept to one short word each so it fits a 320 px phone.
+export const HERO_PATH: Record<'en' | 'th', string[]> = {
+  en: ['Meet', 'Model', 'Agree', 'Roll out', 'Live'],
+  th: ['นัดคุย', 'วางดีล', 'ตกลง', 'ติดตั้ง', 'ใช้จริง'],
+};
 
 export interface ProofStat {
   value: string;
@@ -36,9 +48,9 @@ export interface ProofStat {
 
 export const PROOF_STATS: ProofStat[] = [
   // Career · Actmedia: "Project-manage 4 live rollouts across retailer, supplier and internal teams."
-  { value: '4', label: { en: 'live in-store rollouts, project-managed by me', th: 'งานติดตั้งในร้านที่ผมบริหารอยู่' } },
+  { value: '4', label: { en: 'live in-store rollouts, project-managed by me', th: 'งานติดตั้งในร้าน ที่ผมบริหารอยู่' } },
   // Career · Actmedia: "Found 3–4 new channel opportunities with Modern Trade retailers, now in active discussion."
-  { value: '3–4', label: { en: 'new retail channel opportunities, in active discussion', th: 'ช่องทางค้าปลีกใหม่ ที่กำลังเจรจาอยู่' } },
+  { value: '3–4', label: { en: 'new retail channel opportunities, in active discussion', th: 'ช่องทางค้าปลีกใหม่ กำลังเจรจาอยู่' } },
   // Projects · Tripedia: "Final 30 of 500 teams" (KATALYST Startup Launchpad, 2022).
   { value: '30', unit: '/ 500', label: { en: 'startup finalist, KATALYST Launchpad 2022', th: 'ทีมเข้ารอบสุดท้าย KATALYST Launchpad 2022' } },
   // Career · A Bun Dance: "Held gross profit at ~35% per unit", 20 months.

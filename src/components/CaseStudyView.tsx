@@ -27,6 +27,7 @@ const COPY = {
     th: ['เงื่อนไขการค้า', 'เตรียมจอ', 'ติดตั้ง', 'ความพร้อมฝ่ายขาย', 'ตรวจหลังเปิดตัว'],
   },
   batch: { en: 'Batch', th: 'ชุด' },
+  flags: { en: '2 flags:', th: 'มี 2 จุดที่ต้องดู:' },
   states: {
     done: { en: 'Done', th: 'เสร็จ' },
     track: { en: 'On track', th: 'ตามแผน' },
@@ -49,6 +50,15 @@ function Tracker({ locale, caption }: { locale: Locale; caption: string }) {
   const s = COPY.states;
   return (
     <Reveal as="figure" className="cst-tracker">
+      {/* The slips, spelled out (shown on phones, where the table scrolls). Built from TRACKER. */}
+      <p className="cst-flags">
+        <b>{COPY.flags[locale]}</b>{' '}
+        {TRACKER.flatMap((row, i) =>
+          row.flatMap((st, j) =>
+            st === 'risk' || st === 'off' ? [`${COPY.batch[locale]} ${String.fromCharCode(65 + i)} · ${COPY.stages[locale][j]} · ${s[st][locale]}`] : [],
+          ),
+        ).join('  /  ')}
+      </p>
       <div className="cst-scroll" role="region" aria-label={caption} tabIndex={0}>
         <table>
           <thead>
@@ -91,6 +101,53 @@ function Tracker({ locale, caption }: { locale: Locale; caption: string }) {
 /** One case study page (/{locale}/work/{slug} for a code-defined case). Server component. */
 export default function CaseStudyView({ c, next, locale }: { c: CaseStudy; next: CaseStudy | null; locale: Locale }) {
   const demo = demoHref(c);
+  // A drawn (tracker) case has no screenshot, so its artifact leads the page,
+  // full width, before the story: show, then tell (design review 2026-11-09).
+  const artifactFirst = c.artifact.kind === 'tracker';
+  const artifact = (
+    <section id="c-artifact" className={artifactFirst ? 'cst-lead' : undefined} aria-labelledby="c-artifact-h">
+      <h2 id="c-artifact-h">{c.artifact.heading[locale]}</h2>
+      <p>
+        <ThaiText text={c.artifact.intro[locale]} />
+      </p>
+      {c.artifact.kind === 'tracker' ? (
+        <Tracker locale={locale} caption={c.artifact.caption[locale]} />
+      ) : (
+        <figure className="cst-demo">
+          {c.artifact.image ? (
+            <img
+              className="cst-demo-img"
+              src={c.artifact.image.src}
+              alt={c.artifact.image.alt[locale]}
+              width={c.artifact.image.width}
+              height={c.artifact.image.height}
+              loading="lazy"
+              decoding="async"
+            />
+          ) : (
+            <CaseThumb c={c} locale={locale} />
+          )}
+          <figcaption>
+            {demo && (
+              <a className="btn btn-fill" href={demo} target="_blank" rel="noreferrer">
+                {COPY.openDemo[locale]} <span aria-hidden="true">↗</span>
+              </a>
+            )}
+            <span>
+              <ThaiText text={c.artifact.caption[locale]} />
+            </span>
+          </figcaption>
+        </figure>
+      )}
+    </section>
+  );
+  const toc = [
+    { id: 'c-problem', text: COPY.problem[locale] },
+    { id: 'c-did', text: COPY.did[locale] },
+    { id: 'c-artifact', text: c.artifact.heading[locale] },
+    { id: 'c-result', text: COPY.result[locale] },
+  ];
+  if (artifactFirst) toc.unshift(toc.splice(2, 1)[0]);
   return (
     <article className="cst wrap">
       <p className="cst-back">
@@ -145,16 +202,10 @@ export default function CaseStudyView({ c, next, locale }: { c: CaseStudy; next:
         </span>
       </p>
 
+      {artifactFirst && artifact}
+
       <div className="cst-body">
-        <CaseToc
-          label={COPY.onPage[locale]}
-          items={[
-            { id: 'c-problem', text: COPY.problem[locale] },
-            { id: 'c-did', text: COPY.did[locale] },
-            { id: 'c-artifact', text: c.artifact.heading[locale] },
-            { id: 'c-result', text: COPY.result[locale] },
-          ]}
-        />
+        <CaseToc label={COPY.onPage[locale]} items={toc} />
         <div className="cst-prose">
           <section id="c-problem" aria-labelledby="c-problem-h">
             <h2 id="c-problem-h">{COPY.problem[locale]}</h2>
@@ -179,41 +230,7 @@ export default function CaseStudyView({ c, next, locale }: { c: CaseStudy; next:
               ))}
             </Reveal>
           </section>
-          <section id="c-artifact" aria-labelledby="c-artifact-h">
-            <h2 id="c-artifact-h">{c.artifact.heading[locale]}</h2>
-            <p>
-              <ThaiText text={c.artifact.intro[locale]} />
-            </p>
-            {c.artifact.kind === 'tracker' ? (
-              <Tracker locale={locale} caption={c.artifact.caption[locale]} />
-            ) : (
-              <figure className="cst-demo">
-                {c.artifact.image ? (
-                  <img
-                    className="cst-demo-img"
-                    src={c.artifact.image.src}
-                    alt={c.artifact.image.alt[locale]}
-                    width={c.artifact.image.width}
-                    height={c.artifact.image.height}
-                    loading="lazy"
-                    decoding="async"
-                  />
-                ) : (
-                  <CaseThumb c={c} locale={locale} />
-                )}
-                <figcaption>
-                  {demo && (
-                    <a className="btn btn-fill" href={demo} target="_blank" rel="noreferrer">
-                      {COPY.openDemo[locale]} <span aria-hidden="true">↗</span>
-                    </a>
-                  )}
-                  <span>
-                    <ThaiText text={c.artifact.caption[locale]} />
-                  </span>
-                </figcaption>
-              </figure>
-            )}
-          </section>
+          {!artifactFirst && artifact}
           <section id="c-result" aria-labelledby="c-result-h">
             <h2 id="c-result-h">{COPY.result[locale]}</h2>
             <p className="cst-result">

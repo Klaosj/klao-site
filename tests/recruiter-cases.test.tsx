@@ -82,7 +82,7 @@ describe('case study content', () => {
 
   it('points every screenshot at a real file', () => {
     for (const c of CASE_STUDIES) {
-      for (const src of [c.image?.src, c.imagePhone?.src, c.artifact.image?.src]) {
+      for (const src of [c.image?.src, c.imagePhone?.src, c.imageMini?.src, c.artifact.image?.src]) {
         if (src) expect(() => readFileSync(`public${src}`), src).not.toThrow();
       }
     }
@@ -146,7 +146,7 @@ describe('Recruiter Edition hero', () => {
   it('shows the figures as static text (no count-up: it would display numbers that are not true) and marks the end point', () => {
     const html = renderToStaticMarkup(<RecruiterHero profile={profile} career={career} locale="en" />);
     expect(html).toContain('<span class="rh-n">4</span>');
-    expect(html).toContain('<span class="rh-n">~35%</span>');
+    expect(html).toContain('<span class="rh-n rh-n-s">~35%</span>');
     expect(html).not.toContain('rh-c-v');
     expect(html).toContain('class="rh-mark"');
   });
@@ -160,7 +160,16 @@ describe('Recruiter Edition hero', () => {
     expect(html).toContain(HERO.emailMe[locale]);
     expect(html).toContain('href="mailto:');
     expect(html).toContain('LinkedIn');
-    expect(html.match(/class="rh-n"/g)).toHaveLength(4);
+    // Two Actmedia figures lead; the two earlier ones sit in the card's foot.
+    expect(html.match(/class="rh-n"/g)).toHaveLength(2);
+    expect(html.match(/class="rh-n rh-n-s"/g)).toHaveLength(2);
+    // The path card: five stops, ending at Live, labelled for screen readers.
+    expect(html.match(/class="rh-dot"/g)).toHaveLength(5);
+    expect(html).toContain(`aria-label="${HERO.pathLabel[locale]}"`);
+    // The earlier figures sit under a visible "Before Actmedia" label, never under "Now at Actmedia" alone.
+    const foot = html.slice(html.indexOf('class="rh-earlier"'));
+    expect(foot).toContain(`>${HERO.earlier[locale]}</p>`);
+    expect(foot.indexOf(HERO.earlier[locale])).toBeLessThan(foot.indexOf('rh-n rh-n-s'));
   });
 });
 
@@ -172,6 +181,21 @@ describe('case study rendering', () => {
     expect(html).toContain('id="cases"');
     for (const c of visibleCases(PREVIEW)) expect(html).toContain(`href="/${locale}/work/${c.slug}"`);
     expect(html.match(/class="cs-chip cs-draft"/g)?.length).toBe(visibleCases(PREVIEW).filter((c) => c.status === 'draft').length);
+  });
+
+  it('leads a drawn (tracker) case with its artifact, and the contents list follows the page order', () => {
+    const tracker = visibleCases(PREVIEW).find((c) => c.artifact.kind === 'tracker')!;
+    const html = renderToStaticMarkup(<CaseStudyView c={tracker} next={null} locale="en" />);
+    expect(html.indexOf('id="c-artifact"')).toBeLessThan(html.indexOf('id="c-problem"'));
+    const toc = html.slice(html.indexOf('class="cst-toc"'));
+    expect(toc.indexOf('href="#c-artifact"')).toBeLessThan(toc.indexOf('href="#c-problem"'));
+  });
+
+  it('uses the close crop, not the whole screen, for the next-case mini picture', () => {
+    const shot = visibleCases(PREVIEW).find((c) => c.imageMini)!;
+    const other = visibleCases(PREVIEW).find((c) => c !== shot)!;
+    const html = renderToStaticMarkup(<CaseStudyView c={other} next={shot} locale="en" />);
+    expect(html.slice(html.indexOf('class="cst-next"'))).toContain(`src="${shot.imageMini!.src}"`);
   });
 
   it('hides the next-case mini picture from assistive tech (the link text names the case)', () => {
@@ -194,6 +218,12 @@ describe('case study rendering', () => {
       expect(html).toContain('class="cst-toc"');
       // Status is never shown by fill alone: the two slips carry a flag mark.
       if (c.artifact.kind === 'tracker') expect(html.match(/class="cst-flag"/g)).toHaveLength(2);
+      // ...and the phone summary spells the same two slips out in words.
+      if (c.artifact.kind === 'tracker') {
+        const flags = html.slice(html.indexOf('class="cst-flags"'), html.indexOf('class="cst-scroll"'));
+        expect(flags).toContain(locale === 'en' ? 'Batch C · Installation · At risk' : 'ชุด C · ติดตั้ง · เสี่ยง');
+        expect(flags).toContain(locale === 'en' ? 'Batch D · Screen prep · Off track' : 'ชุด D · เตรียมจอ · หลุดแผน');
+      }
       if (c.status === 'draft') expect(html).toContain('cst-draftnote');
       if (c.artifact.kind === 'tracker') expect(html).toContain('<table>');
       if (c.demo) expect(html).toContain(`href="${demoHref(c)}"`);

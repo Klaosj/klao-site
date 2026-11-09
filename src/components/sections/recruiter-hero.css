@@ -1,35 +1,65 @@
-/* Recruiter Edition hero (2026-11-09 mockup; motion pass the same night). Two
-   columns from 1069 px: the copy and the four receipts; one column below.
-   Only transform and opacity animate, plus one paint-only one-shot (the
-   highlight under the h1's end point; no count-up -- design review: a
-   counter shows numbers that are not true), and only under
-   html.js with motion welcome; the h1 (LCP) moves but is never hidden. */
+/* Recruiter Edition hero (2026-11-09 mockup; polish passes the same night).
+   Two columns from 1069 px: the copy, and the signature card -- the h1's
+   promise drawn as a five-step path, then two Actmedia figures, then the
+   earlier receipts; one column below. Only transform and opacity animate,
+   plus one paint-only one-shot (the highlight under the h1's end point); no
+   count-up (design review: a counter shows numbers that are not true). All
+   motion is under html.js with motion welcome; the h1 (LCP) moves but is
+   never hidden. */
 @layer components {
   .rh { padding-top: 132px; }
-  .rh-grid { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 56px; align-items: center; }
+  .rh-grid { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); gap: 40px; align-items: center; }
   .rh-who { display: flex; align-items: center; gap: 14px; margin: 0 0 24px; font-size: 15px; line-height: 20px; }
   .rh-who img { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 3px var(--canvas), 0 0 0 4px var(--line); }
   .rh-who b { display: block; font-weight: 600; }
-  .rh-role { display: block; color: var(--ink-2); }
-  .rh-h1 { margin: 0 0 22px; font-size: 54px; line-height: 58px; font-weight: 600; letter-spacing: -.02em; text-wrap: balance; }
-  .rh-h1:lang(th) { font-size: 44px; line-height: 60px; letter-spacing: 0; }
+  .rh-role { display: block; color: var(--ink-2); text-wrap: balance; }
+  /* Plain wrapping, not balance: at this width it gives the four-line break
+     "Partnerships and / business development, / from first meeting / to live rollout." */
+  .rh-h1 { margin: 0 0 22px; font-size: 54px; line-height: 58px; font-weight: 600; letter-spacing: -.02em; text-wrap: wrap; }
+  .rh-h1:lang(th) { font-size: 44px; line-height: 60px; letter-spacing: 0; text-wrap: balance; }
   /* The end point, highlighted like a marker pen under the lower part of the words. */
   .rh-mark { padding: 0 .06em; margin: 0 -.06em; background: linear-gradient(var(--select), var(--select)) 0 88% / 100% .34em no-repeat; }
+  /* The end point never splits across lines in English (it fits a 320 px phone). */
+  :lang(en) .rh-mark { white-space: nowrap; }
   .rh-lede { max-width: 34em; margin: 0 0 30px; color: var(--ink-2); font-size: 19px; line-height: 29px; text-wrap: pretty; }
   .rh-lede:lang(th) { line-height: 32px; }
   .rh-ctas { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
   .rh-lnk { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; padding: 0 6px; color: var(--link); font-size: 17px; text-decoration: none; }
   .rh-lnk:hover { text-decoration: underline; text-underline-offset: .12em; }
 
-  /* The four receipts: one panel split by hairlines, not four grey tiles. */
-  .rh-proof { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); margin: 0; padding: 0; list-style: none; border-radius: 24px; background: var(--card); box-shadow: var(--e2); overflow: hidden; }
-  .rh-proof li { display: flex; flex-direction: column; gap: 8px; min-height: 148px; padding: 24px; }
-  .rh-proof li:nth-child(odd) { border-right: 1px solid var(--line); }
-  .rh-proof li:nth-child(-n + 2) { border-bottom: 1px solid var(--line); }
+  /* The signature card. */
+  .rh-card { padding: 24px 26px 0; border-radius: 26px; background: var(--card); box-shadow: var(--e2); overflow: hidden; }
+  .rh-card-k { margin: 0; color: var(--ink-2); font-size: 13px; line-height: 18px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+  :lang(th) .rh-card-k { letter-spacing: 0; text-transform: none; }
+
+  /* The path: five equal columns, a track from the first dot's centre to the
+     last's, and a Kram line drawn over it. The last stop (Live) is filled. */
+  .rh-path { position: relative; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin: 20px 0 22px; padding: 0; list-style: none; }
+  .rh-path::before, .rh-path::after { content: ""; position: absolute; top: 7px; left: 10%; right: 10%; height: 2px; border-radius: 2px; background: var(--line); }
+  .rh-path::after { background: var(--kram); transform-origin: 0 50%; }
+  .rh-path li { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 10px; color: var(--ink-2); font-size: 14px; line-height: 18px; text-align: center; }
+  .rh-dot { width: 16px; height: 16px; border-radius: 50%; background: var(--card); box-shadow: inset 0 0 0 2px var(--kram); }
+  .rh-path li:last-child { color: var(--ink-1); font-weight: 600; }
+  .rh-path li:last-child .rh-dot { position: relative; background: var(--kram); box-shadow: 0 0 0 4px var(--select); }
+  .rh-path li:last-child .rh-dot::after { content: ""; position: absolute; inset: -4px; border-radius: 50%; box-shadow: 0 0 0 2px var(--kram); opacity: 0; }
+
+  /* The two Actmedia figures, split by hairlines and bled to the card's edges. */
+  .rh-proof { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); margin: 0 -26px; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+  .rh-proof li { display: flex; flex-direction: column; gap: 8px; padding: 22px 26px 24px; }
+  .rh-proof li + li { border-left: 1px solid var(--line); }
   .rh-n { color: var(--kram); font-size: 48px; line-height: 50px; font-weight: 600; letter-spacing: -.03em; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .rh-n small { color: var(--ink-2); font-size: 20px; font-weight: 600; letter-spacing: 0; }
   .rh-l { color: var(--ink-2); font-size: 15px; line-height: 21px; text-wrap: pretty; }
   :lang(th) .rh-l { line-height: 24px; }
+
+  /* Earlier receipts: a quiet mist strip at the foot of the card. */
+  .rh-earlier { margin: 0 -26px; padding: 16px 26px 18px; background: var(--mist); }
+  .rh-earlier ul { display: grid; gap: 10px; margin: 12px 0 0; padding: 0; list-style: none; }
+  .rh-earlier li { display: grid; grid-template-columns: 92px minmax(0, 1fr); align-items: baseline; gap: 12px; }
+  .rh-n-s { color: var(--ink-1); font-size: 20px; line-height: 24px; letter-spacing: -.01em; }
+  .rh-n-s small { font-size: 14px; }
+  .rh-earlier .rh-l { font-size: 14px; line-height: 20px; }
+  :lang(th) .rh-earlier .rh-l { line-height: 22px; }
 
   .rh-orgs { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 26px; margin-top: 44px; padding-top: 22px; border-top: 1px solid var(--line); color: var(--ink-2); font-size: 15px; line-height: 22px; }
   .rh-orgs b { color: var(--ink-1); font-weight: 600; }
@@ -40,26 +70,44 @@
     html.js .rh-in-b { animation: rh-move 600ms var(--ease-settle) both; }
     html.js .rh-in-c { animation-delay: 80ms; }
     html.js .rh-in-d { animation-delay: 160ms; }
+    html.js .rh-card.rh-in-d { animation-name: rh-appear; }
     html.js .rh-mark { animation: rh-mark 900ms var(--ease-settle) 520ms both; }
+    /* The path draws once: the line runs, each stop lands in turn, Live rings once. */
+    html.js .rh-path::after { animation: rh-draw 1300ms var(--ease-settle) 520ms both; }
+    html.js .rh-path .rh-dot { animation: rh-pop 520ms var(--ease-tick) both; animation-delay: calc(560ms + var(--p) * 260ms); }
+    html.js .rh-path .rh-pl { animation: rh-fade 420ms var(--ease-drift) both; animation-delay: calc(600ms + var(--p) * 260ms); }
+    html.js .rh-path li:last-child .rh-dot::after { animation: rh-ring 1400ms var(--ease-drift) 1750ms 2; }
   }
   @keyframes rh-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
   @keyframes rh-move { from { transform: translateY(10px); } to { transform: none; } }
   @keyframes rh-mark { from { background-size: 0% .34em; } }
+  @keyframes rh-draw { from { transform: scaleX(0); } }
+  @keyframes rh-appear { from { opacity: 0; } }
+  @keyframes rh-pop { from { opacity: 0; transform: scale(.4); } }
+  @keyframes rh-fade { from { opacity: 0; transform: translateY(4px); } }
+  @keyframes rh-ring { 0% { opacity: .8; transform: scale(1); } 80%, 100% { opacity: 0; transform: scale(1.9); } }
 
   @media (max-width: 1068px) {
     .rh-grid { grid-template-columns: minmax(0, 1fr); gap: 36px; }
   }
   @media (max-width: 734px) {
     .rh { padding-top: 104px; }
-    .rh-h1 { font-size: 37px; line-height: 42px; }
+    /* Scales with the phone so the EN h1 keeps its four-line break from 375 px up. */
+    .rh-h1 { font-size: clamp(30px, 8.5vw, 37px); line-height: 1.14; }
     .rh-h1:lang(th) { font-size: 31px; line-height: 44px; }
     .rh-lede { font-size: 17px; line-height: 26px; }
     .rh-lede:lang(th) { line-height: 29px; }
     .rh-ctas .btn { flex: 1 1 auto; }
-    .rh-proof { border-radius: 20px; }
-    .rh-proof li { min-height: 0; padding: 18px 16px; gap: 6px; }
+    .rh-card { padding: 20px 18px 0; border-radius: 22px; }
+    .rh-card-k { font-size: 14px; }
+    .rh-path { margin: 16px -6px 18px; }
+    .rh-proof, .rh-earlier { margin: 0 -18px; }
+    .rh-proof li { padding: 18px; gap: 6px; }
     .rh-n { font-size: 34px; line-height: 38px; }
     .rh-n small { font-size: 16px; }
+    .rh-n-s { font-size: 18px; line-height: 22px; }
+    .rh-earlier { padding: 14px 18px 16px; }
+    .rh-earlier li { grid-template-columns: 76px minmax(0, 1fr); gap: 10px; }
     .rh-orgs { gap: 6px 18px; margin-top: 32px; }
   }
 }

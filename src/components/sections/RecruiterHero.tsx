@@ -1,5 +1,6 @@
 import ThaiText from '@/components/ThaiText';
-import { HERO, PROOF_STATS } from '@/content/recruiter';
+import type { CSSProperties } from 'react';
+import { HERO, HERO_PATH, PROOF_STATS, type ProofStat } from '@/content/recruiter';
 import { mailtoHref } from '@/lib/format';
 import type { CareerEntry, Locale, Profile } from '@/lib/models';
 import './recruiter-hero.css';
@@ -23,10 +24,24 @@ export function experienceOrgs(career: CareerEntry[]): { name: string; founder: 
 
 /**
  * Recruiter Edition first screen (2026-11-09): who he is, the role he does,
- * four receipts from the page below, and the three things a hiring manager
+ * the path card (his five moves, two Actmedia figures, two earlier ones), and the three things a hiring manager
  * wants next -- the résumé, an email, LinkedIn. Server component: every word
  * is in the first HTML response. `#hero-cta` stays the hook SiteNav watches.
  */
+function Stat({ s, locale, small = false }: { s: ProofStat; locale: Locale; small?: boolean }) {
+  return (
+    <li>
+      <span className={small ? 'rh-n rh-n-s' : 'rh-n'}>
+        {s.value}
+        {s.unit && <small> {s.unit}</small>}
+      </span>
+      <span className="rh-l">
+        <ThaiText text={s.label[locale]} />
+      </span>
+    </li>
+  );
+}
+
 export default function RecruiterHero({
   profile,
   career,
@@ -84,19 +99,35 @@ export default function RecruiterHero({
             )}
           </div>
         </div>
-        <ul className="rh-proof rh-in-d" aria-label={HERO.highlights[locale]}>
-          {PROOF_STATS.map((s) => (
-            <li key={s.value + s.label.en}>
-              <span className="rh-n">
-                {s.value}
-                {s.unit && <small> {s.unit}</small>}
-              </span>
-              <span className="rh-l">
-                <ThaiText text={s.label[locale]} />
-              </span>
-            </li>
-          ))}
-        </ul>
+        {/* The signature card: the h1's promise as a path that draws itself
+            once, then the two Actmedia figures, then the earlier receipts. */}
+        <div className="rh-card rh-in-d">
+          <p className="rh-card-k">{HERO.nowAt[locale]}</p>
+          <ol className="rh-path" aria-label={HERO.pathLabel[locale]}>
+            {HERO_PATH[locale].map((t, i) => (
+              <li key={t} style={{ ['--p' as string]: String(i) } as CSSProperties}>
+                <span className="rh-dot" aria-hidden="true" />
+                <span className="rh-pl">{t}</span>
+              </li>
+            ))}
+          </ol>
+          <ul className="rh-proof" aria-label={HERO.highlights[locale]}>
+            {PROOF_STATS.slice(0, 2).map((s) => (
+              <Stat key={s.value + s.label.en} s={s} locale={locale} />
+            ))}
+          </ul>
+          {/* Visible label: these two are not Actmedia results (design review round 2). */}
+          <div className="rh-earlier">
+            <p className="rh-card-k" id="rh-earlier-k">
+              {HERO.earlier[locale]}
+            </p>
+            <ul aria-labelledby="rh-earlier-k">
+              {PROOF_STATS.slice(2).map((s) => (
+                <Stat key={s.value + s.label.en} s={s} locale={locale} small />
+              ))}
+            </ul>
+          </div>
+        </div>
       </div>
       {orgs.length > 0 && (
         <p className="wrap rh-orgs rh-in-d">
