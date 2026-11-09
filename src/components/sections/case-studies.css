@@ -72,6 +72,16 @@
   :lang(th) .cs-out > span:first-child { letter-spacing: 0; }
   .cs-more { margin-top: 14px; color: var(--link); font-size: 15px; line-height: 21px; font-weight: 600; }
 
+  /* A single case: picture left, words right, full row. */
+  @media (min-width: 735px) {
+    .cs-grid-one { grid-template-columns: minmax(0, 1fr); }
+    .cs-grid-one .cs-card { flex-direction: row; align-items: stretch; padding: 14px; }
+    .cs-grid-one .cs-thumb { flex: 0 0 56%; aspect-ratio: auto; min-height: 340px; }
+    .cs-grid-one .cs-body { padding: 22px 22px 8px 30px; }
+    .cs-grid-one .cs-title { font-size: 28px; line-height: 34px; }
+    :lang(th) .cs-grid-one .cs-title { font-size: 25px; line-height: 36px; }
+  }
+
   @media (max-width: 734px) {
     .cs-grid { grid-template-columns: minmax(0, 1fr); gap: 16px; margin-top: 28px; }
     .cs-title { font-size: 21px; line-height: 27px; }

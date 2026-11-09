@@ -106,7 +106,8 @@ export const CASE_STUDIES: CaseStudy[] = [
   },
   {
     slug: 'uat-bug-desk',
-    status: 'draft',
+    // Cleared by Klao on 9 Nov 2026 (confidentiality OK; result line in his words).
+    status: 'cleared',
     thumb: 'uat',
     image: {
       src: '/images/uat-desk-list.jpg',
@@ -127,10 +128,12 @@ export const CASE_STUDIES: CaseStudy[] = [
       url: 'https://uat-bug-desk.vercel.app',
       previewUrl: 'https://uat-bug-desk-klaosjs-projects.vercel.app',
     },
-    kicker: { en: 'Actmedia · CRM rollout · Built by me · 2026', th: 'Actmedia · ติดตั้ง CRM · สร้างเอง · 2026' },
+    kicker: { en: 'Actmedia · Salesforce implementation · Built by me · 2026', th: 'Actmedia · นำ Salesforce มาใช้ · สร้างเอง · 2026' },
     title: {
       en: 'A bug desk that kept a CRM user-acceptance test moving',
-      th: 'ระบบแจ้งบั๊กที่ทำให้การทดสอบ CRM ก่อนใช้งานจริงเดินต่อได้',
+      // No-break space: "การทดสอบ CRM" stays one phrase (a break before CRM left a
+      // visible leading space on the next line in Chrome).
+      th: 'ระบบแจ้งบั๊กที่ทำให้การทดสอบ\u00a0CRM ก่อนใช้งานจริงเดินต่อได้',
     },
     summary: {
       en: 'Testers report a bug in under a minute with a marked-up screenshot; I triage it, record the vendor’s answer and keep paid change requests apart from real bugs.',
@@ -142,7 +145,7 @@ export const CASE_STUDIES: CaseStudy[] = [
       th: 'ทีมขายของเรากำลังทดสอบ CRM ใหม่ก่อนใช้งานจริง โดยมีผู้พัฒนาภายนอกเป็นคนสร้าง ผมจึงทำเว็บแอปเล็กๆ ให้ผู้ทดสอบแจ้งปัญหาได้ครบถ้วน และให้ทั้งสองฝ่ายทำงานจากรายการเดียวกัน',
     },
     meta: [
-      { label: { en: 'Role', th: 'บทบาท' }, value: { en: 'UAT lead for the business side; designed and built the tool', th: 'ผู้นำการทดสอบฝั่งธุรกิจ ออกแบบและสร้างเครื่องมือเอง' } },
+      { label: { en: 'Role', th: 'บทบาท' }, value: { en: 'Client-side project owner for the Salesforce implementation; designed and built this tool', th: 'เจ้าของโปรเจกต์ฝั่งลูกค้าในงานนำ Salesforce มาใช้ ออกแบบและสร้างเครื่องมือนี้เอง' } },
       { label: { en: 'Users', th: 'ผู้ใช้' }, value: { en: 'Sales testers · project lead · vendor', th: 'ผู้ทดสอบฝั่งขาย · หัวหน้าโปรเจกต์ · ผู้พัฒนา' } },
       { label: { en: 'Built with', th: 'สร้างด้วย' }, value: { en: 'HTML, CSS, JavaScript · Supabase · Vercel', th: 'HTML, CSS, JavaScript · Supabase · Vercel' } },
       { label: { en: 'Demo', th: 'เดโม' }, value: { en: 'Same screens, sample data only', th: 'หน้าจอเดียวกัน ใช้ข้อมูลตัวอย่างทั้งหมด' } },
@@ -214,13 +217,11 @@ export const CASE_STUDIES: CaseStudy[] = [
     },
     result: {
       headline: {
-        en: 'One list both sides work from: every bug has a screenshot, an owner, and the vendor’s answer on record.',
-        th: 'มีรายการเดียวที่ทั้งสองฝ่ายใช้ร่วมกัน ทุกบั๊กมีภาพหน้าจอ มีผู้รับผิดชอบ และมีคำตอบของผู้พัฒนาบันทึกไว้',
+        // Klao's own words (9 Nov 2026), translated.
+        en: 'It let a company with no IT team of its own understand each bug and where it came from, focus module by module without losing the thread, and track every fix.',
+        th: 'ทำให้บริษัทที่ไม่มีทีม IT ของตัวเอง เข้าใจได้ว่าบั๊กแต่ละตัวคืออะไร และมาจากไหน โฟกัสทีละโมดูลได้ชัดเจนขึ้น โดยไม่หลงประเด็น และติดตามการแก้ได้',
       },
-      draftNote: {
-        en: 'Klao to confirm how the desk was used (and any figure he is happy to share) before publishing.',
-        th: 'เกลาต้องยืนยันว่าใช้ระบบนี้อย่างไร (และตัวเลขที่ยินดีเปิดเผย) ก่อนเผยแพร่',
-      },
+      draftNote: null,
     },
     skills: {
       en: 'Skills this shows: running a user-acceptance test, managing a vendor, spotting scope creep early, and building the tool the process needed.',

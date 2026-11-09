@@ -1,3 +1,4 @@
+import { CASE_STUDIES } from '@/content/cases';
 import type { ReactElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, it, expect, vi } from 'vitest';
@@ -222,7 +223,11 @@ describe('post routing logic (synthetic fixtures, decoupled from src/content/fix
     expect(urls.some((u) => u.includes(`/en/work/`))).toBe(true); // At least one project appears
     expect(
       urls.some(
-        (u) => u.includes(`/en/work/`) && !u.includes(`/en/work/${projectWithSlug.slug}`),
+        (u) =>
+          u.includes(`/en/work/`) &&
+          !u.includes(`/en/work/${projectWithSlug.slug}`) &&
+          // cleared code-defined client cases are listed on purpose
+          !CASE_STUDIES.some((c) => c.status === 'cleared' && u.endsWith(`/en/work/${c.slug}`)),
       ),
     ).toBe(false); // But not the slug-less one
 

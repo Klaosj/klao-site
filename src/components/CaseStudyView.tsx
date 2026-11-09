@@ -202,11 +202,13 @@ export default function CaseStudyView({ c, next, locale }: { c: CaseStudy; next:
               {/* Thai phrases stay whole (display mode). A list of "·" items keeps each
                   item on one line on the desktop strip; a sentence wraps normally. */}
               {m.value[locale].includes(' · ') ? (
-                m.value[locale].split(' · ').map((u, i) => (
+                m.value[locale].split(' · ').map((u, i, all) => (
                   <span key={u}>
-                    {i > 0 && ' · '}
+                    {i > 0 && ' '}
+                    {/* The "·" is glued to the item before it (no-break space), so a line
+                        can end with "·" but never start with one, in EN and TH alike. */}
                     <span className="cst-unit">
-                      <ThaiText text={u} display />
+                      <ThaiText text={i < all.length - 1 ? `${u}\u00a0·` : u} display />
                     </span>
                   </span>
                 ))
@@ -256,7 +258,7 @@ export default function CaseStudyView({ c, next, locale }: { c: CaseStudy; next:
           <section id="c-result" aria-labelledby="c-result-h">
             <h2 id="c-result-h">{COPY.result[locale]}</h2>
             <p className="cst-result">
-              <ThaiText text={c.result.headline[locale]} />
+              <ThaiText text={c.result.headline[locale]} display />
             </p>
             <p>
               <ThaiText text={c.skills[locale]} />

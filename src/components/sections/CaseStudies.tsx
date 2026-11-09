@@ -45,7 +45,8 @@ export default function CaseStudies({ cases, locale }: { cases: CaseStudy[]; loc
           <ThaiText text={CASES_COPY.lead[locale]} />
         </p>
       </Reveal>
-      <ul className="cs-grid">
+      {/* One case: a wide feature card, so the row never looks half empty. */}
+      <ul className={cases.length === 1 ? 'cs-grid cs-grid-one' : 'cs-grid'}>
         {cases.map((c, i) => (
           <li key={c.slug}>
             <Reveal delayIndex={i}>
