@@ -74,7 +74,11 @@ export default function RecruiterHero({
                     </span>
                   )}
                   {title && place && ' · '}
-                  {place && <ThaiText text={place} />}
+                  {place && (
+                    <span className="rh-role-p">
+                      <ThaiText text={place} />
+                    </span>
+                  )}
                 </span>
               )}
             </span>

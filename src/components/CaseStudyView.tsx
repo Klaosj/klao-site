@@ -52,12 +52,16 @@ function Tracker({ locale, caption }: { locale: Locale; caption: string }) {
     <Reveal as="figure" className="cst-tracker">
       {/* The slips, spelled out (shown on phones, where the table scrolls). Built from TRACKER. */}
       <p className="cst-flags">
-        <b>{COPY.flags[locale]}</b>{' '}
+        <b>{COPY.flags[locale]}</b>
         {TRACKER.flatMap((row, i) =>
           row.flatMap((st, j) =>
-            st === 'risk' || st === 'off' ? [`${COPY.batch[locale]} ${String.fromCharCode(65 + i)} · ${COPY.stages[locale][j]} · ${s[st][locale]}`] : [],
+            st === 'risk' || st === 'off' ? [`${COPY.batch[locale]}\u00a0${String.fromCharCode(65 + i)} · ${COPY.stages[locale][j]} · ${s[st][locale]}`] : [],
           ),
-        ).join('  /  ')}
+        ).map((t) => (
+          <span key={t} className="cst-flag-i">
+            {t}
+          </span>
+        ))}
       </p>
       <div className="cst-scroll" role="region" aria-label={caption} tabIndex={0}>
         <table>
@@ -158,7 +162,12 @@ export default function CaseStudyView({ c, next, locale }: { c: CaseStudy; next:
       {c.status === 'draft' && (
         <p className="cst-draftnote" role="note">
           <ThaiText text={COPY.draft[locale]} />
-          {c.result.draftNote && <span lang="en"> {c.result.draftNote}</span>}
+          {c.result.draftNote && (
+            <span>
+              {' '}
+              <ThaiText text={c.result.draftNote[locale]} />
+            </span>
+          )}
         </p>
       )}
       <header className="cst-head">

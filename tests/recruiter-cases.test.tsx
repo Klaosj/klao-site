@@ -221,8 +221,9 @@ describe('case study rendering', () => {
       // ...and the phone summary spells the same two slips out in words.
       if (c.artifact.kind === 'tracker') {
         const flags = html.slice(html.indexOf('class="cst-flags"'), html.indexOf('class="cst-scroll"'));
-        expect(flags).toContain(locale === 'en' ? 'Batch C · Installation · At risk' : 'ชุด C · ติดตั้ง · เสี่ยง');
-        expect(flags).toContain(locale === 'en' ? 'Batch D · Screen prep · Off track' : 'ชุด D · เตรียมจอ · หลุดแผน');
+        expect(flags).toContain(locale === 'en' ? 'Batch\u00a0C · Installation · At risk' : 'ชุด\u00a0C · ติดตั้ง · เสี่ยง');
+        expect(flags).toContain(locale === 'en' ? 'Batch\u00a0D · Screen prep · Off track' : 'ชุด\u00a0D · เตรียมจอ · หลุดแผน');
+        expect(flags.match(/class="cst-flag-i"/g)).toHaveLength(2);
       }
       if (c.status === 'draft') expect(html).toContain('cst-draftnote');
       if (c.artifact.kind === 'tracker') expect(html).toContain('<table>');

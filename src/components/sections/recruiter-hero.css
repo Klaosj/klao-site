@@ -13,7 +13,7 @@
   .rh-who img { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 3px var(--canvas), 0 0 0 4px var(--line); }
   .rh-who b { display: block; font-weight: 600; }
   .rh-role { display: block; color: var(--ink-2); }
-  .rh-role-t { white-space: nowrap; }
+  .rh-role-t, .rh-role-p { white-space: nowrap; }
   /* Plain wrapping, not balance: at this width it gives the four-line break
      "Partnerships and / business development, / from first meeting / to live rollout." */
   .rh-h1 { margin: 0 0 22px; font-size: 54px; line-height: 58px; font-weight: 600; letter-spacing: -.02em; text-wrap: wrap; }

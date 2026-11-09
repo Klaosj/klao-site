@@ -48,7 +48,8 @@ export interface CaseStudy {
     /** The artifact's own picture (a different screen from the hero). */
     image?: { src: string; alt: Localized; width: number; height: number };
   };
-  result: { headline: Localized; draftNote: string | null };
+  /** draftNote: preview-only reminder to Klao, in both languages (never on production). */
+  result: { headline: Localized; draftNote: Localized | null };
   skills: Localized;
 }
 

@@ -94,7 +94,10 @@ export const CASE_STUDIES: CaseStudy[] = [
         en: 'The largest rollout is about two-thirds complete and on track to the contract.',
         th: 'งานติดตั้งที่ใหญ่ที่สุดคืบหน้าราวสองในสาม และเดินตามสัญญา',
       },
-      draftNote: 'Klao to confirm the current status and its date before publishing.',
+      draftNote: {
+        en: 'Klao to confirm the current status and its date before publishing.',
+        th: 'เกลาต้องยืนยันสถานะล่าสุดและวันที่ก่อนเผยแพร่',
+      },
     },
     skills: {
       en: 'Skills this shows: project delivery, vendor negotiation, budget control, working across three organisations, and handing a system over so it keeps running.',
@@ -214,7 +217,10 @@ export const CASE_STUDIES: CaseStudy[] = [
         en: 'One list both sides work from: every bug has a screenshot, an owner, and the vendor’s answer on record.',
         th: 'มีรายการเดียวที่ทั้งสองฝ่ายใช้ร่วมกัน ทุกบั๊กมีภาพหน้าจอ มีผู้รับผิดชอบ และมีคำตอบของผู้พัฒนาบันทึกไว้',
       },
-      draftNote: 'Klao to confirm how the desk was used (and any figure he is happy to share) before publishing.',
+      draftNote: {
+        en: 'Klao to confirm how the desk was used (and any figure he is happy to share) before publishing.',
+        th: 'เกลาต้องยืนยันว่าใช้ระบบนี้อย่างไร (และตัวเลขที่ยินดีเปิดเผย) ก่อนเผยแพร่',
+      },
     },
     skills: {
       en: 'Skills this shows: running a user-acceptance test, managing a vendor, spotting scope creep early, and building the tool the process needed.',
